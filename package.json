@@ -1,0 +1,31 @@
+{
+  "name": "nbo",
+  "private": true,
+  "license": "FSL-1.1-ALv2",
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "eslint --config eslint.config.mjs eslint.config.mjs packages scripts test-support",
+    "test": "turbo run test",
+    "test:ci": "node --test \"scripts/ci/__tests__/*.test.mjs\"",
+    "docs:check": "node scripts/docs/check-docs.mjs",
+    "format": "prettier --write .",
+    "check-types": "turbo run check-types",
+    "spec:generate": "cd spec && ./generate.sh",
+    "lint:fix": "eslint --config eslint.config.mjs eslint.config.mjs packages scripts test-support --fix",
+    "format:check": "prettier --check .",
+    "knip": "knip"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "eslint": "10.9.1",
+    "knip": "^6.44.1",
+    "prettier": "3.9.6",
+    "turbo": "^2.11.10",
+    "typescript": "7.0.2"
+  },
+  "packageManager": "pnpm@11.25.0",
+  "engines": {
+    "node": ">=24"
+  }
+}

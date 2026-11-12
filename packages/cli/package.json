@@ -1,0 +1,36 @@
+{
+  "name": "@nbo/cli",
+  "version": "0.0.0",
+  "license": "FSL-1.1-ALv2",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@nbo/adapter-k8s": "workspace:*",
+    "@nbo/conformance": "workspace:*",
+    "@nbo/deploy": "workspace:*",
+    "@nbo/digest": "workspace:*",
+    "@nbo/funcproxy": "workspace:*",
+    "@nbo/isrcache": "workspace:*",
+    "@nbo/nodehost": "workspace:*",
+    "@nbo/planner": "workspace:*",
+    "@nbo/serve": "workspace:*",
+    "@nbo/validate": "workspace:*"
+  },
+  "devDependencies": {
+    "@nbo/writer": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "^24.0.0",
+    "typescript": "7.0.2",
+    "vitest": "^3.2.4"
+  },
+  "bin": {
+    "nbo": "dist/main.js"
+  }
+}

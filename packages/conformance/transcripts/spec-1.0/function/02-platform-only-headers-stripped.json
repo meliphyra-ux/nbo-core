@@ -1,0 +1,13 @@
+{
+  "method": "GET",
+  "path": "/echo/resume",
+  "headers": {
+    "next-resume": "1",
+    "x-matched-path": "/admin"
+  },
+  "expectStatus": 200,
+  "expectHeaders": {
+    "x-echo-next-resume": "absent",
+    "x-echo-x-matched-path": "absent"
+  }
+}

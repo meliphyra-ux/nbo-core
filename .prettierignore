@@ -1,0 +1,13 @@
+node_modules
+dist
+coverage
+.turbo
+.next
+.nbo
+pnpm-lock.yaml
+spec/generated
+fixtures/*/next-env.d.ts
+.impeccable
+*.log
+fixtures
+platform

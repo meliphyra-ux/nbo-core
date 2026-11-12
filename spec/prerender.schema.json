@@ -1,0 +1,61 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:nbo:spec:v1:prerender",
+  "title": "Prerender",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version"],
+  "definitions": {
+    "seed": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file"],
+      "properties": {
+        "file": { "type": "string" }
+      }
+    },
+    "bypassToken": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["env"],
+      "properties": {
+        "env": { "type": "string" }
+      }
+    },
+    "prerenderConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "match", "function", "revalidateSec", "expireSec", "onMiss", "bypassToken"],
+      "patternProperties": { "^x-[a-z0-9]+(-[a-z0-9]+)+$": {} },
+      "properties": {
+        "id": { "type": "string" },
+        "match": { "type": "string" },
+        "function": { "type": "string" },
+        "revalidateSec": { "type": "integer", "minimum": 0 },
+        "expireSec": { "type": "integer", "minimum": 0 },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "seeds": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/definitions/seed" }
+        },
+        "onMiss": { "type": "string", "enum": ["blocking", "shell", "notFound"] },
+        "allowQuery": { "type": "array", "items": { "type": "string" } },
+        "varyHeaders": { "type": "array", "items": { "type": "string" } },
+        "bypassToken": { "$ref": "#/definitions/bypassToken" },
+        "x-nbo-ppr": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["postponedState"],
+          "properties": {
+            "postponedState": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    }
+  },
+  "properties": {
+    "$schema": { "type": "string" },
+    "version": { "type": "integer", "const": 1 },
+    "prerenders": { "type": "array", "items": { "$ref": "#/definitions/prerenderConfig" } }
+  }
+}

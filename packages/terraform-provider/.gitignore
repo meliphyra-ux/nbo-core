@@ -1,0 +1,5 @@
+# go build output
+/terraform-provider
+/terraform-provider.exe
+/terraform-provider-nbo
+/terraform-provider-nbo.exe

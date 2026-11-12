@@ -1,0 +1,48 @@
+# NBO on one machine: `docker compose up -d`. See docs/production.md.
+name: nbo
+
+services:
+  nbo:
+    build: .
+    image: nbo:local
+    platform: linux/amd64
+    # Root, because NBO talks to the Docker socket below, and the socket's
+    # group differs from host to host. Whoever controls this container controls
+    # the host's Docker, which is as good as root there anyway.
+    user: root
+    restart: unless-stopped
+    environment:
+      NBO_MODE: production
+      NBO_CONTROL_PLANE_ADDR: 0.0.0.0:8081
+      NBO_CONTROL_PLANE_DB: /data/nbo.db
+      NBO_SECRET_KEY_FILE: /keys/nbo-secret.key
+      NBO_TERRAFORM_PROVIDER_DIR: /app/terraform-provider/dist
+      # Annotations for the edge's and relays' load balancers, for clouds that
+      # need them. Set it in .env. See docs/production.md.
+      NBO_LB_ANNOTATIONS: ${NBO_LB_ANNOTATIONS:-}
+      # Which edge the next install or reinstall builds: unset is the Node
+      # edge, `rust` opts in to the Rust edge. Set it in .env.
+      NBO_EDGE_IMPL: ${NBO_EDGE_IMPL:-}
+      # Builds are large: keep them on the data volume, not the container layer.
+      TEMP: /data/tmp
+      TMP: /data/tmp
+      TMPDIR: /data/tmp
+    volumes:
+      - nbo-data:/data
+      - nbo-keys:/keys
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      # Loopback only, never all interfaces: NBO has no login. Reach it from
+      # another computer through an SSH tunnel. NBO_PORT moves the host port.
+      - "127.0.0.1:${NBO_PORT:-8081}:8081"
+    healthcheck:
+      # /healthz answers 200 to any caller, with no token.
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8081/healthz').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+
+volumes:
+  nbo-data:
+  nbo-keys:

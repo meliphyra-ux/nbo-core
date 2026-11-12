@@ -1,0 +1,8 @@
+{
+  "method": "HEAD",
+  "path": "/assets/old.js",
+  "expectStatus": 200,
+  "expectHeaders": {
+    "x-nbo-carried-from": "{{carriedFrom}}"
+  }
+}

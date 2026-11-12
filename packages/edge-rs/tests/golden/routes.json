@@ -1,0 +1,402 @@
+[
+ {
+  "path": "/",
+  "route": "/"
+ },
+ {
+  "path": "",
+  "route": null
+ },
+ {
+  "path": "users",
+  "route": null
+ },
+ {
+  "path": "//evil.example/x",
+  "route": null
+ },
+ {
+  "path": "/users/123",
+  "route": "/users/[id]"
+ },
+ {
+  "path": "/users/123/posts/456",
+  "route": "/users/[id]/posts/[id]"
+ },
+ {
+  "path": "/a?b=1",
+  "route": "/a"
+ },
+ {
+  "path": "/a#hash",
+  "route": "/a"
+ },
+ {
+  "path": "/a?b=1#h",
+  "route": "/a"
+ },
+ {
+  "path": "?only",
+  "route": null
+ },
+ {
+  "path": "#only",
+  "route": null
+ },
+ {
+  "path": "/a//b",
+  "route": "/a//b"
+ },
+ {
+  "path": "/a/",
+  "route": "/a/"
+ },
+ {
+  "path": "/0",
+  "route": "/[id]"
+ },
+ {
+  "path": "/007",
+  "route": "/[id]"
+ },
+ {
+  "path": "/v1",
+  "route": "/v1"
+ },
+ {
+  "path": "/12abc",
+  "route": "/12abc"
+ },
+ {
+  "path": "/u/550e8400-e29b-41d4-a716-446655440000",
+  "route": "/u/[id]"
+ },
+ {
+  "path": "/u/550E8400-E29B-41D4-A716-446655440000",
+  "route": "/u/[id]"
+ },
+ {
+  "path": "/u/550e8400-e29b-41d4-a716-44665544000",
+  "route": "/u/[id]"
+ },
+ {
+  "path": "/u/550e8400e29b41d4a716446655440000",
+  "route": "/u/[id]"
+ },
+ {
+  "path": "/h/0123456789abcdef",
+  "route": "/h/[id]"
+ },
+ {
+  "path": "/h/0123456789abcde",
+  "route": "/h/0123456789abcde"
+ },
+ {
+  "path": "/h/0123456789ABCDEF0123",
+  "route": "/h/[id]"
+ },
+ {
+  "path": "/h/0123456789abcdeg",
+  "route": "/h/0123456789abcdeg"
+ },
+ {
+  "path": "/t/abcdefghijklmnopqrs1",
+  "route": "/t/[id]"
+ },
+ {
+  "path": "/t/abcdefghijklmnopqr1",
+  "route": "/t/abcdefghijklmnopqr1"
+ },
+ {
+  "path": "/t/abcdefghijklmnopqrst",
+  "route": "/t/abcdefghijklmnopqrst"
+ },
+ {
+  "path": "/t/how-to-deploy-on-kubernetes",
+  "route": "/t/how-to-deploy-on-kubernetes"
+ },
+ {
+  "path": "/t/how-to-deploy-on-kubernetes-2",
+  "route": "/t/[id]"
+ },
+ {
+  "path": "/t/aaaaaaaaaaaaaaaaaaaaaaaaa9",
+  "route": "/t/[id]"
+ },
+ {
+  "path": "/t/a_b.c~d%2Be=f-g+h1234567",
+  "route": "/t/[id]"
+ },
+ {
+  "path": "/t/a_b.c~d%2Be=f-g+h!1234567",
+  "route": "/t/a_b.c~d%2Be=f-g+h!1234567"
+ },
+ {
+  "path": "/t/9aaaaaaaaaaaaaaaaaaa",
+  "route": "/t/[id]"
+ },
+ {
+  "path": "/t/aaaaaaaaaaaaaaaaaaa9",
+  "route": "/t/[id]"
+ },
+ {
+  "path": "/t/AAAAAAAAAAAAAAAAAAAA0",
+  "route": "/t/[id]"
+ },
+ {
+  "path": "/t/eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.abc123",
+  "route": "/t/[id]"
+ },
+ {
+  "path": "/me@example.com",
+  "route": "/[id]"
+ },
+ {
+  "path": "/u/me@example.com/settings",
+  "route": "/u/[id]/settings"
+ },
+ {
+  "path": "/@",
+  "route": "/[id]"
+ },
+ {
+  "path": "/a@",
+  "route": "/[id]"
+ },
+ {
+  "path": "/%40",
+  "route": "/%40"
+ },
+ {
+  "path": "/café",
+  "route": "/café"
+ },
+ {
+  "path": "/١٢٣",
+  "route": "/١٢٣"
+ },
+ {
+  "path": "/١٢٣٤٥٦٧٨٩٠١٢٣٤٥٦٧٨٩٠a",
+  "route": "/١٢٣٤٥٦٧٨٩٠١٢٣٤٥٦٧٨٩٠a"
+ },
+ {
+  "path": "/１２３",
+  "route": "/１２３"
+ },
+ {
+  "path": "/éééééééééééééééééééé1",
+  "route": "/éééééééééééééééééééé1"
+ },
+ {
+  "path": "/a b/123",
+  "route": "/a b/[id]"
+ },
+ {
+  "path": "/a\nb",
+  "route": "/a\nb"
+ },
+ {
+  "path": "/aaaaaaaaaaaaaaaaaaaa\n1",
+  "route": "/aaaaaaaaaaaaaaaaaaaa\n1"
+ },
+ {
+  "path": "/products/shoes/42?color=red",
+  "route": "/products/shoes/[id]"
+ },
+ {
+  "path": "/blog/2024/10/my-post",
+  "route": "/blog/[id]/[id]/my-post"
+ },
+ {
+  "path": "/blog/2024/10/my-post-2024-10-30-final-v2",
+  "route": "/blog/[id]/[id]/[id]"
+ },
+ {
+  "path": "/_next/static/chunks/main-0123456789abcdef.js",
+  "route": "/_next/static/chunks/[id]"
+ },
+ {
+  "path": "/api/v1/items/18446744073709551616",
+  "route": "/api/v1/items/[id]"
+ },
+ {
+  "path": "/a/b/c/d/e/f/g/h",
+  "route": "/a/b/c/d/e/f/g/h"
+ },
+ {
+  "path": "/x?y=/1#/2",
+  "route": "/x"
+ },
+ {
+  "path": "/.",
+  "route": "/."
+ },
+ {
+  "path": "/..",
+  "route": "/.."
+ },
+ {
+  "path": "/-",
+  "route": "/-"
+ },
+ {
+  "path": "/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "route": "/[id]"
+ },
+ {
+  "path": "/1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111",
+  "route": "/[id]"
+ },
+ {
+  "path": "/deadbeefdeadbeef",
+  "route": "/[id]"
+ },
+ {
+  "path": "/DeadBeefDeadBeef",
+  "route": "/[id]"
+ },
+ {
+  "path": "/deadbeefdeadbee",
+  "route": "/deadbeefdeadbee"
+ },
+ {
+  "path": "/ABCDEF0123456789",
+  "route": "/[id]"
+ },
+ {
+  "path": "/slug-with-words-only-ok?q=0123456789abcdef0",
+  "route": "/slug-with-words-only-ok"
+ },
+ {
+  "path": "/abc/slug-with-words-only-ok/v2#0123456789abcdef0",
+  "route": "/abc/slug-with-words-only-ok/v2"
+ },
+ {
+  "path": "/tokenaaaaaaaaaaaaaa12/slug-with-words-only-ok/été",
+  "route": "/[id]/slug-with-words-only-ok/été"
+ },
+ {
+  "path": "/%20/0123456789abcdef0",
+  "route": "/%20/[id]"
+ },
+ {
+  "path": "/users/x@y#550e8400-e29b-41d4-a716-446655440000",
+  "route": "/users/[id]"
+ },
+ {
+  "path": "/tokenaaaaaaaaaaaaaa12/été#%20",
+  "route": "/[id]/été"
+ },
+ {
+  "path": "/été/x@y/123?q=x@y#x@y",
+  "route": "/été/[id]/[id]"
+ },
+ {
+  "path": "/v2",
+  "route": "/v2"
+ },
+ {
+  "path": "/550e8400-e29b-41d4-a716-446655440000//x@y/été",
+  "route": "/[id]//[id]/été"
+ },
+ {
+  "path": "/0123456789abcdef0/%20/users",
+  "route": "/[id]/%20/users"
+ },
+ {
+  "path": "/x@y/abc/tokenaaaaaaaaaaaaaa12?q=été",
+  "route": "/[id]/abc/[id]"
+ },
+ {
+  "path": "/users/slug-with-words-only-ok#slug-with-words-only-ok",
+  "route": "/users/slug-with-words-only-ok"
+ },
+ {
+  "path": "//%20",
+  "route": null
+ },
+ {
+  "path": "/0123456789abcdef0/123/été/users",
+  "route": "/[id]/[id]/été/users"
+ },
+ {
+  "path": "/abc?q=0123456789abcdef0",
+  "route": "/abc"
+ },
+ {
+  "path": "/x@y/abc",
+  "route": "/[id]/abc"
+ },
+ {
+  "path": "/x@y#%20",
+  "route": "/[id]"
+ },
+ {
+  "path": "/0123456789abcdef0/550e8400-e29b-41d4-a716-446655440000",
+  "route": "/[id]/[id]"
+ },
+ {
+  "path": "//abc",
+  "route": null
+ },
+ {
+  "path": "/v2/",
+  "route": "/v2/"
+ },
+ {
+  "path": "/slug-with-words-only-ok/123/slug-with-words-only-ok",
+  "route": "/slug-with-words-only-ok/[id]/slug-with-words-only-ok"
+ },
+ {
+  "path": "///slug-with-words-only-ok/",
+  "route": null
+ },
+ {
+  "path": "/users/v2?q=#v2",
+  "route": "/users/v2"
+ },
+ {
+  "path": "/x@y/v2/%20/slug-with-words-only-ok?q=abc",
+  "route": "/[id]/v2/%20/slug-with-words-only-ok"
+ },
+ {
+  "path": "/123/v2",
+  "route": "/[id]/v2"
+ },
+ {
+  "path": "/été/abc/x@y/été",
+  "route": "/été/abc/[id]/été"
+ },
+ {
+  "path": "/%20/%20/abc",
+  "route": "/%20/%20/abc"
+ },
+ {
+  "path": "/v2/slug-with-words-only-ok/550e8400-e29b-41d4-a716-446655440000/550e8400-e29b-41d4-a716-446655440000#abc",
+  "route": "/v2/slug-with-words-only-ok/[id]/[id]"
+ },
+ {
+  "path": "/abc/tokenaaaaaaaaaaaaaa12//été?q=",
+  "route": "/abc/[id]//été"
+ },
+ {
+  "path": "/v2/été/été#été",
+  "route": "/v2/été/été"
+ },
+ {
+  "path": "/users/",
+  "route": "/users/"
+ },
+ {
+  "path": "/tokenaaaaaaaaaaaaaa12",
+  "route": "/[id]"
+ },
+ {
+  "path": "/%20/été",
+  "route": "/%20/été"
+ },
+ {
+  "path": "/x@y",
+  "route": "/[id]"
+ }
+]

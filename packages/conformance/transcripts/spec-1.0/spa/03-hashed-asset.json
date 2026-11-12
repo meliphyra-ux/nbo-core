@@ -1,0 +1,8 @@
+{
+  "method": "GET",
+  "path": "/assets/app-abc123.js",
+  "expectStatus": 200,
+  "expectHeaders": {
+    "cache-control": "max-age=31536000, immutable"
+  }
+}

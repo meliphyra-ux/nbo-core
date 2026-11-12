@@ -1,0 +1,10 @@
+{
+  "ref": "refs/heads/feature/x",
+  "before": "0000000000000000000000000000000000000000",
+  "after": "1111111111111111111111111111111111111111",
+  "created": true,
+  "deleted": false,
+  "forced": false,
+  "repository": { "id": 1000, "full_name": "acme/web" },
+  "pusher": { "name": "octocat" }
+}

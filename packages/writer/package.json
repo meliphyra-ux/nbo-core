@@ -1,0 +1,26 @@
+{
+  "name": "@nbo/writer",
+  "version": "0.0.0",
+  "license": "FSL-1.1-ALv2",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@nbo/digest": "workspace:*",
+    "@nbo/spec": "workspace:*",
+    "mime-types": "^3.0.1"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/mime-types": "^3.0.1",
+    "@types/node": "^24.0.0",
+    "typescript": "7.0.2",
+    "vitest": "^3.2.4"
+  }
+}

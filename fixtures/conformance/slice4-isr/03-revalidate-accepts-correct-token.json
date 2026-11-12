@@ -1,0 +1,1 @@
+{ "method": "POST", "path": "/_nbo/revalidate", "headers": { "Authorization": "Bearer nbo-slice4-isr-test-token" }, "body": "{\"paths\":[\"/isr-demo\"]}", "expectStatus": 204, "expectBodySha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" }

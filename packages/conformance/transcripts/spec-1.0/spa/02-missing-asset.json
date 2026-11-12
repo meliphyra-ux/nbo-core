@@ -1,0 +1,5 @@
+{
+  "method": "GET",
+  "path": "/assets/missing.js",
+  "expectStatus": 404
+}

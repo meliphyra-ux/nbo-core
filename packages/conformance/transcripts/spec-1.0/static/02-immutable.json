@@ -1,0 +1,10 @@
+{
+  "method": "GET",
+  "path": "/assets/app-3f9a1c.js",
+  "expectStatus": 200,
+  "expectHeaders": {
+    "cache-control": "max-age=31536000, immutable",
+    "x-nbo-deployment-id": "{{contentId}}"
+  },
+  "expectBodyContains": "immutable asset"
+}

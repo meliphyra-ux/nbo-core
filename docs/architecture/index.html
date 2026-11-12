@@ -1,0 +1,2244 @@
+<title>NBO Architecture</title>
+<meta name="claude:viewport-fit-sides" content="cover" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=JetBrains+Mono:wght@400;600&display=swap"
+/>
+<style>
+  /* Layout: a reference manual open on the desk, section dividers as tabs
+   along the top (and down the fore edge on wide screens), acetate leaves
+   laid on a cream board. */
+  :root {
+    --board: #efe8d8;
+    --leaf: #faf7ef;
+    --shade: #e6dfcd;
+    --rule: #cfc6b2;
+    --ink: #1c1b18;
+    --ink-soft: #5f5a4f;
+    --chrome: #f2c230;
+    --oxide: #e8682a;
+    --grass: #3f8a35;
+    --teal: #16928c;
+    --ultra: #2448b0;
+    --violet: #6a3fb5;
+    --sienna: #8c4a2b;
+    --vermilion: #c8361b;
+    --code-bg: #e9e2d0;
+    --display: "Archivo", system-ui, sans-serif;
+    --prose: "EB Garamond", Georgia, serif;
+    --mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+    --tab-ink: #1c1b18;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --board: #1d1b17;
+      --leaf: #26231e;
+      --shade: #2f2b25;
+      --rule: #3d3830;
+      --ink: #efe8d8;
+      --ink-soft: #b3aa98;
+      --code-bg: #1a1814;
+      --ultra: #5b7fe0;
+      --violet: #9a78e0;
+      --grass: #6fbf5f;
+      --vermilion: #ef6a4c;
+      --oxide: #f08a4b;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --board: #1d1b17;
+    --leaf: #26231e;
+    --shade: #2f2b25;
+    --rule: #3d3830;
+    --ink: #efe8d8;
+    --ink-soft: #b3aa98;
+    --code-bg: #1a1814;
+    --ultra: #5b7fe0;
+    --violet: #9a78e0;
+    --grass: #6fbf5f;
+    --vermilion: #ef6a4c;
+    --oxide: #f08a4b;
+    color-scheme: dark;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    background: var(--board);
+    color: var(--ink);
+    font: 15px/1.5 var(--display);
+    font-variation-settings: "wdth" 100;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0 0 auto;
+    height: env(safe-area-inset-top, 0px);
+    z-index: 10;
+    background: var(--board);
+  }
+  a {
+    color: inherit;
+  }
+  :focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--chrome) 80%, transparent);
+    outline-offset: 2px;
+  }
+  .wrap {
+    max-width: 1120px;
+    margin: 0 auto;
+  }
+
+  /* Voices */
+  .display {
+    font-family: var(--display);
+    font-weight: 800;
+    font-variation-settings: "wdth" 85;
+    text-transform: uppercase;
+    line-height: 0.95;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+    margin: 0;
+  }
+  .label {
+    font-family: var(--display);
+    font-weight: 600;
+    font-variation-settings: "wdth" 75;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 11px;
+    color: var(--ink-soft);
+  }
+  .section-h {
+    font-family: var(--display);
+    font-weight: 700;
+    font-variation-settings: "wdth" 80;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 17px;
+    margin: 0;
+    text-wrap: balance;
+  }
+  .prose,
+  p {
+    font-family: var(--prose);
+    font-size: 18px;
+    line-height: 1.5;
+    max-width: 68ch;
+    margin: 0;
+  }
+  p + p {
+    margin-top: 0.6em;
+  }
+  code,
+  .mono {
+    font-family: var(--mono);
+    font-size: 0.8em;
+  }
+  p code {
+    background: var(--code-bg);
+    padding: 0.05em 0.3em;
+    border-radius: 3px;
+  }
+  pre {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.55;
+    background: var(--code-bg);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    margin: 0;
+    white-space: pre;
+  }
+
+  /* Masthead */
+  header.mast {
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 5;
+    background: var(--board);
+    border-bottom: 1px solid var(--ink);
+  }
+  .mast-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding-block: 14px;
+  }
+  .word {
+    font-family: var(--display);
+    font-weight: 800;
+    font-variation-settings: "wdth" 85;
+    font-size: 26px;
+    letter-spacing: 0.32em;
+  }
+  .mast-tag {
+    line-height: 1.2;
+  }
+  .mast-row .spacer {
+    flex: 1;
+  }
+  .theme-btn {
+    font: 600 11px var(--display);
+    font-variation-settings: "wdth" 75;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: var(--leaf);
+    color: var(--ink);
+    border: 1px solid color-mix(in srgb, var(--ink) 70%, transparent);
+    border-radius: 4px;
+    padding: 8px 12px;
+    cursor: pointer;
+  }
+  nav.tabs {
+    display: flex;
+    gap: 2px;
+    overflow-x: auto;
+    padding-bottom: 0;
+    scrollbar-width: thin;
+  }
+  nav.tabs a {
+    position: relative;
+    flex: none;
+    text-decoration: none;
+    padding: 10px 12px 12px;
+    font: 600 12px var(--display);
+    font-variation-settings: "wdth" 75;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  nav.tabs a::after {
+    content: "";
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    bottom: -1px;
+    height: 4px;
+    border-radius: 3px 3px 0 0;
+    background: transparent;
+  }
+  nav.tabs a:hover {
+    color: var(--ink);
+  }
+  nav.tabs a:hover::after {
+    background: color-mix(in srgb, var(--c) 40%, transparent);
+  }
+  nav.tabs a[aria-current="page"] {
+    color: var(--ink);
+  }
+  nav.tabs a[aria-current="page"]::after {
+    background: var(--c);
+  }
+
+  /* Fore edge */
+  .fore {
+    position: fixed;
+    right: 0;
+    top: 130px;
+    display: none;
+    flex-direction: column;
+    gap: 3px;
+    z-index: 4;
+  }
+  @media (min-width: 1300px) {
+    .fore {
+      display: flex;
+    }
+  }
+  .fore a {
+    width: 26px;
+    height: 104px;
+    border-radius: 6px 0 0 6px;
+    border: 1px solid color-mix(in srgb, var(--ink) 25%, transparent);
+    border-right: 0;
+    background: var(--c);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: width 0.2s ease-out;
+  }
+  .fore a span {
+    writing-mode: vertical-rl;
+    font: 600 9.5px var(--display);
+    font-variation-settings: "wdth" 75;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--tab-ink);
+  }
+  .fore a:hover {
+    width: 34px;
+  }
+  .fore a[aria-current="page"] {
+    width: 40px;
+  }
+
+  /* Chapters */
+  main {
+    padding-block: 40px 96px;
+  }
+  section.chapter {
+    display: none;
+  }
+  section.chapter.on {
+    display: block;
+    animation: rise 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  @keyframes rise {
+    from {
+      transform: translateY(6px);
+      opacity: 0.6;
+    }
+    to {
+      transform: none;
+      opacity: 1;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    section.chapter.on {
+      animation: none;
+    }
+  }
+  .ch-head {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 6px 20px;
+    align-items: end;
+    margin-bottom: 28px;
+  }
+  .ch-no {
+    grid-row: span 2;
+    width: 64px;
+    height: 64px;
+    border-radius: 3px;
+    background: var(--c);
+    color: var(--tab-ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font: 800 26px var(--display);
+    font-variation-settings: "wdth" 85;
+  }
+  .ch-head h1 {
+    font-size: clamp(34px, 6vw, 60px);
+  }
+  .ch-head .prose {
+    grid-column: 2;
+    color: var(--ink-soft);
+  }
+  @media (max-width: 560px) {
+    .ch-head {
+      grid-template-columns: 1fr;
+    }
+    .ch-no {
+      grid-row: auto;
+      width: 48px;
+      height: 48px;
+      font-size: 20px;
+    }
+    .ch-head .prose {
+      grid-column: 1;
+    }
+  }
+
+  .leaf {
+    background: var(--leaf);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 20px;
+    min-width: 0;
+  }
+  .stack {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .grid2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+  }
+  h2.section-h {
+    margin-top: 44px;
+    margin-bottom: 14px;
+  }
+  .errata {
+    border: 1px solid color-mix(in srgb, var(--vermilion) 45%, transparent);
+    background: color-mix(in srgb, var(--vermilion) 8%, var(--leaf));
+    border-radius: 6px;
+    padding: 12px 16px;
+  }
+  .errata .label {
+    color: var(--vermilion);
+  }
+  .note {
+    border: 1px solid var(--rule);
+    background: color-mix(in srgb, var(--chrome) 12%, var(--leaf));
+    border-radius: 6px;
+    padding: 12px 16px;
+  }
+
+  /* Pipeline (chapter 1) */
+  .pipe {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 8px;
+  }
+  .stage {
+    text-align: left;
+    cursor: pointer;
+    border: 1px solid var(--rule);
+    background: var(--leaf);
+    color: var(--ink);
+    border-radius: 6px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font: inherit;
+    position: relative;
+  }
+  .stage .k {
+    font: 600 10px var(--display);
+    font-variation-settings: "wdth" 75;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .stage b {
+    font-weight: 700;
+    font-variation-settings: "wdth" 88;
+    font-size: 15px;
+  }
+  .stage .sw {
+    height: 5px;
+    border-radius: 2px;
+    background: var(--c);
+  }
+  .stage[aria-pressed="true"] {
+    border-color: var(--ink);
+    background: color-mix(in srgb, var(--chrome) 14%, var(--leaf));
+  }
+  .stage-detail {
+    margin-top: 12px;
+  }
+  .where {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .chip {
+    font: 600 10.5px var(--display);
+    font-variation-settings: "wdth" 75;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border: 1px solid color-mix(in srgb, var(--ink) 55%, transparent);
+    border-radius: 3px;
+    padding: 2px 6px;
+  }
+  .chip.dot::before {
+    content: "";
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--c);
+    margin-right: 5px;
+    vertical-align: 0;
+  }
+
+  /* Storage map (chapter 2) */
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+  .filter {
+    font: 600 11px var(--display);
+    font-variation-settings: "wdth" 78;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border: 1px solid color-mix(in srgb, var(--ink) 70%, transparent);
+    background: var(--leaf);
+    color: var(--ink);
+    border-radius: 4px;
+    padding: 7px 11px;
+    cursor: pointer;
+  }
+  .filter[aria-pressed="true"] {
+    background: var(--ink);
+    color: var(--board);
+  }
+  .stores {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 16px;
+  }
+  .store {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .store-top {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .block {
+    width: 44px;
+    height: 44px;
+    flex: none;
+    border-radius: 3px;
+    background: var(--c);
+  }
+  .store h3 {
+    margin: 0;
+    font-weight: 700;
+    font-variation-settings: "wdth" 88;
+    font-size: 17px;
+  }
+  .store .path {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-soft);
+    word-break: break-all;
+  }
+  .store .life {
+    font-family: var(--prose);
+    font-size: 16px;
+  }
+  details.tables summary {
+    cursor: pointer;
+    font: 600 11px var(--display);
+    font-variation-settings: "wdth" 75;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 13px;
+  }
+  th,
+  td {
+    text-align: left;
+    vertical-align: top;
+    padding: 7px 10px;
+    border-top: 1px solid var(--rule);
+  }
+  th {
+    font: 600 10.5px var(--display);
+    font-variation-settings: "wdth" 75;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    border-top: 0;
+  }
+  td code {
+    word-break: break-word;
+  }
+  .tablewrap {
+    overflow-x: auto;
+  }
+
+  /* Stepper (chapters 3–6) */
+  .stepper {
+    display: grid;
+    grid-template-columns: minmax(220px, 300px) minmax(0, 1fr);
+    gap: 20px;
+    align-items: start;
+  }
+  @media (max-width: 760px) {
+    .stepper {
+      grid-template-columns: 1fr;
+    }
+  }
+  .steps {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .steps button {
+    width: 100%;
+    text-align: left;
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+    border: 1px solid transparent;
+    background: none;
+    color: var(--ink);
+    border-radius: 5px;
+    padding: 8px 10px;
+    cursor: pointer;
+    font: inherit;
+  }
+  .steps button .n {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-soft);
+    width: 20px;
+    flex: none;
+  }
+  .steps button:hover {
+    background: color-mix(in srgb, var(--ink) 5%, transparent);
+  }
+  .steps button[aria-current="step"] {
+    background: var(--leaf);
+    border-color: var(--ink);
+  }
+  .step-body {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .step-body h3 {
+    margin: 0;
+    font-size: 22px;
+  }
+  .files {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .file {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    background: var(--code-bg);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 2px 6px;
+  }
+  .stepnav {
+    display: flex;
+    gap: 8px;
+  }
+
+  /* Manifest renderer (chapter 4) */
+  .form-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: end;
+  }
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+  .field input {
+    font: 14px var(--mono);
+    background: var(--leaf);
+    color: var(--ink);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 8px 10px;
+    width: 240px;
+    max-width: 100%;
+  }
+  .field input:focus {
+    border-color: var(--ink);
+    outline: 3px solid color-mix(in srgb, var(--chrome) 60%, transparent);
+    outline-offset: 0;
+  }
+  .kv {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    gap: 6px 16px;
+    font-size: 13px;
+  }
+  .kv dt {
+    color: var(--ink-soft);
+    font: 600 10.5px var(--display);
+    font-variation-settings: "wdth" 75;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding-top: 2px;
+  }
+  .kv dd {
+    margin: 0;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    word-break: break-all;
+  }
+
+  /* Traffic switch (chapter 6) */
+  .bar {
+    display: flex;
+    height: 32px;
+    border-radius: 999px;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--ink) 30%, transparent);
+  }
+  .bar div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font: 600 12px var(--mono);
+    transition: flex-basis 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+    min-width: 0;
+    overflow: hidden;
+  }
+  .bar .k8s {
+    background: var(--ultra);
+  }
+  .bar .cr {
+    background: var(--violet);
+  }
+  .ticks {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .tick {
+    font: 600 11px var(--display);
+    font-variation-settings: "wdth" 75;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 6px 10px;
+    border-radius: 4px;
+    border: 1px solid var(--rule);
+    background: var(--leaf);
+    color: var(--ink-soft);
+  }
+  .tick.done {
+    background: var(--ink);
+    color: var(--board);
+    border-color: var(--ink);
+  }
+  .tick.now {
+    border-color: var(--ink);
+    color: var(--ink);
+    background: color-mix(in srgb, var(--chrome) 25%, var(--leaf));
+  }
+  .btn {
+    font: 600 12px var(--display);
+    font-variation-settings: "wdth" 78;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border: 1px solid color-mix(in srgb, var(--ink) 70%, transparent);
+    border-radius: 4px;
+    padding: 9px 14px;
+    cursor: pointer;
+    background: var(--leaf);
+    color: var(--ink);
+  }
+  .btn.primary {
+    background: var(--chrome);
+    color: #1c1b18;
+  }
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .legend {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+
+  /* Routing phases (chapter 7) */
+  .phases {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+  }
+  .phase {
+    flex: 1 1 140px;
+    border: 1px solid var(--rule);
+    background: var(--leaf);
+    color: var(--ink);
+    padding: 12px;
+    cursor: pointer;
+    text-align: left;
+    font: inherit;
+    margin: -1px 0 0 -1px;
+  }
+  .phase .n {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-soft);
+  }
+  .phase b {
+    display: block;
+    font-weight: 700;
+    font-variation-settings: "wdth" 85;
+  }
+  .phase[aria-pressed="true"] {
+    background: color-mix(in srgb, var(--chrome) 18%, var(--leaf));
+    border-color: var(--ink);
+    position: relative;
+    z-index: 1;
+  }
+
+  /* API (chapter 9) */
+  .search {
+    font: 14px var(--display);
+    background: var(--leaf);
+    color: var(--ink);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 9px 12px;
+    width: 100%;
+    max-width: 420px;
+  }
+  .method {
+    font: 600 11px var(--mono);
+    padding: 1px 6px;
+    border-radius: 3px;
+    border: 1px solid currentColor;
+  }
+  .m-GET {
+    color: var(--grass);
+  }
+  .m-POST {
+    color: var(--oxide);
+  }
+  .m-PUT {
+    color: var(--ultra);
+  }
+  .m-PATCH {
+    color: var(--violet);
+  }
+  .m-DELETE {
+    color: var(--vermilion);
+  }
+  .empty {
+    font-family: var(--prose);
+    font-size: 17px;
+    color: var(--ink-soft);
+    padding: 12px 0;
+  }
+  tr.grp th {
+    text-align: left;
+    font: 600 12px var(--mono);
+    letter-spacing: 0.04em;
+    padding-top: 16px;
+    color: var(--ink-soft);
+  }
+  footer {
+    border-top: 1px solid var(--rule);
+    padding-block: 20px 40px;
+    color: var(--ink-soft);
+  }
+</style>
+
+<header class="mast">
+  <div class="wrap">
+    <div class="mast-row">
+      <span class="word">NBO</span>
+      <span class="label mast-tag">Architecture<br />and API reference</span>
+      <span class="spacer"></span>
+      <button class="theme-btn" id="theme-btn" type="button" aria-label="Switch theme">Theme: system</button>
+    </div>
+    <nav class="tabs" id="tabs" aria-label="Chapters"></nav>
+  </div>
+</header>
+<div class="fore" id="fore" aria-hidden="true"></div>
+
+<main class="wrap" id="main">
+  <!-- ================================================================== -->
+  <section class="chapter" id="overview" data-title="Overview" data-c="var(--chrome)">
+    <div class="ch-head">
+      <span class="ch-no">1</span>
+      <h1 class="display">How NBO works</h1>
+      <p class="prose">
+        NBO deploys the same build to Kubernetes and Cloud Run, and moves a project between them as a weighted traffic shift. It is built like a compiler: frameworks write a
+        neutral build output, and cloud adapters deploy from it without knowing the framework.
+      </p>
+    </div>
+
+    <div class="leaf stack">
+      <span class="label">The pipeline: select a stage</span>
+      <div class="pipe" id="pipe"></div>
+      <div class="stage-detail" id="stage-detail" aria-live="polite"></div>
+    </div>
+
+    <h2 class="section-h">The pieces, by package</h2>
+    <div class="leaf tablewrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Package</th>
+            <th>Role</th>
+            <th>Runs where</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>@nbo/controlplane</code></td>
+            <td>The brain: projects, git polling, build queue and runner, setup, transfers, cron scheduler, edge sync. SQLite. Its HTTP API is the only way in.</td>
+            <td>Your server, <code>127.0.0.1:8081</code></td>
+          </tr>
+          <tr>
+            <td><code>nbo-server</code> (in <code>@nbo/controlplane</code>, <code>src/server-cli.ts</code>)</td>
+            <td>The operator's command: connect clouds, install the edge, set domains, make API tokens, set up projects. It calls the API over loopback with no token.</td>
+            <td>On the server, <code>docker compose exec nbo nbo-server ...</code></td>
+          </tr>
+          <tr>
+            <td><code>@nbo/edge</code></td>
+            <td>The public entry point: maps a host to weighted backends and proxies requests.</td>
+            <td>Your machine, data <code>:9443</code>, admin <code>127.0.0.1:9444</code></td>
+          </tr>
+          <tr>
+            <td><code>packages/edge-rs</code></td>
+            <td>The same edge in Rust (one binary, <code>nbo-edge</code>; ADR 0005). Opt-in until its gate holds; the Node edge is the default.</td>
+            <td>Same ports as <code>@nbo/edge</code></td>
+          </tr>
+          <tr>
+            <td><code>@nbo/next-adapter</code></td>
+            <td>Next.js <code>onBuildComplete</code> hook that writes <code>.nbo/</code>.</td>
+            <td>Inside <code>next build</code></td>
+          </tr>
+          <tr>
+            <td><code>@nbo/producer-static</code></td>
+            <td>Turns a static folder (or SPA) into <code>.nbo/</code>.</td>
+            <td>Build step</td>
+          </tr>
+          <tr>
+            <td><code>@nbo/writer</code>, <code>@nbo/digest</code></td>
+            <td>Write the output tree; sha256 over canonical JSON (RFC 8785) for content ids.</td>
+            <td>Build step</td>
+          </tr>
+          <tr>
+            <td><code>@nbo/validate</code>, <code>@nbo/planner</code></td>
+            <td>Schema + invariant checks; match the app's requirements against an adapter's capabilities.</td>
+            <td>Before every deploy</td>
+          </tr>
+          <tr>
+            <td><code>@nbo/deploy</code></td>
+            <td>The deploy algorithm and the two targets (Kubernetes, Cloud Run).</td>
+            <td>Inside the control-plane / CLI</td>
+          </tr>
+          <tr>
+            <td><code>@nbo/adapter-k8s</code>, <code>@nbo/adapter-cloudrun</code></td>
+            <td>Images, manifests, <code>kubectl</code> / <code>gcloud</code> calls.</td>
+            <td>Your machine (shells out)</td>
+          </tr>
+          <tr>
+            <td><code>@nbo/cli</code></td>
+            <td><code>nbo validate | plan | serve | deploy | conformance</code>. Also the server baked into every app image.</td>
+            <td>Your shell, and every app container</td>
+          </tr>
+          <tr>
+            <td><code>@nbo/serve</code>, <code>@nbo/router</code></td>
+            <td>The runtime that serves <code>.nbo/</code>: six-phase RE2 router, static files, prerender/ISR.</td>
+            <td>Every app container</td>
+          </tr>
+          <tr>
+            <td><code>@nbo/funcproxy</code>, <code>@nbo/nodehost</code></td>
+            <td>Call functions (local spawn, in-cluster URL, or Cloud Run with an ID token); Node ↔ Fetch bridge.</td>
+            <td>App containers, function containers</td>
+          </tr>
+          <tr>
+            <td><code>@nbo/isrcache</code></td>
+            <td>ISR cache service (in-memory, byte-limited, <code>/healthz</code>); <code>nbo isrcache</code> starts it.</td>
+            <td>One per app (<code>&lt;app&gt;-isr</code>) on Kubernetes and Cloud Run, when the build has ISR pages</td>
+          </tr>
+          <tr>
+            <td><code>@nbo/conformance</code>, <code>@nbo/loadtest</code></td>
+            <td>HTTP-transcript conformance runner; load generator for the zero-failure switch test.</td>
+            <td>Your shell / CI</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="prose">
+      NBO has no web interface of its own. You drive it with <code>nbo-server</code>, the HTTP API and the Terraform provider. A hosted dashboard, made separately by NBO's licensor, can sit on top of the same API; nothing in NBO needs it.
+    </p>
+  </section>
+
+  <!-- ================================================================== -->
+  <section class="chapter" id="storage" data-title="Where things live" data-c="var(--teal)">
+    <div class="ch-head">
+      <span class="ch-no">2</span>
+      <h1 class="display">Where things live</h1>
+      <p class="prose">Every piece of state NBO keeps, where it sits on disk or in a cloud, and how long it lasts. Filter by location.</p>
+    </div>
+    <div class="filters" id="store-filters" role="group" aria-label="Filter by location"></div>
+    <div class="stores" id="stores"></div>
+    <p class="empty" id="stores-empty" hidden>Nothing stored there.</p>
+  </section>
+
+  <!-- ================================================================== -->
+  <section class="chapter" id="deploy" data-title="Life of a deploy" data-c="var(--oxide)">
+    <div class="ch-head">
+      <span class="ch-no">3</span>
+      <h1 class="display">Life of a deploy</h1>
+      <p class="prose">From <code>POST /projects/setup</code> (sent by <code>nbo-server project setup</code>, Terraform's <code>nbo_project</code> or your own script) to traffic arriving on the new build. Step through it; each step names the code that does it.</p>
+    </div>
+    <div class="stepper" data-steps="deploy"></div>
+  </section>
+
+  <!-- ================================================================== -->
+  <section class="chapter" id="kubernetes" data-title="Kubernetes adapter" data-c="var(--ultra)">
+    <div class="ch-head">
+      <span class="ch-no">4</span>
+      <h1 class="display">Kubernetes adapter</h1>
+      <p class="prose">
+        How a <code>.nbo/</code> build becomes Deployments, Services and an Ingress on the local kind cluster <code>nbo-local</code>, step by step, with the exact commands NBO
+        runs. In production NBO can hold several connected clusters (<code>kube_connections</code>); every Kubernetes cloud records its cluster's id and is deployed with that
+        cluster's own credentials, never another cluster's. Clouds (the <code>environments</code> rows) are named <code>k8s</code> (local, or the upgraded <code>default</code> cluster) or
+        <code>k8s-&lt;cluster&gt;</code>.
+      </p>
+    </div>
+    <div class="stepper" data-steps="k8s"></div>
+
+    <h2 class="section-h">Render the objects for your project</h2>
+    <div class="leaf stack">
+      <p>
+        The resource name is <code>p&lt;first 8 chars of the project id&gt;-&lt;cloud name&gt;</code> (<code>deployAppName</code> in
+        <code>packages/controlplane/src/deploy.ts</code>). Type a project id and see exactly what gets applied.
+      </p>
+      <div class="form-row">
+        <div class="field"><label class="label" for="k-proj">Project id</label><input id="k-proj" value="proj_0896d60bc168e19d" spellcheck="false" autocomplete="off" /></div>
+        <div class="field"><label class="label" for="k-env">Cloud name</label><input id="k-env" value="k8s" spellcheck="false" autocomplete="off" /></div>
+        <div class="field"><label class="label" for="k-fn">Function (optional)</label><input id="k-fn" value="ssr" spellcheck="false" autocomplete="off" /></div>
+      </div>
+      <dl class="kv" id="k-names"></dl>
+      <pre id="k-yaml" aria-label="Rendered manifests"></pre>
+    </div>
+  </section>
+
+  <!-- ================================================================== -->
+  <section class="chapter" id="cloudrun" data-title="Cloud Run adapter" data-c="var(--violet)">
+    <div class="ch-head">
+      <span class="ch-no">5</span>
+      <h1 class="display">Cloud Run adapter</h1>
+      <p class="prose">The same build on Google Cloud Run: what automatic setup creates in your existing gcloud project (dev mode; in production the Google connection does it once), and what each deploy pushes and runs.</p>
+    </div>
+    <div class="stepper" data-steps="cloudrun"></div>
+  </section>
+
+  <!-- ================================================================== -->
+  <section class="chapter" id="traffic" data-title="Edge & traffic" data-c="var(--grass)">
+    <div class="ch-head">
+      <span class="ch-no">6</span>
+      <h1 class="display">Edge &amp; traffic</h1>
+      <p class="prose">
+        Every project has one address on the NBO edge, <code>http://&lt;name&gt;.127.0.0.1.sslip.io:9443</code>. The edge picks a backend by weight and keeps each visitor on it (a random-id cookie, <code>nbo_v</code>, plus weighted rendezvous hashing in
+        <code>packages/edge/src/sticky.ts</code>), so switching clouds is a dial, not a cutover, and a visitor never flips between <em>clouds</em> mid-session. (It does not cover a rolling update inside one cloud, where old and new copies briefly answer together.)
+      </p>
+    </div>
+
+    <div class="grid2">
+      <div class="leaf stack">
+        <span class="label">Run a transfer</span>
+        <p>
+          A transfer sets up the other cloud, deploys the current production commit there, then shifts traffic in four steps. Each step is pushed to the edge before the next; you
+          can stop at any step.
+        </p>
+        <div class="bar" aria-hidden="true">
+          <div class="k8s" id="bar-k">100%</div>
+          <div class="cr" id="bar-c">0%</div>
+        </div>
+        <p class="legend" id="bar-legend">Kubernetes 100% · Cloud Run 0%</p>
+        <div class="ticks" id="ticks"></div>
+        <div class="stepnav">
+          <button class="btn primary" id="xfer-go" type="button">Start transfer</button>
+          <button class="btn" id="xfer-stop" type="button" disabled>Stop</button>
+          <button class="btn" id="xfer-reset" type="button">Reset</button>
+        </div>
+        <p class="legend" id="xfer-log" aria-live="polite">Idle. The real step delay is 20 s (transferConfig.stepDelayMs); this demo uses 1.2 s.</p>
+      </div>
+      <div class="leaf stack">
+        <span class="label">Who owns the split</span>
+        <p>
+          The control-plane is the source of truth. Each cloud row stores <code>traffic_weight</code>; <code>edge-sync.ts</code> turns them into the edge's target for the
+          project's host.
+        </p>
+        <p>
+          The edge keeps targets only in memory. When it restarts it forgets them, so the poll loop (every 45 s) runs <code>reconcile()</code>: for each project it reads
+          <code>GET /targets/&lt;host&gt;</code> and re-sends the split if it differs. <code>GET /projects/{id}/traffic</code> answers <code>edgeInSync: false</code> for a split the edge doesn't have.
+        </p>
+        <p>
+          <strong>In production</strong> the edge runs in a cluster instead (namespace <code>nbo-edge</code>, 2 pods behind a LoadBalancer, kept apart from <code>nbo-system</code> where NBO's own token lives). It reads its route table from the ConfigMap <code>nbo-edge-routes</code>, which the control-plane rebuilds from the database every 45 s and on every change; <code>PUT /targets</code> is off there. Certificates are Let's Encrypt (HTTP-01 through the edge, renewal under 30 days left, backoff 1 h / 6 h / 24 h) issued by the control-plane and stored as Secrets in <code>nbo-edge</code>; sites keep serving if NBO is down. Other clusters are reached through a relay (<code>nbo-relay</code>, pinned private CA, token), enabled per cluster with <code>nbo-server cluster relay &lt;id&gt; --confirm-billing</code>; transfers to a cluster without it are refused. Speed Insights is drained through the API server's pod proxy (token in the URL, may appear in audit logs; NBO's NetworkPolicy opens port 9444, which is not on the LoadBalancer). The cluster edge sets <code>X-Forwarded-Proto</code> from the listener and <code>X-Forwarded-For</code> from the connection's address, and ignores what the visitor sent in those, <code>X-Real-IP</code> and <code>Forwarded</code>. See the manual's <em>Domains and the public edge</em> chapter (<code>docs/manual/domains.md</code>).
+        </p>
+        <p>
+          <strong>Two edges, one contract.</strong> The edge exists twice: the Node edge (<code>packages/edge</code>) and the Rust edge (<code>packages/edge-rs</code>, ADR 0005), with the same modes, ports, environment variables, admin API, route table and headers. A black-box suite (<code>packages/edge/src/__tests__/blackbox</code>) runs against whichever binary <code>NBO_EDGE_BIN</code> names, and both pass it. The Node edge stays the default until the last gate step holds: the Rust edge serving a site over HTTPS on a real cluster. To try it locally, run <code>cargo build --release</code> in <code>packages/edge-rs</code> and start <code>target/release/nbo-edge</code> instead of <code>node packages/edge/dist/main.js</code>. In production, set <code>NBO_EDGE_IMPL=rust</code> and run <code>nbo-server edge reinstall</code>; unset it and reinstall to go back. Two differences are on purpose: a compressed answer passes through as the backend sent it (only a page that gets the Speed Insights tag is decompressed), and the HTTPS listener offers HTTP/2 by ALPN, which <code>NBO_EDGE_HTTP2=off</code> turns off. Measurements are in ADR 0005.
+        </p>
+        <p>
+          The first successful deploy of a project registers its host at 100% automatically. A backend on <code>*.sslip.io</code> (the local cluster's self-signed TLS) is sent with
+          <code>insecureSkipVerify: true</code>; Cloud Run's <code>*.run.app</code> keeps normal verification.
+        </p>
+        <pre>
+PUT http://127.0.0.1:9444/targets/storefront.127.0.0.1.sslip.io
+{ "backends": [
+  { "url": "https://p0896d60b-k8s.127.0.0.1.sslip.io", "weight": 90, "insecureSkipVerify": true },
+  { "url": "https://p0896d60b-cloudrun-…-lz.a.run.app", "weight": 10, "insecureSkipVerify": false }
+] }</pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================================== -->
+  <section class="chapter" id="runtime" data-title="Routing & runtime" data-c="var(--sienna)">
+    <div class="ch-head">
+      <span class="ch-no">7</span>
+      <h1 class="display">Routing &amp; runtime</h1>
+      <p class="prose">Inside every app container, <code>nbo serve</code> answers requests from the <code>.nbo/</code> tree: one router, the same on every cloud.</p>
+    </div>
+    <div class="leaf stack">
+      <span class="label">routes.json: six phases, in order. Select one.</span>
+      <div class="phases" id="phases"></div>
+      <div id="phase-detail" aria-live="polite"></div>
+    </div>
+    <h2 class="section-h">What a request goes through</h2>
+    <div class="grid2">
+      <div class="leaf stack">
+        <span class="label">Edge → app container</span>
+        <p>
+          The edge picks a backend, proxies the request and forwards it. The app server (<code>nbo serve</code>, inside every app image) sets
+          <code>x-nbo-deployment-id</code> (the content id of the build that answered) on every response, because during a rollout only the answering pod knows its build. The edge
+          removes no <code>x-nbo-*</code> header from responses, so visitors can see the content id; Speed Insights reads it to credit the right build.
+        </p>
+        <p>The app image's entry point is <code>node dist/main.js serve /app/app --port 8080</code>: the CLI's own server over the baked-in <code>.nbo/</code>.</p>
+      </div>
+      <div class="leaf stack">
+        <span class="label">App → functions</span>
+        <p>
+          Functions (SSR, middleware) run in their own containers. The app reads their URLs from <code>/functions.json</code>, written into the image at build time:
+          <code>http://&lt;app&gt;-fn-&lt;name&gt;:8080</code> on Kubernetes (a name over 63 characters becomes its first 54, a dash and 8 hex of its sha256,
+          <code>kubeName</code>), the private <code>*.run.app</code> URL on Cloud Run. On Cloud Run, <code>@nbo/funcproxy</code> fetches an ID token from the metadata server for
+          each call.
+        </p>
+      </div>
+      <div class="leaf stack">
+        <span class="label">ISR and prerender</span>
+        <p>
+          Prerendered routes are served from cache and re-rendered after <code>expiration</code>. The cache is <code>@nbo/isrcache</code>, an in-memory service with a byte limit
+          (96 MiB, least recently used first). A deploy runs one per app (<code>&lt;app&gt;-isr</code>: a Deployment and Service with a NetworkPolicy on Kubernetes, a private
+          one-instance service on Cloud Run) and puts its address in the app's function URLs under <code>__isrcache</code>; <code>nbo serve</code> by hand uses
+          <code>NBO_ISRCACHE_URL</code>. Cache keys start with the content id, so a new build never reads an old build's pages, and a cache read that fails or takes over 2 seconds is a miss.
+          Each environment has one sealed revalidation secret (<code>stage_revalidate_tokens</code>), delivered at runtime as <code>NBO_PRERENDER_BYPASS</code> like any secret variable.
+          <code>POST /_nbo/revalidate</code> through the edge goes to every backend of the host (204, the shared status, or 502 with a per-backend list); the control-plane routes
+          <code>.../stages/{id}/revalidate</code> (also <code>nbo-server revalidate</code>) and <code>.../revalidate-secret[/rotate]</code> do the same from the API.
+        </p>
+      </div>
+      <div class="leaf stack">
+        <span class="label">Crons</span>
+        <p>
+          The control-plane's scheduler ticks, finds due crons (stored per cloud), and calls the cloud's live URL with
+          <code>Authorization: Bearer &lt;HMAC-SHA256&gt;</code>, <code>X-Nbo-Cron</code> and <code>X-Nbo-Cron-Timestamp</code>. Crons run only in one cloud
+          (<code>cronsEnabled</code>); a finished transfer moves the flag.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================================== -->
+  <section class="chapter" id="operate" data-title="Operating" data-c="var(--chrome)">
+    <div class="ch-head">
+      <span class="ch-no">8</span>
+      <h1 class="display">Operating NBO</h1>
+      <p class="prose">The ports NBO listens on. Running, configuring and launching NBO are described in the manual (<code>docs/manual/README.md</code>) and <code>docs/production.md</code>.</p>
+    </div>
+    <h2 class="section-h">Ports</h2>
+    <div class="leaf tablewrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Port</th>
+            <th>Service</th>
+            <th>Exposure</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>8081</code></td>
+            <td>Control-plane API</td>
+            <td>Loopback only. Without a token, refuses non-loopback <code>Host</code> and cross-site <code>Origin</code>; with an API token, see the Terraform tab's API tokens section. <code>GET /healthz</code> needs nothing.</td>
+          </tr>
+          <tr>
+            <td><code>9443</code></td>
+            <td>Edge data plane (plain HTTP)</td>
+            <td>All interfaces</td>
+          </tr>
+          <tr>
+            <td><code>9444</code></td>
+            <td>Edge admin API</td>
+            <td>Loopback only</td>
+          </tr>
+          <tr>
+            <td><code>8080</code>, <code>8443</code>, <code>9444</code></td>
+            <td>Edge in a cluster: HTTP, HTTPS (HTTP/1.1, and HTTP/2 on the Rust edge), admin (only <code>/insights/drain</code>)</td>
+            <td>80 and 443 on the LoadBalancer; 9444 inside the cluster only</td>
+          </tr>
+          <tr>
+            <td><code>80/443</code></td>
+            <td>ingress-nginx inside kind</td>
+            <td>Mapped to the host for <code>*.127.0.0.1.sslip.io</code></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <h2 class="section-h">Where the how-to lives</h2>
+    <div class="leaf">
+      <p class="prose">
+        Starting NBO on your own machine, with the commands you run day to day, is the manual's <strong>Running NBO for development</strong> chapter
+        (<code>docs/manual/running.md</code>). Every environment variable, with its default, where it is read and whether it is safe to change on a running
+        server, is the <strong>Server settings</strong> chapter (<code>docs/manual/server-settings.md</code>); <code>pnpm docs:check</code> fails when the
+        code reads a variable that chapter does not list. Launching NBO for real sites (Docker Compose, a cluster, domains, backups, upgrades) is
+        <code>docs/production.md</code>, the <strong>Launch NBO on a server</strong> guide. Setup on a server goes through <code>nbo-server</code>; <code>nbo-server help</code> lists its commands.
+      </p>
+    </div>
+  </section>
+
+  <!-- ================================================================== -->
+  <section class="chapter" id="api" data-title="API" data-c="var(--oxide)">
+    <div class="ch-head">
+      <span class="ch-no">9</span>
+      <h1 class="display">API reference</h1>
+      <p class="prose">
+        Every route of the control-plane (<code>127.0.0.1:8081</code>) and the edge admin API (<code>127.0.0.1:9444</code>). Bodies are JSON; errors are
+        <code>{"error": "…"}</code> with the real message. <strong>Access</strong> is read from <code>packages/controlplane/src/access.ts</code>:
+        <code>token</code> takes an API token from anywhere, or no token from this computer; <code>local</code> takes no token, from this computer only (a token gets
+        <code>403</code> <code>API tokens can't use this route</code>): every <code>/system/*</code> route and the two legacy routes; <code>webhook</code> is checked by its signature;
+        <code>public</code> needs nothing. <code>pnpm docs:check</code> fails when a route has no row here, a row has no route, or the access differs.
+      </p>
+    </div>
+    <div class="leaf stack">
+      <label class="label" for="api-q">Filter routes</label>
+      <input class="search" id="api-q" type="search" placeholder="e.g. traffic, DELETE, transfer" autocomplete="off" />
+      <div class="tablewrap">
+        <table id="api-table">
+          <thead>
+            <tr>
+              <th>Method</th>
+              <th>Path</th>
+              <th>Access</th>
+              <th>What it does</th>
+              <th>Service</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="empty" id="api-empty" hidden>No route matches that filter.</p>
+    </div>
+    <div class="leaf stack" id="git">
+      <span class="label">Git: credentials, two ways to see a push</span>
+      <p>
+        <strong>Credentials.</strong> Each project reaches its repository with a credential of its own (<code>src/git-credentials.ts</code>, table
+        <code>project_git_credentials</code>): <code>public</code> (none), <code>token</code> (an <code>https://</code> address; the token goes to git steps only through
+        <code>GIT_CONFIG_COUNT</code>, <code>GIT_CONFIG_KEY_n</code> and <code>GIT_CONFIG_VALUE_n</code>, never in the URL, and is added to the build's redaction list) or
+        <code>deploy-key</code> (an <code>ssh://</code> or <code>git@host:path</code> address; NBO makes the key pair and keeps the private half sealed). Tokens and private keys are
+        sealed with the secret key; <code>GET /projects/{id}/git</code> shows only <code>{ kind, publicKey?, username? }</code>. A credential stays with its host: moving a
+        project's repository to another host needs the credential sent again with the move. Authenticated git steps never follow redirects.
+      </p>
+      <p>
+        <strong>The deploy key flow.</strong> <code>POST /projects/setup</code> with <code>credential: { kind: "deploy-key" }</code> makes the key pair before the project's first
+        look at the repository. That first <code>git ls-remote</code> fails until the public half is added to the repository as a read-only deploy key, so the project waits in
+        <code>needs-setup</code>. <code>nbo-server project setup</code> prints the public half and the retry command; after the key is added,
+        <code>nbo-server project retry &lt;id&gt;</code> (<code>POST /projects/{id}/setup/retry</code>) carries on. Terraform's <code>nbo_project</code> exposes the public half as the
+        computed <code>deploy_key_public</code>. <code>POST /projects/{id}/git/deploy-key</code> replaces the pair.
+      </p>
+      <p>
+        <strong>Host keys.</strong> github.com, gitlab.com and bitbucket.org are checked against the host keys they publish, which NBO carries in
+        <code>src/git-host-keys.ts</code> and writes to <code>known_hosts.published</code> next to the database. Any other host is remembered in <code>known_hosts</code>
+        the first time NBO reaches it and refused if its key changes.
+      </p>
+      <p>
+        <strong>Seeing a push.</strong> The poller asks every project's repository for its branch heads every 45 seconds (<code>git ls-remote</code>), which needs nothing
+        else. The per-project webhook (<code>POST /projects/{id}/webhooks/github</code>, HMAC-checked) is faster when GitHub can reach NBO. Both go through
+        <code>advanceHead</code>, a compare-and-set on the head, so a commit builds once. A database from an older NBO that had its own GitHub App keeps building those
+        projects with a token NBO asks GitHub for (<code>src/github-legacy.ts</code>) until they get a credential of their own.
+      </p>
+    </div>
+    <div class="leaf stack" id="access">
+      <span class="label">Access: tokens and the loopback rule</span>
+      <p>
+        NBO has no sign-in, members or roles. <code>guardRequest</code> (<code>packages/controlplane/src/api-tokens.ts</code>) runs once per request in
+        <code>createMux</code> (<code>handlers.ts</code>), after <code>router.match</code> found the route, and reads that route's row in <code>access.ts</code>:
+      </p>
+      <ul>
+        <li><code>public</code> (only <code>GET /healthz</code>): allowed from any Host, no token.</li>
+        <li><code>webhook</code>: no token is read; the handler checks the signature. From loopback or the public address.</li>
+        <li><code>token</code>: a valid <code>Bearer nbo_…</code> token from anywhere, or no header from loopback.</li>
+        <li><code>local</code>: no header, from loopback only. A valid token gets <code>403</code>.</li>
+      </ul>
+      <p>
+        An <code>Authorization</code> header that isn't a valid token is <code>401</code>, even on loopback. No header from a non-loopback <code>Host</code>, or with a
+        cross-site <code>Origin</code>, is refused. A test fails when <code>router.routes()</code> and the table differ, a missing row is refused, and the level comes from
+        the pattern the router matched, so odd spellings of a path can't pick a weaker rule. A token made by an older NBO for a Viewer or Developer (while it had sign-in)
+        is refused with <code>401</code>, because NBO can no longer limit it.
+      </p>
+      <p>
+        <strong>Public address.</strong> <code>NBO_PUBLIC_URL</code> (https, no path, or the control-plane won't start) is the one non-loopback Host accepted, and only
+        for requests with a token, the webhooks and <code>/healthz</code>; anything else for that host is <code>403</code>. <code>compose.public.yaml</code> adds
+        <code>caddy:2.8.4</code> on 80 and 443, proxying to <code>nbo:8081</code>; NBO's own port stays on <code>127.0.0.1</code>. The no-token rule trusts the
+        <code>Host</code> header, so it is safe only while that port binds to loopback.
+      </p>
+    </div>
+  </section>
+
+  <!-- ================================================================== -->
+  <section class="chapter" id="terraform" data-title="Terraform" data-c="var(--teal)">
+    <div class="ch-head">
+      <span class="ch-no">10</span>
+      <h1 class="display">Terraform &amp; API tokens</h1>
+      <p class="prose">
+        Projects, variables, builds, domains and traffic can live in <code>.tf</code> files. The provider (<code>packages/terraform-provider</code>, Go, ADR 0004) is a separate
+        program Terraform starts; it only talks to the control-plane's HTTP API, with an API token. Its unit tests run against a fake NBO. The acceptance test <code>TestAccProject</code> passed with Terraform 1.17.1
+        against a local dev-mode NBO (2026-11-08): project, variable, deployment, data source, import and destroy. Domains and traffic haven't run through Terraform yet. The manual's <em>Terraform</em> chapter (<code>docs/manual/terraform.md</code>) is the user guide.
+      </p>
+    </div>
+
+    <div class="grid2">
+      <div class="leaf stack">
+        <span class="label">How a request gets in</span>
+        <pre>
+terraform apply
+  └─ terraform-provider-nbo  (Go, plugin protocol 6)
+       └─ HTTP  Authorization: Bearer nbo_…
+            └─ ssh -L 8081:127.0.0.1:8081  (the only supported path)
+                 └─ control-plane: guardRequest → router</pre>
+        <p>
+          <code>guardRequest</code> (<code>packages/controlplane/src/api-tokens.ts</code>) runs before the handler. The API has no path prefix: an endpoint is
+          <code>http://localhost:8081</code>, not an older NBO's <code>/api/controlplane</code>.
+        </p>
+        <ol>
+          <li>An <code>Authorization</code> header that isn't a valid <code>Bearer nbo_…</code> token: <strong>401</strong>, even on loopback.</li>
+          <li>A valid token on a <code>local</code> route (every <code>/system/*</code> route and the legacy <code>/environments/{id}/deployments</code> and <code>/projects/{id}/environments</code>): <strong>403</strong>.</li>
+          <li>A valid token anywhere else: allowed, whatever the Host and Origin. Responses leave out the webhook signing secret.</li>
+          <li>No header: the loopback rule (non-loopback <code>Host</code> or cross-site <code>Origin</code> refused).</li>
+        </ol>
+        <p>Webhook routes skip 1 to 3: their signature is the authentication. <code>GET /healthz</code> needs nothing.</p>
+      </div>
+      <div class="leaf stack">
+        <span class="label">Tokens</span>
+        <p>
+          Made on the server with <code>nbo-server token create &lt;name&gt;</code> (<code>POST /system/api-tokens</code>, local only). A token is <code>nbo_</code> plus 32 random bytes in hex, shown once. Table <code>api_tokens</code> keeps <code>id</code> (<code>tok_…</code>),
+          a unique <code>name</code>, an 8-character <code>prefix</code>, the sha256 <code>hash</code>, <code>created_at</code> and <code>last_used_at</code> (written at most once a
+          minute). Deleting the row revokes it at once.
+        </p>
+        <p>
+          <strong>A token equals root on the server.</strong> It can't read stored cloud credentials, but it can run builds, and builds run as the NBO user; NBO has no isolated builds. A token has no expiry. The <code>user_id</code> and <code>role</code> columns are
+          what an older NBO with sign-in wrote; NBO writes <code>''</code> and <code>admin</code>.
+        </p>
+        <p>
+          <strong>Don't expose the API through a VPN or reverse proxy.</strong> Requests without a token are trusted by their Host header, which a proxy can rewrite.
+          The one exception is NBO's own public address: see the Access part of the API chapter and <code>compose.public.yaml</code>.
+        </p>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="leaf stack">
+        <span class="label">Resources</span>
+        <div class="tablewrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Routes</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>nbo_project</code></td>
+                <td><code>POST /projects/setup</code> with <code>skipFirstBuild</code>, <code>/summary</code>, <code>PATCH /settings</code>, <code>GET</code> and <code>PUT /git</code>, <code>DELETE</code></td>
+                <td>Never builds. Build settings update in place. <code>git_credential</code> (public, token or deploy-key); a deploy key's public half is the computed <code>deploy_key_public</code>. <code>delete_cloud_resources</code> adds <code>?resources=true</code>.</td>
+              </tr>
+              <tr>
+                <td><code>nbo_env_var</code></td>
+                <td>Project or workspace variable routes</td>
+                <td>Secret values aren't read back; they sit in plain text in the state file.</td>
+              </tr>
+              <tr>
+                <td><code>nbo_deployment</code></td>
+                <td><code>POST /projects/{id}/builds</code>, <code>GET /builds/{id}</code></td>
+                <td>Waits for deploy or failure (<code>timeout</code>, default 20 min). Builds again only when <code>triggers</code> change. Delete makes no call.</td>
+              </tr>
+              <tr>
+                <td><code>nbo_domain</code></td>
+                <td><code>/projects/{id}/domains</code></td>
+                <td><code>records</code>: the edge record, or Cloud Run's <code>mappingRecords</code>. Doesn't wait for Active.</td>
+              </tr>
+              <tr>
+                <td><code>nbo_traffic</code></td>
+                <td><code>PUT /projects/{id}/traffic</code></td>
+                <td>Weights by cloud name, must add to 100. Delete only leaves state.</td>
+              </tr>
+              <tr>
+                <td><code>data.nbo_project</code></td>
+                <td><code>GET /projects/summary</code></td>
+                <td>Finds a project by name.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Cloud connections, the edge, clusters and domain settings are <code>nbo-server</code> commands on the server: they need admin credentials and billing confirmations, and tokens can't reach <code>/system/*</code>.</p>
+      </div>
+      <div class="leaf stack">
+        <span class="label">Guide</span>
+        <ol>
+          <li>Make a token on the server with <code>nbo-server token create terraform</code> and keep it out of git.</li>
+          <li>Open the tunnel: <code>ssh -N -L 8081:127.0.0.1:8081 you@server</code>.</li>
+          <li>Build the provider (Go 1.25.8+) and put it in Terraform's local plugins folder:</li>
+        </ol>
+        <pre>
+cd packages/terraform-provider
+go build -o terraform-provider-nbo_v0.1.0
+mkdir -p ~/.terraform.d/plugins/registry.terraform.io/nbo/nbo/0.1.0/linux_amd64
+mv terraform-provider-nbo_v0.1.0 \
+  ~/.terraform.d/plugins/registry.terraform.io/nbo/nbo/0.1.0/linux_amd64/</pre>
+        <ol start="4">
+          <li>Write <code>main.tf</code> (full example with Cloudflare DNS in the manual's Terraform chapter):</li>
+        </ol>
+        <pre>
+terraform {
+  required_providers {
+    nbo = { source = "nbo/nbo", version = "0.1.0" }
+  }
+}
+provider "nbo" {
+  endpoint = "http://localhost:8081"
+}
+resource "nbo_project" "shop" {
+  name      = "shop"
+  repo_url  = "https://gitlab.com/you/shop.git"
+  branch    = "main"
+  framework = "nextjs"
+  # NBO doesn't install dependencies itself
+  build_command = "npm install &amp;&amp; npm run build"
+  clouds    = [{ target = "kubernetes" }]
+}
+resource "nbo_env_var" "api_url" {
+  project_id = nbo_project.shop.id
+  name       = "API_URL"
+  value      = "https://api.example.com"
+}
+resource "nbo_deployment" "shop" {
+  project_id = nbo_project.shop.id
+  triggers   = { api_url = nbo_env_var.api_url.value }
+}</pre>
+        <ol start="5">
+          <li>Run it with the token from the environment:</li>
+        </ol>
+        <pre>
+export NBO_TOKEN=nbo_…
+terraform init
+terraform plan
+terraform apply</pre>
+        <ol start="6">
+          <li>Check the project and its build with <code>GET /projects/summary</code> (or <code>nbo-server api GET /projects/summary</code> on the server). Change a value in <code>triggers</code> to build again.</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="leaf stack">
+      <span class="label">Known limits</span>
+      <ul>
+        <li>A commit landing right after setup can build once before the variables exist; <code>nbo_deployment</code> then builds again with them.</li>
+        <li>Changes to secret variables made through the API aren't noticed by Terraform.</li>
+        <li>A Cloud Run mapped domain has no records until ownership is verified, so its DNS record needs a second run.</li>
+        <li>Not on the Terraform Registry; the plugins-folder install, <code>nbo_domain</code>, <code>nbo_traffic</code> and the Cloudflare example are untried. The acceptance test serves the provider in-process.</li>
+        <li>The provider copies the API's shapes by hand: a changed route needs a matching change in <code>packages/terraform-provider/internal/client</code>, and <code>PUT /projects/{id}/git</code> replaces the whole config.</li>
+      </ul>
+    </div>
+  </section>
+</main>
+<footer>
+  <div class="wrap">
+    <p class="prose" style="font-size: 16px">
+      Written from the code (<code>packages/*</code>, <code>docs/nbo-spec.md</code>); updated 2026-11-12. File: <code>docs/architecture/index.html</code>.
+    </p>
+  </div>
+</footer>
+
+<script>
+  (() => {
+    const $ = (s, el = document) => el.querySelector(s);
+    const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+
+    /* ---------- theme ---------- */
+    const modes = ["system", "light", "dark"];
+    let mode = "system";
+    try {
+      mode = localStorage.getItem("nbo-docs-theme") || "system";
+    } catch {}
+    const applyTheme = () => {
+      if (mode === "system") document.documentElement.removeAttribute("data-theme");
+      else document.documentElement.setAttribute("data-theme", mode);
+      $("#theme-btn").textContent = "Theme: " + mode;
+    };
+    $("#theme-btn").addEventListener("click", () => {
+      mode = modes[(modes.indexOf(mode) + 1) % modes.length];
+      try {
+        localStorage.setItem("nbo-docs-theme", mode);
+      } catch {}
+      applyTheme();
+    });
+    applyTheme();
+
+    /* ---------- chapters (hash routing) ---------- */
+    const chapters = [...document.querySelectorAll("section.chapter")];
+    const tabs = $("#tabs"),
+      fore = $("#fore");
+    chapters.forEach((ch) => {
+      for (const host of [tabs, fore]) {
+        const a = document.createElement("a");
+        a.href = "#" + ch.id;
+        a.style.setProperty("--c", ch.dataset.c);
+        if (host === fore) {
+          a.style.background = ch.dataset.c;
+          a.tabIndex = -1;
+          a.innerHTML = "<span>" + esc(ch.dataset.title) + "</span>";
+        } else a.textContent = ch.dataset.title;
+        host.appendChild(a);
+      }
+      ch.querySelector(".ch-no").style.setProperty("--c", ch.dataset.c);
+    });
+    const show = () => {
+      const id = (location.hash || "#overview").slice(1);
+      const target = chapters.find((c) => c.id === id) || chapters[0];
+      chapters.forEach((c) => c.classList.toggle("on", c === target));
+      document.querySelectorAll("#tabs a, #fore a").forEach((a) => {
+        if (a.getAttribute("href") === "#" + target.id) a.setAttribute("aria-current", "page");
+        else a.removeAttribute("aria-current");
+      });
+      document.title = "NBO Architecture";
+    };
+    window.addEventListener("hashchange", () => {
+      show();
+      window.scrollTo(0, 0);
+    });
+    show();
+
+    /* ---------- 1. pipeline ---------- */
+    const stages = [
+      {
+        k: "Source",
+        t: "Your repo",
+        c: "var(--chrome)",
+        where: ["Any git host (https or ssh)"],
+        d: "A public <code>https://</code> address, an <code>https://</code> address with a token, or an ssh address with a deploy key NBO made (never a local path). The control-plane resolves the branch head with <code>git ls-remote</code> and clones that exact commit into a temp directory.",
+      },
+      {
+        k: "Producer",
+        t: "Build → .nbo/",
+        c: "var(--oxide)",
+        where: ["temp clone dir"],
+        d: "The runner runs your build command in the Root Directory with <code>NEXT_ADAPTER_PATH</code> set. Next.js calls <code>@nbo/next-adapter</code>'s <code>onBuildComplete</code>, which writes <code>.nbo/</code>; a static or SPA build is turned into <code>.nbo/</code> by <code>@nbo/producer-static</code>.",
+      },
+      {
+        k: "Contract",
+        t: ".nbo/ output",
+        c: "var(--teal)",
+        where: ["temp clone dir"],
+        d: "<code>manifest.json</code>, <code>routes.json</code>, <code>static.index.json</code>, <code>static/</code>, <code>functions/&lt;name&gt;/</code> (with <code>function.json</code>, <code>bundle.index.json</code> and <code>bundle/</code>), optionally <code>prerender.json</code>. Every JSON file is canonical (RFC 8785). It never names a cloud, account, region or secret. The content id is the sha256 of the canonical manifest minus its <code>build</code> block, so identical output = identical id. Images: the build's <code>images</code> block is an allowlist (an unlisted width or quality is a 400; a missing cache lifetime means not stored).",
+      },
+      {
+        k: "Gate",
+        t: "Validate + plan",
+        c: "var(--sienna)",
+        where: ["in-process"],
+        d: "<code>@nbo/validate</code> checks schemas and invariants (RE2-only patterns, mandatory <code>contentType</code>, no unknown fields, canonical JSON, a spec version this NBO can read, declared <code>x-</code> extension keys; <code>--strict</code> turns warnings into errors). <code>@nbo/planner</code> matches the app's requirements (streaming, ISR, limits) against the target's capabilities and refuses before anything is built.",
+      },
+      {
+        k: "Adapter",
+        t: "Image + deploy",
+        c: "var(--ultra)",
+        where: ["Docker", "kind / Artifact Registry"],
+        d: "Functions first (one image and service each), then the app image (the NBO server + <code>.nbo/</code> + <code>/functions.json</code>). Kubernetes: <code>kind load</code> + <code>kubectl apply</code>. Cloud Run: <code>docker push</code> + <code>gcloud run deploy</code>. Your own variables are delivered at deploy time: plain ones through <code>--env-vars-file</code>, secret ones from Secret Manager through <code>--set-secrets</code>. Skipped entirely if the live content id already matches.",
+      },
+      {
+        k: "Edge",
+        t: "Weighted traffic",
+        c: "var(--grass)",
+        where: ["edge (in memory)"],
+        d: "The project's host on the edge maps to one backend per cloud with a weight. The first deploy registers it at 100%; a transfer shifts it 1 → 10 → 50 → 100.",
+      },
+    ];
+    const pipe = $("#pipe"),
+      detail = $("#stage-detail");
+    stages.forEach((s, i) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "stage";
+      b.style.setProperty("--c", s.c);
+      b.innerHTML = `<span class="sw"></span><span class="k">${i + 1} · ${esc(s.k)}</span><b>${esc(s.t)}</b>`;
+      b.addEventListener("click", () => pick(i));
+      pipe.appendChild(b);
+    });
+    function pick(i) {
+      [...pipe.children].forEach((b, j) => b.setAttribute("aria-pressed", String(i === j)));
+      const s = stages[i];
+      detail.innerHTML = `<p>${s.d}</p><div class="where">${s.where.map((w) => `<span class="chip dot" style="--c:${s.c}">${esc(w)}</span>`).join("")}</div>`;
+    }
+    pick(0);
+
+    /* ---------- 2. storage ---------- */
+    const places = [
+      { id: "all", label: "Everything" },
+      { id: "machine", label: "Your machine" },
+      { id: "cluster", label: "kind cluster" },
+      { id: "gcp", label: "Google Cloud" },
+      { id: "memory", label: "In memory only" },
+    ];
+    const stores = [
+      {
+        at: ["machine"],
+        c: "var(--chrome)",
+        name: "Control-plane database",
+        path: "$NBO_CONTROL_PLANE_DB (SQLite, node:sqlite)",
+        life: "Permanent. The source of truth for projects, builds, splits and transfers. Upgraded in place by migrate.ts.",
+        tables: [
+          ["projects", "id, name (unique), created_at, edge_host, polling_enabled, last_seen_sha, setup_status (provisioning | ready | needs-setup), setup_error"],
+          ["stages", "id, project_id, name, kind (production | preview | development | custom | ephemeral), branch, auto_deploy, host, last_seen_sha; ephemeral ones also expires_at, label, removal_status (\"\" | removing | removal-failed | removed), removal_attempts, next_attempt_at, removal_error. The manual calls these environments; clouds, builds and domains carry a stage_id (old rows: Production)"],
+          ["env_vars", "project_id (empty = workspace), stage (an environment name or *), name, value (secret ones sealed), secret, has_value (0 when NBO keeps names only); unique per scope, stage and name"],
+          ["environments", "One row per cloud (the manual says cloud): id, project_id, name (k8s | cloudrun), target, config (JSON: project/region/arRepo/cronsEnabled), traffic_weight, archived"],
+          ["deployments", "id, environment_id, content_id, status, url, error, created_at; one per cloud per build"],
+          [
+            "builds",
+            "id, project_id, revision (40-hex sha), status (queued | running | skipped | succeeded | failed), deployment_ids (JSON), error, log (≤ 256 KiB), started_at, finished_at",
+          ],
+          ["project_git_config", "project_id, config JSON: repo, productionBranch, framework, buildCommand, outputDir, spa, ignoredBuildStepCommand, rootDirectory"],
+          ["preview_cert_orders", "registered_domain, host, ordered_at: counts ephemeral environments' certificate orders for the 20-per-7-days cap; pruned after 7 days, never deleted with a project. (An earlier NBO's preview_settings, previews and preview_branch_heads may remain in an upgraded database, read once and never changed.)"],
+          ["project_webhook_secrets", "project_id, secret (GitHub webhook HMAC)"],
+          ["project_git_credentials", "project_id, kind (token | deploy-key), the token or private key (sealed), user name, public key. No row means a public repository."],
+          ["transfers", "id, project_id, from_env_id, to_env_id, status, weight, error, created_at"],
+          ["crons", "environment_id, cron_id, config, next_run, last_run, running"],
+          ["environment_cron_secrets", "environment_id, secret (signs cron calls)"],
+          ["domains", "production: id, project_id, host, kind (default | custom), status, behind_cloudflare (0/1: the record is proxied, so the reach check replaces the DNS check), cert_source (letsencrypt | pasted Origin CA; the pasted key is stored sealed), warning (Flexible mode, expiring pasted certificate), …"],
+        ],
+      },
+      {
+        at: ["machine"],
+        c: "var(--oxide)",
+        name: "Build workspace",
+        path: "%TEMP%/nbo-build-XXXXXX (clone + node_modules + .nbo/)",
+        life: "One build. Deleted when the build finishes, success or not. What survives is the build log in the builds table and the images.",
+      },
+      {
+        at: ["machine"],
+        c: "var(--sienna)",
+        name: "Local Docker images",
+        path: "nbo-app-<app>:<content-id prefix>[-c<carry hash>]-b<baked hash>, nbo-fn-<app>-<fn>:<content hash>",
+        life: "Until you prune them. Built on your machine for both clouds; Cloud Run tags are pushed on.",
+      },
+      {
+        at: ["cluster"],
+        c: "var(--ultra)",
+        name: "kind node image store",
+        path: "kind load docker-image … --name nbo-local",
+        life: "Until the cluster is deleted. Pods use imagePullPolicy: IfNotPresent, so no registry is involved.",
+      },
+      {
+        at: ["cluster"],
+        c: "var(--ultra)",
+        name: "Kubernetes objects",
+        path: "Deployment, Service, Ingress <app>; Deployment + Service <app>-fn-<fn>",
+        life: "Until replaced by the next deploy or removed by DELETE /projects/{id}?resources=true. The Deployment carries the annotation nbo.dev/content-id.",
+      },
+      {
+        at: ["cluster"],
+        c: "var(--ultra)",
+        name: "TLS certificates",
+        path: "Secret <app>-tls (cert-manager, selfsigned-issuer)",
+        life: "With the Ingress. Self-signed, which is why the edge talks to sslip.io backends with insecureSkipVerify.",
+      },
+      {
+        at: ["gcp"],
+        c: "var(--violet)",
+        name: "Artifact Registry",
+        path: "<region>-docker.pkg.dev/<project>/nbo/nbo-app-<app>:…",
+        life: "Kept, also after a project is deleted (cheap, and a redeploy reuses layers). Created once per region by the Google connection or automatic setup.",
+      },
+      {
+        at: ["gcp"],
+        c: "var(--violet)",
+        name: "Cloud Run services",
+        path: "<app> (public), <app>-fn-<fn> (private)",
+        life: "Until replaced or deleted. The service label nbo-content-id holds the first 32 hex chars of the content id.",
+      },
+      {
+        at: ["memory"],
+        c: "var(--grass)",
+        name: "Edge registry",
+        path: "@nbo/edge process memory: host → backends + weights",
+        life: "Until the edge restarts. The control-plane's poll loop re-sends any split the edge has lost.",
+      },
+      {
+        at: ["memory"],
+        c: "var(--grass)",
+        name: "Build queue",
+        path: "@nbo/controlplane process memory (one running + one queued per project)",
+        life: "Until restart. On startup, builds/setups/transfers left in progress are marked failed with a clear message.",
+      },
+      { at: ["memory"], c: "var(--teal)", name: "ISR cache", path: "@nbo/isrcache process memory", life: "Until the app's cache service restarts (Cloud Run: also when it sits idle); pages re-render on next request. One cache per app." },
+    ];
+    const filters = $("#store-filters"),
+      storesEl = $("#stores");
+    let place = "all";
+    places.forEach((p) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "filter";
+      b.textContent = p.label;
+      b.addEventListener("click", () => {
+        place = p.id;
+        renderStores();
+      });
+      b.dataset.id = p.id;
+      filters.appendChild(b);
+    });
+    function renderStores() {
+      [...filters.children].forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.id === place)));
+      const list = stores.filter((s) => place === "all" || s.at.includes(place));
+      storesEl.innerHTML = list
+        .map(
+          (s) => `
+      <article class="leaf store">
+        <div class="store-top"><span class="block" style="--c:${s.c}"></span>
+          <div style="min-width:0"><h3>${esc(s.name)}</h3><div class="path">${esc(s.path)}</div></div></div>
+        <div class="life">${esc(s.life)}</div>
+        ${s.tables ? `<details class="tables"><summary>${s.tables.length} tables</summary><div class="tablewrap"><table><tbody>${s.tables.map(([t, c]) => `<tr><td><code>${esc(t)}</code></td><td>${esc(c)}</td></tr>`).join("")}</tbody></table></div></details>` : ""}
+      </article>`,
+        )
+        .join("");
+      $("#stores-empty").hidden = list.length > 0;
+    }
+    renderStores();
+
+    /* ---------- steppers (3, 4, 5) ---------- */
+    const flows = {
+      deploy: [
+        {
+          t: "Describe the project",
+          files: ["controlplane/src/server-cli.ts", "terraform-provider/internal/provider"],
+          d: `<p>You describe the project as the body of <code>POST /projects/setup</code>: name, repository, production branch, framework (Next.js, static, React SPA), optionally a Root Directory, build command and output directory, a git credential, and the clouds it runs on. <code>nbo-server project setup --body-file site.json</code> sends it from the server; Terraform's <code>nbo_project</code> sends it with a token. <code>GET /system/preflight</code> says which clouds this server can use.</p>`,
+        },
+        {
+          t: "Setup",
+          files: ["controlplane/src/setup.ts", "controlplane/src/cloud-setup.ts"],
+          d: `<p><code>POST /projects/setup</code> validates everything (name, URL, paths, GCP formats), creates the project with host <code>&lt;name&gt;.127.0.0.1.sslip.io</code> and its git config, then in the background provisions each cloud: a cloud <code>k8s</code> and/or <code>cloudrun</code>. If anything fails the project's <code>setup_status</code> is <code>needs-setup</code> with the real error; <code>POST /projects/{id}/setup/retry</code> (<code>nbo-server project retry</code>) tries again.</p>`,
+        },
+        {
+          t: "Resolve the commit",
+          files: ["controlplane/src/gitremote.ts"],
+          d: `<p><code>git ls-remote -- &lt;repo&gt; refs/heads/&lt;branch&gt;</code> with prompts disabled (<code>GIT_TERMINAL_PROMPT=0</code>) and a 30 s limit, so a private or wrong URL fails fast. The head becomes <code>last_seen_sha</code>.</p>`,
+        },
+        {
+          t: "Queue",
+          files: ["controlplane/src/build-queue.ts"],
+          d: `<p>One job runs per project at a time; at most one commit build waits. A newer commit replaces the waiting build (recorded as <em>skipped: superseded</em>); promote jobs (a stored build deployed to one cloud) wait in order behind it and are never replaced. Poll ticks, Redeploy, webhooks, setup and transfers all go through this queue.</p>`,
+        },
+        {
+          t: "Build",
+          files: ["controlplane/src/runner.ts", "controlplane/src/run.ts"],
+          d: `<p><code>git clone</code> → <code>git checkout &lt;sha&gt;</code> → optional ignored-build-step (exit 0 skips) → your build command, in the Root Directory, with <code>NEXT_ADAPTER_PATH</code> set. Every command's output streams into the build log. A command that times out has its whole process tree killed.</p><p>Static builds: <code>produce(outputDir → .nbo/)</code>. Next.js: the adapter already wrote <code>.nbo/</code>; if it landed in a subfolder the error names the Root Directory to set.</p>`,
+        },
+        {
+          t: "Deploy to each cloud",
+          files: ["controlplane/src/deploy.ts", "deploy/src/deploy.ts"],
+          d: `<p>For every live cloud with <em>Deploy new commits automatically</em> on, in order: validate → plan → content id → compare with what's live (<code>liveContentID</code>) → if different, deploy functions, then the app. The build succeeds only if every cloud succeeded; each cloud's result is recorded separately.</p>`,
+        },
+        {
+          t: "Edge",
+          files: ["controlplane/src/edge-sync.ts"],
+          d: `<p>After each successful cloud deploy, <code>onDeployed</code> pushes the project's split to the edge. On the project's first success, that cloud gets 100%.</p>`,
+        },
+        {
+          t: "Keep deploying",
+          files: ["controlplane/src/poller.ts"],
+          d: `<p>Every 45 s the poller checks each ready project's branch head and queues new commits (a failed head isn't retried; use Redeploy), then reconciles the edge. The same <code>ls-remote</code> gives the head of every custom and running ephemeral environment's branch. Every 10 minutes an expiry pass (<code>stage-expiry.ts</code>) removes ephemeral environments past their end time, and their certificate orders are capped at 20 per registered domain per 7 days.</p>`,
+        },
+      ],
+      k8s: [
+        {
+          t: "Preflight",
+          files: ["controlplane/src/cloud-setup.ts"],
+          d: `<p><code>kubectl --context kind-nbo-local get nodes -o name</code> (answered within 4 s or treated as unreachable) and <code>docker info</code>. No cloud account involved.</p><pre>./scripts/bootstrap-local-k8s.sh   # creates kind cluster nbo-local
+# pins kindest/node:v1.31.4 (cgroup v1 hosts), installs
+# ingress-nginx, cert-manager and a selfsigned ClusterIssuer</pre>`,
+        },
+        {
+          t: "Idempotency check",
+          files: ["adapter-k8s/src/manifest.ts"],
+          d: `<p>Before building anything:</p><pre>kubectl get deployment &lt;app&gt; -o jsonpath={.metadata.annotations.nbo\\.dev/content-id}</pre><p>If it equals this build's content id, the deploy is a no-op (<code>alreadyLive</code>). NotFound means first deploy.</p>`,
+        },
+        {
+          t: "Function images",
+          files: ["deploy/src/kubernetes-target.ts", "adapter-k8s/src/image.ts", "adapter-k8s/src/templates.ts"],
+          d: `<p>For each function in <code>manifest.functions</code>, up to 4 at once. The tag is the function's content hash and the Deployment carries <code>nbo.dev/fn-config</code> (a hash of the rendered manifests); when the live Deployment runs that image with that config and its rollout is complete and healthy, everything below is skipped (<code>function &lt;fn&gt;: unchanged, skipped</code>). Loads into kind run one at a time.</p><pre>kubectl get deployment &lt;app&gt;-fn-&lt;fn&gt; -o jsonpath=…image, fn-config, generation, observedGeneration, replicas, updated/available…
+docker build -t nbo-fn-&lt;app&gt;-&lt;fn&gt;:&lt;content hash&gt; &lt;ctx&gt;
+kind load docker-image nbo-fn-&lt;app&gt;-&lt;fn&gt;:… --name nbo-local
+kubectl apply -f -          # Deployment + Service &lt;app&gt;-fn-&lt;fn&gt; :8080
+kubectl rollout status deployment/&lt;app&gt;-fn-&lt;fn&gt; --timeout=120s</pre><pre>FROM node:24-slim
+COPY host.mjs /app/host.mjs          # @nbo/funcproxy host
+COPY bundle /app/bundle              # functions/&lt;fn&gt;/bundle (traced, installed)
+COPY function.json env.json /app/
+WORKDIR /app/bundle
+ENTRYPOINT [\"node\", \"/app/host.mjs\", \"/app/bundle\"]</pre><p>The app reaches each function at <code>http://&lt;app&gt;-fn-&lt;fn&gt;:8080</code> (in-cluster DNS).</p>`,
+        },
+        {
+          t: "App image",
+          files: ["deploy/src/kubernetes-target.ts", "adapter-k8s/src/templates.ts"],
+          d: `<p>The NBO CLI is packed with <code>pnpm --filter @nbo/cli deploy --prod --os=linux --cpu=x64 --config.node-linker=hoisted</code>, then:</p><pre>FROM node:24-slim
+COPY cli /app/cli                  # the NBO server (nbo serve)
+WORKDIR /app/cli
+RUN …                              # rebuild re2 for Linux (cached between deploys)
+COPY app /app/app                  # your .nbo/ (per-deploy inputs come last)
+COPY carry /app/carry              # the previous live build's hashed files (immutable, max 256 MiB)
+COPY functions.json /functions.json  # fn name → in-cluster URL
+COPY env.json /env.json
+ENTRYPOINT [\"node\", \"dist/main.js\", \"serve\", \"/app/app\", \"--carry\", \"/app/carry\", \"--port\", \"8080\"]</pre><pre>docker build -t nbo-app-&lt;app&gt;:&lt;content id prefix&gt;[-c&lt;carry hash&gt;]-b&lt;baked hash&gt; &lt;ctx&gt;
+kind load docker-image nbo-app-&lt;app&gt;:… --name nbo-local</pre><p><strong>Carried files.</strong> The runner finds the build live on this cloud and copies its <code>immutable</code> files that the new build lacks into <code>carry/</code>. <code>nbo serve</code> answers one only where the new build would answer 404 (<code>200</code>, immutable cache header, <code>x-nbo-carried-from</code>), so a page loaded from the old build keeps its hashed files while the rollout runs. Carried answers skip the new build's header rules. Nothing to carry, a missing stored output or a carry over 256 MiB logs a line and the deploy goes on.</p><p>Function URLs are baked in because a container's entry point is fixed before any URL exists. Your own environment variables are not baked in: they live in one Secret <code>&lt;app&gt;-env</code>, loaded with <code>envFrom</code>.</p>`,
+        },
+        {
+          t: "Apply",
+          files: ["adapter-k8s/src/manifest.ts"],
+          d: `<p>Deployment (1 replica, annotation <code>nbo.dev/content-id</code>, a <code>tcpSocket</code> readiness probe on 8080 every 2 s and a 5 s <code>preStop</code> sleep, so a new pod gets requests only once it listens and an old one keeps answering while it leaves the Service; a page served by the new pod can still miss a file for a few seconds in that window), Service (80 → 8080) and an nginx Ingress for <code>&lt;app&gt;.127.0.0.1.sslip.io</code> with a cert-manager TLS secret. Then <code>kubectl rollout status deployment/&lt;app&gt; --timeout=120s</code>. See the renderer below for the exact YAML.</p>`,
+        },
+        {
+          t: "URL and edge",
+          files: ["deploy/src/kubernetes-target.ts", "controlplane/src/edge-sync.ts"],
+          d: `<p>The deployment URL is <code>https://&lt;app&gt;.127.0.0.1.sslip.io</code>. sslip.io resolves any <code>*.127.0.0.1.sslip.io</code> to 127.0.0.1, where kind maps ports 80/443 to ingress-nginx. The edge proxies to it with TLS verification off (self-signed).</p>`,
+        },
+        {
+          t: "Teardown",
+          files: ["controlplane/src/cloud-teardown.ts"],
+          d: `<p><code>DELETE /projects/{id}?resources=true</code>:</p><pre>kubectl --context kind-nbo-local delete deployment,service,ingress &lt;app&gt; --ignore-not-found
+kubectl --context kind-nbo-local get deployments -o name
+kubectl --context kind-nbo-local delete deployment,service &lt;app&gt;-fn-&lt;fn&gt; --ignore-not-found</pre><p>Archiving a cloud (<code>POST /environments/{id}/archive</code>) never deletes anything in the cluster.</p>`,
+        },
+      ],
+      cloudrun: [
+        {
+          t: "Preflight",
+          files: ["controlplane/src/cloud-setup.ts"],
+          d: `<p>Read in parallel (cached 15 s):</p><pre>gcloud config get-value account
+gcloud config get-value project
+gcloud config get-value run/region      # falls back to compute/region, then us-central1
+docker info --format {{.ServerVersion}}</pre><p>Automatic setup (<code>mode: "auto"</code>) needs an account and a project; manual setup needs only a signed-in gcloud.</p>`,
+        },
+        {
+          t: "Automatic setup",
+          files: ["controlplane/src/cloud-setup.ts"],
+          d: `<p>Runs once per project setup, in your existing project (it never creates projects or touches billing):</p><pre>gcloud services enable run.googleapis.com artifactregistry.googleapis.com --project &lt;p&gt;
+gcloud artifacts repositories create nbo --repository-format=docker \\
+  --location &lt;region&gt; --project &lt;p&gt; --quiet        # ALREADY_EXISTS counts as success
+gcloud auth configure-docker &lt;region&gt;-docker.pkg.dev --quiet</pre><p>The cloud row stores <code>{project, region, arRepo: &lt;region&gt;-docker.pkg.dev/&lt;p&gt;/nbo}</code>. Manual entries are checked against the same formats.</p>`,
+        },
+        {
+          t: "Idempotency check",
+          files: ["adapter-cloudrun/src/deploy.ts"],
+          d: `<pre>gcloud run services describe &lt;app&gt; --project &lt;p&gt; --region &lt;r&gt; --format=json</pre><p>The label <code>nbo-content-id</code> holds the first 32 hex characters of the content id (labels are length-limited). A match means nothing to do.</p>`,
+        },
+        {
+          t: "Function services (private)",
+          files: ["deploy/src/cloudrun-target.ts", "adapter-cloudrun/src/iam.ts"],
+          d: `<pre>docker build -t nbo-fn-&lt;app&gt;-&lt;fn&gt;:&lt;ts&gt; …
+docker tag  … &lt;arRepo&gt;/nbo-fn-&lt;app&gt;-&lt;fn&gt;:&lt;ts&gt;
+docker push &lt;arRepo&gt;/nbo-fn-&lt;app&gt;-&lt;fn&gt;:&lt;ts&gt;
+gcloud run deploy &lt;app&gt;-fn-&lt;fn&gt; --image … --no-allow-unauthenticated \\
+  --memory &lt;memoryMb&gt;Mi --timeout &lt;maxDurationSec&gt;
+gcloud run services add-iam-policy-binding &lt;app&gt;-fn-&lt;fn&gt; \\
+  --member serviceAccount:&lt;project-number&gt;-compute@… --role roles/run.invoker</pre><p>Functions are private; only the app's runtime identity (the default compute service account) may call them, with an ID token from the metadata server.</p>`,
+        },
+        {
+          t: "App service (public)",
+          files: ["deploy/src/cloudrun-target.ts", "adapter-cloudrun/src/deploy.ts"],
+          d: `<pre>docker build -t nbo-app-&lt;app&gt;:&lt;id prefix&gt; …     # same Dockerfile as Kubernetes
+docker push &lt;arRepo&gt;/nbo-app-&lt;app&gt;:&lt;id prefix&gt;
+gcloud run deploy &lt;app&gt; --image … --labels nbo-content-id=&lt;32 hex&gt; \\
+  --allow-unauthenticated --quiet</pre><p>The service URL (<code>https://&lt;app&gt;-…-lz.a.run.app</code>) is read back with <code>describe</code> and becomes the cloud's backend on the edge.</p>`,
+        },
+        {
+          t: "Teardown",
+          files: ["controlplane/src/cloud-teardown.ts"],
+          d: `<pre>gcloud run services list --project &lt;p&gt; --region &lt;r&gt; --format=value(metadata.name)
+gcloud run services delete &lt;app&gt; --project &lt;p&gt; --region &lt;r&gt; --quiet
+gcloud run services delete &lt;app&gt;-fn-&lt;fn&gt; … --quiet</pre><p>Images stay in Artifact Registry.</p>`,
+        },
+      ],
+    };
+    document.querySelectorAll(".stepper").forEach((root) => {
+      const flow = flows[root.dataset.steps];
+      let at = 0;
+      root.innerHTML = `<ol class="steps" aria-label="Steps"></ol><div class="leaf step-body" aria-live="polite"></div>`;
+      const list = root.querySelector(".steps"),
+        body = root.querySelector(".step-body");
+      flow.forEach((s, i) => {
+        const li = document.createElement("li");
+        li.innerHTML = `<button type="button"><span class="n">${String(i + 1).padStart(2, "0")}</span><span>${esc(s.t)}</span></button>`;
+        li.firstChild.addEventListener("click", () => go(i));
+        list.appendChild(li);
+      });
+      function go(i) {
+        at = Math.max(0, Math.min(flow.length - 1, i));
+        const s = flow[at];
+        [...list.querySelectorAll("button")].forEach((b, j) => (j === at ? b.setAttribute("aria-current", "step") : b.removeAttribute("aria-current")));
+        body.innerHTML = `<span class="label">Step ${at + 1} of ${flow.length}</span><h3 class="display">${esc(s.t)}</h3>${s.d}
+        <div class="files">${s.files.map((f) => `<span class="file">packages/${esc(f)}</span>`).join("")}</div>
+        <div class="stepnav"><button class="btn" type="button" data-d="-1" ${at === 0 ? "disabled" : ""}>Previous</button><button class="btn primary" type="button" data-d="1" ${at === flow.length - 1 ? "disabled" : ""}>Next step</button></div>`;
+        body.querySelectorAll(".stepnav button").forEach((b) => b.addEventListener("click", () => go(at + Number(b.dataset.d))));
+      }
+      go(0);
+    });
+
+    /* ---------- 4. manifest renderer ---------- */
+    function appName(projectId, env) {
+      let suffix = projectId;
+      const i = suffix.lastIndexOf("_");
+      if (i !== -1) suffix = suffix.slice(i + 1);
+      if (suffix.length > 8) suffix = suffix.slice(0, 8);
+      return `p${suffix}-${env}`;
+    }
+    function renderK8s() {
+      const proj = $("#k-proj").value.trim() || "proj_0896d60bc168e19d";
+      const env = $("#k-env").value.trim() || "k8s";
+      const fn = $("#k-fn").value.trim();
+      const app = appName(proj, env);
+      const host = `${app}.127.0.0.1.sslip.io`;
+      const id = "sha256:6a2e3cf04d13d80a…";
+      $("#k-names").innerHTML = [
+        ["App", app],
+        ["URL", "https://" + host],
+        ["App image", `nbo-app-${app}:<content id prefix>-b<baked hash>`],
+        ...(fn
+          ? [
+              ["Function", `${app}-fn-${fn}`],
+              ["Function URL (in cluster)", `http://${app}-fn-${fn}:8080`],
+            ]
+          : []),
+      ]
+        .map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`)
+        .join("");
+      let y = `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${app}
+  annotations:
+    nbo.dev/content-id: "${id}"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ${app}
+  template:
+    metadata:
+      labels:
+        app: ${app}
+    spec:
+      containers:
+      - name: nbo-server
+        image: nbo-app-${app}:<content id prefix>-b<baked hash>
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${app}
+spec:
+  selector:
+    app: ${app}
+  ports:
+  - port: 80
+    targetPort: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ${app}
+  annotations:
+    cert-manager.io/cluster-issuer: selfsigned-issuer
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - ${host}
+    secretName: ${app}-tls
+  rules:
+  - host: ${host}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: ${app}
+            port:
+              number: 80`;
+      if (fn) {
+        const n = `${app}-fn-${fn}`;
+        y += `
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${n}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ${n}
+  template:
+    metadata:
+      labels:
+        app: ${n}
+    spec:
+      containers:
+      - name: nbo-function
+        image: nbo-fn-${app}-${fn}:<content hash>
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${n}
+spec:
+  selector:
+    app: ${n}
+  ports:
+  - port: 8080
+    targetPort: 8080`;
+      }
+      $("#k-yaml").textContent = y;
+    }
+    ["#k-proj", "#k-env", "#k-fn"].forEach((s) => $(s).addEventListener("input", renderK8s));
+    renderK8s();
+
+    /* ---------- 6. transfer demo ---------- */
+    const steps = [1, 10, 50, 100];
+    const tickLabels = ["Set up Cloud Run", "Build + deploy", ...steps.map((w) => w + "%")];
+    const ticksEl = $("#ticks");
+    ticksEl.innerHTML = tickLabels.map((t) => `<span class="tick">${esc(t)}</span>`).join("");
+    let timer = null,
+      phase = -1,
+      weight = 0;
+    function paint() {
+      $("#bar-k").style.flexBasis = 100 - weight + "%";
+      $("#bar-k").textContent = 100 - weight + "%";
+      $("#bar-c").style.flexBasis = weight + "%";
+      $("#bar-c").textContent = weight ? weight + "%" : "";
+      $("#bar-legend").textContent = `Kubernetes ${100 - weight}% · Cloud Run ${weight}%`;
+      [...ticksEl.children].forEach((t, i) => {
+        t.className = "tick" + (i < phase ? " done" : i === phase ? " now" : "");
+      });
+    }
+    const log = (m) => ($("#xfer-log").textContent = m);
+    function advance() {
+      phase++;
+      if (phase === 0) log("Provisioning Cloud Run: enable APIs, create the nbo repository, configure docker…");
+      else if (phase === 1) log("Building the production commit and deploying it to both clouds…");
+      else if (phase - 2 < steps.length) {
+        weight = steps[phase - 2];
+        log(`PUT /targets/<host> → Kubernetes ${100 - weight} / Cloud Run ${weight}. Waiting before the next step…`);
+      }
+      paint();
+      if (phase - 2 >= steps.length - 1) {
+        phase = tickLabels.length;
+        paint();
+        log("Done. Cloud Run takes all traffic; Kubernetes stays at 0% until you remove it. Crons moved to Cloud Run.");
+        stopTimer();
+        return;
+      }
+    }
+    function stopTimer() {
+      clearInterval(timer);
+      timer = null;
+      $("#xfer-go").disabled = false;
+      $("#xfer-stop").disabled = true;
+    }
+    $("#xfer-go").addEventListener("click", () => {
+      if (phase >= tickLabels.length) {
+        phase = -1;
+        weight = 0;
+      }
+      $("#xfer-go").disabled = true;
+      $("#xfer-stop").disabled = false;
+      advance();
+      timer = setInterval(advance, 1200);
+    });
+    $("#xfer-stop").addEventListener("click", () => {
+      stopTimer();
+      log(`Stopped. The split stays at the last applied step: Kubernetes ${100 - weight} / Cloud Run ${weight}.`);
+    });
+    $("#xfer-reset").addEventListener("click", () => {
+      stopTimer();
+      phase = -1;
+      weight = 0;
+      paint();
+      log("Idle.");
+    });
+    paint();
+
+    /* ---------- 7. routing phases ---------- */
+    const phaseData = [
+      [
+        "beforeFiles",
+        "Redirects, header rules, middleware, and rewrites that must win over files.",
+        '{ "id": "mw", "match": { "path": "^/", "pathNot": "^/(_assets|_nbo)/" },\n  "action": { "type": "middleware", "function": "middleware" } }',
+      ],
+      [
+        "filesystem",
+        "Implicit. Prerender routes first (so ISR pages never bypass their cache), then static.index.json. A hit ends routing.",
+        '"static.index.json": { "/about": { "file": "about.html", "contentType": "text/html; charset=utf-8", … } }',
+      ],
+      [
+        "afterFiles",
+        "Rewrites to functions, including dynamic routes like /blog/[slug].",
+        '{ "id": "blog-detail", "match": { "path": "^/blog/(?P<slug>[^/]+)$" },\n  "action": { "type": "rewrite", "function": "ssr" } }',
+      ],
+      [
+        "fallback",
+        "Last chance: catch-all SSR, or a single-page app's index.html.",
+        '{ "id": "spa", "match": { "path": "^/" },\n  "action": { "type": "rewrite", "path": "/index.html" } }',
+      ],
+      [
+        "onMatch",
+        "Header rules applied to whatever was finally served.",
+        '{ "id": "blog-cache", "match": { "path": "^/blog/" },\n  "action": { "type": "headers", "set": { "cdn-cache-control": "max-age=60" } }, "continue": true }',
+      ],
+      ["error", "Maps a status to a static page or a function.", '"error": { "404": { "file": "/404" }, "500": { "function": "ssr" } }'],
+    ];
+    const phasesEl = $("#phases");
+    phaseData.forEach(([name], i) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "phase";
+      b.innerHTML = `<span class="n">${i + 1}</span><b>${esc(name)}</b>`;
+      b.addEventListener("click", () => pickPhase(i));
+      phasesEl.appendChild(b);
+    });
+    function pickPhase(i) {
+      [...phasesEl.children].forEach((b, j) => b.setAttribute("aria-pressed", String(i === j)));
+      const [, d, ex] = phaseData[i];
+      $("#phase-detail").innerHTML = `<p>${esc(d)}</p><pre style="margin-top:10px">${esc(ex)}</pre>`;
+    }
+    pickPhase(0);
+
+    /* ---------- 9. API ---------- */
+    const api = [
+      ["GET","/healthz","Liveness: { ok: true }. Needs no token, from any Host.","control-plane","public","Projects"],
+      ["POST","/projects/setup","Create a project from a repo and clouds; provisions and starts the first build in the background. { skipFirstBuild: true } sets up without building (Terraform).","control-plane","token","Projects"],
+      ["POST","/projects/{id}/setup/retry","Retry a failed setup; optional { clouds } replaces the choice.","control-plane","token","Projects"],
+      ["GET","/projects/summary","Every project with its git config, clouds (latest deployment), latest and production build, transfers.","control-plane","token","Projects"],
+      ["GET","/projects/{id}/summary","One project's summary.","control-plane","token","Projects"],
+      ["DELETE","/projects/{id}","Delete the project and its edge route; ?resources=true first deletes its cloud services.","control-plane","token","Projects"],
+      ["PATCH","/projects/{id}/settings","{ pollingEnabled }.","control-plane","token","Projects"],
+      ["POST","/projects","Create a bare project (pre-v2 API).","control-plane","token","Projects"],
+      ["GET","/projects","List projects.","control-plane","token","Projects"],
+      ["GET","/projects/{id}","One project.","control-plane","token","Projects"],
+      ["PUT","/projects/{id}/git","Repo (https, or ssh with a deploy key), branch, framework, build command, outputDir, rootDirectory, ignored build step, and credential (public, token or deploy-key). A github field is 400.","control-plane","token","Git, builds and webhooks"],
+      ["GET","/projects/{id}/git","The git config plus credential: { kind, publicKey?, username? }, never the token or private key.","control-plane","token","Git, builds and webhooks"],
+      ["POST","/projects/{id}/git/deploy-key","Make (or replace) the project's SSH deploy key pair; 201 { publicKey }.","control-plane","token","Git, builds and webhooks"],
+      ["POST","/projects/{id}/builds","Queue a build of the branch head, or { revision } for an exact commit. { stage } picks the environment (default production); { values } carries the variable values when NBO keeps names only.","control-plane","token","Git, builds and webhooks"],
+      ["GET","/projects/{id}/builds","Builds, oldest first, without logs or captured details.","control-plane","token","Git, builds and webhooks"],
+      ["GET","/builds/{id}","One build with its full log and captured details (commit, input, timeline, output summary).","control-plane","token","Git, builds and webhooks"],
+      ["GET","/builds/{id}/files","The build's static files, paged (?prefix=, ?cursor=, ?limit=); 404 once its stored output was cleaned up.","control-plane","token","Git, builds and webhooks"],
+      ["GET","/builds/{id}/functions","The build's functions with sizes and routes, read from its stored output.","control-plane","token","Git, builds and webhooks"],
+      ["POST","/builds/{id}/deploy","Deploy a stored build to one cloud of any environment: { environmentId, values? }. The target's variables apply. Queues a promote job (validated stored .nbo/, content id checked, no rebuild); 202.","control-plane","token","Git, builds and webhooks"],
+      ["POST","/projects/{id}/webhooks/github","GitHub webhook (HMAC-verified). push: queues the commit for Production's, a custom environment's or a running ephemeral environment's branch; any other branch, a branch deletion and every pull_request are ignored. Answers 202 { status: queued, buildId } or 200 { status: ignored, reason }. Records last_webhook_at.","control-plane","webhook","Git, builds and webhooks"],
+      ["GET","/projects/{id}/traffic","Desired split per cloud, and whether the edge has it (edgeInSync).","control-plane","token","Clouds, deployments and traffic"],
+      ["PUT","/projects/{id}/traffic","{ weights: { envId: 0–100 } }; refused mid-transfer or for a cloud that never deployed.","control-plane","token","Clouds, deployments and traffic"],
+      ["POST","/projects/{id}/transfer","Move a one-cloud project to the other cloud: provision, deploy, shift 1/10/50/100.","control-plane","token","Clouds, deployments and traffic"],
+      ["POST","/projects/{id}/transfer/cancel","Stop a transfer; the split stays at the last applied step.","control-plane","token","Clouds, deployments and traffic"],
+      ["PATCH","/environments/{id}","{ autoDeploy: boolean }: whether new commits' builds deploy to this cloud.","control-plane","token","Clouds, deployments and traffic"],
+      ["POST","/projects/{id}/environments/add","Add the other cloud (same choices as setup).","control-plane","token","Clouds, deployments and traffic"],
+      ["POST","/environments/{id}/archive","Stop deploying to a cloud at 0% traffic; the cloud side is left running.","control-plane","token","Clouds, deployments and traffic"],
+      ["POST","/projects/{id}/environments","Create a cloud row by hand (name, target, config); the pre-v2 API.","control-plane","local","Clouds, deployments and traffic"],
+      ["GET","/projects/{id}/environments","List live clouds.","control-plane","local","Clouds, deployments and traffic"],
+      ["GET","/environments/{id}","One cloud.","control-plane","token","Clouds, deployments and traffic"],
+      ["POST","/environments/{id}/deployments","Deploy a local .nbo/ directory ({ nboDir }) to one cloud; the pre-v2 API, refused to tokens.","control-plane","local","Clouds, deployments and traffic"],
+      ["GET","/environments/{id}/deployments","A cloud's deployments.","control-plane","local","Clouds, deployments and traffic"],
+      ["GET","/projects/{id}/stages","Every environment (stage) of the project, ephemeral ones included: id, name, kind, branch, autoDeploy, host, url, its clouds and live build, expiresAt, label, removal, removalError, removedAt. A removed ephemeral one is listed for 7 days after its removal; ?all=1 lists every one.","control-plane","token","Environments and the page cache"],
+      ["PATCH","/projects/{id}/stages/{stageId}","{ branch?, autoDeploy? } for a custom environment (a branch already feeding another environment or the production branch is 409); { expiresAt } for an ephemeral one (at most 90 days ahead).","control-plane","token","Environments and the page cache"],
+      ["DELETE","/projects/{id}/stages/{stageId}","A custom environment: ?resources=true tears down only that environment's apps first; 409 while a build of it is queued or running. An ephemeral one: 202, removal (route, certificate, its own app) runs in the background; 409 once removed.","control-plane","token","Environments and the page cache"],
+      ["POST","/projects/{id}/stages","Create a custom environment ({ name, branch, clouds, autoDeploy? }) or an ephemeral one ({ kind: ephemeral, branch, hostLabel, clouds (one), ttlHours or expiresAt, label? }; a taken address is 409); 201, builds nothing.","control-plane","token","Environments and the page cache"],
+      ["POST","/projects/{id}/stages/{stageId}/revalidate","Revalidate cached pages of a Next.js app: { tags?, paths? } (at least one, 256 each, paths start with /). Answers per-cloud results. See the Page cache and revalidation chapter.","control-plane","token","Environments and the page cache"],
+      ["POST","/projects/{id}/stages/{stageId}/revalidate-secret","Show the environment's revalidation secret, creating it on first use: { secret, createdAt }. Never cached.","control-plane","token","Environments and the page cache"],
+      ["POST","/projects/{id}/stages/{stageId}/revalidate-secret/rotate","Replace the revalidation secret and return the new one; it reaches the app on the next deploy.","control-plane","token","Environments and the page cache"],
+      ["GET","/projects/{id}/domains","The project's domains with status and DNS record (or the Cloudflare reach state).","control-plane","token","Domains"],
+      ["POST","/projects/{id}/domains/{domainId}/move-to-edge","Move a Cloud Run mapped domain onto the edge; the mapping is kept for 24 hours after the edge has its certificate.","control-plane","token","Domains"],
+      ["POST","/projects/{id}/domains","Add a custom domain: { host, stage? } (Production by default). Needs production mode; with no edge, Production can use a Cloud Run mapping. 201 with the DNS record to create.","control-plane","token","Domains"],
+      ["PATCH","/projects/{id}/domains/{domainId}","{ behindCloudflare: boolean } flips the Cloudflare switch; the reach check then replaces the DNS check. Refused for Cloud Run mappings.","control-plane","token","Domains"],
+      ["DELETE","/projects/{id}/domains/{domainId}","Remove the domain, its route and its certificate.","control-plane","token","Domains"],
+      ["POST","/projects/{id}/domains/{domainId}/check","Re-check DNS (or the Cloudflare reach) now.","control-plane","token","Domains"],
+      ["PUT","/projects/{id}/domains/{domainId}/certificate","Paste a Cloudflare Origin CA certificate: { certPem, keyPem }. The key is written sealed and never echoed.","control-plane","token","Domains"],
+      ["DELETE","/projects/{id}/domains/{domainId}/certificate","Remove the pasted certificate; NBO orders a Let's Encrypt one instead.","control-plane","token","Domains"],
+      ["GET","/projects/{id}/env/fingerprint","Keyed fingerprint of the current variables (no names, no values), ?stage=; null with names only. The build page compares it with a build's recorded one.","control-plane","token","Variables"],
+      ["PUT","/projects/{id}/env/{name}?stage=","Set a project variable for one environment (default production, ?stage=) or * for all. With names only it takes { secret } and no value (400 if a value is sent).","control-plane","token","Variables"],
+      ["GET","/workspace/settings","{ storeEnvValues }: false when NBO keeps only variable names.","control-plane","token","Variables"],
+      ["GET","/projects/{id}/env","The project's variables: name, secret flag, per environment; values only for plain ones, never for secrets.","control-plane","token","Variables"],
+      ["DELETE","/projects/{id}/env/{name}","Delete a project variable (?stage= picks the environment).","control-plane","token","Variables"],
+      ["GET","/workspace/env","The workspace variables (shared by every project; a project's own override them).","control-plane","token","Variables"],
+      ["PUT","/workspace/env/{name}","Set a workspace variable; same body as the project route.","control-plane","token","Variables"],
+      ["DELETE","/workspace/env/{name}","Delete a workspace variable.","control-plane","token","Variables"],
+      ["PATCH","/system/workspace-settings","{ storeEnvValues: false, confirm: \"delete values\" } turns names only on (from this computer only; tokens get 403).","control-plane","local","Variables"],
+      ["GET","/system/preflight","What this machine can deploy to: gcloud (account, project, region), Docker, kind; plus a Kubernetes summary and per-cluster list.","control-plane","local","System: clouds, edge and domains"],
+      ["GET","/system/connections","Production connections: Google, and a list of Kubernetes clusters (never secrets).","control-plane","local","System: clouds, edge and domains"],
+      ["POST","/system/connections/kubernetes","Connect another Kubernetes cluster ({ name, source, registry }); names are unique and cannot change later.","control-plane","local","System: clouds, edge and domains"],
+      ["PUT","/system/connections/kubernetes/{id}","Replace one cluster's credentials or registry.","control-plane","local","System: clouds, edge and domains"],
+      ["POST","/system/connections/kubernetes/{id}/test","Re-check one cluster with its own stored kubeconfig.","control-plane","local","System: clouds, edge and domains"],
+      ["DELETE","/system/connections/kubernetes/{id}","Disconnect a cluster; 409 while projects still run on it.","control-plane","local","System: clouds, edge and domains"],
+      ["GET","/system/edge","Production: the public edge's state, address, settings and latest install job.","control-plane","local","System: clouds, edge and domains"],
+      ["GET","/system/regions","Cloud Run regions the connected Google project offers; 409 when Cloud Run is not connected.","control-plane","local","System: clouds, edge and domains"],
+      ["GET","/system/regions/domain-mapping","Regions where Cloud Run domain mappings are available (a static list).","control-plane","local","System: clouds, edge and domains"],
+      ["GET","/system/connections/detect","What this machine already has: gcloud accounts and projects, kubeconfig contexts.","control-plane","local","System: clouds, edge and domains"],
+      ["GET","/system/connections/plan","The steps a connection would run, before it runs: ?google=<machine|key>,<project>,<region> and/or ?kubernetes=1.","control-plane","local","System: clouds, edge and domains"],
+      ["POST","/system/connections/google","Connect Google: { source: \"machine\", project, region } or { source: \"key\", keyJson, region }; 201.","control-plane","local","System: clouds, edge and domains"],
+      ["POST","/system/connections/{kind}/test","Re-check the stored connection (google).","control-plane","local","System: clouds, edge and domains"],
+      ["DELETE","/system/connections/{kind}","Disconnect Google; refused while projects or domains use it.","control-plane","local","System: clouds, edge and domains"],
+      ["GET","/system/clusters/{id}/relay","A cluster's relay state: { status, address, caFingerprint?, job? }.","control-plane","local","System: clouds, edge and domains"],
+      ["POST","/system/clusters/{id}/relay","Enable public entry on a cluster: { confirmBilling: true }; runs as a background job (202 { job }).","control-plane","local","System: clouds, edge and domains"],
+      ["POST","/system/clusters/{id}/update-setup","Re-run the cluster's guard and RBAC setup with admin credentials ({ admin }, never stored).","control-plane","local","System: clouds, edge and domains"],
+      ["POST","/system/edge/install","Install the edge in a cluster: { clusterId, admin, confirmBilling: true }; background job, 202 { job }.","control-plane","local","System: clouds, edge and domains"],
+      ["POST","/system/edge/reinstall","Reinstall the edge from the current image; background job, 202.","control-plane","local","System: clouds, edge and domains"],
+      ["PATCH","/system/domains","Platform domain settings: { baseDomain?, acmeEmail?, acmeDirectory?, moveExisting? }; moves default hosts when the base domain changes.","control-plane","local","System: clouds, edge and domains"],
+      ["GET","/system/api-tokens","API tokens: id, name, prefix, createdAt, lastUsedAt (never the token or hash). nbo-server token list.","control-plane","local","API tokens and the Terraform provider"],
+      ["GET","/system/terraform-provider","The Terraform provider built into the image: { version, platforms: [{ platform, fileName, size, sha256 }] }, only files that exist. 404 when NBO_TERRAFORM_PROVIDER_DIR is unset. Refused to tokens.","control-plane","local","API tokens and the Terraform provider"],
+      ["GET","/system/terraform-provider/{platform}","The provider file for one platform (linux_amd64, linux_arm64, darwin_amd64, darwin_arm64, windows_amd64) as an attachment. Refused to tokens.","control-plane","local","API tokens and the Terraform provider"],
+      ["POST","/system/api-tokens","Create a token: { name }; the token appears in the answer once (201). nbo-server token create <name>.","control-plane","local","API tokens and the Terraform provider"],
+      ["DELETE","/system/api-tokens/{id}","Revoke a token at once (204). nbo-server token revoke <id>.","control-plane","local","API tokens and the Terraform provider"],
+      ["PUT","/targets/{host}","Set a host's weighted backends ({ backends: [{ id?, url, weight, insecureSkipVerify? }] }; id = the backend's stable key for sticky visitors).","edge admin","none","Edge admin API (127.0.0.1:9444)"],
+      ["GET","/targets/{host}","Read a host's target.","edge admin","none","Edge admin API (127.0.0.1:9444)"],
+      ["DELETE","/targets/{host}","Remove a host.","edge admin","none","Edge admin API (127.0.0.1:9444)"],
+      ["GET","/insights/drain","Return the Speed Insights histograms held in memory and clear them (a Speed Insights sink, when one is plugged in, calls this every 60 s; core alone never does, and the edge then keeps at most 100,000 histograms, dropping the oldest). PUT /targets/{host} also takes an optional insights: { enabled, inject, sampleRate }.","edge admin","none","Edge admin API (127.0.0.1:9444)"],
+      ["GET","/_nbo/insights/v1/script.js","The Speed Insights script (web-vitals plus a loader), served by the edge on a host with Speed Insights on.","edge public","public","Edge public paths"],
+      ["POST","/_nbo/insights/v1/vitals","A visitor's Web Vitals beacon (JSON, 2 KB max); answered 204 and folded into an in-memory histogram.","edge public","public","Edge public paths"],
+    ];
+    const tbody = $("#api-table tbody");
+    function renderApi() {
+      const q = $("#api-q").value.trim().toLowerCase();
+      const rows = api.filter((r) => !q || r.join(" ").toLowerCase().includes(q));
+      let last = "";
+      const html = [];
+      for (const [m, p, d, s, access, g] of rows) {
+        if (g !== last) {
+          html.push(`<tr class="grp"><th colspan="5" scope="colgroup">${esc(g)}</th></tr>`);
+          last = g;
+        }
+        html.push(
+          `<tr><td><span class="method m-${m}">${m}</span></td><td><code>${esc(p)}</code></td><td>${esc(access)}</td><td>${esc(d)}</td><td>${esc(s)}</td></tr>`,
+        );
+      }
+      tbody.innerHTML = html.join("");
+      $("#api-empty").hidden = rows.length > 0;
+    }
+    $("#api-q").addEventListener("input", renderApi);
+    renderApi();
+  })();
+</script>

@@ -1,0 +1,44 @@
+# What has been tried for real
+
+NBO is built and tested on one developer machine. Most of the code has run against **fakes**: stand-in servers and command-line tools that answer the way Google, GitHub, Let's Encrypt, Cloudflare or a Kubernetes cluster are supposed to, so the tests are fast and never touch anyone's account. A fake proves that NBO sends the right requests and handles the documented answers. It does not prove that the real service answers the same way, that your network lets the traffic through, or that nothing surprising happens on the first real try.
+
+This chapter says, feature by feature, what has run on real infrastructure and what has not. Read it before you rely on a feature for a site that matters.
+
+## How to read the labels
+
+Every section of this manual about something in the last column of the table below carries a block quote that starts with **Not tried for real yet.** and then says what was tested and how. It is the same sentence everywhere, so you can spot it. The table links to the section that holds each label.
+
+A feature with a label is not broken. It means the first real run is yours, so do it on a throwaway project, cluster or domain, and tell the maintainers what you saw. Anything you find goes to `docs/points-to-improve-or-fix.md` in the repository.
+
+## The table
+
+| Feature | Tried for real | Only against fakes | Where |
+| --- | --- | --- | --- |
+| Dev mode: kind cluster, the test apps, the traffic switch | A local kind cluster and the local edge, by the verify scripts for each slice (Next.js apps over HTTPS on `*.127.0.0.1.sslip.io`, a weight shift under load with zero failed requests) | A cloud-to-cloud transfer on a real cluster and Google project | [Moving to another cloud: transfers](./traffic.md#moving-to-another-cloud-transfers) |
+| Cloud Run deploys from the command line | Deploys of the test apps to a real Google project while Slice 3 was built | - | - |
+| Docker Compose on a Linux server | A real Hetzner Linux server running NBO with Docker Compose since 2026-11, with a Hetzner k3s cluster connected; Docker Desktop on Windows, 2026-11-05: data and key survived restarts, backup and restore worked | A Google project connected from Compose; a site deployed end to end this way; restoring a backup onto a different server | [Read this first](../production.md#read-this-first) |
+| Running without Docker | Windows, up to starting in production mode | The `systemd` example | [Running without Docker](../production.md#running-without-docker) |
+| Public edge and Let's Encrypt on a real cluster | A real Hetzner k3s cluster, 2026-11-06: the install reached the load balancer step, which showed Hetzner needs a location | Certificates, relays and visitor traffic on a real cluster | [Installing the edge](./domains.md#installing-the-edge) |
+| Custom registry | - | The registry settings, the pull secret and the pushes, against fake commands | [Connect it in NBO](./clusters.md#connect-it-in-nbo) |
+| `nbo-server`, the setup command | `status`, `token create` and `api` against a dev-mode NBO on a local kind cluster, 2026-11-12 (`scripts/verify-headless.sh`) | The other commands, against a fake control-plane in tests; any command against a production-mode server. The image runs `nbo-server help` when it is built | [Connect your clouds](../production.md#3-connect-your-clouds) |
+| A core with no web interface, from an empty database to a live site | A local kind cluster, 2026-11-12: `scripts/verify-headless.sh` made an API token with `nbo-server`, set up a public static site through the API, built and deployed it, got the page through the local edge and set its traffic split | The same on a real cluster or Google project | [Connect your clouds](../production.md#3-connect-your-clouds) |
+| Git credentials (deploy keys and tokens) | - | Clones, `ls-remote`, host key checks and redaction against local repositories and a fake GitHub; the deploy key flow through `nbo-server` and Terraform against fakes | [Private repositories](../production.md#4-private-repositories) |
+| Google connection | - | Connecting with your own login or a key, and production-mode deploys after it, against fake commands | [Read this first](../production.md#read-this-first) |
+| Cloud Run domains | - | Domain mappings, the ownership check and moving a domain to the edge, against a fake `gcloud` | [Domains without a cluster](./domains.md#domains-without-a-cluster) |
+| Behind Cloudflare | - | The reach check, the warnings and the Origin CA option, against fakes; no real Cloudflare zone | [Domains behind Cloudflare](./domains.md#domains-behind-cloudflare) |
+| Rust edge on a cluster | Its gates 1 to 3 on a local machine: the shared black-box suite, the load test with zero failed requests, a one-core benchmark | Gate 4, a real cluster serving HTTPS | [Read this first](../production.md#read-this-first) |
+| Terraform | `TestAccProject` with Terraform 1.17.1 against a local dev-mode NBO, 2026-11-08, and again on 2026-11-12 against a core with no web interface | Environments, values sent with a deploy, domains, traffic, the plugins-folder install and the Cloudflare example | [What has been tried](./terraform.md#what-has-been-tried) |
+| Custom environments | - | Addresses, certificates, variables and teardown, against fakes and local tests | [Adding your own](./environments.md#adding-your-own) |
+| Ephemeral environments | - | Creating, building, expiry, removal and its retries, the certificate weekly cap and the upgrade of earlier previews, against fakes and local tests | [Ephemeral environments](./environments.md#ephemeral-environments) |
+| Projects linked to an older NBO's GitHub App | - | Building them with a token NBO asks GitHub for, against a fake GitHub | [Private repositories](../production.md#4-private-repositories) |
+| Caddy on NBO's own address | - | Tokens and webhooks through the public address, in local tests | [Reaching NBO on its own address](../production.md#8-reaching-nbo-on-its-own-address) |
+| Production ISR page cache | - | One cache per app, the revalidation secret and the edge's fan-out, against fakes and local tests | [Page cache and revalidation](./cache.md#if-it-does-not-work) |
+| Speed Insights collection on a cluster edge | The script and beacons on the local edge | Drain through a real cluster's API server pod proxy; real visitors | [Domains and the public edge](./domains.md) |
+| This repository on its own | A copy of it made the way this public repository is made, 2026-11-12: inside it, install, build, tests, type checks, the docs check, the CI script tests, the pipeline check, both determinism checks, the Go and Rust tests, `scripts/verify-headless.sh` on a local kind cluster and `TestAccProject` all passed | A CI run on the public repository: the pipeline is GitLab's (see [Continuous integration](./quality.md#continuous-integration)) | - |
+| The GitLab pipeline | Its scripts, run locally with fake cloud tools; the serve and kind bootstrap steps of the `kubernetes` job | A real GitLab run; the kind deploy step; the `cloudrun` job | [Continuous integration](./quality.md#continuous-integration) |
+
+## What "tried" means here
+
+A row counts as tried for real only when the thing ran on infrastructure that belongs to someone and nothing stood in for it: a real cloud account, a real cluster, a real DNS name, a real certificate authority. A local kind cluster is a real Kubernetes, so the dev-mode row counts, but it is not a cloud you rent and it has no public address.
+
+The dates in the table are the day the run happened. They are not a promise that the version you have still behaves the same: the code moved on after most of them.

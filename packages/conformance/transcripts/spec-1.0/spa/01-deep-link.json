@@ -1,0 +1,9 @@
+{
+  "method": "GET",
+  "path": "/settings/profile",
+  "expectStatus": 200,
+  "expectHeaders": {
+    "x-nbo-deployment-id": "{{contentId}}"
+  },
+  "expectBodyContains": "spa root document"
+}

@@ -1,0 +1,12 @@
+{
+  "method": "POST",
+  "path": "/_nbo/revalidate",
+  "headers": {
+    "content-type": "application/json"
+  },
+  "body": "{\"tags\":[\"group:1\"]}",
+  "expectStatus": 401,
+  "expectHeaders": {
+    "x-nbo-deployment-id": "{{contentId}}"
+  }
+}

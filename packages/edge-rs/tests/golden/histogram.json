@@ -1,0 +1,12502 @@
+[
+ {
+  "metric": "LCP",
+  "value": 0,
+  "index": 0
+ },
+ {
+  "metric": "LCP",
+  "value": 0,
+  "index": 0
+ },
+ {
+  "metric": "LCP",
+  "value": -1,
+  "index": 0
+ },
+ {
+  "metric": "LCP",
+  "value": -0.001,
+  "index": 0
+ },
+ {
+  "metric": "LCP",
+  "value": -120000,
+  "index": 0
+ },
+ {
+  "metric": "LCP",
+  "value": 1e-12,
+  "index": 1
+ },
+ {
+  "metric": "LCP",
+  "value": 5e-324,
+  "index": 1
+ },
+ {
+  "metric": "LCP",
+  "value": 0.5,
+  "index": 1
+ },
+ {
+  "metric": "LCP",
+  "value": 0.999999,
+  "index": 1
+ },
+ {
+  "metric": "LCP",
+  "value": 1,
+  "index": 1
+ },
+ {
+  "metric": "LCP",
+  "value": 1.0000001,
+  "index": 1
+ },
+ {
+  "metric": "LCP",
+  "value": 1.05,
+  "index": 2
+ },
+ {
+  "metric": "LCP",
+  "value": 1.025,
+  "index": 1
+ },
+ {
+  "metric": "LCP",
+  "value": 2,
+  "index": 15
+ },
+ {
+  "metric": "LCP",
+  "value": 10,
+  "index": 48
+ },
+ {
+  "metric": "LCP",
+  "value": 100,
+  "index": 95
+ },
+ {
+  "metric": "LCP",
+  "value": 1000,
+  "index": 142
+ },
+ {
+  "metric": "LCP",
+  "value": 120000,
+  "index": 240
+ },
+ {
+  "metric": "LCP",
+  "value": 1000000000,
+  "index": 425
+ },
+ {
+  "metric": "LCP",
+  "value": 1,
+  "index": 1
+ },
+ {
+  "metric": "LCP",
+  "value": 0.999999999999,
+  "index": 1
+ },
+ {
+  "metric": "LCP",
+  "value": 1.000000000001,
+  "index": 1
+ },
+ {
+  "metric": "LCP",
+  "value": 1.05,
+  "index": 2
+ },
+ {
+  "metric": "LCP",
+  "value": 1.04999999999895,
+  "index": 1
+ },
+ {
+  "metric": "LCP",
+  "value": 1.05000000000105,
+  "index": 2
+ },
+ {
+  "metric": "LCP",
+  "value": 1.1025,
+  "index": 2
+ },
+ {
+  "metric": "LCP",
+  "value": 1.1024999999988976,
+  "index": 2
+ },
+ {
+  "metric": "LCP",
+  "value": 1.1025000000011027,
+  "index": 3
+ },
+ {
+  "metric": "LCP",
+  "value": 1.1576250000000001,
+  "index": 3
+ },
+ {
+  "metric": "LCP",
+  "value": 1.1576249999988426,
+  "index": 3
+ },
+ {
+  "metric": "LCP",
+  "value": 1.1576250000011579,
+  "index": 4
+ },
+ {
+  "metric": "LCP",
+  "value": 1.2155062500000002,
+  "index": 5
+ },
+ {
+  "metric": "LCP",
+  "value": 1.2155062499987848,
+  "index": 4
+ },
+ {
+  "metric": "LCP",
+  "value": 1.215506250001216,
+  "index": 5
+ },
+ {
+  "metric": "LCP",
+  "value": 1.2762815625000004,
+  "index": 6
+ },
+ {
+  "metric": "LCP",
+  "value": 1.276281562498724,
+  "index": 5
+ },
+ {
+  "metric": "LCP",
+  "value": 1.2762815625012767,
+  "index": 6
+ },
+ {
+  "metric": "LCP",
+  "value": 1.3400956406250004,
+  "index": 7
+ },
+ {
+  "metric": "LCP",
+  "value": 1.3400956406236604,
+  "index": 6
+ },
+ {
+  "metric": "LCP",
+  "value": 1.3400956406263407,
+  "index": 7
+ },
+ {
+  "metric": "LCP",
+  "value": 1.4071004226562505,
+  "index": 8
+ },
+ {
+  "metric": "LCP",
+  "value": 1.4071004226548434,
+  "index": 7
+ },
+ {
+  "metric": "LCP",
+  "value": 1.4071004226576578,
+  "index": 8
+ },
+ {
+  "metric": "LCP",
+  "value": 1.477455443789063,
+  "index": 9
+ },
+ {
+  "metric": "LCP",
+  "value": 1.4774554437875855,
+  "index": 8
+ },
+ {
+  "metric": "LCP",
+  "value": 1.4774554437905405,
+  "index": 9
+ },
+ {
+  "metric": "LCP",
+  "value": 1.5513282159785162,
+  "index": 10
+ },
+ {
+  "metric": "LCP",
+  "value": 1.551328215976965,
+  "index": 9
+ },
+ {
+  "metric": "LCP",
+  "value": 1.5513282159800676,
+  "index": 10
+ },
+ {
+  "metric": "LCP",
+  "value": 1.628894626777442,
+  "index": 10
+ },
+ {
+  "metric": "LCP",
+  "value": 1.628894626775813,
+  "index": 10
+ },
+ {
+  "metric": "LCP",
+  "value": 1.6288946267790712,
+  "index": 11
+ },
+ {
+  "metric": "LCP",
+  "value": 1.7103393581163142,
+  "index": 11
+ },
+ {
+  "metric": "LCP",
+  "value": 1.7103393581146038,
+  "index": 11
+ },
+ {
+  "metric": "LCP",
+  "value": 1.7103393581180246,
+  "index": 12
+ },
+ {
+  "metric": "LCP",
+  "value": 1.79585632602213,
+  "index": 13
+ },
+ {
+  "metric": "LCP",
+  "value": 1.7958563260203342,
+  "index": 12
+ },
+ {
+  "metric": "LCP",
+  "value": 1.7958563260239262,
+  "index": 13
+ },
+ {
+  "metric": "LCP",
+  "value": 1.8856491423232367,
+  "index": 14
+ },
+ {
+  "metric": "LCP",
+  "value": 1.885649142321351,
+  "index": 13
+ },
+ {
+  "metric": "LCP",
+  "value": 1.8856491423251225,
+  "index": 14
+ },
+ {
+  "metric": "LCP",
+  "value": 1.9799315994393987,
+  "index": 15
+ },
+ {
+  "metric": "LCP",
+  "value": 1.9799315994374187,
+  "index": 14
+ },
+ {
+  "metric": "LCP",
+  "value": 1.9799315994413789,
+  "index": 15
+ },
+ {
+  "metric": "LCP",
+  "value": 2.0789281794113688,
+  "index": 16
+ },
+ {
+  "metric": "LCP",
+  "value": 2.07892817940929,
+  "index": 15
+ },
+ {
+  "metric": "LCP",
+  "value": 2.078928179413448,
+  "index": 16
+ },
+ {
+  "metric": "LCP",
+  "value": 2.182874588381937,
+  "index": 16
+ },
+ {
+  "metric": "LCP",
+  "value": 2.1828745883797542,
+  "index": 16
+ },
+ {
+  "metric": "LCP",
+  "value": 2.18287458838412,
+  "index": 17
+ },
+ {
+  "metric": "LCP",
+  "value": 2.292018317801034,
+  "index": 17
+ },
+ {
+  "metric": "LCP",
+  "value": 2.292018317798742,
+  "index": 17
+ },
+ {
+  "metric": "LCP",
+  "value": 2.2920183178033264,
+  "index": 18
+ },
+ {
+  "metric": "LCP",
+  "value": 2.4066192336910857,
+  "index": 18
+ },
+ {
+  "metric": "LCP",
+  "value": 2.406619233688679,
+  "index": 18
+ },
+ {
+  "metric": "LCP",
+  "value": 2.4066192336934926,
+  "index": 19
+ },
+ {
+  "metric": "LCP",
+  "value": 2.5269501953756404,
+  "index": 20
+ },
+ {
+  "metric": "LCP",
+  "value": 2.5269501953731135,
+  "index": 19
+ },
+ {
+  "metric": "LCP",
+  "value": 2.5269501953781677,
+  "index": 20
+ },
+ {
+  "metric": "LCP",
+  "value": 2.653297705144422,
+  "index": 20
+ },
+ {
+  "metric": "LCP",
+  "value": 2.6532977051417688,
+  "index": 20
+ },
+ {
+  "metric": "LCP",
+  "value": 2.6532977051470756,
+  "index": 21
+ },
+ {
+  "metric": "LCP",
+  "value": 2.7859625904016436,
+  "index": 21
+ },
+ {
+  "metric": "LCP",
+  "value": 2.785962590398858,
+  "index": 21
+ },
+ {
+  "metric": "LCP",
+  "value": 2.78596259040443,
+  "index": 22
+ },
+ {
+  "metric": "LCP",
+  "value": 2.925260719921726,
+  "index": 23
+ },
+ {
+  "metric": "LCP",
+  "value": 2.9252607199188008,
+  "index": 22
+ },
+ {
+  "metric": "LCP",
+  "value": 2.9252607199246516,
+  "index": 23
+ },
+ {
+  "metric": "LCP",
+  "value": 3.0715237559178123,
+  "index": 23
+ },
+ {
+  "metric": "LCP",
+  "value": 3.071523755914741,
+  "index": 23
+ },
+ {
+  "metric": "LCP",
+  "value": 3.071523755920884,
+  "index": 24
+ },
+ {
+  "metric": "LCP",
+  "value": 3.225099943713703,
+  "index": 24
+ },
+ {
+  "metric": "LCP",
+  "value": 3.225099943710478,
+  "index": 24
+ },
+ {
+  "metric": "LCP",
+  "value": 3.2250999437169283,
+  "index": 25
+ },
+ {
+  "metric": "LCP",
+  "value": 3.3863549408993885,
+  "index": 25
+ },
+ {
+  "metric": "LCP",
+  "value": 3.3863549408960023,
+  "index": 25
+ },
+ {
+  "metric": "LCP",
+  "value": 3.386354940902775,
+  "index": 26
+ },
+ {
+  "metric": "LCP",
+  "value": 3.555672687944358,
+  "index": 26
+ },
+ {
+  "metric": "LCP",
+  "value": 3.5556726879408025,
+  "index": 26
+ },
+ {
+  "metric": "LCP",
+  "value": 3.5556726879479137,
+  "index": 27
+ },
+ {
+  "metric": "LCP",
+  "value": 3.733456322341576,
+  "index": 27
+ },
+ {
+  "metric": "LCP",
+  "value": 3.7334563223378425,
+  "index": 27
+ },
+ {
+  "metric": "LCP",
+  "value": 3.73345632234531,
+  "index": 28
+ },
+ {
+  "metric": "LCP",
+  "value": 3.920129138458655,
+  "index": 29
+ },
+ {
+  "metric": "LCP",
+  "value": 3.920129138454735,
+  "index": 28
+ },
+ {
+  "metric": "LCP",
+  "value": 3.9201291384625754,
+  "index": 29
+ },
+ {
+  "metric": "LCP",
+  "value": 4.116135595381588,
+  "index": 30
+ },
+ {
+  "metric": "LCP",
+  "value": 4.1161355953774725,
+  "index": 29
+ },
+ {
+  "metric": "LCP",
+  "value": 4.116135595385705,
+  "index": 30
+ },
+ {
+  "metric": "LCP",
+  "value": 4.321942375150668,
+  "index": 31
+ },
+ {
+  "metric": "LCP",
+  "value": 4.321942375146346,
+  "index": 30
+ },
+ {
+  "metric": "LCP",
+  "value": 4.321942375154991,
+  "index": 31
+ },
+ {
+  "metric": "LCP",
+  "value": 4.538039493908201,
+  "index": 31
+ },
+ {
+  "metric": "LCP",
+  "value": 4.538039493903663,
+  "index": 31
+ },
+ {
+  "metric": "LCP",
+  "value": 4.5380394939127395,
+  "index": 32
+ },
+ {
+  "metric": "LCP",
+  "value": 4.764941468603611,
+  "index": 33
+ },
+ {
+  "metric": "LCP",
+  "value": 4.764941468598846,
+  "index": 32
+ },
+ {
+  "metric": "LCP",
+  "value": 4.764941468608376,
+  "index": 33
+ },
+ {
+  "metric": "LCP",
+  "value": 5.003188542033792,
+  "index": 34
+ },
+ {
+  "metric": "LCP",
+  "value": 5.003188542028789,
+  "index": 33
+ },
+ {
+  "metric": "LCP",
+  "value": 5.003188542038796,
+  "index": 34
+ },
+ {
+  "metric": "LCP",
+  "value": 5.253347969135482,
+  "index": 34
+ },
+ {
+  "metric": "LCP",
+  "value": 5.253347969130228,
+  "index": 34
+ },
+ {
+  "metric": "LCP",
+  "value": 5.253347969140735,
+  "index": 35
+ },
+ {
+  "metric": "LCP",
+  "value": 5.5160153675922565,
+  "index": 36
+ },
+ {
+  "metric": "LCP",
+  "value": 5.516015367586741,
+  "index": 35
+ },
+ {
+  "metric": "LCP",
+  "value": 5.516015367597773,
+  "index": 36
+ },
+ {
+  "metric": "LCP",
+  "value": 5.791816135971869,
+  "index": 36
+ },
+ {
+  "metric": "LCP",
+  "value": 5.791816135966077,
+  "index": 36
+ },
+ {
+  "metric": "LCP",
+  "value": 5.791816135977662,
+  "index": 37
+ },
+ {
+  "metric": "LCP",
+  "value": 6.081406942770463,
+  "index": 38
+ },
+ {
+  "metric": "LCP",
+  "value": 6.0814069427643815,
+  "index": 37
+ },
+ {
+  "metric": "LCP",
+  "value": 6.081406942776545,
+  "index": 38
+ },
+ {
+  "metric": "LCP",
+  "value": 6.385477289908986,
+  "index": 38
+ },
+ {
+  "metric": "LCP",
+  "value": 6.385477289902601,
+  "index": 38
+ },
+ {
+  "metric": "LCP",
+  "value": 6.3854772899153724,
+  "index": 39
+ },
+ {
+  "metric": "LCP",
+  "value": 6.704751154404436,
+  "index": 40
+ },
+ {
+  "metric": "LCP",
+  "value": 6.704751154397731,
+  "index": 39
+ },
+ {
+  "metric": "LCP",
+  "value": 6.704751154411142,
+  "index": 40
+ },
+ {
+  "metric": "LCP",
+  "value": 7.039988712124658,
+  "index": 40
+ },
+ {
+  "metric": "LCP",
+  "value": 7.039988712117618,
+  "index": 40
+ },
+ {
+  "metric": "LCP",
+  "value": 7.039988712131699,
+  "index": 41
+ },
+ {
+  "metric": "LCP",
+  "value": 7.391988147730891,
+  "index": 41
+ },
+ {
+  "metric": "LCP",
+  "value": 7.3919881477235,
+  "index": 41
+ },
+ {
+  "metric": "LCP",
+  "value": 7.391988147738283,
+  "index": 42
+ },
+ {
+  "metric": "LCP",
+  "value": 7.761587555117436,
+  "index": 42
+ },
+ {
+  "metric": "LCP",
+  "value": 7.761587555109674,
+  "index": 42
+ },
+ {
+  "metric": "LCP",
+  "value": 7.761587555125199,
+  "index": 43
+ },
+ {
+  "metric": "LCP",
+  "value": 8.14966693287331,
+  "index": 44
+ },
+ {
+  "metric": "LCP",
+  "value": 8.14966693286516,
+  "index": 43
+ },
+ {
+  "metric": "LCP",
+  "value": 8.149666932881459,
+  "index": 44
+ },
+ {
+  "metric": "LCP",
+  "value": 8.557150279516975,
+  "index": 45
+ },
+ {
+  "metric": "LCP",
+  "value": 8.557150279508418,
+  "index": 44
+ },
+ {
+  "metric": "LCP",
+  "value": 8.557150279525533,
+  "index": 45
+ },
+ {
+  "metric": "LCP",
+  "value": 8.985007793492823,
+  "index": 45
+ },
+ {
+  "metric": "LCP",
+  "value": 8.985007793483838,
+  "index": 45
+ },
+ {
+  "metric": "LCP",
+  "value": 8.98500779350181,
+  "index": 46
+ },
+ {
+  "metric": "LCP",
+  "value": 9.434258183167465,
+  "index": 46
+ },
+ {
+  "metric": "LCP",
+  "value": 9.43425818315803,
+  "index": 46
+ },
+ {
+  "metric": "LCP",
+  "value": 9.4342581831769,
+  "index": 47
+ },
+ {
+  "metric": "LCP",
+  "value": 9.905971092325839,
+  "index": 48
+ },
+ {
+  "metric": "LCP",
+  "value": 9.905971092315934,
+  "index": 47
+ },
+ {
+  "metric": "LCP",
+  "value": 9.905971092335745,
+  "index": 48
+ },
+ {
+  "metric": "LCP",
+  "value": 10.401269646942131,
+  "index": 49
+ },
+ {
+  "metric": "LCP",
+  "value": 10.40126964693173,
+  "index": 48
+ },
+ {
+  "metric": "LCP",
+  "value": 10.401269646952533,
+  "index": 49
+ },
+ {
+  "metric": "LCP",
+  "value": 10.921333129289238,
+  "index": 49
+ },
+ {
+  "metric": "LCP",
+  "value": 10.921333129278317,
+  "index": 49
+ },
+ {
+  "metric": "LCP",
+  "value": 10.92133312930016,
+  "index": 50
+ },
+ {
+  "metric": "LCP",
+  "value": 11.4673997857537,
+  "index": 50
+ },
+ {
+  "metric": "LCP",
+  "value": 11.467399785742234,
+  "index": 50
+ },
+ {
+  "metric": "LCP",
+  "value": 11.467399785765169,
+  "index": 51
+ },
+ {
+  "metric": "LCP",
+  "value": 12.040769775041387,
+  "index": 52
+ },
+ {
+  "metric": "LCP",
+  "value": 12.040769775029347,
+  "index": 51
+ },
+ {
+  "metric": "LCP",
+  "value": 12.040769775053429,
+  "index": 52
+ },
+ {
+  "metric": "LCP",
+  "value": 12.642808263793455,
+  "index": 52
+ },
+ {
+  "metric": "LCP",
+  "value": 12.642808263780813,
+  "index": 52
+ },
+ {
+  "metric": "LCP",
+  "value": 12.6428082638061,
+  "index": 53
+ },
+ {
+  "metric": "LCP",
+  "value": 13.27494867698313,
+  "index": 53
+ },
+ {
+  "metric": "LCP",
+  "value": 13.274948676969855,
+  "index": 53
+ },
+ {
+  "metric": "LCP",
+  "value": 13.274948676996406,
+  "index": 54
+ },
+ {
+  "metric": "LCP",
+  "value": 13.938696110832286,
+  "index": 54
+ },
+ {
+  "metric": "LCP",
+  "value": 13.938696110818347,
+  "index": 54
+ },
+ {
+  "metric": "LCP",
+  "value": 13.938696110846225,
+  "index": 55
+ },
+ {
+  "metric": "LCP",
+  "value": 14.6356309163739,
+  "index": 56
+ },
+ {
+  "metric": "LCP",
+  "value": 14.635630916359265,
+  "index": 55
+ },
+ {
+  "metric": "LCP",
+  "value": 14.635630916388537,
+  "index": 56
+ },
+ {
+  "metric": "LCP",
+  "value": 15.367412462192597,
+  "index": 57
+ },
+ {
+  "metric": "LCP",
+  "value": 15.36741246217723,
+  "index": 56
+ },
+ {
+  "metric": "LCP",
+  "value": 15.367412462207966,
+  "index": 57
+ },
+ {
+  "metric": "LCP",
+  "value": 16.135783085302226,
+  "index": 57
+ },
+ {
+  "metric": "LCP",
+  "value": 16.13578308528609,
+  "index": 57
+ },
+ {
+  "metric": "LCP",
+  "value": 16.135783085318362,
+  "index": 58
+ },
+ {
+  "metric": "LCP",
+  "value": 16.94257223956734,
+  "index": 58
+ },
+ {
+  "metric": "LCP",
+  "value": 16.942572239550397,
+  "index": 58
+ },
+ {
+  "metric": "LCP",
+  "value": 16.942572239584283,
+  "index": 59
+ },
+ {
+  "metric": "LCP",
+  "value": 17.789700851545707,
+  "index": 60
+ },
+ {
+  "metric": "LCP",
+  "value": 17.78970085152792,
+  "index": 59
+ },
+ {
+  "metric": "LCP",
+  "value": 17.7897008515635,
+  "index": 60
+ },
+ {
+  "metric": "LCP",
+  "value": 18.679185894122995,
+  "index": 61
+ },
+ {
+  "metric": "LCP",
+  "value": 18.679185894104315,
+  "index": 60
+ },
+ {
+  "metric": "LCP",
+  "value": 18.679185894141675,
+  "index": 61
+ },
+ {
+  "metric": "LCP",
+  "value": 19.613145188829144,
+  "index": 61
+ },
+ {
+  "metric": "LCP",
+  "value": 19.613145188809533,
+  "index": 61
+ },
+ {
+  "metric": "LCP",
+  "value": 19.61314518884876,
+  "index": 62
+ },
+ {
+  "metric": "LCP",
+  "value": 20.5938024482706,
+  "index": 62
+ },
+ {
+  "metric": "LCP",
+  "value": 20.593802448250006,
+  "index": 62
+ },
+ {
+  "metric": "LCP",
+  "value": 20.593802448291196,
+  "index": 63
+ },
+ {
+  "metric": "LCP",
+  "value": 21.62349257068413,
+  "index": 64
+ },
+ {
+  "metric": "LCP",
+  "value": 21.62349257066251,
+  "index": 63
+ },
+ {
+  "metric": "LCP",
+  "value": 21.623492570705757,
+  "index": 64
+ },
+ {
+  "metric": "LCP",
+  "value": 22.70466719921834,
+  "index": 64
+ },
+ {
+  "metric": "LCP",
+  "value": 22.704667199195633,
+  "index": 64
+ },
+ {
+  "metric": "LCP",
+  "value": 22.704667199241044,
+  "index": 65
+ },
+ {
+  "metric": "LCP",
+  "value": 23.83990055917926,
+  "index": 66
+ },
+ {
+  "metric": "LCP",
+  "value": 23.83990055915542,
+  "index": 65
+ },
+ {
+  "metric": "LCP",
+  "value": 23.8399005592031,
+  "index": 66
+ },
+ {
+  "metric": "LCP",
+  "value": 25.031895587138223,
+  "index": 67
+ },
+ {
+  "metric": "LCP",
+  "value": 25.03189558711319,
+  "index": 66
+ },
+ {
+  "metric": "LCP",
+  "value": 25.031895587163255,
+  "index": 67
+ },
+ {
+  "metric": "LCP",
+  "value": 26.283490366495133,
+  "index": 68
+ },
+ {
+  "metric": "LCP",
+  "value": 26.28349036646885,
+  "index": 67
+ },
+ {
+  "metric": "LCP",
+  "value": 26.28349036652142,
+  "index": 68
+ },
+ {
+  "metric": "LCP",
+  "value": 27.597664884819892,
+  "index": 68
+ },
+ {
+  "metric": "LCP",
+  "value": 27.597664884792295,
+  "index": 68
+ },
+ {
+  "metric": "LCP",
+  "value": 27.597664884847493,
+  "index": 69
+ },
+ {
+  "metric": "LCP",
+  "value": 28.97754812906089,
+  "index": 70
+ },
+ {
+  "metric": "LCP",
+  "value": 28.977548129031913,
+  "index": 69
+ },
+ {
+  "metric": "LCP",
+  "value": 28.977548129089868,
+  "index": 70
+ },
+ {
+  "metric": "LCP",
+  "value": 30.426425535513935,
+  "index": 71
+ },
+ {
+  "metric": "LCP",
+  "value": 30.42642553548351,
+  "index": 70
+ },
+ {
+  "metric": "LCP",
+  "value": 30.426425535544364,
+  "index": 71
+ },
+ {
+  "metric": "LCP",
+  "value": 31.947746812289633,
+  "index": 72
+ },
+ {
+  "metric": "LCP",
+  "value": 31.947746812257687,
+  "index": 71
+ },
+ {
+  "metric": "LCP",
+  "value": 31.947746812321583,
+  "index": 72
+ },
+ {
+  "metric": "LCP",
+  "value": 33.54513415290411,
+  "index": 72
+ },
+ {
+  "metric": "LCP",
+  "value": 33.54513415287057,
+  "index": 72
+ },
+ {
+  "metric": "LCP",
+  "value": 33.545134152937656,
+  "index": 73
+ },
+ {
+  "metric": "LCP",
+  "value": 35.222390860549325,
+  "index": 74
+ },
+ {
+  "metric": "LCP",
+  "value": 35.2223908605141,
+  "index": 73
+ },
+ {
+  "metric": "LCP",
+  "value": 35.222390860584554,
+  "index": 74
+ },
+ {
+  "metric": "LCP",
+  "value": 36.98351040357679,
+  "index": 75
+ },
+ {
+  "metric": "LCP",
+  "value": 36.9835104035398,
+  "index": 74
+ },
+ {
+  "metric": "LCP",
+  "value": 36.98351040361377,
+  "index": 75
+ },
+ {
+  "metric": "LCP",
+  "value": 38.83268592375563,
+  "index": 76
+ },
+ {
+  "metric": "LCP",
+  "value": 38.8326859237168,
+  "index": 75
+ },
+ {
+  "metric": "LCP",
+  "value": 38.83268592379447,
+  "index": 76
+ },
+ {
+  "metric": "LCP",
+  "value": 40.77432021994341,
+  "index": 76
+ },
+ {
+  "metric": "LCP",
+  "value": 40.77432021990264,
+  "index": 76
+ },
+ {
+  "metric": "LCP",
+  "value": 40.77432021998419,
+  "index": 77
+ },
+ {
+  "metric": "LCP",
+  "value": 42.81303623094059,
+  "index": 78
+ },
+ {
+  "metric": "LCP",
+  "value": 42.81303623089778,
+  "index": 77
+ },
+ {
+  "metric": "LCP",
+  "value": 42.81303623098341,
+  "index": 78
+ },
+ {
+  "metric": "LCP",
+  "value": 44.95368804248762,
+  "index": 79
+ },
+ {
+  "metric": "LCP",
+  "value": 44.953688042442664,
+  "index": 78
+ },
+ {
+  "metric": "LCP",
+  "value": 44.953688042532576,
+  "index": 79
+ },
+ {
+  "metric": "LCP",
+  "value": 47.201372444612,
+  "index": 80
+ },
+ {
+  "metric": "LCP",
+  "value": 47.2013724445648,
+  "index": 79
+ },
+ {
+  "metric": "LCP",
+  "value": 47.20137244465921,
+  "index": 80
+ },
+ {
+  "metric": "LCP",
+  "value": 49.561441066842605,
+  "index": 81
+ },
+ {
+  "metric": "LCP",
+  "value": 49.561441066793044,
+  "index": 80
+ },
+ {
+  "metric": "LCP",
+  "value": 49.56144106689217,
+  "index": 81
+ },
+ {
+  "metric": "LCP",
+  "value": 52.039513120184736,
+  "index": 82
+ },
+ {
+  "metric": "LCP",
+  "value": 52.039513120132696,
+  "index": 81
+ },
+ {
+  "metric": "LCP",
+  "value": 52.03951312023678,
+  "index": 82
+ },
+ {
+  "metric": "LCP",
+  "value": 54.641488776193974,
+  "index": 82
+ },
+ {
+  "metric": "LCP",
+  "value": 54.64148877613933,
+  "index": 82
+ },
+ {
+  "metric": "LCP",
+  "value": 54.64148877624862,
+  "index": 83
+ },
+ {
+  "metric": "LCP",
+  "value": 57.37356321500368,
+  "index": 83
+ },
+ {
+  "metric": "LCP",
+  "value": 57.37356321494631,
+  "index": 83
+ },
+ {
+  "metric": "LCP",
+  "value": 57.373563215061054,
+  "index": 84
+ },
+ {
+  "metric": "LCP",
+  "value": 60.24224137575386,
+  "index": 84
+ },
+ {
+  "metric": "LCP",
+  "value": 60.242241375693624,
+  "index": 84
+ },
+ {
+  "metric": "LCP",
+  "value": 60.24224137581411,
+  "index": 85
+ },
+ {
+  "metric": "LCP",
+  "value": 63.25435344454156,
+  "index": 86
+ },
+ {
+  "metric": "LCP",
+  "value": 63.254353444478305,
+  "index": 85
+ },
+ {
+  "metric": "LCP",
+  "value": 63.25435344460482,
+  "index": 86
+ },
+ {
+  "metric": "LCP",
+  "value": 66.41707111676864,
+  "index": 87
+ },
+ {
+  "metric": "LCP",
+  "value": 66.41707111670222,
+  "index": 86
+ },
+ {
+  "metric": "LCP",
+  "value": 66.41707111683506,
+  "index": 87
+ },
+ {
+  "metric": "LCP",
+  "value": 69.73792467260708,
+  "index": 88
+ },
+ {
+  "metric": "LCP",
+  "value": 69.73792467253735,
+  "index": 87
+ },
+ {
+  "metric": "LCP",
+  "value": 69.73792467267683,
+  "index": 88
+ },
+ {
+  "metric": "LCP",
+  "value": 73.22482090623743,
+  "index": 89
+ },
+ {
+  "metric": "LCP",
+  "value": 73.2248209061642,
+  "index": 88
+ },
+ {
+  "metric": "LCP",
+  "value": 73.22482090631065,
+  "index": 89
+ },
+ {
+  "metric": "LCP",
+  "value": 76.88606195154931,
+  "index": 90
+ },
+ {
+  "metric": "LCP",
+  "value": 76.88606195147243,
+  "index": 89
+ },
+ {
+  "metric": "LCP",
+  "value": 76.8860619516262,
+  "index": 90
+ },
+ {
+  "metric": "LCP",
+  "value": 80.73036504912677,
+  "index": 90
+ },
+ {
+  "metric": "LCP",
+  "value": 80.73036504904604,
+  "index": 90
+ },
+ {
+  "metric": "LCP",
+  "value": 80.7303650492075,
+  "index": 91
+ },
+ {
+  "metric": "LCP",
+  "value": 84.76688330158312,
+  "index": 91
+ },
+ {
+  "metric": "LCP",
+  "value": 84.76688330149835,
+  "index": 91
+ },
+ {
+  "metric": "LCP",
+  "value": 84.76688330166789,
+  "index": 92
+ },
+ {
+  "metric": "LCP",
+  "value": 89.00522746666228,
+  "index": 92
+ },
+ {
+  "metric": "LCP",
+  "value": 89.00522746657327,
+  "index": 92
+ },
+ {
+  "metric": "LCP",
+  "value": 89.0052274667513,
+  "index": 93
+ },
+ {
+  "metric": "LCP",
+  "value": 93.4554888399954,
+  "index": 94
+ },
+ {
+  "metric": "LCP",
+  "value": 93.45548883990195,
+  "index": 93
+ },
+ {
+  "metric": "LCP",
+  "value": 93.45548884008886,
+  "index": 94
+ },
+ {
+  "metric": "LCP",
+  "value": 98.12826328199516,
+  "index": 95
+ },
+ {
+  "metric": "LCP",
+  "value": 98.12826328189703,
+  "index": 94
+ },
+ {
+  "metric": "LCP",
+  "value": 98.1282632820933,
+  "index": 95
+ },
+ {
+  "metric": "LCP",
+  "value": 103.03467644609493,
+  "index": 96
+ },
+ {
+  "metric": "LCP",
+  "value": 103.0346764459919,
+  "index": 95
+ },
+ {
+  "metric": "LCP",
+  "value": 103.03467644619798,
+  "index": 96
+ },
+ {
+  "metric": "LCP",
+  "value": 108.18641026839968,
+  "index": 97
+ },
+ {
+  "metric": "LCP",
+  "value": 108.1864102682915,
+  "index": 96
+ },
+ {
+  "metric": "LCP",
+  "value": 108.18641026850788,
+  "index": 97
+ },
+ {
+  "metric": "LCP",
+  "value": 113.59573078181967,
+  "index": 98
+ },
+ {
+  "metric": "LCP",
+  "value": 113.59573078170608,
+  "index": 97
+ },
+ {
+  "metric": "LCP",
+  "value": 113.59573078193327,
+  "index": 98
+ },
+ {
+  "metric": "LCP",
+  "value": 119.27551732091065,
+  "index": 98
+ },
+ {
+  "metric": "LCP",
+  "value": 119.27551732079138,
+  "index": 98
+ },
+ {
+  "metric": "LCP",
+  "value": 119.27551732102994,
+  "index": 99
+ },
+ {
+  "metric": "LCP",
+  "value": 125.23929318695619,
+  "index": 99
+ },
+ {
+  "metric": "LCP",
+  "value": 125.23929318683095,
+  "index": 99
+ },
+ {
+  "metric": "LCP",
+  "value": 125.23929318708144,
+  "index": 100
+ },
+ {
+  "metric": "LCP",
+  "value": 131.50125784630401,
+  "index": 100
+ },
+ {
+  "metric": "LCP",
+  "value": 131.5012578461725,
+  "index": 100
+ },
+ {
+  "metric": "LCP",
+  "value": 131.50125784643552,
+  "index": 101
+ },
+ {
+  "metric": "LCP",
+  "value": 138.07632073861922,
+  "index": 102
+ },
+ {
+  "metric": "LCP",
+  "value": 138.07632073848114,
+  "index": 101
+ },
+ {
+  "metric": "LCP",
+  "value": 138.07632073875732,
+  "index": 102
+ },
+ {
+  "metric": "LCP",
+  "value": 144.9801367755502,
+  "index": 103
+ },
+ {
+  "metric": "LCP",
+  "value": 144.9801367754052,
+  "index": 102
+ },
+ {
+  "metric": "LCP",
+  "value": 144.98013677569517,
+  "index": 103
+ },
+ {
+  "metric": "LCP",
+  "value": 152.2291436143277,
+  "index": 104
+ },
+ {
+  "metric": "LCP",
+  "value": 152.22914361417548,
+  "index": 103
+ },
+ {
+  "metric": "LCP",
+  "value": 152.22914361447997,
+  "index": 104
+ },
+ {
+  "metric": "LCP",
+  "value": 159.84060079504408,
+  "index": 105
+ },
+ {
+  "metric": "LCP",
+  "value": 159.84060079488424,
+  "index": 104
+ },
+ {
+  "metric": "LCP",
+  "value": 159.84060079520393,
+  "index": 105
+ },
+ {
+  "metric": "LCP",
+  "value": 167.8326308347963,
+  "index": 105
+ },
+ {
+  "metric": "LCP",
+  "value": 167.83263083462847,
+  "index": 105
+ },
+ {
+  "metric": "LCP",
+  "value": 167.83263083496416,
+  "index": 106
+ },
+ {
+  "metric": "LCP",
+  "value": 176.22426237653613,
+  "index": 106
+ },
+ {
+  "metric": "LCP",
+  "value": 176.22426237635992,
+  "index": 106
+ },
+ {
+  "metric": "LCP",
+  "value": 176.22426237671237,
+  "index": 107
+ },
+ {
+  "metric": "LCP",
+  "value": 185.03547549536293,
+  "index": 107
+ },
+ {
+  "metric": "LCP",
+  "value": 185.0354754951779,
+  "index": 107
+ },
+ {
+  "metric": "LCP",
+  "value": 185.03547549554798,
+  "index": 108
+ },
+ {
+  "metric": "LCP",
+  "value": 194.2872492701311,
+  "index": 108
+ },
+ {
+  "metric": "LCP",
+  "value": 194.2872492699368,
+  "index": 108
+ },
+ {
+  "metric": "LCP",
+  "value": 194.2872492703254,
+  "index": 109
+ },
+ {
+  "metric": "LCP",
+  "value": 204.00161173363765,
+  "index": 110
+ },
+ {
+  "metric": "LCP",
+  "value": 204.00161173343363,
+  "index": 109
+ },
+ {
+  "metric": "LCP",
+  "value": 204.00161173384166,
+  "index": 110
+ },
+ {
+  "metric": "LCP",
+  "value": 214.20169232031955,
+  "index": 111
+ },
+ {
+  "metric": "LCP",
+  "value": 214.20169232010537,
+  "index": 110
+ },
+ {
+  "metric": "LCP",
+  "value": 214.20169232053377,
+  "index": 111
+ },
+ {
+  "metric": "LCP",
+  "value": 224.91177693633554,
+  "index": 112
+ },
+ {
+  "metric": "LCP",
+  "value": 224.91177693611064,
+  "index": 111
+ },
+ {
+  "metric": "LCP",
+  "value": 224.91177693656047,
+  "index": 112
+ },
+ {
+  "metric": "LCP",
+  "value": 236.15736578315233,
+  "index": 113
+ },
+ {
+  "metric": "LCP",
+  "value": 236.15736578291617,
+  "index": 112
+ },
+ {
+  "metric": "LCP",
+  "value": 236.1573657833885,
+  "index": 113
+ },
+ {
+  "metric": "LCP",
+  "value": 247.96523407230995,
+  "index": 113
+ },
+ {
+  "metric": "LCP",
+  "value": 247.965234072062,
+  "index": 113
+ },
+ {
+  "metric": "LCP",
+  "value": 247.96523407255793,
+  "index": 114
+ },
+ {
+  "metric": "LCP",
+  "value": 260.36349577592546,
+  "index": 114
+ },
+ {
+  "metric": "LCP",
+  "value": 260.3634957756651,
+  "index": 114
+ },
+ {
+  "metric": "LCP",
+  "value": 260.36349577618586,
+  "index": 115
+ },
+ {
+  "metric": "LCP",
+  "value": 273.38167056472173,
+  "index": 115
+ },
+ {
+  "metric": "LCP",
+  "value": 273.38167056444837,
+  "index": 115
+ },
+ {
+  "metric": "LCP",
+  "value": 273.38167056499515,
+  "index": 116
+ },
+ {
+  "metric": "LCP",
+  "value": 287.05075409295785,
+  "index": 116
+ },
+ {
+  "metric": "LCP",
+  "value": 287.0507540926708,
+  "index": 116
+ },
+ {
+  "metric": "LCP",
+  "value": 287.0507540932449,
+  "index": 117
+ },
+ {
+  "metric": "LCP",
+  "value": 301.40329179760573,
+  "index": 118
+ },
+ {
+  "metric": "LCP",
+  "value": 301.40329179730435,
+  "index": 117
+ },
+ {
+  "metric": "LCP",
+  "value": 301.4032917979072,
+  "index": 118
+ },
+ {
+  "metric": "LCP",
+  "value": 316.47345638748607,
+  "index": 119
+ },
+ {
+  "metric": "LCP",
+  "value": 316.4734563871696,
+  "index": 118
+ },
+ {
+  "metric": "LCP",
+  "value": 316.47345638780257,
+  "index": 119
+ },
+ {
+  "metric": "LCP",
+  "value": 332.29712920686035,
+  "index": 120
+ },
+ {
+  "metric": "LCP",
+  "value": 332.29712920652804,
+  "index": 119
+ },
+ {
+  "metric": "LCP",
+  "value": 332.29712920719265,
+  "index": 120
+ },
+ {
+  "metric": "LCP",
+  "value": 348.9119856672034,
+  "index": 121
+ },
+ {
+  "metric": "LCP",
+  "value": 348.9119856668545,
+  "index": 120
+ },
+ {
+  "metric": "LCP",
+  "value": 348.91198566755236,
+  "index": 121
+ },
+ {
+  "metric": "LCP",
+  "value": 366.3575849505636,
+  "index": 121
+ },
+ {
+  "metric": "LCP",
+  "value": 366.35758495019724,
+  "index": 121
+ },
+ {
+  "metric": "LCP",
+  "value": 366.35758495093,
+  "index": 122
+ },
+ {
+  "metric": "LCP",
+  "value": 384.6754641980918,
+  "index": 122
+ },
+ {
+  "metric": "LCP",
+  "value": 384.67546419770713,
+  "index": 122
+ },
+ {
+  "metric": "LCP",
+  "value": 384.6754641984765,
+  "index": 123
+ },
+ {
+  "metric": "LCP",
+  "value": 403.9092374079964,
+  "index": 123
+ },
+ {
+  "metric": "LCP",
+  "value": 403.9092374075925,
+  "index": 123
+ },
+ {
+  "metric": "LCP",
+  "value": 403.9092374084003,
+  "index": 124
+ },
+ {
+  "metric": "LCP",
+  "value": 424.1046992783962,
+  "index": 124
+ },
+ {
+  "metric": "LCP",
+  "value": 424.1046992779721,
+  "index": 124
+ },
+ {
+  "metric": "LCP",
+  "value": 424.10469927882036,
+  "index": 125
+ },
+ {
+  "metric": "LCP",
+  "value": 445.30993424231605,
+  "index": 126
+ },
+ {
+  "metric": "LCP",
+  "value": 445.30993424187074,
+  "index": 125
+ },
+ {
+  "metric": "LCP",
+  "value": 445.3099342427614,
+  "index": 126
+ },
+ {
+  "metric": "LCP",
+  "value": 467.57543095443185,
+  "index": 127
+ },
+ {
+  "metric": "LCP",
+  "value": 467.5754309539643,
+  "index": 126
+ },
+ {
+  "metric": "LCP",
+  "value": 467.57543095489945,
+  "index": 127
+ },
+ {
+  "metric": "LCP",
+  "value": 490.95420250215346,
+  "index": 128
+ },
+ {
+  "metric": "LCP",
+  "value": 490.9542025016625,
+  "index": 127
+ },
+ {
+  "metric": "LCP",
+  "value": 490.9542025026445,
+  "index": 128
+ },
+ {
+  "metric": "LCP",
+  "value": 515.5019126272612,
+  "index": 128
+ },
+ {
+  "metric": "LCP",
+  "value": 515.5019126267457,
+  "index": 128
+ },
+ {
+  "metric": "LCP",
+  "value": 515.5019126277767,
+  "index": 129
+ },
+ {
+  "metric": "LCP",
+  "value": 541.2770082586243,
+  "index": 129
+ },
+ {
+  "metric": "LCP",
+  "value": 541.277008258083,
+  "index": 129
+ },
+ {
+  "metric": "LCP",
+  "value": 541.2770082591657,
+  "index": 130
+ },
+ {
+  "metric": "LCP",
+  "value": 568.3408586715555,
+  "index": 131
+ },
+ {
+  "metric": "LCP",
+  "value": 568.3408586709871,
+  "index": 130
+ },
+ {
+  "metric": "LCP",
+  "value": 568.3408586721239,
+  "index": 131
+ },
+ {
+  "metric": "LCP",
+  "value": 25152,
+  "index": 208
+ },
+ {
+  "metric": "LCP",
+  "value": 50865,
+  "index": 223
+ },
+ {
+  "metric": "LCP",
+  "value": 34189,
+  "index": 214
+ },
+ {
+  "metric": "LCP",
+  "value": 25939.068606754317,
+  "index": 209
+ },
+ {
+  "metric": "LCP",
+  "value": 26979,
+  "index": 210
+ },
+ {
+  "metric": "LCP",
+  "value": 96830.17575667166,
+  "index": 236
+ },
+ {
+  "metric": "LCP",
+  "value": 82408,
+  "index": 233
+ },
+ {
+  "metric": "LCP",
+  "value": 98795,
+  "index": 236
+ },
+ {
+  "metric": "LCP",
+  "value": 106079,
+  "index": 238
+ },
+ {
+  "metric": "LCP",
+  "value": 1987.7157103209697,
+  "index": 156
+ },
+ {
+  "metric": "LCP",
+  "value": 97910.93214415894,
+  "index": 236
+ },
+ {
+  "metric": "LCP",
+  "value": 97897,
+  "index": 236
+ },
+ {
+  "metric": "LCP",
+  "value": 37543,
+  "index": 216
+ },
+ {
+  "metric": "LCP",
+  "value": 114027.68197442143,
+  "index": 239
+ },
+ {
+  "metric": "LCP",
+  "value": 96195.05635118799,
+  "index": 236
+ },
+ {
+  "metric": "LCP",
+  "value": 50817,
+  "index": 223
+ },
+ {
+  "metric": "LCP",
+  "value": 111265.40190420457,
+  "index": 239
+ },
+ {
+  "metric": "LCP",
+  "value": 11139,
+  "index": 191
+ },
+ {
+  "metric": "LCP",
+  "value": 18071.531455010616,
+  "index": 201
+ },
+ {
+  "metric": "LCP",
+  "value": 22221.201253106243,
+  "index": 206
+ },
+ {
+  "metric": "LCP",
+  "value": 66316,
+  "index": 228
+ },
+ {
+  "metric": "LCP",
+  "value": 77670.10757020955,
+  "index": 231
+ },
+ {
+  "metric": "LCP",
+  "value": 10125,
+  "index": 190
+ },
+ {
+  "metric": "LCP",
+  "value": 74411,
+  "index": 230
+ },
+ {
+  "metric": "LCP",
+  "value": 105364,
+  "index": 238
+ },
+ {
+  "metric": "LCP",
+  "value": 63187,
+  "index": 227
+ },
+ {
+  "metric": "LCP",
+  "value": 64735.905469021876,
+  "index": 228
+ },
+ {
+  "metric": "LCP",
+  "value": 66734.54521890932,
+  "index": 228
+ },
+ {
+  "metric": "LCP",
+  "value": 112570.50791401567,
+  "index": 239
+ },
+ {
+  "metric": "LCP",
+  "value": 32803,
+  "index": 214
+ },
+ {
+  "metric": "LCP",
+  "value": 47844.876056053065,
+  "index": 221
+ },
+ {
+  "metric": "LCP",
+  "value": 344,
+  "index": 120
+ },
+ {
+  "metric": "LCP",
+  "value": 99807,
+  "index": 236
+ },
+ {
+  "metric": "LCP",
+  "value": 31748.145005182523,
+  "index": 213
+ },
+ {
+  "metric": "LCP",
+  "value": 58992,
+  "index": 226
+ },
+ {
+  "metric": "LCP",
+  "value": 67242,
+  "index": 228
+ },
+ {
+  "metric": "LCP",
+  "value": 118228,
+  "index": 240
+ },
+ {
+  "metric": "LCP",
+  "value": 8277,
+  "index": 185
+ },
+ {
+  "metric": "LCP",
+  "value": 44825,
+  "index": 220
+ },
+ {
+  "metric": "LCP",
+  "value": 108280,
+  "index": 238
+ },
+ {
+  "metric": "LCP",
+  "value": 68766,
+  "index": 229
+ },
+ {
+  "metric": "LCP",
+  "value": 26529,
+  "index": 209
+ },
+ {
+  "metric": "LCP",
+  "value": 4515,
+  "index": 173
+ },
+ {
+  "metric": "LCP",
+  "value": 88898,
+  "index": 234
+ },
+ {
+  "metric": "LCP",
+  "value": 97101,
+  "index": 236
+ },
+ {
+  "metric": "LCP",
+  "value": 88853,
+  "index": 234
+ },
+ {
+  "metric": "LCP",
+  "value": 45640,
+  "index": 220
+ },
+ {
+  "metric": "LCP",
+  "value": 46465,
+  "index": 221
+ },
+ {
+  "metric": "LCP",
+  "value": 30854.42353760797,
+  "index": 212
+ },
+ {
+  "metric": "LCP",
+  "value": 119063,
+  "index": 240
+ },
+ {
+  "metric": "LCP",
+  "value": 39066,
+  "index": 217
+ },
+ {
+  "metric": "LCP",
+  "value": 101705.36603541378,
+  "index": 237
+ },
+ {
+  "metric": "LCP",
+  "value": 34934.43161520787,
+  "index": 215
+ },
+ {
+  "metric": "LCP",
+  "value": 147.8957853528584,
+  "index": 103
+ },
+ {
+  "metric": "LCP",
+  "value": 110484.01959202337,
+  "index": 239
+ },
+ {
+  "metric": "LCP",
+  "value": 43432,
+  "index": 219
+ },
+ {
+  "metric": "LCP",
+  "value": 1048,
+  "index": 143
+ },
+ {
+  "metric": "LCP",
+  "value": 103086,
+  "index": 237
+ },
+ {
+  "metric": "LCP",
+  "value": 118379,
+  "index": 240
+ },
+ {
+  "metric": "LCP",
+  "value": 76680,
+  "index": 231
+ },
+ {
+  "metric": "LCP",
+  "value": 81190.15876063856,
+  "index": 232
+ },
+ {
+  "metric": "LCP",
+  "value": 110453.08412995127,
+  "index": 239
+ },
+ {
+  "metric": "LCP",
+  "value": 75210,
+  "index": 231
+ },
+ {
+  "metric": "LCP",
+  "value": 104244,
+  "index": 237
+ },
+ {
+  "metric": "LCP",
+  "value": 37728.75221629192,
+  "index": 216
+ },
+ {
+  "metric": "LCP",
+  "value": 92640,
+  "index": 235
+ },
+ {
+  "metric": "LCP",
+  "value": 114971,
+  "index": 239
+ },
+ {
+  "metric": "LCP",
+  "value": 31112.52143012237,
+  "index": 213
+ },
+ {
+  "metric": "LCP",
+  "value": 109619,
+  "index": 238
+ },
+ {
+  "metric": "LCP",
+  "value": 45461.09040670629,
+  "index": 220
+ },
+ {
+  "metric": "LCP",
+  "value": 90574,
+  "index": 234
+ },
+ {
+  "metric": "LCP",
+  "value": 25023,
+  "index": 208
+ },
+ {
+  "metric": "LCP",
+  "value": 11586,
+  "index": 192
+ },
+ {
+  "metric": "LCP",
+  "value": 96165.9671384534,
+  "index": 236
+ },
+ {
+  "metric": "LCP",
+  "value": 103381,
+  "index": 237
+ },
+ {
+  "metric": "LCP",
+  "value": 48061.99060171281,
+  "index": 221
+ },
+ {
+  "metric": "LCP",
+  "value": 6104,
+  "index": 179
+ },
+ {
+  "metric": "LCP",
+  "value": 116852,
+  "index": 240
+ },
+ {
+  "metric": "LCP",
+  "value": 65428.64198270877,
+  "index": 228
+ },
+ {
+  "metric": "LCP",
+  "value": 3945,
+  "index": 170
+ },
+ {
+  "metric": "LCP",
+  "value": 63318,
+  "index": 227
+ },
+ {
+  "metric": "LCP",
+  "value": 67953,
+  "index": 229
+ },
+ {
+  "metric": "LCP",
+  "value": 117505,
+  "index": 240
+ },
+ {
+  "metric": "LCP",
+  "value": 49561.2398922529,
+  "index": 222
+ },
+ {
+  "metric": "LCP",
+  "value": 119122,
+  "index": 240
+ },
+ {
+  "metric": "LCP",
+  "value": 23578,
+  "index": 207
+ },
+ {
+  "metric": "LCP",
+  "value": 75532,
+  "index": 231
+ },
+ {
+  "metric": "LCP",
+  "value": 82242.7983806456,
+  "index": 232
+ },
+ {
+  "metric": "INP",
+  "value": 0,
+  "index": 0
+ },
+ {
+  "metric": "INP",
+  "value": 0,
+  "index": 0
+ },
+ {
+  "metric": "INP",
+  "value": -1,
+  "index": 0
+ },
+ {
+  "metric": "INP",
+  "value": -0.001,
+  "index": 0
+ },
+ {
+  "metric": "INP",
+  "value": -120000,
+  "index": 0
+ },
+ {
+  "metric": "INP",
+  "value": 1e-12,
+  "index": 1
+ },
+ {
+  "metric": "INP",
+  "value": 5e-324,
+  "index": 1
+ },
+ {
+  "metric": "INP",
+  "value": 0.5,
+  "index": 1
+ },
+ {
+  "metric": "INP",
+  "value": 0.999999,
+  "index": 1
+ },
+ {
+  "metric": "INP",
+  "value": 1,
+  "index": 1
+ },
+ {
+  "metric": "INP",
+  "value": 1.0000001,
+  "index": 1
+ },
+ {
+  "metric": "INP",
+  "value": 1.05,
+  "index": 2
+ },
+ {
+  "metric": "INP",
+  "value": 1.025,
+  "index": 1
+ },
+ {
+  "metric": "INP",
+  "value": 2,
+  "index": 15
+ },
+ {
+  "metric": "INP",
+  "value": 10,
+  "index": 48
+ },
+ {
+  "metric": "INP",
+  "value": 100,
+  "index": 95
+ },
+ {
+  "metric": "INP",
+  "value": 1000,
+  "index": 142
+ },
+ {
+  "metric": "INP",
+  "value": 120000,
+  "index": 240
+ },
+ {
+  "metric": "INP",
+  "value": 1000000000,
+  "index": 425
+ },
+ {
+  "metric": "INP",
+  "value": 1,
+  "index": 1
+ },
+ {
+  "metric": "INP",
+  "value": 0.999999999999,
+  "index": 1
+ },
+ {
+  "metric": "INP",
+  "value": 1.000000000001,
+  "index": 1
+ },
+ {
+  "metric": "INP",
+  "value": 1.05,
+  "index": 2
+ },
+ {
+  "metric": "INP",
+  "value": 1.04999999999895,
+  "index": 1
+ },
+ {
+  "metric": "INP",
+  "value": 1.05000000000105,
+  "index": 2
+ },
+ {
+  "metric": "INP",
+  "value": 1.1025,
+  "index": 2
+ },
+ {
+  "metric": "INP",
+  "value": 1.1024999999988976,
+  "index": 2
+ },
+ {
+  "metric": "INP",
+  "value": 1.1025000000011027,
+  "index": 3
+ },
+ {
+  "metric": "INP",
+  "value": 1.1576250000000001,
+  "index": 3
+ },
+ {
+  "metric": "INP",
+  "value": 1.1576249999988426,
+  "index": 3
+ },
+ {
+  "metric": "INP",
+  "value": 1.1576250000011579,
+  "index": 4
+ },
+ {
+  "metric": "INP",
+  "value": 1.2155062500000002,
+  "index": 5
+ },
+ {
+  "metric": "INP",
+  "value": 1.2155062499987848,
+  "index": 4
+ },
+ {
+  "metric": "INP",
+  "value": 1.215506250001216,
+  "index": 5
+ },
+ {
+  "metric": "INP",
+  "value": 1.2762815625000004,
+  "index": 6
+ },
+ {
+  "metric": "INP",
+  "value": 1.276281562498724,
+  "index": 5
+ },
+ {
+  "metric": "INP",
+  "value": 1.2762815625012767,
+  "index": 6
+ },
+ {
+  "metric": "INP",
+  "value": 1.3400956406250004,
+  "index": 7
+ },
+ {
+  "metric": "INP",
+  "value": 1.3400956406236604,
+  "index": 6
+ },
+ {
+  "metric": "INP",
+  "value": 1.3400956406263407,
+  "index": 7
+ },
+ {
+  "metric": "INP",
+  "value": 1.4071004226562505,
+  "index": 8
+ },
+ {
+  "metric": "INP",
+  "value": 1.4071004226548434,
+  "index": 7
+ },
+ {
+  "metric": "INP",
+  "value": 1.4071004226576578,
+  "index": 8
+ },
+ {
+  "metric": "INP",
+  "value": 1.477455443789063,
+  "index": 9
+ },
+ {
+  "metric": "INP",
+  "value": 1.4774554437875855,
+  "index": 8
+ },
+ {
+  "metric": "INP",
+  "value": 1.4774554437905405,
+  "index": 9
+ },
+ {
+  "metric": "INP",
+  "value": 1.5513282159785162,
+  "index": 10
+ },
+ {
+  "metric": "INP",
+  "value": 1.551328215976965,
+  "index": 9
+ },
+ {
+  "metric": "INP",
+  "value": 1.5513282159800676,
+  "index": 10
+ },
+ {
+  "metric": "INP",
+  "value": 1.628894626777442,
+  "index": 10
+ },
+ {
+  "metric": "INP",
+  "value": 1.628894626775813,
+  "index": 10
+ },
+ {
+  "metric": "INP",
+  "value": 1.6288946267790712,
+  "index": 11
+ },
+ {
+  "metric": "INP",
+  "value": 1.7103393581163142,
+  "index": 11
+ },
+ {
+  "metric": "INP",
+  "value": 1.7103393581146038,
+  "index": 11
+ },
+ {
+  "metric": "INP",
+  "value": 1.7103393581180246,
+  "index": 12
+ },
+ {
+  "metric": "INP",
+  "value": 1.79585632602213,
+  "index": 13
+ },
+ {
+  "metric": "INP",
+  "value": 1.7958563260203342,
+  "index": 12
+ },
+ {
+  "metric": "INP",
+  "value": 1.7958563260239262,
+  "index": 13
+ },
+ {
+  "metric": "INP",
+  "value": 1.8856491423232367,
+  "index": 14
+ },
+ {
+  "metric": "INP",
+  "value": 1.885649142321351,
+  "index": 13
+ },
+ {
+  "metric": "INP",
+  "value": 1.8856491423251225,
+  "index": 14
+ },
+ {
+  "metric": "INP",
+  "value": 1.9799315994393987,
+  "index": 15
+ },
+ {
+  "metric": "INP",
+  "value": 1.9799315994374187,
+  "index": 14
+ },
+ {
+  "metric": "INP",
+  "value": 1.9799315994413789,
+  "index": 15
+ },
+ {
+  "metric": "INP",
+  "value": 2.0789281794113688,
+  "index": 16
+ },
+ {
+  "metric": "INP",
+  "value": 2.07892817940929,
+  "index": 15
+ },
+ {
+  "metric": "INP",
+  "value": 2.078928179413448,
+  "index": 16
+ },
+ {
+  "metric": "INP",
+  "value": 2.182874588381937,
+  "index": 16
+ },
+ {
+  "metric": "INP",
+  "value": 2.1828745883797542,
+  "index": 16
+ },
+ {
+  "metric": "INP",
+  "value": 2.18287458838412,
+  "index": 17
+ },
+ {
+  "metric": "INP",
+  "value": 2.292018317801034,
+  "index": 17
+ },
+ {
+  "metric": "INP",
+  "value": 2.292018317798742,
+  "index": 17
+ },
+ {
+  "metric": "INP",
+  "value": 2.2920183178033264,
+  "index": 18
+ },
+ {
+  "metric": "INP",
+  "value": 2.4066192336910857,
+  "index": 18
+ },
+ {
+  "metric": "INP",
+  "value": 2.406619233688679,
+  "index": 18
+ },
+ {
+  "metric": "INP",
+  "value": 2.4066192336934926,
+  "index": 19
+ },
+ {
+  "metric": "INP",
+  "value": 2.5269501953756404,
+  "index": 20
+ },
+ {
+  "metric": "INP",
+  "value": 2.5269501953731135,
+  "index": 19
+ },
+ {
+  "metric": "INP",
+  "value": 2.5269501953781677,
+  "index": 20
+ },
+ {
+  "metric": "INP",
+  "value": 2.653297705144422,
+  "index": 20
+ },
+ {
+  "metric": "INP",
+  "value": 2.6532977051417688,
+  "index": 20
+ },
+ {
+  "metric": "INP",
+  "value": 2.6532977051470756,
+  "index": 21
+ },
+ {
+  "metric": "INP",
+  "value": 2.7859625904016436,
+  "index": 21
+ },
+ {
+  "metric": "INP",
+  "value": 2.785962590398858,
+  "index": 21
+ },
+ {
+  "metric": "INP",
+  "value": 2.78596259040443,
+  "index": 22
+ },
+ {
+  "metric": "INP",
+  "value": 2.925260719921726,
+  "index": 23
+ },
+ {
+  "metric": "INP",
+  "value": 2.9252607199188008,
+  "index": 22
+ },
+ {
+  "metric": "INP",
+  "value": 2.9252607199246516,
+  "index": 23
+ },
+ {
+  "metric": "INP",
+  "value": 3.0715237559178123,
+  "index": 23
+ },
+ {
+  "metric": "INP",
+  "value": 3.071523755914741,
+  "index": 23
+ },
+ {
+  "metric": "INP",
+  "value": 3.071523755920884,
+  "index": 24
+ },
+ {
+  "metric": "INP",
+  "value": 3.225099943713703,
+  "index": 24
+ },
+ {
+  "metric": "INP",
+  "value": 3.225099943710478,
+  "index": 24
+ },
+ {
+  "metric": "INP",
+  "value": 3.2250999437169283,
+  "index": 25
+ },
+ {
+  "metric": "INP",
+  "value": 3.3863549408993885,
+  "index": 25
+ },
+ {
+  "metric": "INP",
+  "value": 3.3863549408960023,
+  "index": 25
+ },
+ {
+  "metric": "INP",
+  "value": 3.386354940902775,
+  "index": 26
+ },
+ {
+  "metric": "INP",
+  "value": 3.555672687944358,
+  "index": 26
+ },
+ {
+  "metric": "INP",
+  "value": 3.5556726879408025,
+  "index": 26
+ },
+ {
+  "metric": "INP",
+  "value": 3.5556726879479137,
+  "index": 27
+ },
+ {
+  "metric": "INP",
+  "value": 3.733456322341576,
+  "index": 27
+ },
+ {
+  "metric": "INP",
+  "value": 3.7334563223378425,
+  "index": 27
+ },
+ {
+  "metric": "INP",
+  "value": 3.73345632234531,
+  "index": 28
+ },
+ {
+  "metric": "INP",
+  "value": 3.920129138458655,
+  "index": 29
+ },
+ {
+  "metric": "INP",
+  "value": 3.920129138454735,
+  "index": 28
+ },
+ {
+  "metric": "INP",
+  "value": 3.9201291384625754,
+  "index": 29
+ },
+ {
+  "metric": "INP",
+  "value": 4.116135595381588,
+  "index": 30
+ },
+ {
+  "metric": "INP",
+  "value": 4.1161355953774725,
+  "index": 29
+ },
+ {
+  "metric": "INP",
+  "value": 4.116135595385705,
+  "index": 30
+ },
+ {
+  "metric": "INP",
+  "value": 4.321942375150668,
+  "index": 31
+ },
+ {
+  "metric": "INP",
+  "value": 4.321942375146346,
+  "index": 30
+ },
+ {
+  "metric": "INP",
+  "value": 4.321942375154991,
+  "index": 31
+ },
+ {
+  "metric": "INP",
+  "value": 4.538039493908201,
+  "index": 31
+ },
+ {
+  "metric": "INP",
+  "value": 4.538039493903663,
+  "index": 31
+ },
+ {
+  "metric": "INP",
+  "value": 4.5380394939127395,
+  "index": 32
+ },
+ {
+  "metric": "INP",
+  "value": 4.764941468603611,
+  "index": 33
+ },
+ {
+  "metric": "INP",
+  "value": 4.764941468598846,
+  "index": 32
+ },
+ {
+  "metric": "INP",
+  "value": 4.764941468608376,
+  "index": 33
+ },
+ {
+  "metric": "INP",
+  "value": 5.003188542033792,
+  "index": 34
+ },
+ {
+  "metric": "INP",
+  "value": 5.003188542028789,
+  "index": 33
+ },
+ {
+  "metric": "INP",
+  "value": 5.003188542038796,
+  "index": 34
+ },
+ {
+  "metric": "INP",
+  "value": 5.253347969135482,
+  "index": 34
+ },
+ {
+  "metric": "INP",
+  "value": 5.253347969130228,
+  "index": 34
+ },
+ {
+  "metric": "INP",
+  "value": 5.253347969140735,
+  "index": 35
+ },
+ {
+  "metric": "INP",
+  "value": 5.5160153675922565,
+  "index": 36
+ },
+ {
+  "metric": "INP",
+  "value": 5.516015367586741,
+  "index": 35
+ },
+ {
+  "metric": "INP",
+  "value": 5.516015367597773,
+  "index": 36
+ },
+ {
+  "metric": "INP",
+  "value": 5.791816135971869,
+  "index": 36
+ },
+ {
+  "metric": "INP",
+  "value": 5.791816135966077,
+  "index": 36
+ },
+ {
+  "metric": "INP",
+  "value": 5.791816135977662,
+  "index": 37
+ },
+ {
+  "metric": "INP",
+  "value": 6.081406942770463,
+  "index": 38
+ },
+ {
+  "metric": "INP",
+  "value": 6.0814069427643815,
+  "index": 37
+ },
+ {
+  "metric": "INP",
+  "value": 6.081406942776545,
+  "index": 38
+ },
+ {
+  "metric": "INP",
+  "value": 6.385477289908986,
+  "index": 38
+ },
+ {
+  "metric": "INP",
+  "value": 6.385477289902601,
+  "index": 38
+ },
+ {
+  "metric": "INP",
+  "value": 6.3854772899153724,
+  "index": 39
+ },
+ {
+  "metric": "INP",
+  "value": 6.704751154404436,
+  "index": 40
+ },
+ {
+  "metric": "INP",
+  "value": 6.704751154397731,
+  "index": 39
+ },
+ {
+  "metric": "INP",
+  "value": 6.704751154411142,
+  "index": 40
+ },
+ {
+  "metric": "INP",
+  "value": 7.039988712124658,
+  "index": 40
+ },
+ {
+  "metric": "INP",
+  "value": 7.039988712117618,
+  "index": 40
+ },
+ {
+  "metric": "INP",
+  "value": 7.039988712131699,
+  "index": 41
+ },
+ {
+  "metric": "INP",
+  "value": 7.391988147730891,
+  "index": 41
+ },
+ {
+  "metric": "INP",
+  "value": 7.3919881477235,
+  "index": 41
+ },
+ {
+  "metric": "INP",
+  "value": 7.391988147738283,
+  "index": 42
+ },
+ {
+  "metric": "INP",
+  "value": 7.761587555117436,
+  "index": 42
+ },
+ {
+  "metric": "INP",
+  "value": 7.761587555109674,
+  "index": 42
+ },
+ {
+  "metric": "INP",
+  "value": 7.761587555125199,
+  "index": 43
+ },
+ {
+  "metric": "INP",
+  "value": 8.14966693287331,
+  "index": 44
+ },
+ {
+  "metric": "INP",
+  "value": 8.14966693286516,
+  "index": 43
+ },
+ {
+  "metric": "INP",
+  "value": 8.149666932881459,
+  "index": 44
+ },
+ {
+  "metric": "INP",
+  "value": 8.557150279516975,
+  "index": 45
+ },
+ {
+  "metric": "INP",
+  "value": 8.557150279508418,
+  "index": 44
+ },
+ {
+  "metric": "INP",
+  "value": 8.557150279525533,
+  "index": 45
+ },
+ {
+  "metric": "INP",
+  "value": 8.985007793492823,
+  "index": 45
+ },
+ {
+  "metric": "INP",
+  "value": 8.985007793483838,
+  "index": 45
+ },
+ {
+  "metric": "INP",
+  "value": 8.98500779350181,
+  "index": 46
+ },
+ {
+  "metric": "INP",
+  "value": 9.434258183167465,
+  "index": 46
+ },
+ {
+  "metric": "INP",
+  "value": 9.43425818315803,
+  "index": 46
+ },
+ {
+  "metric": "INP",
+  "value": 9.4342581831769,
+  "index": 47
+ },
+ {
+  "metric": "INP",
+  "value": 9.905971092325839,
+  "index": 48
+ },
+ {
+  "metric": "INP",
+  "value": 9.905971092315934,
+  "index": 47
+ },
+ {
+  "metric": "INP",
+  "value": 9.905971092335745,
+  "index": 48
+ },
+ {
+  "metric": "INP",
+  "value": 10.401269646942131,
+  "index": 49
+ },
+ {
+  "metric": "INP",
+  "value": 10.40126964693173,
+  "index": 48
+ },
+ {
+  "metric": "INP",
+  "value": 10.401269646952533,
+  "index": 49
+ },
+ {
+  "metric": "INP",
+  "value": 10.921333129289238,
+  "index": 49
+ },
+ {
+  "metric": "INP",
+  "value": 10.921333129278317,
+  "index": 49
+ },
+ {
+  "metric": "INP",
+  "value": 10.92133312930016,
+  "index": 50
+ },
+ {
+  "metric": "INP",
+  "value": 11.4673997857537,
+  "index": 50
+ },
+ {
+  "metric": "INP",
+  "value": 11.467399785742234,
+  "index": 50
+ },
+ {
+  "metric": "INP",
+  "value": 11.467399785765169,
+  "index": 51
+ },
+ {
+  "metric": "INP",
+  "value": 12.040769775041387,
+  "index": 52
+ },
+ {
+  "metric": "INP",
+  "value": 12.040769775029347,
+  "index": 51
+ },
+ {
+  "metric": "INP",
+  "value": 12.040769775053429,
+  "index": 52
+ },
+ {
+  "metric": "INP",
+  "value": 12.642808263793455,
+  "index": 52
+ },
+ {
+  "metric": "INP",
+  "value": 12.642808263780813,
+  "index": 52
+ },
+ {
+  "metric": "INP",
+  "value": 12.6428082638061,
+  "index": 53
+ },
+ {
+  "metric": "INP",
+  "value": 13.27494867698313,
+  "index": 53
+ },
+ {
+  "metric": "INP",
+  "value": 13.274948676969855,
+  "index": 53
+ },
+ {
+  "metric": "INP",
+  "value": 13.274948676996406,
+  "index": 54
+ },
+ {
+  "metric": "INP",
+  "value": 13.938696110832286,
+  "index": 54
+ },
+ {
+  "metric": "INP",
+  "value": 13.938696110818347,
+  "index": 54
+ },
+ {
+  "metric": "INP",
+  "value": 13.938696110846225,
+  "index": 55
+ },
+ {
+  "metric": "INP",
+  "value": 14.6356309163739,
+  "index": 56
+ },
+ {
+  "metric": "INP",
+  "value": 14.635630916359265,
+  "index": 55
+ },
+ {
+  "metric": "INP",
+  "value": 14.635630916388537,
+  "index": 56
+ },
+ {
+  "metric": "INP",
+  "value": 15.367412462192597,
+  "index": 57
+ },
+ {
+  "metric": "INP",
+  "value": 15.36741246217723,
+  "index": 56
+ },
+ {
+  "metric": "INP",
+  "value": 15.367412462207966,
+  "index": 57
+ },
+ {
+  "metric": "INP",
+  "value": 16.135783085302226,
+  "index": 57
+ },
+ {
+  "metric": "INP",
+  "value": 16.13578308528609,
+  "index": 57
+ },
+ {
+  "metric": "INP",
+  "value": 16.135783085318362,
+  "index": 58
+ },
+ {
+  "metric": "INP",
+  "value": 16.94257223956734,
+  "index": 58
+ },
+ {
+  "metric": "INP",
+  "value": 16.942572239550397,
+  "index": 58
+ },
+ {
+  "metric": "INP",
+  "value": 16.942572239584283,
+  "index": 59
+ },
+ {
+  "metric": "INP",
+  "value": 17.789700851545707,
+  "index": 60
+ },
+ {
+  "metric": "INP",
+  "value": 17.78970085152792,
+  "index": 59
+ },
+ {
+  "metric": "INP",
+  "value": 17.7897008515635,
+  "index": 60
+ },
+ {
+  "metric": "INP",
+  "value": 18.679185894122995,
+  "index": 61
+ },
+ {
+  "metric": "INP",
+  "value": 18.679185894104315,
+  "index": 60
+ },
+ {
+  "metric": "INP",
+  "value": 18.679185894141675,
+  "index": 61
+ },
+ {
+  "metric": "INP",
+  "value": 19.613145188829144,
+  "index": 61
+ },
+ {
+  "metric": "INP",
+  "value": 19.613145188809533,
+  "index": 61
+ },
+ {
+  "metric": "INP",
+  "value": 19.61314518884876,
+  "index": 62
+ },
+ {
+  "metric": "INP",
+  "value": 20.5938024482706,
+  "index": 62
+ },
+ {
+  "metric": "INP",
+  "value": 20.593802448250006,
+  "index": 62
+ },
+ {
+  "metric": "INP",
+  "value": 20.593802448291196,
+  "index": 63
+ },
+ {
+  "metric": "INP",
+  "value": 21.62349257068413,
+  "index": 64
+ },
+ {
+  "metric": "INP",
+  "value": 21.62349257066251,
+  "index": 63
+ },
+ {
+  "metric": "INP",
+  "value": 21.623492570705757,
+  "index": 64
+ },
+ {
+  "metric": "INP",
+  "value": 22.70466719921834,
+  "index": 64
+ },
+ {
+  "metric": "INP",
+  "value": 22.704667199195633,
+  "index": 64
+ },
+ {
+  "metric": "INP",
+  "value": 22.704667199241044,
+  "index": 65
+ },
+ {
+  "metric": "INP",
+  "value": 23.83990055917926,
+  "index": 66
+ },
+ {
+  "metric": "INP",
+  "value": 23.83990055915542,
+  "index": 65
+ },
+ {
+  "metric": "INP",
+  "value": 23.8399005592031,
+  "index": 66
+ },
+ {
+  "metric": "INP",
+  "value": 25.031895587138223,
+  "index": 67
+ },
+ {
+  "metric": "INP",
+  "value": 25.03189558711319,
+  "index": 66
+ },
+ {
+  "metric": "INP",
+  "value": 25.031895587163255,
+  "index": 67
+ },
+ {
+  "metric": "INP",
+  "value": 26.283490366495133,
+  "index": 68
+ },
+ {
+  "metric": "INP",
+  "value": 26.28349036646885,
+  "index": 67
+ },
+ {
+  "metric": "INP",
+  "value": 26.28349036652142,
+  "index": 68
+ },
+ {
+  "metric": "INP",
+  "value": 27.597664884819892,
+  "index": 68
+ },
+ {
+  "metric": "INP",
+  "value": 27.597664884792295,
+  "index": 68
+ },
+ {
+  "metric": "INP",
+  "value": 27.597664884847493,
+  "index": 69
+ },
+ {
+  "metric": "INP",
+  "value": 28.97754812906089,
+  "index": 70
+ },
+ {
+  "metric": "INP",
+  "value": 28.977548129031913,
+  "index": 69
+ },
+ {
+  "metric": "INP",
+  "value": 28.977548129089868,
+  "index": 70
+ },
+ {
+  "metric": "INP",
+  "value": 30.426425535513935,
+  "index": 71
+ },
+ {
+  "metric": "INP",
+  "value": 30.42642553548351,
+  "index": 70
+ },
+ {
+  "metric": "INP",
+  "value": 30.426425535544364,
+  "index": 71
+ },
+ {
+  "metric": "INP",
+  "value": 31.947746812289633,
+  "index": 72
+ },
+ {
+  "metric": "INP",
+  "value": 31.947746812257687,
+  "index": 71
+ },
+ {
+  "metric": "INP",
+  "value": 31.947746812321583,
+  "index": 72
+ },
+ {
+  "metric": "INP",
+  "value": 33.54513415290411,
+  "index": 72
+ },
+ {
+  "metric": "INP",
+  "value": 33.54513415287057,
+  "index": 72
+ },
+ {
+  "metric": "INP",
+  "value": 33.545134152937656,
+  "index": 73
+ },
+ {
+  "metric": "INP",
+  "value": 35.222390860549325,
+  "index": 74
+ },
+ {
+  "metric": "INP",
+  "value": 35.2223908605141,
+  "index": 73
+ },
+ {
+  "metric": "INP",
+  "value": 35.222390860584554,
+  "index": 74
+ },
+ {
+  "metric": "INP",
+  "value": 36.98351040357679,
+  "index": 75
+ },
+ {
+  "metric": "INP",
+  "value": 36.9835104035398,
+  "index": 74
+ },
+ {
+  "metric": "INP",
+  "value": 36.98351040361377,
+  "index": 75
+ },
+ {
+  "metric": "INP",
+  "value": 38.83268592375563,
+  "index": 76
+ },
+ {
+  "metric": "INP",
+  "value": 38.8326859237168,
+  "index": 75
+ },
+ {
+  "metric": "INP",
+  "value": 38.83268592379447,
+  "index": 76
+ },
+ {
+  "metric": "INP",
+  "value": 40.77432021994341,
+  "index": 76
+ },
+ {
+  "metric": "INP",
+  "value": 40.77432021990264,
+  "index": 76
+ },
+ {
+  "metric": "INP",
+  "value": 40.77432021998419,
+  "index": 77
+ },
+ {
+  "metric": "INP",
+  "value": 42.81303623094059,
+  "index": 78
+ },
+ {
+  "metric": "INP",
+  "value": 42.81303623089778,
+  "index": 77
+ },
+ {
+  "metric": "INP",
+  "value": 42.81303623098341,
+  "index": 78
+ },
+ {
+  "metric": "INP",
+  "value": 44.95368804248762,
+  "index": 79
+ },
+ {
+  "metric": "INP",
+  "value": 44.953688042442664,
+  "index": 78
+ },
+ {
+  "metric": "INP",
+  "value": 44.953688042532576,
+  "index": 79
+ },
+ {
+  "metric": "INP",
+  "value": 47.201372444612,
+  "index": 80
+ },
+ {
+  "metric": "INP",
+  "value": 47.2013724445648,
+  "index": 79
+ },
+ {
+  "metric": "INP",
+  "value": 47.20137244465921,
+  "index": 80
+ },
+ {
+  "metric": "INP",
+  "value": 49.561441066842605,
+  "index": 81
+ },
+ {
+  "metric": "INP",
+  "value": 49.561441066793044,
+  "index": 80
+ },
+ {
+  "metric": "INP",
+  "value": 49.56144106689217,
+  "index": 81
+ },
+ {
+  "metric": "INP",
+  "value": 52.039513120184736,
+  "index": 82
+ },
+ {
+  "metric": "INP",
+  "value": 52.039513120132696,
+  "index": 81
+ },
+ {
+  "metric": "INP",
+  "value": 52.03951312023678,
+  "index": 82
+ },
+ {
+  "metric": "INP",
+  "value": 54.641488776193974,
+  "index": 82
+ },
+ {
+  "metric": "INP",
+  "value": 54.64148877613933,
+  "index": 82
+ },
+ {
+  "metric": "INP",
+  "value": 54.64148877624862,
+  "index": 83
+ },
+ {
+  "metric": "INP",
+  "value": 57.37356321500368,
+  "index": 83
+ },
+ {
+  "metric": "INP",
+  "value": 57.37356321494631,
+  "index": 83
+ },
+ {
+  "metric": "INP",
+  "value": 57.373563215061054,
+  "index": 84
+ },
+ {
+  "metric": "INP",
+  "value": 60.24224137575386,
+  "index": 84
+ },
+ {
+  "metric": "INP",
+  "value": 60.242241375693624,
+  "index": 84
+ },
+ {
+  "metric": "INP",
+  "value": 60.24224137581411,
+  "index": 85
+ },
+ {
+  "metric": "INP",
+  "value": 63.25435344454156,
+  "index": 86
+ },
+ {
+  "metric": "INP",
+  "value": 63.254353444478305,
+  "index": 85
+ },
+ {
+  "metric": "INP",
+  "value": 63.25435344460482,
+  "index": 86
+ },
+ {
+  "metric": "INP",
+  "value": 66.41707111676864,
+  "index": 87
+ },
+ {
+  "metric": "INP",
+  "value": 66.41707111670222,
+  "index": 86
+ },
+ {
+  "metric": "INP",
+  "value": 66.41707111683506,
+  "index": 87
+ },
+ {
+  "metric": "INP",
+  "value": 69.73792467260708,
+  "index": 88
+ },
+ {
+  "metric": "INP",
+  "value": 69.73792467253735,
+  "index": 87
+ },
+ {
+  "metric": "INP",
+  "value": 69.73792467267683,
+  "index": 88
+ },
+ {
+  "metric": "INP",
+  "value": 73.22482090623743,
+  "index": 89
+ },
+ {
+  "metric": "INP",
+  "value": 73.2248209061642,
+  "index": 88
+ },
+ {
+  "metric": "INP",
+  "value": 73.22482090631065,
+  "index": 89
+ },
+ {
+  "metric": "INP",
+  "value": 76.88606195154931,
+  "index": 90
+ },
+ {
+  "metric": "INP",
+  "value": 76.88606195147243,
+  "index": 89
+ },
+ {
+  "metric": "INP",
+  "value": 76.8860619516262,
+  "index": 90
+ },
+ {
+  "metric": "INP",
+  "value": 80.73036504912677,
+  "index": 90
+ },
+ {
+  "metric": "INP",
+  "value": 80.73036504904604,
+  "index": 90
+ },
+ {
+  "metric": "INP",
+  "value": 80.7303650492075,
+  "index": 91
+ },
+ {
+  "metric": "INP",
+  "value": 84.76688330158312,
+  "index": 91
+ },
+ {
+  "metric": "INP",
+  "value": 84.76688330149835,
+  "index": 91
+ },
+ {
+  "metric": "INP",
+  "value": 84.76688330166789,
+  "index": 92
+ },
+ {
+  "metric": "INP",
+  "value": 89.00522746666228,
+  "index": 92
+ },
+ {
+  "metric": "INP",
+  "value": 89.00522746657327,
+  "index": 92
+ },
+ {
+  "metric": "INP",
+  "value": 89.0052274667513,
+  "index": 93
+ },
+ {
+  "metric": "INP",
+  "value": 93.4554888399954,
+  "index": 94
+ },
+ {
+  "metric": "INP",
+  "value": 93.45548883990195,
+  "index": 93
+ },
+ {
+  "metric": "INP",
+  "value": 93.45548884008886,
+  "index": 94
+ },
+ {
+  "metric": "INP",
+  "value": 98.12826328199516,
+  "index": 95
+ },
+ {
+  "metric": "INP",
+  "value": 98.12826328189703,
+  "index": 94
+ },
+ {
+  "metric": "INP",
+  "value": 98.1282632820933,
+  "index": 95
+ },
+ {
+  "metric": "INP",
+  "value": 103.03467644609493,
+  "index": 96
+ },
+ {
+  "metric": "INP",
+  "value": 103.0346764459919,
+  "index": 95
+ },
+ {
+  "metric": "INP",
+  "value": 103.03467644619798,
+  "index": 96
+ },
+ {
+  "metric": "INP",
+  "value": 108.18641026839968,
+  "index": 97
+ },
+ {
+  "metric": "INP",
+  "value": 108.1864102682915,
+  "index": 96
+ },
+ {
+  "metric": "INP",
+  "value": 108.18641026850788,
+  "index": 97
+ },
+ {
+  "metric": "INP",
+  "value": 113.59573078181967,
+  "index": 98
+ },
+ {
+  "metric": "INP",
+  "value": 113.59573078170608,
+  "index": 97
+ },
+ {
+  "metric": "INP",
+  "value": 113.59573078193327,
+  "index": 98
+ },
+ {
+  "metric": "INP",
+  "value": 119.27551732091065,
+  "index": 98
+ },
+ {
+  "metric": "INP",
+  "value": 119.27551732079138,
+  "index": 98
+ },
+ {
+  "metric": "INP",
+  "value": 119.27551732102994,
+  "index": 99
+ },
+ {
+  "metric": "INP",
+  "value": 125.23929318695619,
+  "index": 99
+ },
+ {
+  "metric": "INP",
+  "value": 125.23929318683095,
+  "index": 99
+ },
+ {
+  "metric": "INP",
+  "value": 125.23929318708144,
+  "index": 100
+ },
+ {
+  "metric": "INP",
+  "value": 131.50125784630401,
+  "index": 100
+ },
+ {
+  "metric": "INP",
+  "value": 131.5012578461725,
+  "index": 100
+ },
+ {
+  "metric": "INP",
+  "value": 131.50125784643552,
+  "index": 101
+ },
+ {
+  "metric": "INP",
+  "value": 138.07632073861922,
+  "index": 102
+ },
+ {
+  "metric": "INP",
+  "value": 138.07632073848114,
+  "index": 101
+ },
+ {
+  "metric": "INP",
+  "value": 138.07632073875732,
+  "index": 102
+ },
+ {
+  "metric": "INP",
+  "value": 144.9801367755502,
+  "index": 103
+ },
+ {
+  "metric": "INP",
+  "value": 144.9801367754052,
+  "index": 102
+ },
+ {
+  "metric": "INP",
+  "value": 144.98013677569517,
+  "index": 103
+ },
+ {
+  "metric": "INP",
+  "value": 152.2291436143277,
+  "index": 104
+ },
+ {
+  "metric": "INP",
+  "value": 152.22914361417548,
+  "index": 103
+ },
+ {
+  "metric": "INP",
+  "value": 152.22914361447997,
+  "index": 104
+ },
+ {
+  "metric": "INP",
+  "value": 159.84060079504408,
+  "index": 105
+ },
+ {
+  "metric": "INP",
+  "value": 159.84060079488424,
+  "index": 104
+ },
+ {
+  "metric": "INP",
+  "value": 159.84060079520393,
+  "index": 105
+ },
+ {
+  "metric": "INP",
+  "value": 167.8326308347963,
+  "index": 105
+ },
+ {
+  "metric": "INP",
+  "value": 167.83263083462847,
+  "index": 105
+ },
+ {
+  "metric": "INP",
+  "value": 167.83263083496416,
+  "index": 106
+ },
+ {
+  "metric": "INP",
+  "value": 176.22426237653613,
+  "index": 106
+ },
+ {
+  "metric": "INP",
+  "value": 176.22426237635992,
+  "index": 106
+ },
+ {
+  "metric": "INP",
+  "value": 176.22426237671237,
+  "index": 107
+ },
+ {
+  "metric": "INP",
+  "value": 185.03547549536293,
+  "index": 107
+ },
+ {
+  "metric": "INP",
+  "value": 185.0354754951779,
+  "index": 107
+ },
+ {
+  "metric": "INP",
+  "value": 185.03547549554798,
+  "index": 108
+ },
+ {
+  "metric": "INP",
+  "value": 194.2872492701311,
+  "index": 108
+ },
+ {
+  "metric": "INP",
+  "value": 194.2872492699368,
+  "index": 108
+ },
+ {
+  "metric": "INP",
+  "value": 194.2872492703254,
+  "index": 109
+ },
+ {
+  "metric": "INP",
+  "value": 204.00161173363765,
+  "index": 110
+ },
+ {
+  "metric": "INP",
+  "value": 204.00161173343363,
+  "index": 109
+ },
+ {
+  "metric": "INP",
+  "value": 204.00161173384166,
+  "index": 110
+ },
+ {
+  "metric": "INP",
+  "value": 214.20169232031955,
+  "index": 111
+ },
+ {
+  "metric": "INP",
+  "value": 214.20169232010537,
+  "index": 110
+ },
+ {
+  "metric": "INP",
+  "value": 214.20169232053377,
+  "index": 111
+ },
+ {
+  "metric": "INP",
+  "value": 224.91177693633554,
+  "index": 112
+ },
+ {
+  "metric": "INP",
+  "value": 224.91177693611064,
+  "index": 111
+ },
+ {
+  "metric": "INP",
+  "value": 224.91177693656047,
+  "index": 112
+ },
+ {
+  "metric": "INP",
+  "value": 236.15736578315233,
+  "index": 113
+ },
+ {
+  "metric": "INP",
+  "value": 236.15736578291617,
+  "index": 112
+ },
+ {
+  "metric": "INP",
+  "value": 236.1573657833885,
+  "index": 113
+ },
+ {
+  "metric": "INP",
+  "value": 247.96523407230995,
+  "index": 113
+ },
+ {
+  "metric": "INP",
+  "value": 247.965234072062,
+  "index": 113
+ },
+ {
+  "metric": "INP",
+  "value": 247.96523407255793,
+  "index": 114
+ },
+ {
+  "metric": "INP",
+  "value": 260.36349577592546,
+  "index": 114
+ },
+ {
+  "metric": "INP",
+  "value": 260.3634957756651,
+  "index": 114
+ },
+ {
+  "metric": "INP",
+  "value": 260.36349577618586,
+  "index": 115
+ },
+ {
+  "metric": "INP",
+  "value": 273.38167056472173,
+  "index": 115
+ },
+ {
+  "metric": "INP",
+  "value": 273.38167056444837,
+  "index": 115
+ },
+ {
+  "metric": "INP",
+  "value": 273.38167056499515,
+  "index": 116
+ },
+ {
+  "metric": "INP",
+  "value": 287.05075409295785,
+  "index": 116
+ },
+ {
+  "metric": "INP",
+  "value": 287.0507540926708,
+  "index": 116
+ },
+ {
+  "metric": "INP",
+  "value": 287.0507540932449,
+  "index": 117
+ },
+ {
+  "metric": "INP",
+  "value": 301.40329179760573,
+  "index": 118
+ },
+ {
+  "metric": "INP",
+  "value": 301.40329179730435,
+  "index": 117
+ },
+ {
+  "metric": "INP",
+  "value": 301.4032917979072,
+  "index": 118
+ },
+ {
+  "metric": "INP",
+  "value": 316.47345638748607,
+  "index": 119
+ },
+ {
+  "metric": "INP",
+  "value": 316.4734563871696,
+  "index": 118
+ },
+ {
+  "metric": "INP",
+  "value": 316.47345638780257,
+  "index": 119
+ },
+ {
+  "metric": "INP",
+  "value": 332.29712920686035,
+  "index": 120
+ },
+ {
+  "metric": "INP",
+  "value": 332.29712920652804,
+  "index": 119
+ },
+ {
+  "metric": "INP",
+  "value": 332.29712920719265,
+  "index": 120
+ },
+ {
+  "metric": "INP",
+  "value": 348.9119856672034,
+  "index": 121
+ },
+ {
+  "metric": "INP",
+  "value": 348.9119856668545,
+  "index": 120
+ },
+ {
+  "metric": "INP",
+  "value": 348.91198566755236,
+  "index": 121
+ },
+ {
+  "metric": "INP",
+  "value": 366.3575849505636,
+  "index": 121
+ },
+ {
+  "metric": "INP",
+  "value": 366.35758495019724,
+  "index": 121
+ },
+ {
+  "metric": "INP",
+  "value": 366.35758495093,
+  "index": 122
+ },
+ {
+  "metric": "INP",
+  "value": 384.6754641980918,
+  "index": 122
+ },
+ {
+  "metric": "INP",
+  "value": 384.67546419770713,
+  "index": 122
+ },
+ {
+  "metric": "INP",
+  "value": 384.6754641984765,
+  "index": 123
+ },
+ {
+  "metric": "INP",
+  "value": 403.9092374079964,
+  "index": 123
+ },
+ {
+  "metric": "INP",
+  "value": 403.9092374075925,
+  "index": 123
+ },
+ {
+  "metric": "INP",
+  "value": 403.9092374084003,
+  "index": 124
+ },
+ {
+  "metric": "INP",
+  "value": 424.1046992783962,
+  "index": 124
+ },
+ {
+  "metric": "INP",
+  "value": 424.1046992779721,
+  "index": 124
+ },
+ {
+  "metric": "INP",
+  "value": 424.10469927882036,
+  "index": 125
+ },
+ {
+  "metric": "INP",
+  "value": 445.30993424231605,
+  "index": 126
+ },
+ {
+  "metric": "INP",
+  "value": 445.30993424187074,
+  "index": 125
+ },
+ {
+  "metric": "INP",
+  "value": 445.3099342427614,
+  "index": 126
+ },
+ {
+  "metric": "INP",
+  "value": 467.57543095443185,
+  "index": 127
+ },
+ {
+  "metric": "INP",
+  "value": 467.5754309539643,
+  "index": 126
+ },
+ {
+  "metric": "INP",
+  "value": 467.57543095489945,
+  "index": 127
+ },
+ {
+  "metric": "INP",
+  "value": 490.95420250215346,
+  "index": 128
+ },
+ {
+  "metric": "INP",
+  "value": 490.9542025016625,
+  "index": 127
+ },
+ {
+  "metric": "INP",
+  "value": 490.9542025026445,
+  "index": 128
+ },
+ {
+  "metric": "INP",
+  "value": 515.5019126272612,
+  "index": 128
+ },
+ {
+  "metric": "INP",
+  "value": 515.5019126267457,
+  "index": 128
+ },
+ {
+  "metric": "INP",
+  "value": 515.5019126277767,
+  "index": 129
+ },
+ {
+  "metric": "INP",
+  "value": 541.2770082586243,
+  "index": 129
+ },
+ {
+  "metric": "INP",
+  "value": 541.277008258083,
+  "index": 129
+ },
+ {
+  "metric": "INP",
+  "value": 541.2770082591657,
+  "index": 130
+ },
+ {
+  "metric": "INP",
+  "value": 568.3408586715555,
+  "index": 131
+ },
+ {
+  "metric": "INP",
+  "value": 568.3408586709871,
+  "index": 130
+ },
+ {
+  "metric": "INP",
+  "value": 568.3408586721239,
+  "index": 131
+ },
+ {
+  "metric": "INP",
+  "value": 33630,
+  "index": 214
+ },
+ {
+  "metric": "INP",
+  "value": 102451,
+  "index": 237
+ },
+ {
+  "metric": "INP",
+  "value": 43178,
+  "index": 219
+ },
+ {
+  "metric": "INP",
+  "value": 113713,
+  "index": 239
+ },
+ {
+  "metric": "INP",
+  "value": 64433,
+  "index": 227
+ },
+ {
+  "metric": "INP",
+  "value": 11790,
+  "index": 193
+ },
+ {
+  "metric": "INP",
+  "value": 45550.15650825354,
+  "index": 220
+ },
+ {
+  "metric": "INP",
+  "value": 36729,
+  "index": 216
+ },
+ {
+  "metric": "INP",
+  "value": 115048,
+  "index": 239
+ },
+ {
+  "metric": "INP",
+  "value": 98976,
+  "index": 236
+ },
+ {
+  "metric": "INP",
+  "value": 12968,
+  "index": 195
+ },
+ {
+  "metric": "INP",
+  "value": 27850,
+  "index": 210
+ },
+ {
+  "metric": "INP",
+  "value": 47773,
+  "index": 221
+ },
+ {
+  "metric": "INP",
+  "value": 2768,
+  "index": 163
+ },
+ {
+  "metric": "INP",
+  "value": 57119.31706533278,
+  "index": 225
+ },
+ {
+  "metric": "INP",
+  "value": 21942,
+  "index": 205
+ },
+ {
+  "metric": "INP",
+  "value": 109753.60213375154,
+  "index": 238
+ },
+ {
+  "metric": "INP",
+  "value": 16495,
+  "index": 200
+ },
+ {
+  "metric": "INP",
+  "value": 35074,
+  "index": 215
+ },
+ {
+  "metric": "INP",
+  "value": 11256,
+  "index": 192
+ },
+ {
+  "metric": "INP",
+  "value": 54349,
+  "index": 224
+ },
+ {
+  "metric": "INP",
+  "value": 621.5196475741891,
+  "index": 132
+ },
+ {
+  "metric": "INP",
+  "value": 43659,
+  "index": 219
+ },
+ {
+  "metric": "INP",
+  "value": 60074,
+  "index": 226
+ },
+ {
+  "metric": "INP",
+  "value": 33202,
+  "index": 214
+ },
+ {
+  "metric": "INP",
+  "value": 30342,
+  "index": 212
+ },
+ {
+  "metric": "INP",
+  "value": 44047,
+  "index": 220
+ },
+ {
+  "metric": "INP",
+  "value": 57689,
+  "index": 225
+ },
+ {
+  "metric": "INP",
+  "value": 4799.359539168649,
+  "index": 174
+ },
+ {
+  "metric": "INP",
+  "value": 34284.070203706135,
+  "index": 215
+ },
+ {
+  "metric": "INP",
+  "value": 119240,
+  "index": 240
+ },
+ {
+  "metric": "INP",
+  "value": 82963.38404364405,
+  "index": 233
+ },
+ {
+  "metric": "INP",
+  "value": 13682,
+  "index": 196
+ },
+ {
+  "metric": "INP",
+  "value": 118349.01968052023,
+  "index": 240
+ },
+ {
+  "metric": "INP",
+  "value": 86377,
+  "index": 233
+ },
+ {
+  "metric": "INP",
+  "value": 65722.79780112012,
+  "index": 228
+ },
+ {
+  "metric": "INP",
+  "value": 49800.01273479147,
+  "index": 222
+ },
+ {
+  "metric": "INP",
+  "value": 80274,
+  "index": 232
+ },
+ {
+  "metric": "INP",
+  "value": 112054.14187564458,
+  "index": 239
+ },
+ {
+  "metric": "INP",
+  "value": 117968,
+  "index": 240
+ },
+ {
+  "metric": "INP",
+  "value": 107980.12217967439,
+  "index": 238
+ },
+ {
+  "metric": "INP",
+  "value": 19556,
+  "index": 203
+ },
+ {
+  "metric": "INP",
+  "value": 89866,
+  "index": 234
+ },
+ {
+  "metric": "INP",
+  "value": 102512,
+  "index": 237
+ },
+ {
+  "metric": "INP",
+  "value": 82287,
+  "index": 232
+ },
+ {
+  "metric": "INP",
+  "value": 107290.19019615208,
+  "index": 238
+ },
+ {
+  "metric": "INP",
+  "value": 3609,
+  "index": 168
+ },
+ {
+  "metric": "INP",
+  "value": 73839,
+  "index": 230
+ },
+ {
+  "metric": "INP",
+  "value": 74744,
+  "index": 231
+ },
+ {
+  "metric": "INP",
+  "value": 15349,
+  "index": 198
+ },
+ {
+  "metric": "INP",
+  "value": 71261,
+  "index": 230
+ },
+ {
+  "metric": "INP",
+  "value": 108244,
+  "index": 238
+ },
+ {
+  "metric": "INP",
+  "value": 77882.0382004595,
+  "index": 231
+ },
+ {
+  "metric": "INP",
+  "value": 99658.23990731536,
+  "index": 236
+ },
+ {
+  "metric": "INP",
+  "value": 33191.17094926966,
+  "index": 214
+ },
+ {
+  "metric": "INP",
+  "value": 29884,
+  "index": 212
+ },
+ {
+  "metric": "INP",
+  "value": 15079,
+  "index": 198
+ },
+ {
+  "metric": "INP",
+  "value": 48518,
+  "index": 222
+ },
+ {
+  "metric": "INP",
+  "value": 75715,
+  "index": 231
+ },
+ {
+  "metric": "INP",
+  "value": 114269,
+  "index": 239
+ },
+ {
+  "metric": "INP",
+  "value": 54862.09199450883,
+  "index": 224
+ },
+ {
+  "metric": "INP",
+  "value": 113239,
+  "index": 239
+ },
+ {
+  "metric": "INP",
+  "value": 70240,
+  "index": 229
+ },
+ {
+  "metric": "INP",
+  "value": 64606,
+  "index": 228
+ },
+ {
+  "metric": "INP",
+  "value": 41104,
+  "index": 218
+ },
+ {
+  "metric": "INP",
+  "value": 7897.983315854731,
+  "index": 184
+ },
+ {
+  "metric": "INP",
+  "value": 14648,
+  "index": 197
+ },
+ {
+  "metric": "INP",
+  "value": 9276,
+  "index": 188
+ },
+ {
+  "metric": "INP",
+  "value": 65404,
+  "index": 228
+ },
+ {
+  "metric": "INP",
+  "value": 112485.73441091068,
+  "index": 239
+ },
+ {
+  "metric": "INP",
+  "value": 113834.0450892997,
+  "index": 239
+ },
+ {
+  "metric": "INP",
+  "value": 109088,
+  "index": 238
+ },
+ {
+  "metric": "INP",
+  "value": 85755,
+  "index": 233
+ },
+ {
+  "metric": "INP",
+  "value": 89999.29323020084,
+  "index": 234
+ },
+ {
+  "metric": "INP",
+  "value": 55959,
+  "index": 225
+ },
+ {
+  "metric": "INP",
+  "value": 58807,
+  "index": 226
+ },
+ {
+  "metric": "INP",
+  "value": 60692.017534903614,
+  "index": 226
+ },
+ {
+  "metric": "INP",
+  "value": 7578,
+  "index": 184
+ },
+ {
+  "metric": "INP",
+  "value": 69011,
+  "index": 229
+ },
+ {
+  "metric": "INP",
+  "value": 35983,
+  "index": 216
+ },
+ {
+  "metric": "INP",
+  "value": 95805,
+  "index": 236
+ },
+ {
+  "metric": "INP",
+  "value": 72482,
+  "index": 230
+ },
+ {
+  "metric": "INP",
+  "value": 4354,
+  "index": 172
+ },
+ {
+  "metric": "INP",
+  "value": 8089.712276753147,
+  "index": 185
+ },
+ {
+  "metric": "INP",
+  "value": 27936,
+  "index": 210
+ },
+ {
+  "metric": "INP",
+  "value": 14635.051320898072,
+  "index": 197
+ },
+ {
+  "metric": "INP",
+  "value": 6368,
+  "index": 180
+ },
+ {
+  "metric": "INP",
+  "value": 115071.24554132303,
+  "index": 239
+ },
+ {
+  "metric": "CLS",
+  "value": 0,
+  "index": 0
+ },
+ {
+  "metric": "CLS",
+  "value": 0,
+  "index": 0
+ },
+ {
+  "metric": "CLS",
+  "value": -1,
+  "index": 0
+ },
+ {
+  "metric": "CLS",
+  "value": -0.001,
+  "index": 0
+ },
+ {
+  "metric": "CLS",
+  "value": -120000,
+  "index": 0
+ },
+ {
+  "metric": "CLS",
+  "value": 1e-12,
+  "index": 1
+ },
+ {
+  "metric": "CLS",
+  "value": 5e-324,
+  "index": 1
+ },
+ {
+  "metric": "CLS",
+  "value": 0.5,
+  "index": 128
+ },
+ {
+  "metric": "CLS",
+  "value": 0.999999,
+  "index": 142
+ },
+ {
+  "metric": "CLS",
+  "value": 1,
+  "index": 142
+ },
+ {
+  "metric": "CLS",
+  "value": 1.0000001,
+  "index": 142
+ },
+ {
+  "metric": "CLS",
+  "value": 1.05,
+  "index": 143
+ },
+ {
+  "metric": "CLS",
+  "value": 1.025,
+  "index": 143
+ },
+ {
+  "metric": "CLS",
+  "value": 2,
+  "index": 156
+ },
+ {
+  "metric": "CLS",
+  "value": 10,
+  "index": 189
+ },
+ {
+  "metric": "CLS",
+  "value": 100,
+  "index": 236
+ },
+ {
+  "metric": "CLS",
+  "value": 1000,
+  "index": 284
+ },
+ {
+  "metric": "CLS",
+  "value": 120000,
+  "index": 382
+ },
+ {
+  "metric": "CLS",
+  "value": 1000000000,
+  "index": 567
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0001,
+  "index": 1
+ },
+ {
+  "metric": "CLS",
+  "value": 0.001,
+  "index": 1
+ },
+ {
+  "metric": "CLS",
+  "value": 0.00105,
+  "index": 2
+ },
+ {
+  "metric": "CLS",
+  "value": 0.01,
+  "index": 48
+ },
+ {
+  "metric": "CLS",
+  "value": 0.05,
+  "index": 81
+ },
+ {
+  "metric": "CLS",
+  "value": 0.1,
+  "index": 95
+ },
+ {
+  "metric": "CLS",
+  "value": 0.1000001,
+  "index": 95
+ },
+ {
+  "metric": "CLS",
+  "value": 0.25,
+  "index": 114
+ },
+ {
+  "metric": "CLS",
+  "value": 1,
+  "index": 142
+ },
+ {
+  "metric": "CLS",
+  "value": 9.999,
+  "index": 189
+ },
+ {
+  "metric": "CLS",
+  "value": 10,
+  "index": 189
+ },
+ {
+  "metric": "CLS",
+  "value": 0.001,
+  "index": 1
+ },
+ {
+  "metric": "CLS",
+  "value": 0.000999999999999,
+  "index": 1
+ },
+ {
+  "metric": "CLS",
+  "value": 0.001000000000001,
+  "index": 1
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0010500000000000002,
+  "index": 2
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0010499999999989502,
+  "index": 1
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0010500000000010503,
+  "index": 2
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0011025,
+  "index": 2
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0011024999999988975,
+  "index": 2
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0011025000000011026,
+  "index": 3
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0011576250000000002,
+  "index": 3
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0011576249999988427,
+  "index": 3
+ },
+ {
+  "metric": "CLS",
+  "value": 0.001157625000001158,
+  "index": 4
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0012155062500000002,
+  "index": 5
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0012155062499987848,
+  "index": 4
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0012155062500012158,
+  "index": 5
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0012762815625000003,
+  "index": 6
+ },
+ {
+  "metric": "CLS",
+  "value": 0.001276281562498724,
+  "index": 5
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0012762815625012767,
+  "index": 6
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0013400956406250004,
+  "index": 7
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0013400956406236604,
+  "index": 6
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0013400956406263407,
+  "index": 7
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0014071004226562504,
+  "index": 8
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0014071004226548433,
+  "index": 7
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0014071004226576577,
+  "index": 8
+ },
+ {
+  "metric": "CLS",
+  "value": 0.001477455443789063,
+  "index": 9
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0014774554437875856,
+  "index": 8
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0014774554437905405,
+  "index": 9
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0015513282159785161,
+  "index": 10
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0015513282159769649,
+  "index": 9
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0015513282159800676,
+  "index": 10
+ },
+ {
+  "metric": "CLS",
+  "value": 0.001628894626777442,
+  "index": 10
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0016288946267758132,
+  "index": 10
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0016288946267790712,
+  "index": 11
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0017103393581163141,
+  "index": 11
+ },
+ {
+  "metric": "CLS",
+  "value": 0.001710339358114604,
+  "index": 11
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0017103393581180246,
+  "index": 12
+ },
+ {
+  "metric": "CLS",
+  "value": 0.00179585632602213,
+  "index": 13
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0017958563260203342,
+  "index": 12
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0017958563260239261,
+  "index": 13
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0018856491423232366,
+  "index": 14
+ },
+ {
+  "metric": "CLS",
+  "value": 0.001885649142321351,
+  "index": 13
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0018856491423251225,
+  "index": 14
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0019799315994393986,
+  "index": 15
+ },
+ {
+  "metric": "CLS",
+  "value": 0.001979931599437419,
+  "index": 14
+ },
+ {
+  "metric": "CLS",
+  "value": 0.001979931599441379,
+  "index": 15
+ },
+ {
+  "metric": "CLS",
+  "value": 0.002078928179411369,
+  "index": 16
+ },
+ {
+  "metric": "CLS",
+  "value": 0.00207892817940929,
+  "index": 15
+ },
+ {
+  "metric": "CLS",
+  "value": 0.002078928179413448,
+  "index": 16
+ },
+ {
+  "metric": "CLS",
+  "value": 0.002182874588381937,
+  "index": 16
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0021828745883797542,
+  "index": 16
+ },
+ {
+  "metric": "CLS",
+  "value": 0.00218287458838412,
+  "index": 17
+ },
+ {
+  "metric": "CLS",
+  "value": 0.002292018317801034,
+  "index": 17
+ },
+ {
+  "metric": "CLS",
+  "value": 0.002292018317798742,
+  "index": 17
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0022920183178033265,
+  "index": 18
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0024066192336910856,
+  "index": 18
+ },
+ {
+  "metric": "CLS",
+  "value": 0.002406619233688679,
+  "index": 18
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0024066192336934925,
+  "index": 19
+ },
+ {
+  "metric": "CLS",
+  "value": 0.00252695019537564,
+  "index": 20
+ },
+ {
+  "metric": "CLS",
+  "value": 0.002526950195373113,
+  "index": 19
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0025269501953781672,
+  "index": 20
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0026532977051444222,
+  "index": 20
+ },
+ {
+  "metric": "CLS",
+  "value": 0.002653297705141769,
+  "index": 20
+ },
+ {
+  "metric": "CLS",
+  "value": 0.002653297705147076,
+  "index": 21
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0027859625904016437,
+  "index": 21
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0027859625903988577,
+  "index": 21
+ },
+ {
+  "metric": "CLS",
+  "value": 0.00278596259040443,
+  "index": 22
+ },
+ {
+  "metric": "CLS",
+  "value": 0.002925260719921726,
+  "index": 23
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0029252607199188006,
+  "index": 22
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0029252607199246514,
+  "index": 23
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0030715237559178123,
+  "index": 23
+ },
+ {
+  "metric": "CLS",
+  "value": 0.003071523755914741,
+  "index": 23
+ },
+ {
+  "metric": "CLS",
+  "value": 0.003071523755920884,
+  "index": 24
+ },
+ {
+  "metric": "CLS",
+  "value": 0.003225099943713703,
+  "index": 24
+ },
+ {
+  "metric": "CLS",
+  "value": 0.003225099943710478,
+  "index": 24
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0032250999437169283,
+  "index": 25
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0033863549408993886,
+  "index": 25
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0033863549408960024,
+  "index": 25
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0033863549409027752,
+  "index": 26
+ },
+ {
+  "metric": "CLS",
+  "value": 0.003555672687944358,
+  "index": 26
+ },
+ {
+  "metric": "CLS",
+  "value": 0.003555672687940802,
+  "index": 26
+ },
+ {
+  "metric": "CLS",
+  "value": 0.003555672687947914,
+  "index": 27
+ },
+ {
+  "metric": "CLS",
+  "value": 0.003733456322341576,
+  "index": 27
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0037334563223378426,
+  "index": 27
+ },
+ {
+  "metric": "CLS",
+  "value": 0.00373345632234531,
+  "index": 28
+ },
+ {
+  "metric": "CLS",
+  "value": 0.003920129138458655,
+  "index": 29
+ },
+ {
+  "metric": "CLS",
+  "value": 0.003920129138454734,
+  "index": 28
+ },
+ {
+  "metric": "CLS",
+  "value": 0.003920129138462575,
+  "index": 29
+ },
+ {
+  "metric": "CLS",
+  "value": 0.004116135595381589,
+  "index": 30
+ },
+ {
+  "metric": "CLS",
+  "value": 0.004116135595377473,
+  "index": 29
+ },
+ {
+  "metric": "CLS",
+  "value": 0.004116135595385705,
+  "index": 30
+ },
+ {
+  "metric": "CLS",
+  "value": 0.004321942375150668,
+  "index": 31
+ },
+ {
+  "metric": "CLS",
+  "value": 0.004321942375146346,
+  "index": 30
+ },
+ {
+  "metric": "CLS",
+  "value": 0.00432194237515499,
+  "index": 31
+ },
+ {
+  "metric": "CLS",
+  "value": 0.004538039493908201,
+  "index": 31
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0045380394939036625,
+  "index": 31
+ },
+ {
+  "metric": "CLS",
+  "value": 0.004538039493912739,
+  "index": 32
+ },
+ {
+  "metric": "CLS",
+  "value": 0.004764941468603612,
+  "index": 33
+ },
+ {
+  "metric": "CLS",
+  "value": 0.004764941468598847,
+  "index": 32
+ },
+ {
+  "metric": "CLS",
+  "value": 0.004764941468608377,
+  "index": 33
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0050031885420337915,
+  "index": 34
+ },
+ {
+  "metric": "CLS",
+  "value": 0.005003188542028789,
+  "index": 33
+ },
+ {
+  "metric": "CLS",
+  "value": 0.005003188542038795,
+  "index": 34
+ },
+ {
+  "metric": "CLS",
+  "value": 0.005253347969135482,
+  "index": 34
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0052533479691302285,
+  "index": 34
+ },
+ {
+  "metric": "CLS",
+  "value": 0.005253347969140736,
+  "index": 35
+ },
+ {
+  "metric": "CLS",
+  "value": 0.005516015367592256,
+  "index": 36
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0055160153675867405,
+  "index": 35
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0055160153675977725,
+  "index": 36
+ },
+ {
+  "metric": "CLS",
+  "value": 0.005791816135971869,
+  "index": 36
+ },
+ {
+  "metric": "CLS",
+  "value": 0.005791816135966078,
+  "index": 36
+ },
+ {
+  "metric": "CLS",
+  "value": 0.005791816135977661,
+  "index": 37
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0060814069427704625,
+  "index": 38
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0060814069427643815,
+  "index": 37
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0060814069427765445,
+  "index": 38
+ },
+ {
+  "metric": "CLS",
+  "value": 0.006385477289908986,
+  "index": 38
+ },
+ {
+  "metric": "CLS",
+  "value": 0.006385477289902601,
+  "index": 38
+ },
+ {
+  "metric": "CLS",
+  "value": 0.006385477289915373,
+  "index": 39
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0067047511544044355,
+  "index": 40
+ },
+ {
+  "metric": "CLS",
+  "value": 0.006704751154397731,
+  "index": 39
+ },
+ {
+  "metric": "CLS",
+  "value": 0.006704751154411141,
+  "index": 40
+ },
+ {
+  "metric": "CLS",
+  "value": 0.007039988712124658,
+  "index": 40
+ },
+ {
+  "metric": "CLS",
+  "value": 0.007039988712117619,
+  "index": 40
+ },
+ {
+  "metric": "CLS",
+  "value": 0.007039988712131699,
+  "index": 41
+ },
+ {
+  "metric": "CLS",
+  "value": 0.007391988147730891,
+  "index": 41
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0073919881477235,
+  "index": 41
+ },
+ {
+  "metric": "CLS",
+  "value": 0.007391988147738284,
+  "index": 42
+ },
+ {
+  "metric": "CLS",
+  "value": 0.007761587555117436,
+  "index": 42
+ },
+ {
+  "metric": "CLS",
+  "value": 0.007761587555109675,
+  "index": 42
+ },
+ {
+  "metric": "CLS",
+  "value": 0.007761587555125198,
+  "index": 43
+ },
+ {
+  "metric": "CLS",
+  "value": 0.00814966693287331,
+  "index": 44
+ },
+ {
+  "metric": "CLS",
+  "value": 0.00814966693286516,
+  "index": 43
+ },
+ {
+  "metric": "CLS",
+  "value": 0.00814966693288146,
+  "index": 44
+ },
+ {
+  "metric": "CLS",
+  "value": 0.008557150279516975,
+  "index": 45
+ },
+ {
+  "metric": "CLS",
+  "value": 0.008557150279508418,
+  "index": 44
+ },
+ {
+  "metric": "CLS",
+  "value": 0.008557150279525532,
+  "index": 45
+ },
+ {
+  "metric": "CLS",
+  "value": 0.008985007793492823,
+  "index": 45
+ },
+ {
+  "metric": "CLS",
+  "value": 0.008985007793483839,
+  "index": 45
+ },
+ {
+  "metric": "CLS",
+  "value": 0.008985007793501809,
+  "index": 46
+ },
+ {
+  "metric": "CLS",
+  "value": 0.009434258183167465,
+  "index": 46
+ },
+ {
+  "metric": "CLS",
+  "value": 0.009434258183158031,
+  "index": 46
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0094342581831769,
+  "index": 47
+ },
+ {
+  "metric": "CLS",
+  "value": 0.00990597109232584,
+  "index": 48
+ },
+ {
+  "metric": "CLS",
+  "value": 0.009905971092315934,
+  "index": 47
+ },
+ {
+  "metric": "CLS",
+  "value": 0.009905971092335746,
+  "index": 48
+ },
+ {
+  "metric": "CLS",
+  "value": 0.010401269646942131,
+  "index": 49
+ },
+ {
+  "metric": "CLS",
+  "value": 0.01040126964693173,
+  "index": 48
+ },
+ {
+  "metric": "CLS",
+  "value": 0.010401269646952533,
+  "index": 49
+ },
+ {
+  "metric": "CLS",
+  "value": 0.010921333129289237,
+  "index": 49
+ },
+ {
+  "metric": "CLS",
+  "value": 0.010921333129278316,
+  "index": 49
+ },
+ {
+  "metric": "CLS",
+  "value": 0.01092133312930016,
+  "index": 50
+ },
+ {
+  "metric": "CLS",
+  "value": 0.011467399785753701,
+  "index": 50
+ },
+ {
+  "metric": "CLS",
+  "value": 0.011467399785742235,
+  "index": 50
+ },
+ {
+  "metric": "CLS",
+  "value": 0.01146739978576517,
+  "index": 51
+ },
+ {
+  "metric": "CLS",
+  "value": 0.012040769775041387,
+  "index": 52
+ },
+ {
+  "metric": "CLS",
+  "value": 0.012040769775029346,
+  "index": 51
+ },
+ {
+  "metric": "CLS",
+  "value": 0.01204076977505343,
+  "index": 52
+ },
+ {
+  "metric": "CLS",
+  "value": 0.012642808263793454,
+  "index": 52
+ },
+ {
+  "metric": "CLS",
+  "value": 0.012642808263780812,
+  "index": 52
+ },
+ {
+  "metric": "CLS",
+  "value": 0.012642808263806099,
+  "index": 53
+ },
+ {
+  "metric": "CLS",
+  "value": 0.01327494867698313,
+  "index": 53
+ },
+ {
+  "metric": "CLS",
+  "value": 0.013274948676969855,
+  "index": 53
+ },
+ {
+  "metric": "CLS",
+  "value": 0.013274948676996405,
+  "index": 54
+ },
+ {
+  "metric": "CLS",
+  "value": 0.013938696110832286,
+  "index": 54
+ },
+ {
+  "metric": "CLS",
+  "value": 0.013938696110818348,
+  "index": 54
+ },
+ {
+  "metric": "CLS",
+  "value": 0.013938696110846227,
+  "index": 55
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0146356309163739,
+  "index": 56
+ },
+ {
+  "metric": "CLS",
+  "value": 0.014635630916359265,
+  "index": 55
+ },
+ {
+  "metric": "CLS",
+  "value": 0.014635630916388538,
+  "index": 56
+ },
+ {
+  "metric": "CLS",
+  "value": 0.015367412462192597,
+  "index": 57
+ },
+ {
+  "metric": "CLS",
+  "value": 0.01536741246217723,
+  "index": 56
+ },
+ {
+  "metric": "CLS",
+  "value": 0.015367412462207965,
+  "index": 57
+ },
+ {
+  "metric": "CLS",
+  "value": 0.016135783085302224,
+  "index": 57
+ },
+ {
+  "metric": "CLS",
+  "value": 0.016135783085286088,
+  "index": 57
+ },
+ {
+  "metric": "CLS",
+  "value": 0.01613578308531836,
+  "index": 58
+ },
+ {
+  "metric": "CLS",
+  "value": 0.01694257223956734,
+  "index": 58
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0169425722395504,
+  "index": 58
+ },
+ {
+  "metric": "CLS",
+  "value": 0.016942572239584286,
+  "index": 59
+ },
+ {
+  "metric": "CLS",
+  "value": 0.017789700851545708,
+  "index": 60
+ },
+ {
+  "metric": "CLS",
+  "value": 0.01778970085152792,
+  "index": 59
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0177897008515635,
+  "index": 60
+ },
+ {
+  "metric": "CLS",
+  "value": 0.018679185894122995,
+  "index": 61
+ },
+ {
+  "metric": "CLS",
+  "value": 0.018679185894104316,
+  "index": 60
+ },
+ {
+  "metric": "CLS",
+  "value": 0.018679185894141675,
+  "index": 61
+ },
+ {
+  "metric": "CLS",
+  "value": 0.019613145188829145,
+  "index": 61
+ },
+ {
+  "metric": "CLS",
+  "value": 0.019613145188809532,
+  "index": 61
+ },
+ {
+  "metric": "CLS",
+  "value": 0.01961314518884876,
+  "index": 62
+ },
+ {
+  "metric": "CLS",
+  "value": 0.020593802448270603,
+  "index": 62
+ },
+ {
+  "metric": "CLS",
+  "value": 0.020593802448250008,
+  "index": 62
+ },
+ {
+  "metric": "CLS",
+  "value": 0.020593802448291197,
+  "index": 63
+ },
+ {
+  "metric": "CLS",
+  "value": 0.021623492570684133,
+  "index": 64
+ },
+ {
+  "metric": "CLS",
+  "value": 0.02162349257066251,
+  "index": 63
+ },
+ {
+  "metric": "CLS",
+  "value": 0.021623492570705758,
+  "index": 64
+ },
+ {
+  "metric": "CLS",
+  "value": 0.022704667199218338,
+  "index": 64
+ },
+ {
+  "metric": "CLS",
+  "value": 0.022704667199195634,
+  "index": 64
+ },
+ {
+  "metric": "CLS",
+  "value": 0.022704667199241045,
+  "index": 65
+ },
+ {
+  "metric": "CLS",
+  "value": 0.02383990055917926,
+  "index": 66
+ },
+ {
+  "metric": "CLS",
+  "value": 0.02383990055915542,
+  "index": 65
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0238399005592031,
+  "index": 66
+ },
+ {
+  "metric": "CLS",
+  "value": 0.025031895587138222,
+  "index": 67
+ },
+ {
+  "metric": "CLS",
+  "value": 0.02503189558711319,
+  "index": 66
+ },
+ {
+  "metric": "CLS",
+  "value": 0.025031895587163257,
+  "index": 67
+ },
+ {
+  "metric": "CLS",
+  "value": 0.026283490366495132,
+  "index": 68
+ },
+ {
+  "metric": "CLS",
+  "value": 0.026283490366468848,
+  "index": 67
+ },
+ {
+  "metric": "CLS",
+  "value": 0.026283490366521417,
+  "index": 68
+ },
+ {
+  "metric": "CLS",
+  "value": 0.027597664884819892,
+  "index": 68
+ },
+ {
+  "metric": "CLS",
+  "value": 0.027597664884792296,
+  "index": 68
+ },
+ {
+  "metric": "CLS",
+  "value": 0.02759766488484749,
+  "index": 69
+ },
+ {
+  "metric": "CLS",
+  "value": 0.02897754812906089,
+  "index": 70
+ },
+ {
+  "metric": "CLS",
+  "value": 0.028977548129031912,
+  "index": 69
+ },
+ {
+  "metric": "CLS",
+  "value": 0.02897754812908987,
+  "index": 70
+ },
+ {
+  "metric": "CLS",
+  "value": 0.030426425535513935,
+  "index": 71
+ },
+ {
+  "metric": "CLS",
+  "value": 0.030426425535483508,
+  "index": 70
+ },
+ {
+  "metric": "CLS",
+  "value": 0.030426425535544366,
+  "index": 71
+ },
+ {
+  "metric": "CLS",
+  "value": 0.03194774681228963,
+  "index": 72
+ },
+ {
+  "metric": "CLS",
+  "value": 0.031947746812257684,
+  "index": 71
+ },
+ {
+  "metric": "CLS",
+  "value": 0.031947746812321584,
+  "index": 72
+ },
+ {
+  "metric": "CLS",
+  "value": 0.03354513415290411,
+  "index": 72
+ },
+ {
+  "metric": "CLS",
+  "value": 0.03354513415287057,
+  "index": 72
+ },
+ {
+  "metric": "CLS",
+  "value": 0.03354513415293766,
+  "index": 73
+ },
+ {
+  "metric": "CLS",
+  "value": 0.035222390860549325,
+  "index": 74
+ },
+ {
+  "metric": "CLS",
+  "value": 0.035222390860514104,
+  "index": 73
+ },
+ {
+  "metric": "CLS",
+  "value": 0.035222390860584554,
+  "index": 74
+ },
+ {
+  "metric": "CLS",
+  "value": 0.03698351040357679,
+  "index": 75
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0369835104035398,
+  "index": 74
+ },
+ {
+  "metric": "CLS",
+  "value": 0.03698351040361377,
+  "index": 75
+ },
+ {
+  "metric": "CLS",
+  "value": 0.03883268592375563,
+  "index": 76
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0388326859237168,
+  "index": 75
+ },
+ {
+  "metric": "CLS",
+  "value": 0.03883268592379447,
+  "index": 76
+ },
+ {
+  "metric": "CLS",
+  "value": 0.040774320219943413,
+  "index": 76
+ },
+ {
+  "metric": "CLS",
+  "value": 0.04077432021990264,
+  "index": 76
+ },
+ {
+  "metric": "CLS",
+  "value": 0.04077432021998419,
+  "index": 77
+ },
+ {
+  "metric": "CLS",
+  "value": 0.04281303623094059,
+  "index": 78
+ },
+ {
+  "metric": "CLS",
+  "value": 0.04281303623089778,
+  "index": 77
+ },
+ {
+  "metric": "CLS",
+  "value": 0.04281303623098341,
+  "index": 78
+ },
+ {
+  "metric": "CLS",
+  "value": 0.04495368804248762,
+  "index": 79
+ },
+ {
+  "metric": "CLS",
+  "value": 0.04495368804244267,
+  "index": 78
+ },
+ {
+  "metric": "CLS",
+  "value": 0.04495368804253258,
+  "index": 79
+ },
+ {
+  "metric": "CLS",
+  "value": 0.047201372444612,
+  "index": 80
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0472013724445648,
+  "index": 79
+ },
+ {
+  "metric": "CLS",
+  "value": 0.047201372444659204,
+  "index": 80
+ },
+ {
+  "metric": "CLS",
+  "value": 0.049561441066842606,
+  "index": 81
+ },
+ {
+  "metric": "CLS",
+  "value": 0.04956144106679305,
+  "index": 80
+ },
+ {
+  "metric": "CLS",
+  "value": 0.04956144106689217,
+  "index": 81
+ },
+ {
+  "metric": "CLS",
+  "value": 0.05203951312018474,
+  "index": 82
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0520395131201327,
+  "index": 81
+ },
+ {
+  "metric": "CLS",
+  "value": 0.05203951312023678,
+  "index": 82
+ },
+ {
+  "metric": "CLS",
+  "value": 0.05464148877619397,
+  "index": 82
+ },
+ {
+  "metric": "CLS",
+  "value": 0.054641488776139335,
+  "index": 82
+ },
+ {
+  "metric": "CLS",
+  "value": 0.054641488776248616,
+  "index": 83
+ },
+ {
+  "metric": "CLS",
+  "value": 0.05737356321500368,
+  "index": 83
+ },
+ {
+  "metric": "CLS",
+  "value": 0.057373563214946306,
+  "index": 83
+ },
+ {
+  "metric": "CLS",
+  "value": 0.057373563215061055,
+  "index": 84
+ },
+ {
+  "metric": "CLS",
+  "value": 0.06024224137575386,
+  "index": 84
+ },
+ {
+  "metric": "CLS",
+  "value": 0.06024224137569362,
+  "index": 84
+ },
+ {
+  "metric": "CLS",
+  "value": 0.06024224137581411,
+  "index": 85
+ },
+ {
+  "metric": "CLS",
+  "value": 0.06325435344454156,
+  "index": 86
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0632543534444783,
+  "index": 85
+ },
+ {
+  "metric": "CLS",
+  "value": 0.06325435344460481,
+  "index": 86
+ },
+ {
+  "metric": "CLS",
+  "value": 0.06641707111676864,
+  "index": 87
+ },
+ {
+  "metric": "CLS",
+  "value": 0.06641707111670223,
+  "index": 86
+ },
+ {
+  "metric": "CLS",
+  "value": 0.06641707111683506,
+  "index": 87
+ },
+ {
+  "metric": "CLS",
+  "value": 0.06973792467260707,
+  "index": 88
+ },
+ {
+  "metric": "CLS",
+  "value": 0.06973792467253734,
+  "index": 87
+ },
+ {
+  "metric": "CLS",
+  "value": 0.06973792467267682,
+  "index": 88
+ },
+ {
+  "metric": "CLS",
+  "value": 0.07322482090623743,
+  "index": 89
+ },
+ {
+  "metric": "CLS",
+  "value": 0.07322482090616421,
+  "index": 88
+ },
+ {
+  "metric": "CLS",
+  "value": 0.07322482090631066,
+  "index": 89
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0768860619515493,
+  "index": 90
+ },
+ {
+  "metric": "CLS",
+  "value": 0.07688606195147242,
+  "index": 89
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0768860619516262,
+  "index": 90
+ },
+ {
+  "metric": "CLS",
+  "value": 0.08073036504912677,
+  "index": 90
+ },
+ {
+  "metric": "CLS",
+  "value": 0.08073036504904604,
+  "index": 90
+ },
+ {
+  "metric": "CLS",
+  "value": 0.08073036504920751,
+  "index": 91
+ },
+ {
+  "metric": "CLS",
+  "value": 0.08476688330158312,
+  "index": 91
+ },
+ {
+  "metric": "CLS",
+  "value": 0.08476688330149836,
+  "index": 91
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0847668833016679,
+  "index": 92
+ },
+ {
+  "metric": "CLS",
+  "value": 0.08900522746666227,
+  "index": 92
+ },
+ {
+  "metric": "CLS",
+  "value": 0.08900522746657327,
+  "index": 92
+ },
+ {
+  "metric": "CLS",
+  "value": 0.08900522746675128,
+  "index": 93
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0934554888399954,
+  "index": 94
+ },
+ {
+  "metric": "CLS",
+  "value": 0.09345548883990194,
+  "index": 93
+ },
+ {
+  "metric": "CLS",
+  "value": 0.09345548884008886,
+  "index": 94
+ },
+ {
+  "metric": "CLS",
+  "value": 0.09812826328199516,
+  "index": 95
+ },
+ {
+  "metric": "CLS",
+  "value": 0.09812826328189703,
+  "index": 94
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0981282632820933,
+  "index": 95
+ },
+ {
+  "metric": "CLS",
+  "value": 0.10303467644609493,
+  "index": 96
+ },
+ {
+  "metric": "CLS",
+  "value": 0.1030346764459919,
+  "index": 95
+ },
+ {
+  "metric": "CLS",
+  "value": 0.10303467644619797,
+  "index": 96
+ },
+ {
+  "metric": "CLS",
+  "value": 0.10818641026839969,
+  "index": 97
+ },
+ {
+  "metric": "CLS",
+  "value": 0.10818641026829151,
+  "index": 96
+ },
+ {
+  "metric": "CLS",
+  "value": 0.10818641026850788,
+  "index": 97
+ },
+ {
+  "metric": "CLS",
+  "value": 0.11359573078181967,
+  "index": 98
+ },
+ {
+  "metric": "CLS",
+  "value": 0.11359573078170608,
+  "index": 97
+ },
+ {
+  "metric": "CLS",
+  "value": 0.11359573078193327,
+  "index": 98
+ },
+ {
+  "metric": "CLS",
+  "value": 0.11927551732091066,
+  "index": 98
+ },
+ {
+  "metric": "CLS",
+  "value": 0.11927551732079138,
+  "index": 98
+ },
+ {
+  "metric": "CLS",
+  "value": 0.11927551732102994,
+  "index": 99
+ },
+ {
+  "metric": "CLS",
+  "value": 0.1252392931869562,
+  "index": 99
+ },
+ {
+  "metric": "CLS",
+  "value": 0.12523929318683097,
+  "index": 99
+ },
+ {
+  "metric": "CLS",
+  "value": 0.12523929318708146,
+  "index": 100
+ },
+ {
+  "metric": "CLS",
+  "value": 0.131501257846304,
+  "index": 100
+ },
+ {
+  "metric": "CLS",
+  "value": 0.1315012578461725,
+  "index": 100
+ },
+ {
+  "metric": "CLS",
+  "value": 0.13150125784643552,
+  "index": 101
+ },
+ {
+  "metric": "CLS",
+  "value": 0.13807632073861922,
+  "index": 102
+ },
+ {
+  "metric": "CLS",
+  "value": 0.13807632073848114,
+  "index": 101
+ },
+ {
+  "metric": "CLS",
+  "value": 0.1380763207387573,
+  "index": 102
+ },
+ {
+  "metric": "CLS",
+  "value": 0.1449801367755502,
+  "index": 103
+ },
+ {
+  "metric": "CLS",
+  "value": 0.14498013677540522,
+  "index": 102
+ },
+ {
+  "metric": "CLS",
+  "value": 0.14498013677569518,
+  "index": 103
+ },
+ {
+  "metric": "CLS",
+  "value": 0.1522291436143277,
+  "index": 104
+ },
+ {
+  "metric": "CLS",
+  "value": 0.15222914361417547,
+  "index": 103
+ },
+ {
+  "metric": "CLS",
+  "value": 0.15222914361447995,
+  "index": 104
+ },
+ {
+  "metric": "CLS",
+  "value": 0.15984060079504409,
+  "index": 105
+ },
+ {
+  "metric": "CLS",
+  "value": 0.15984060079488424,
+  "index": 104
+ },
+ {
+  "metric": "CLS",
+  "value": 0.15984060079520393,
+  "index": 105
+ },
+ {
+  "metric": "CLS",
+  "value": 0.1678326308347963,
+  "index": 105
+ },
+ {
+  "metric": "CLS",
+  "value": 0.16783263083462846,
+  "index": 105
+ },
+ {
+  "metric": "CLS",
+  "value": 0.16783263083496414,
+  "index": 106
+ },
+ {
+  "metric": "CLS",
+  "value": 0.17622426237653613,
+  "index": 106
+ },
+ {
+  "metric": "CLS",
+  "value": 0.1762242623763599,
+  "index": 106
+ },
+ {
+  "metric": "CLS",
+  "value": 0.17622426237671238,
+  "index": 107
+ },
+ {
+  "metric": "CLS",
+  "value": 0.18503547549536292,
+  "index": 107
+ },
+ {
+  "metric": "CLS",
+  "value": 0.1850354754951779,
+  "index": 107
+ },
+ {
+  "metric": "CLS",
+  "value": 0.18503547549554797,
+  "index": 108
+ },
+ {
+  "metric": "CLS",
+  "value": 0.1942872492701311,
+  "index": 108
+ },
+ {
+  "metric": "CLS",
+  "value": 0.19428724926993682,
+  "index": 108
+ },
+ {
+  "metric": "CLS",
+  "value": 0.19428724927032542,
+  "index": 109
+ },
+ {
+  "metric": "CLS",
+  "value": 0.20400161173363765,
+  "index": 110
+ },
+ {
+  "metric": "CLS",
+  "value": 0.20400161173343365,
+  "index": 109
+ },
+ {
+  "metric": "CLS",
+  "value": 0.20400161173384168,
+  "index": 110
+ },
+ {
+  "metric": "CLS",
+  "value": 0.21420169232031955,
+  "index": 111
+ },
+ {
+  "metric": "CLS",
+  "value": 0.21420169232010536,
+  "index": 110
+ },
+ {
+  "metric": "CLS",
+  "value": 0.21420169232053377,
+  "index": 111
+ },
+ {
+  "metric": "CLS",
+  "value": 0.22491177693633554,
+  "index": 112
+ },
+ {
+  "metric": "CLS",
+  "value": 0.22491177693611064,
+  "index": 111
+ },
+ {
+  "metric": "CLS",
+  "value": 0.22491177693656048,
+  "index": 112
+ },
+ {
+  "metric": "CLS",
+  "value": 0.23615736578315233,
+  "index": 113
+ },
+ {
+  "metric": "CLS",
+  "value": 0.23615736578291618,
+  "index": 112
+ },
+ {
+  "metric": "CLS",
+  "value": 0.2361573657833885,
+  "index": 113
+ },
+ {
+  "metric": "CLS",
+  "value": 0.24796523407230994,
+  "index": 113
+ },
+ {
+  "metric": "CLS",
+  "value": 0.24796523407206197,
+  "index": 113
+ },
+ {
+  "metric": "CLS",
+  "value": 0.24796523407255794,
+  "index": 114
+ },
+ {
+  "metric": "CLS",
+  "value": 0.26036349577592544,
+  "index": 114
+ },
+ {
+  "metric": "CLS",
+  "value": 0.2603634957756651,
+  "index": 114
+ },
+ {
+  "metric": "CLS",
+  "value": 0.26036349577618584,
+  "index": 115
+ },
+ {
+  "metric": "CLS",
+  "value": 0.27338167056472173,
+  "index": 115
+ },
+ {
+  "metric": "CLS",
+  "value": 0.27338167056444834,
+  "index": 115
+ },
+ {
+  "metric": "CLS",
+  "value": 0.2733816705649951,
+  "index": 116
+ },
+ {
+  "metric": "CLS",
+  "value": 0.2870507540929578,
+  "index": 116
+ },
+ {
+  "metric": "CLS",
+  "value": 0.2870507540926708,
+  "index": 116
+ },
+ {
+  "metric": "CLS",
+  "value": 0.28705075409324493,
+  "index": 117
+ },
+ {
+  "metric": "CLS",
+  "value": 0.3014032917976057,
+  "index": 118
+ },
+ {
+  "metric": "CLS",
+  "value": 0.30140329179730435,
+  "index": 117
+ },
+ {
+  "metric": "CLS",
+  "value": 0.30140329179790715,
+  "index": 118
+ },
+ {
+  "metric": "CLS",
+  "value": 0.3164734563874861,
+  "index": 119
+ },
+ {
+  "metric": "CLS",
+  "value": 0.3164734563871696,
+  "index": 118
+ },
+ {
+  "metric": "CLS",
+  "value": 0.3164734563878026,
+  "index": 119
+ },
+ {
+  "metric": "CLS",
+  "value": 0.33229712920686033,
+  "index": 120
+ },
+ {
+  "metric": "CLS",
+  "value": 0.33229712920652804,
+  "index": 119
+ },
+ {
+  "metric": "CLS",
+  "value": 0.3322971292071927,
+  "index": 120
+ },
+ {
+  "metric": "CLS",
+  "value": 0.3489119856672034,
+  "index": 121
+ },
+ {
+  "metric": "CLS",
+  "value": 0.3489119856668545,
+  "index": 120
+ },
+ {
+  "metric": "CLS",
+  "value": 0.3489119856675523,
+  "index": 121
+ },
+ {
+  "metric": "CLS",
+  "value": 0.3663575849505636,
+  "index": 121
+ },
+ {
+  "metric": "CLS",
+  "value": 0.3663575849501972,
+  "index": 121
+ },
+ {
+  "metric": "CLS",
+  "value": 0.36635758495092996,
+  "index": 122
+ },
+ {
+  "metric": "CLS",
+  "value": 0.3846754641980918,
+  "index": 122
+ },
+ {
+  "metric": "CLS",
+  "value": 0.3846754641977071,
+  "index": 122
+ },
+ {
+  "metric": "CLS",
+  "value": 0.3846754641984765,
+  "index": 123
+ },
+ {
+  "metric": "CLS",
+  "value": 0.4039092374079964,
+  "index": 123
+ },
+ {
+  "metric": "CLS",
+  "value": 0.4039092374075925,
+  "index": 123
+ },
+ {
+  "metric": "CLS",
+  "value": 0.40390923740840035,
+  "index": 124
+ },
+ {
+  "metric": "CLS",
+  "value": 0.4241046992783962,
+  "index": 124
+ },
+ {
+  "metric": "CLS",
+  "value": 0.4241046992779721,
+  "index": 124
+ },
+ {
+  "metric": "CLS",
+  "value": 0.4241046992788204,
+  "index": 125
+ },
+ {
+  "metric": "CLS",
+  "value": 0.445309934242316,
+  "index": 126
+ },
+ {
+  "metric": "CLS",
+  "value": 0.4453099342418707,
+  "index": 125
+ },
+ {
+  "metric": "CLS",
+  "value": 0.4453099342427614,
+  "index": 126
+ },
+ {
+  "metric": "CLS",
+  "value": 0.4675754309544318,
+  "index": 127
+ },
+ {
+  "metric": "CLS",
+  "value": 0.46757543095396426,
+  "index": 126
+ },
+ {
+  "metric": "CLS",
+  "value": 0.46757543095489945,
+  "index": 127
+ },
+ {
+  "metric": "CLS",
+  "value": 0.4909542025021535,
+  "index": 128
+ },
+ {
+  "metric": "CLS",
+  "value": 0.49095420250166255,
+  "index": 127
+ },
+ {
+  "metric": "CLS",
+  "value": 0.4909542025026445,
+  "index": 128
+ },
+ {
+  "metric": "CLS",
+  "value": 0.5155019126272612,
+  "index": 128
+ },
+ {
+  "metric": "CLS",
+  "value": 0.5155019126267457,
+  "index": 128
+ },
+ {
+  "metric": "CLS",
+  "value": 0.5155019126277768,
+  "index": 129
+ },
+ {
+  "metric": "CLS",
+  "value": 0.5412770082586242,
+  "index": 129
+ },
+ {
+  "metric": "CLS",
+  "value": 0.541277008258083,
+  "index": 129
+ },
+ {
+  "metric": "CLS",
+  "value": 0.5412770082591656,
+  "index": 130
+ },
+ {
+  "metric": "CLS",
+  "value": 0.5683408586715555,
+  "index": 131
+ },
+ {
+  "metric": "CLS",
+  "value": 0.5683408586709872,
+  "index": 130
+ },
+ {
+  "metric": "CLS",
+  "value": 0.5683408586721239,
+  "index": 131
+ },
+ {
+  "metric": "CLS",
+  "value": 1.1168,
+  "index": 144
+ },
+ {
+  "metric": "CLS",
+  "value": 1.7012,
+  "index": 153
+ },
+ {
+  "metric": "CLS",
+  "value": 1.7015,
+  "index": 153
+ },
+ {
+  "metric": "CLS",
+  "value": 0.3462,
+  "index": 120
+ },
+ {
+  "metric": "CLS",
+  "value": 1.5701,
+  "index": 151
+ },
+ {
+  "metric": "CLS",
+  "value": 0.3673,
+  "index": 122
+ },
+ {
+  "metric": "CLS",
+  "value": 1.2833,
+  "index": 147
+ },
+ {
+  "metric": "CLS",
+  "value": 1.8002,
+  "index": 154
+ },
+ {
+  "metric": "CLS",
+  "value": 0.2744,
+  "index": 116
+ },
+ {
+  "metric": "CLS",
+  "value": 1.5893,
+  "index": 152
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0721,
+  "index": 88
+ },
+ {
+  "metric": "CLS",
+  "value": 0.4192,
+  "index": 124
+ },
+ {
+  "metric": "CLS",
+  "value": 0.7768,
+  "index": 137
+ },
+ {
+  "metric": "CLS",
+  "value": 1.3767,
+  "index": 149
+ },
+ {
+  "metric": "CLS",
+  "value": 1.0944,
+  "index": 144
+ },
+ {
+  "metric": "CLS",
+  "value": 0.5281,
+  "index": 129
+ },
+ {
+  "metric": "CLS",
+  "value": 0.6549,
+  "index": 133
+ },
+ {
+  "metric": "CLS",
+  "value": 0.5703,
+  "index": 131
+ },
+ {
+  "metric": "CLS",
+  "value": 0.7233,
+  "index": 135
+ },
+ {
+  "metric": "CLS",
+  "value": 1.1431,
+  "index": 145
+ },
+ {
+  "metric": "CLS",
+  "value": 0.9227,
+  "index": 140
+ },
+ {
+  "metric": "CLS",
+  "value": 0.4655,
+  "index": 126
+ },
+ {
+  "metric": "CLS",
+  "value": 0.4494,
+  "index": 126
+ },
+ {
+  "metric": "CLS",
+  "value": 0.5218,
+  "index": 129
+ },
+ {
+  "metric": "CLS",
+  "value": 0.5645,
+  "index": 130
+ },
+ {
+  "metric": "CLS",
+  "value": 0.4318,
+  "index": 125
+ },
+ {
+  "metric": "CLS",
+  "value": 1.3249,
+  "index": 148
+ },
+ {
+  "metric": "CLS",
+  "value": 0.1662,
+  "index": 105
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0281,
+  "index": 69
+ },
+ {
+  "metric": "CLS",
+  "value": 1.4027,
+  "index": 149
+ },
+ {
+  "metric": "CLS",
+  "value": 0.8229,
+  "index": 138
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0964,
+  "index": 94
+ },
+ {
+  "metric": "CLS",
+  "value": 1.6926,
+  "index": 153
+ },
+ {
+  "metric": "CLS",
+  "value": 1.3675,
+  "index": 148
+ },
+ {
+  "metric": "CLS",
+  "value": 0.5576,
+  "index": 130
+ },
+ {
+  "metric": "CLS",
+  "value": 0.7299,
+  "index": 136
+ },
+ {
+  "metric": "CLS",
+  "value": 0.1383,
+  "index": 102
+ },
+ {
+  "metric": "CLS",
+  "value": 0.9864,
+  "index": 142
+ },
+ {
+  "metric": "CLS",
+  "value": 1.7409,
+  "index": 153
+ },
+ {
+  "metric": "CLS",
+  "value": 1.4359,
+  "index": 149
+ },
+ {
+  "metric": "CLS",
+  "value": 0.9593,
+  "index": 141
+ },
+ {
+  "metric": "CLS",
+  "value": 0.7908,
+  "index": 137
+ },
+ {
+  "metric": "CLS",
+  "value": 1.5381,
+  "index": 151
+ },
+ {
+  "metric": "CLS",
+  "value": 1.3925,
+  "index": 149
+ },
+ {
+  "metric": "CLS",
+  "value": 0.7923,
+  "index": 137
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0706,
+  "index": 88
+ },
+ {
+  "metric": "CLS",
+  "value": 1.9544,
+  "index": 156
+ },
+ {
+  "metric": "CLS",
+  "value": 0.934,
+  "index": 141
+ },
+ {
+  "metric": "CLS",
+  "value": 0.2761,
+  "index": 116
+ },
+ {
+  "metric": "CLS",
+  "value": 0.6981,
+  "index": 135
+ },
+ {
+  "metric": "CLS",
+  "value": 1.9333,
+  "index": 156
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0059,
+  "index": 37
+ },
+ {
+  "metric": "CLS",
+  "value": 1.7585,
+  "index": 154
+ },
+ {
+  "metric": "CLS",
+  "value": 1.7283,
+  "index": 153
+ },
+ {
+  "metric": "CLS",
+  "value": 0.1894,
+  "index": 108
+ },
+ {
+  "metric": "CLS",
+  "value": 0.002,
+  "index": 15
+ },
+ {
+  "metric": "CLS",
+  "value": 0.0535,
+  "index": 82
+ },
+ {
+  "metric": "CLS",
+  "value": 1.0856,
+  "index": 144
+ },
+ {
+  "metric": "CLS",
+  "value": 1.862,
+  "index": 155
+ },
+ {
+  "metric": "CLS",
+  "value": 1.2937,
+  "index": 147
+ },
+ {
+  "metric": "CLS",
+  "value": 0.406,
+  "index": 124
+ },
+ {
+  "metric": "CLS",
+  "value": 1.615,
+  "index": 152
+ },
+ {
+  "metric": "CLS",
+  "value": 1.0108,
+  "index": 142
+ },
+ {
+  "metric": "CLS",
+  "value": 1.0927,
+  "index": 144
+ },
+ {
+  "metric": "CLS",
+  "value": 0.5099,
+  "index": 128
+ },
+ {
+  "metric": "CLS",
+  "value": 1.8285,
+  "index": 154
+ },
+ {
+  "metric": "CLS",
+  "value": 0.3567,
+  "index": 121
+ },
+ {
+  "metric": "CLS",
+  "value": 1.7723,
+  "index": 154
+ },
+ {
+  "metric": "CLS",
+  "value": 0.8998,
+  "index": 140
+ },
+ {
+  "metric": "CLS",
+  "value": 0.5095,
+  "index": 128
+ },
+ {
+  "metric": "CLS",
+  "value": 0.1564,
+  "index": 104
+ },
+ {
+  "metric": "CLS",
+  "value": 0.4402,
+  "index": 125
+ },
+ {
+  "metric": "CLS",
+  "value": 0.5091,
+  "index": 128
+ },
+ {
+  "metric": "CLS",
+  "value": 0.5249,
+  "index": 129
+ },
+ {
+  "metric": "CLS",
+  "value": 0.6309,
+  "index": 133
+ },
+ {
+  "metric": "CLS",
+  "value": 0.7326,
+  "index": 136
+ },
+ {
+  "metric": "CLS",
+  "value": 1.0838,
+  "index": 144
+ },
+ {
+  "metric": "FCP",
+  "value": 0,
+  "index": 0
+ },
+ {
+  "metric": "FCP",
+  "value": 0,
+  "index": 0
+ },
+ {
+  "metric": "FCP",
+  "value": -1,
+  "index": 0
+ },
+ {
+  "metric": "FCP",
+  "value": -0.001,
+  "index": 0
+ },
+ {
+  "metric": "FCP",
+  "value": -120000,
+  "index": 0
+ },
+ {
+  "metric": "FCP",
+  "value": 1e-12,
+  "index": 1
+ },
+ {
+  "metric": "FCP",
+  "value": 5e-324,
+  "index": 1
+ },
+ {
+  "metric": "FCP",
+  "value": 0.5,
+  "index": 1
+ },
+ {
+  "metric": "FCP",
+  "value": 0.999999,
+  "index": 1
+ },
+ {
+  "metric": "FCP",
+  "value": 1,
+  "index": 1
+ },
+ {
+  "metric": "FCP",
+  "value": 1.0000001,
+  "index": 1
+ },
+ {
+  "metric": "FCP",
+  "value": 1.05,
+  "index": 2
+ },
+ {
+  "metric": "FCP",
+  "value": 1.025,
+  "index": 1
+ },
+ {
+  "metric": "FCP",
+  "value": 2,
+  "index": 15
+ },
+ {
+  "metric": "FCP",
+  "value": 10,
+  "index": 48
+ },
+ {
+  "metric": "FCP",
+  "value": 100,
+  "index": 95
+ },
+ {
+  "metric": "FCP",
+  "value": 1000,
+  "index": 142
+ },
+ {
+  "metric": "FCP",
+  "value": 120000,
+  "index": 240
+ },
+ {
+  "metric": "FCP",
+  "value": 1000000000,
+  "index": 425
+ },
+ {
+  "metric": "FCP",
+  "value": 1,
+  "index": 1
+ },
+ {
+  "metric": "FCP",
+  "value": 0.999999999999,
+  "index": 1
+ },
+ {
+  "metric": "FCP",
+  "value": 1.000000000001,
+  "index": 1
+ },
+ {
+  "metric": "FCP",
+  "value": 1.05,
+  "index": 2
+ },
+ {
+  "metric": "FCP",
+  "value": 1.04999999999895,
+  "index": 1
+ },
+ {
+  "metric": "FCP",
+  "value": 1.05000000000105,
+  "index": 2
+ },
+ {
+  "metric": "FCP",
+  "value": 1.1025,
+  "index": 2
+ },
+ {
+  "metric": "FCP",
+  "value": 1.1024999999988976,
+  "index": 2
+ },
+ {
+  "metric": "FCP",
+  "value": 1.1025000000011027,
+  "index": 3
+ },
+ {
+  "metric": "FCP",
+  "value": 1.1576250000000001,
+  "index": 3
+ },
+ {
+  "metric": "FCP",
+  "value": 1.1576249999988426,
+  "index": 3
+ },
+ {
+  "metric": "FCP",
+  "value": 1.1576250000011579,
+  "index": 4
+ },
+ {
+  "metric": "FCP",
+  "value": 1.2155062500000002,
+  "index": 5
+ },
+ {
+  "metric": "FCP",
+  "value": 1.2155062499987848,
+  "index": 4
+ },
+ {
+  "metric": "FCP",
+  "value": 1.215506250001216,
+  "index": 5
+ },
+ {
+  "metric": "FCP",
+  "value": 1.2762815625000004,
+  "index": 6
+ },
+ {
+  "metric": "FCP",
+  "value": 1.276281562498724,
+  "index": 5
+ },
+ {
+  "metric": "FCP",
+  "value": 1.2762815625012767,
+  "index": 6
+ },
+ {
+  "metric": "FCP",
+  "value": 1.3400956406250004,
+  "index": 7
+ },
+ {
+  "metric": "FCP",
+  "value": 1.3400956406236604,
+  "index": 6
+ },
+ {
+  "metric": "FCP",
+  "value": 1.3400956406263407,
+  "index": 7
+ },
+ {
+  "metric": "FCP",
+  "value": 1.4071004226562505,
+  "index": 8
+ },
+ {
+  "metric": "FCP",
+  "value": 1.4071004226548434,
+  "index": 7
+ },
+ {
+  "metric": "FCP",
+  "value": 1.4071004226576578,
+  "index": 8
+ },
+ {
+  "metric": "FCP",
+  "value": 1.477455443789063,
+  "index": 9
+ },
+ {
+  "metric": "FCP",
+  "value": 1.4774554437875855,
+  "index": 8
+ },
+ {
+  "metric": "FCP",
+  "value": 1.4774554437905405,
+  "index": 9
+ },
+ {
+  "metric": "FCP",
+  "value": 1.5513282159785162,
+  "index": 10
+ },
+ {
+  "metric": "FCP",
+  "value": 1.551328215976965,
+  "index": 9
+ },
+ {
+  "metric": "FCP",
+  "value": 1.5513282159800676,
+  "index": 10
+ },
+ {
+  "metric": "FCP",
+  "value": 1.628894626777442,
+  "index": 10
+ },
+ {
+  "metric": "FCP",
+  "value": 1.628894626775813,
+  "index": 10
+ },
+ {
+  "metric": "FCP",
+  "value": 1.6288946267790712,
+  "index": 11
+ },
+ {
+  "metric": "FCP",
+  "value": 1.7103393581163142,
+  "index": 11
+ },
+ {
+  "metric": "FCP",
+  "value": 1.7103393581146038,
+  "index": 11
+ },
+ {
+  "metric": "FCP",
+  "value": 1.7103393581180246,
+  "index": 12
+ },
+ {
+  "metric": "FCP",
+  "value": 1.79585632602213,
+  "index": 13
+ },
+ {
+  "metric": "FCP",
+  "value": 1.7958563260203342,
+  "index": 12
+ },
+ {
+  "metric": "FCP",
+  "value": 1.7958563260239262,
+  "index": 13
+ },
+ {
+  "metric": "FCP",
+  "value": 1.8856491423232367,
+  "index": 14
+ },
+ {
+  "metric": "FCP",
+  "value": 1.885649142321351,
+  "index": 13
+ },
+ {
+  "metric": "FCP",
+  "value": 1.8856491423251225,
+  "index": 14
+ },
+ {
+  "metric": "FCP",
+  "value": 1.9799315994393987,
+  "index": 15
+ },
+ {
+  "metric": "FCP",
+  "value": 1.9799315994374187,
+  "index": 14
+ },
+ {
+  "metric": "FCP",
+  "value": 1.9799315994413789,
+  "index": 15
+ },
+ {
+  "metric": "FCP",
+  "value": 2.0789281794113688,
+  "index": 16
+ },
+ {
+  "metric": "FCP",
+  "value": 2.07892817940929,
+  "index": 15
+ },
+ {
+  "metric": "FCP",
+  "value": 2.078928179413448,
+  "index": 16
+ },
+ {
+  "metric": "FCP",
+  "value": 2.182874588381937,
+  "index": 16
+ },
+ {
+  "metric": "FCP",
+  "value": 2.1828745883797542,
+  "index": 16
+ },
+ {
+  "metric": "FCP",
+  "value": 2.18287458838412,
+  "index": 17
+ },
+ {
+  "metric": "FCP",
+  "value": 2.292018317801034,
+  "index": 17
+ },
+ {
+  "metric": "FCP",
+  "value": 2.292018317798742,
+  "index": 17
+ },
+ {
+  "metric": "FCP",
+  "value": 2.2920183178033264,
+  "index": 18
+ },
+ {
+  "metric": "FCP",
+  "value": 2.4066192336910857,
+  "index": 18
+ },
+ {
+  "metric": "FCP",
+  "value": 2.406619233688679,
+  "index": 18
+ },
+ {
+  "metric": "FCP",
+  "value": 2.4066192336934926,
+  "index": 19
+ },
+ {
+  "metric": "FCP",
+  "value": 2.5269501953756404,
+  "index": 20
+ },
+ {
+  "metric": "FCP",
+  "value": 2.5269501953731135,
+  "index": 19
+ },
+ {
+  "metric": "FCP",
+  "value": 2.5269501953781677,
+  "index": 20
+ },
+ {
+  "metric": "FCP",
+  "value": 2.653297705144422,
+  "index": 20
+ },
+ {
+  "metric": "FCP",
+  "value": 2.6532977051417688,
+  "index": 20
+ },
+ {
+  "metric": "FCP",
+  "value": 2.6532977051470756,
+  "index": 21
+ },
+ {
+  "metric": "FCP",
+  "value": 2.7859625904016436,
+  "index": 21
+ },
+ {
+  "metric": "FCP",
+  "value": 2.785962590398858,
+  "index": 21
+ },
+ {
+  "metric": "FCP",
+  "value": 2.78596259040443,
+  "index": 22
+ },
+ {
+  "metric": "FCP",
+  "value": 2.925260719921726,
+  "index": 23
+ },
+ {
+  "metric": "FCP",
+  "value": 2.9252607199188008,
+  "index": 22
+ },
+ {
+  "metric": "FCP",
+  "value": 2.9252607199246516,
+  "index": 23
+ },
+ {
+  "metric": "FCP",
+  "value": 3.0715237559178123,
+  "index": 23
+ },
+ {
+  "metric": "FCP",
+  "value": 3.071523755914741,
+  "index": 23
+ },
+ {
+  "metric": "FCP",
+  "value": 3.071523755920884,
+  "index": 24
+ },
+ {
+  "metric": "FCP",
+  "value": 3.225099943713703,
+  "index": 24
+ },
+ {
+  "metric": "FCP",
+  "value": 3.225099943710478,
+  "index": 24
+ },
+ {
+  "metric": "FCP",
+  "value": 3.2250999437169283,
+  "index": 25
+ },
+ {
+  "metric": "FCP",
+  "value": 3.3863549408993885,
+  "index": 25
+ },
+ {
+  "metric": "FCP",
+  "value": 3.3863549408960023,
+  "index": 25
+ },
+ {
+  "metric": "FCP",
+  "value": 3.386354940902775,
+  "index": 26
+ },
+ {
+  "metric": "FCP",
+  "value": 3.555672687944358,
+  "index": 26
+ },
+ {
+  "metric": "FCP",
+  "value": 3.5556726879408025,
+  "index": 26
+ },
+ {
+  "metric": "FCP",
+  "value": 3.5556726879479137,
+  "index": 27
+ },
+ {
+  "metric": "FCP",
+  "value": 3.733456322341576,
+  "index": 27
+ },
+ {
+  "metric": "FCP",
+  "value": 3.7334563223378425,
+  "index": 27
+ },
+ {
+  "metric": "FCP",
+  "value": 3.73345632234531,
+  "index": 28
+ },
+ {
+  "metric": "FCP",
+  "value": 3.920129138458655,
+  "index": 29
+ },
+ {
+  "metric": "FCP",
+  "value": 3.920129138454735,
+  "index": 28
+ },
+ {
+  "metric": "FCP",
+  "value": 3.9201291384625754,
+  "index": 29
+ },
+ {
+  "metric": "FCP",
+  "value": 4.116135595381588,
+  "index": 30
+ },
+ {
+  "metric": "FCP",
+  "value": 4.1161355953774725,
+  "index": 29
+ },
+ {
+  "metric": "FCP",
+  "value": 4.116135595385705,
+  "index": 30
+ },
+ {
+  "metric": "FCP",
+  "value": 4.321942375150668,
+  "index": 31
+ },
+ {
+  "metric": "FCP",
+  "value": 4.321942375146346,
+  "index": 30
+ },
+ {
+  "metric": "FCP",
+  "value": 4.321942375154991,
+  "index": 31
+ },
+ {
+  "metric": "FCP",
+  "value": 4.538039493908201,
+  "index": 31
+ },
+ {
+  "metric": "FCP",
+  "value": 4.538039493903663,
+  "index": 31
+ },
+ {
+  "metric": "FCP",
+  "value": 4.5380394939127395,
+  "index": 32
+ },
+ {
+  "metric": "FCP",
+  "value": 4.764941468603611,
+  "index": 33
+ },
+ {
+  "metric": "FCP",
+  "value": 4.764941468598846,
+  "index": 32
+ },
+ {
+  "metric": "FCP",
+  "value": 4.764941468608376,
+  "index": 33
+ },
+ {
+  "metric": "FCP",
+  "value": 5.003188542033792,
+  "index": 34
+ },
+ {
+  "metric": "FCP",
+  "value": 5.003188542028789,
+  "index": 33
+ },
+ {
+  "metric": "FCP",
+  "value": 5.003188542038796,
+  "index": 34
+ },
+ {
+  "metric": "FCP",
+  "value": 5.253347969135482,
+  "index": 34
+ },
+ {
+  "metric": "FCP",
+  "value": 5.253347969130228,
+  "index": 34
+ },
+ {
+  "metric": "FCP",
+  "value": 5.253347969140735,
+  "index": 35
+ },
+ {
+  "metric": "FCP",
+  "value": 5.5160153675922565,
+  "index": 36
+ },
+ {
+  "metric": "FCP",
+  "value": 5.516015367586741,
+  "index": 35
+ },
+ {
+  "metric": "FCP",
+  "value": 5.516015367597773,
+  "index": 36
+ },
+ {
+  "metric": "FCP",
+  "value": 5.791816135971869,
+  "index": 36
+ },
+ {
+  "metric": "FCP",
+  "value": 5.791816135966077,
+  "index": 36
+ },
+ {
+  "metric": "FCP",
+  "value": 5.791816135977662,
+  "index": 37
+ },
+ {
+  "metric": "FCP",
+  "value": 6.081406942770463,
+  "index": 38
+ },
+ {
+  "metric": "FCP",
+  "value": 6.0814069427643815,
+  "index": 37
+ },
+ {
+  "metric": "FCP",
+  "value": 6.081406942776545,
+  "index": 38
+ },
+ {
+  "metric": "FCP",
+  "value": 6.385477289908986,
+  "index": 38
+ },
+ {
+  "metric": "FCP",
+  "value": 6.385477289902601,
+  "index": 38
+ },
+ {
+  "metric": "FCP",
+  "value": 6.3854772899153724,
+  "index": 39
+ },
+ {
+  "metric": "FCP",
+  "value": 6.704751154404436,
+  "index": 40
+ },
+ {
+  "metric": "FCP",
+  "value": 6.704751154397731,
+  "index": 39
+ },
+ {
+  "metric": "FCP",
+  "value": 6.704751154411142,
+  "index": 40
+ },
+ {
+  "metric": "FCP",
+  "value": 7.039988712124658,
+  "index": 40
+ },
+ {
+  "metric": "FCP",
+  "value": 7.039988712117618,
+  "index": 40
+ },
+ {
+  "metric": "FCP",
+  "value": 7.039988712131699,
+  "index": 41
+ },
+ {
+  "metric": "FCP",
+  "value": 7.391988147730891,
+  "index": 41
+ },
+ {
+  "metric": "FCP",
+  "value": 7.3919881477235,
+  "index": 41
+ },
+ {
+  "metric": "FCP",
+  "value": 7.391988147738283,
+  "index": 42
+ },
+ {
+  "metric": "FCP",
+  "value": 7.761587555117436,
+  "index": 42
+ },
+ {
+  "metric": "FCP",
+  "value": 7.761587555109674,
+  "index": 42
+ },
+ {
+  "metric": "FCP",
+  "value": 7.761587555125199,
+  "index": 43
+ },
+ {
+  "metric": "FCP",
+  "value": 8.14966693287331,
+  "index": 44
+ },
+ {
+  "metric": "FCP",
+  "value": 8.14966693286516,
+  "index": 43
+ },
+ {
+  "metric": "FCP",
+  "value": 8.149666932881459,
+  "index": 44
+ },
+ {
+  "metric": "FCP",
+  "value": 8.557150279516975,
+  "index": 45
+ },
+ {
+  "metric": "FCP",
+  "value": 8.557150279508418,
+  "index": 44
+ },
+ {
+  "metric": "FCP",
+  "value": 8.557150279525533,
+  "index": 45
+ },
+ {
+  "metric": "FCP",
+  "value": 8.985007793492823,
+  "index": 45
+ },
+ {
+  "metric": "FCP",
+  "value": 8.985007793483838,
+  "index": 45
+ },
+ {
+  "metric": "FCP",
+  "value": 8.98500779350181,
+  "index": 46
+ },
+ {
+  "metric": "FCP",
+  "value": 9.434258183167465,
+  "index": 46
+ },
+ {
+  "metric": "FCP",
+  "value": 9.43425818315803,
+  "index": 46
+ },
+ {
+  "metric": "FCP",
+  "value": 9.4342581831769,
+  "index": 47
+ },
+ {
+  "metric": "FCP",
+  "value": 9.905971092325839,
+  "index": 48
+ },
+ {
+  "metric": "FCP",
+  "value": 9.905971092315934,
+  "index": 47
+ },
+ {
+  "metric": "FCP",
+  "value": 9.905971092335745,
+  "index": 48
+ },
+ {
+  "metric": "FCP",
+  "value": 10.401269646942131,
+  "index": 49
+ },
+ {
+  "metric": "FCP",
+  "value": 10.40126964693173,
+  "index": 48
+ },
+ {
+  "metric": "FCP",
+  "value": 10.401269646952533,
+  "index": 49
+ },
+ {
+  "metric": "FCP",
+  "value": 10.921333129289238,
+  "index": 49
+ },
+ {
+  "metric": "FCP",
+  "value": 10.921333129278317,
+  "index": 49
+ },
+ {
+  "metric": "FCP",
+  "value": 10.92133312930016,
+  "index": 50
+ },
+ {
+  "metric": "FCP",
+  "value": 11.4673997857537,
+  "index": 50
+ },
+ {
+  "metric": "FCP",
+  "value": 11.467399785742234,
+  "index": 50
+ },
+ {
+  "metric": "FCP",
+  "value": 11.467399785765169,
+  "index": 51
+ },
+ {
+  "metric": "FCP",
+  "value": 12.040769775041387,
+  "index": 52
+ },
+ {
+  "metric": "FCP",
+  "value": 12.040769775029347,
+  "index": 51
+ },
+ {
+  "metric": "FCP",
+  "value": 12.040769775053429,
+  "index": 52
+ },
+ {
+  "metric": "FCP",
+  "value": 12.642808263793455,
+  "index": 52
+ },
+ {
+  "metric": "FCP",
+  "value": 12.642808263780813,
+  "index": 52
+ },
+ {
+  "metric": "FCP",
+  "value": 12.6428082638061,
+  "index": 53
+ },
+ {
+  "metric": "FCP",
+  "value": 13.27494867698313,
+  "index": 53
+ },
+ {
+  "metric": "FCP",
+  "value": 13.274948676969855,
+  "index": 53
+ },
+ {
+  "metric": "FCP",
+  "value": 13.274948676996406,
+  "index": 54
+ },
+ {
+  "metric": "FCP",
+  "value": 13.938696110832286,
+  "index": 54
+ },
+ {
+  "metric": "FCP",
+  "value": 13.938696110818347,
+  "index": 54
+ },
+ {
+  "metric": "FCP",
+  "value": 13.938696110846225,
+  "index": 55
+ },
+ {
+  "metric": "FCP",
+  "value": 14.6356309163739,
+  "index": 56
+ },
+ {
+  "metric": "FCP",
+  "value": 14.635630916359265,
+  "index": 55
+ },
+ {
+  "metric": "FCP",
+  "value": 14.635630916388537,
+  "index": 56
+ },
+ {
+  "metric": "FCP",
+  "value": 15.367412462192597,
+  "index": 57
+ },
+ {
+  "metric": "FCP",
+  "value": 15.36741246217723,
+  "index": 56
+ },
+ {
+  "metric": "FCP",
+  "value": 15.367412462207966,
+  "index": 57
+ },
+ {
+  "metric": "FCP",
+  "value": 16.135783085302226,
+  "index": 57
+ },
+ {
+  "metric": "FCP",
+  "value": 16.13578308528609,
+  "index": 57
+ },
+ {
+  "metric": "FCP",
+  "value": 16.135783085318362,
+  "index": 58
+ },
+ {
+  "metric": "FCP",
+  "value": 16.94257223956734,
+  "index": 58
+ },
+ {
+  "metric": "FCP",
+  "value": 16.942572239550397,
+  "index": 58
+ },
+ {
+  "metric": "FCP",
+  "value": 16.942572239584283,
+  "index": 59
+ },
+ {
+  "metric": "FCP",
+  "value": 17.789700851545707,
+  "index": 60
+ },
+ {
+  "metric": "FCP",
+  "value": 17.78970085152792,
+  "index": 59
+ },
+ {
+  "metric": "FCP",
+  "value": 17.7897008515635,
+  "index": 60
+ },
+ {
+  "metric": "FCP",
+  "value": 18.679185894122995,
+  "index": 61
+ },
+ {
+  "metric": "FCP",
+  "value": 18.679185894104315,
+  "index": 60
+ },
+ {
+  "metric": "FCP",
+  "value": 18.679185894141675,
+  "index": 61
+ },
+ {
+  "metric": "FCP",
+  "value": 19.613145188829144,
+  "index": 61
+ },
+ {
+  "metric": "FCP",
+  "value": 19.613145188809533,
+  "index": 61
+ },
+ {
+  "metric": "FCP",
+  "value": 19.61314518884876,
+  "index": 62
+ },
+ {
+  "metric": "FCP",
+  "value": 20.5938024482706,
+  "index": 62
+ },
+ {
+  "metric": "FCP",
+  "value": 20.593802448250006,
+  "index": 62
+ },
+ {
+  "metric": "FCP",
+  "value": 20.593802448291196,
+  "index": 63
+ },
+ {
+  "metric": "FCP",
+  "value": 21.62349257068413,
+  "index": 64
+ },
+ {
+  "metric": "FCP",
+  "value": 21.62349257066251,
+  "index": 63
+ },
+ {
+  "metric": "FCP",
+  "value": 21.623492570705757,
+  "index": 64
+ },
+ {
+  "metric": "FCP",
+  "value": 22.70466719921834,
+  "index": 64
+ },
+ {
+  "metric": "FCP",
+  "value": 22.704667199195633,
+  "index": 64
+ },
+ {
+  "metric": "FCP",
+  "value": 22.704667199241044,
+  "index": 65
+ },
+ {
+  "metric": "FCP",
+  "value": 23.83990055917926,
+  "index": 66
+ },
+ {
+  "metric": "FCP",
+  "value": 23.83990055915542,
+  "index": 65
+ },
+ {
+  "metric": "FCP",
+  "value": 23.8399005592031,
+  "index": 66
+ },
+ {
+  "metric": "FCP",
+  "value": 25.031895587138223,
+  "index": 67
+ },
+ {
+  "metric": "FCP",
+  "value": 25.03189558711319,
+  "index": 66
+ },
+ {
+  "metric": "FCP",
+  "value": 25.031895587163255,
+  "index": 67
+ },
+ {
+  "metric": "FCP",
+  "value": 26.283490366495133,
+  "index": 68
+ },
+ {
+  "metric": "FCP",
+  "value": 26.28349036646885,
+  "index": 67
+ },
+ {
+  "metric": "FCP",
+  "value": 26.28349036652142,
+  "index": 68
+ },
+ {
+  "metric": "FCP",
+  "value": 27.597664884819892,
+  "index": 68
+ },
+ {
+  "metric": "FCP",
+  "value": 27.597664884792295,
+  "index": 68
+ },
+ {
+  "metric": "FCP",
+  "value": 27.597664884847493,
+  "index": 69
+ },
+ {
+  "metric": "FCP",
+  "value": 28.97754812906089,
+  "index": 70
+ },
+ {
+  "metric": "FCP",
+  "value": 28.977548129031913,
+  "index": 69
+ },
+ {
+  "metric": "FCP",
+  "value": 28.977548129089868,
+  "index": 70
+ },
+ {
+  "metric": "FCP",
+  "value": 30.426425535513935,
+  "index": 71
+ },
+ {
+  "metric": "FCP",
+  "value": 30.42642553548351,
+  "index": 70
+ },
+ {
+  "metric": "FCP",
+  "value": 30.426425535544364,
+  "index": 71
+ },
+ {
+  "metric": "FCP",
+  "value": 31.947746812289633,
+  "index": 72
+ },
+ {
+  "metric": "FCP",
+  "value": 31.947746812257687,
+  "index": 71
+ },
+ {
+  "metric": "FCP",
+  "value": 31.947746812321583,
+  "index": 72
+ },
+ {
+  "metric": "FCP",
+  "value": 33.54513415290411,
+  "index": 72
+ },
+ {
+  "metric": "FCP",
+  "value": 33.54513415287057,
+  "index": 72
+ },
+ {
+  "metric": "FCP",
+  "value": 33.545134152937656,
+  "index": 73
+ },
+ {
+  "metric": "FCP",
+  "value": 35.222390860549325,
+  "index": 74
+ },
+ {
+  "metric": "FCP",
+  "value": 35.2223908605141,
+  "index": 73
+ },
+ {
+  "metric": "FCP",
+  "value": 35.222390860584554,
+  "index": 74
+ },
+ {
+  "metric": "FCP",
+  "value": 36.98351040357679,
+  "index": 75
+ },
+ {
+  "metric": "FCP",
+  "value": 36.9835104035398,
+  "index": 74
+ },
+ {
+  "metric": "FCP",
+  "value": 36.98351040361377,
+  "index": 75
+ },
+ {
+  "metric": "FCP",
+  "value": 38.83268592375563,
+  "index": 76
+ },
+ {
+  "metric": "FCP",
+  "value": 38.8326859237168,
+  "index": 75
+ },
+ {
+  "metric": "FCP",
+  "value": 38.83268592379447,
+  "index": 76
+ },
+ {
+  "metric": "FCP",
+  "value": 40.77432021994341,
+  "index": 76
+ },
+ {
+  "metric": "FCP",
+  "value": 40.77432021990264,
+  "index": 76
+ },
+ {
+  "metric": "FCP",
+  "value": 40.77432021998419,
+  "index": 77
+ },
+ {
+  "metric": "FCP",
+  "value": 42.81303623094059,
+  "index": 78
+ },
+ {
+  "metric": "FCP",
+  "value": 42.81303623089778,
+  "index": 77
+ },
+ {
+  "metric": "FCP",
+  "value": 42.81303623098341,
+  "index": 78
+ },
+ {
+  "metric": "FCP",
+  "value": 44.95368804248762,
+  "index": 79
+ },
+ {
+  "metric": "FCP",
+  "value": 44.953688042442664,
+  "index": 78
+ },
+ {
+  "metric": "FCP",
+  "value": 44.953688042532576,
+  "index": 79
+ },
+ {
+  "metric": "FCP",
+  "value": 47.201372444612,
+  "index": 80
+ },
+ {
+  "metric": "FCP",
+  "value": 47.2013724445648,
+  "index": 79
+ },
+ {
+  "metric": "FCP",
+  "value": 47.20137244465921,
+  "index": 80
+ },
+ {
+  "metric": "FCP",
+  "value": 49.561441066842605,
+  "index": 81
+ },
+ {
+  "metric": "FCP",
+  "value": 49.561441066793044,
+  "index": 80
+ },
+ {
+  "metric": "FCP",
+  "value": 49.56144106689217,
+  "index": 81
+ },
+ {
+  "metric": "FCP",
+  "value": 52.039513120184736,
+  "index": 82
+ },
+ {
+  "metric": "FCP",
+  "value": 52.039513120132696,
+  "index": 81
+ },
+ {
+  "metric": "FCP",
+  "value": 52.03951312023678,
+  "index": 82
+ },
+ {
+  "metric": "FCP",
+  "value": 54.641488776193974,
+  "index": 82
+ },
+ {
+  "metric": "FCP",
+  "value": 54.64148877613933,
+  "index": 82
+ },
+ {
+  "metric": "FCP",
+  "value": 54.64148877624862,
+  "index": 83
+ },
+ {
+  "metric": "FCP",
+  "value": 57.37356321500368,
+  "index": 83
+ },
+ {
+  "metric": "FCP",
+  "value": 57.37356321494631,
+  "index": 83
+ },
+ {
+  "metric": "FCP",
+  "value": 57.373563215061054,
+  "index": 84
+ },
+ {
+  "metric": "FCP",
+  "value": 60.24224137575386,
+  "index": 84
+ },
+ {
+  "metric": "FCP",
+  "value": 60.242241375693624,
+  "index": 84
+ },
+ {
+  "metric": "FCP",
+  "value": 60.24224137581411,
+  "index": 85
+ },
+ {
+  "metric": "FCP",
+  "value": 63.25435344454156,
+  "index": 86
+ },
+ {
+  "metric": "FCP",
+  "value": 63.254353444478305,
+  "index": 85
+ },
+ {
+  "metric": "FCP",
+  "value": 63.25435344460482,
+  "index": 86
+ },
+ {
+  "metric": "FCP",
+  "value": 66.41707111676864,
+  "index": 87
+ },
+ {
+  "metric": "FCP",
+  "value": 66.41707111670222,
+  "index": 86
+ },
+ {
+  "metric": "FCP",
+  "value": 66.41707111683506,
+  "index": 87
+ },
+ {
+  "metric": "FCP",
+  "value": 69.73792467260708,
+  "index": 88
+ },
+ {
+  "metric": "FCP",
+  "value": 69.73792467253735,
+  "index": 87
+ },
+ {
+  "metric": "FCP",
+  "value": 69.73792467267683,
+  "index": 88
+ },
+ {
+  "metric": "FCP",
+  "value": 73.22482090623743,
+  "index": 89
+ },
+ {
+  "metric": "FCP",
+  "value": 73.2248209061642,
+  "index": 88
+ },
+ {
+  "metric": "FCP",
+  "value": 73.22482090631065,
+  "index": 89
+ },
+ {
+  "metric": "FCP",
+  "value": 76.88606195154931,
+  "index": 90
+ },
+ {
+  "metric": "FCP",
+  "value": 76.88606195147243,
+  "index": 89
+ },
+ {
+  "metric": "FCP",
+  "value": 76.8860619516262,
+  "index": 90
+ },
+ {
+  "metric": "FCP",
+  "value": 80.73036504912677,
+  "index": 90
+ },
+ {
+  "metric": "FCP",
+  "value": 80.73036504904604,
+  "index": 90
+ },
+ {
+  "metric": "FCP",
+  "value": 80.7303650492075,
+  "index": 91
+ },
+ {
+  "metric": "FCP",
+  "value": 84.76688330158312,
+  "index": 91
+ },
+ {
+  "metric": "FCP",
+  "value": 84.76688330149835,
+  "index": 91
+ },
+ {
+  "metric": "FCP",
+  "value": 84.76688330166789,
+  "index": 92
+ },
+ {
+  "metric": "FCP",
+  "value": 89.00522746666228,
+  "index": 92
+ },
+ {
+  "metric": "FCP",
+  "value": 89.00522746657327,
+  "index": 92
+ },
+ {
+  "metric": "FCP",
+  "value": 89.0052274667513,
+  "index": 93
+ },
+ {
+  "metric": "FCP",
+  "value": 93.4554888399954,
+  "index": 94
+ },
+ {
+  "metric": "FCP",
+  "value": 93.45548883990195,
+  "index": 93
+ },
+ {
+  "metric": "FCP",
+  "value": 93.45548884008886,
+  "index": 94
+ },
+ {
+  "metric": "FCP",
+  "value": 98.12826328199516,
+  "index": 95
+ },
+ {
+  "metric": "FCP",
+  "value": 98.12826328189703,
+  "index": 94
+ },
+ {
+  "metric": "FCP",
+  "value": 98.1282632820933,
+  "index": 95
+ },
+ {
+  "metric": "FCP",
+  "value": 103.03467644609493,
+  "index": 96
+ },
+ {
+  "metric": "FCP",
+  "value": 103.0346764459919,
+  "index": 95
+ },
+ {
+  "metric": "FCP",
+  "value": 103.03467644619798,
+  "index": 96
+ },
+ {
+  "metric": "FCP",
+  "value": 108.18641026839968,
+  "index": 97
+ },
+ {
+  "metric": "FCP",
+  "value": 108.1864102682915,
+  "index": 96
+ },
+ {
+  "metric": "FCP",
+  "value": 108.18641026850788,
+  "index": 97
+ },
+ {
+  "metric": "FCP",
+  "value": 113.59573078181967,
+  "index": 98
+ },
+ {
+  "metric": "FCP",
+  "value": 113.59573078170608,
+  "index": 97
+ },
+ {
+  "metric": "FCP",
+  "value": 113.59573078193327,
+  "index": 98
+ },
+ {
+  "metric": "FCP",
+  "value": 119.27551732091065,
+  "index": 98
+ },
+ {
+  "metric": "FCP",
+  "value": 119.27551732079138,
+  "index": 98
+ },
+ {
+  "metric": "FCP",
+  "value": 119.27551732102994,
+  "index": 99
+ },
+ {
+  "metric": "FCP",
+  "value": 125.23929318695619,
+  "index": 99
+ },
+ {
+  "metric": "FCP",
+  "value": 125.23929318683095,
+  "index": 99
+ },
+ {
+  "metric": "FCP",
+  "value": 125.23929318708144,
+  "index": 100
+ },
+ {
+  "metric": "FCP",
+  "value": 131.50125784630401,
+  "index": 100
+ },
+ {
+  "metric": "FCP",
+  "value": 131.5012578461725,
+  "index": 100
+ },
+ {
+  "metric": "FCP",
+  "value": 131.50125784643552,
+  "index": 101
+ },
+ {
+  "metric": "FCP",
+  "value": 138.07632073861922,
+  "index": 102
+ },
+ {
+  "metric": "FCP",
+  "value": 138.07632073848114,
+  "index": 101
+ },
+ {
+  "metric": "FCP",
+  "value": 138.07632073875732,
+  "index": 102
+ },
+ {
+  "metric": "FCP",
+  "value": 144.9801367755502,
+  "index": 103
+ },
+ {
+  "metric": "FCP",
+  "value": 144.9801367754052,
+  "index": 102
+ },
+ {
+  "metric": "FCP",
+  "value": 144.98013677569517,
+  "index": 103
+ },
+ {
+  "metric": "FCP",
+  "value": 152.2291436143277,
+  "index": 104
+ },
+ {
+  "metric": "FCP",
+  "value": 152.22914361417548,
+  "index": 103
+ },
+ {
+  "metric": "FCP",
+  "value": 152.22914361447997,
+  "index": 104
+ },
+ {
+  "metric": "FCP",
+  "value": 159.84060079504408,
+  "index": 105
+ },
+ {
+  "metric": "FCP",
+  "value": 159.84060079488424,
+  "index": 104
+ },
+ {
+  "metric": "FCP",
+  "value": 159.84060079520393,
+  "index": 105
+ },
+ {
+  "metric": "FCP",
+  "value": 167.8326308347963,
+  "index": 105
+ },
+ {
+  "metric": "FCP",
+  "value": 167.83263083462847,
+  "index": 105
+ },
+ {
+  "metric": "FCP",
+  "value": 167.83263083496416,
+  "index": 106
+ },
+ {
+  "metric": "FCP",
+  "value": 176.22426237653613,
+  "index": 106
+ },
+ {
+  "metric": "FCP",
+  "value": 176.22426237635992,
+  "index": 106
+ },
+ {
+  "metric": "FCP",
+  "value": 176.22426237671237,
+  "index": 107
+ },
+ {
+  "metric": "FCP",
+  "value": 185.03547549536293,
+  "index": 107
+ },
+ {
+  "metric": "FCP",
+  "value": 185.0354754951779,
+  "index": 107
+ },
+ {
+  "metric": "FCP",
+  "value": 185.03547549554798,
+  "index": 108
+ },
+ {
+  "metric": "FCP",
+  "value": 194.2872492701311,
+  "index": 108
+ },
+ {
+  "metric": "FCP",
+  "value": 194.2872492699368,
+  "index": 108
+ },
+ {
+  "metric": "FCP",
+  "value": 194.2872492703254,
+  "index": 109
+ },
+ {
+  "metric": "FCP",
+  "value": 204.00161173363765,
+  "index": 110
+ },
+ {
+  "metric": "FCP",
+  "value": 204.00161173343363,
+  "index": 109
+ },
+ {
+  "metric": "FCP",
+  "value": 204.00161173384166,
+  "index": 110
+ },
+ {
+  "metric": "FCP",
+  "value": 214.20169232031955,
+  "index": 111
+ },
+ {
+  "metric": "FCP",
+  "value": 214.20169232010537,
+  "index": 110
+ },
+ {
+  "metric": "FCP",
+  "value": 214.20169232053377,
+  "index": 111
+ },
+ {
+  "metric": "FCP",
+  "value": 224.91177693633554,
+  "index": 112
+ },
+ {
+  "metric": "FCP",
+  "value": 224.91177693611064,
+  "index": 111
+ },
+ {
+  "metric": "FCP",
+  "value": 224.91177693656047,
+  "index": 112
+ },
+ {
+  "metric": "FCP",
+  "value": 236.15736578315233,
+  "index": 113
+ },
+ {
+  "metric": "FCP",
+  "value": 236.15736578291617,
+  "index": 112
+ },
+ {
+  "metric": "FCP",
+  "value": 236.1573657833885,
+  "index": 113
+ },
+ {
+  "metric": "FCP",
+  "value": 247.96523407230995,
+  "index": 113
+ },
+ {
+  "metric": "FCP",
+  "value": 247.965234072062,
+  "index": 113
+ },
+ {
+  "metric": "FCP",
+  "value": 247.96523407255793,
+  "index": 114
+ },
+ {
+  "metric": "FCP",
+  "value": 260.36349577592546,
+  "index": 114
+ },
+ {
+  "metric": "FCP",
+  "value": 260.3634957756651,
+  "index": 114
+ },
+ {
+  "metric": "FCP",
+  "value": 260.36349577618586,
+  "index": 115
+ },
+ {
+  "metric": "FCP",
+  "value": 273.38167056472173,
+  "index": 115
+ },
+ {
+  "metric": "FCP",
+  "value": 273.38167056444837,
+  "index": 115
+ },
+ {
+  "metric": "FCP",
+  "value": 273.38167056499515,
+  "index": 116
+ },
+ {
+  "metric": "FCP",
+  "value": 287.05075409295785,
+  "index": 116
+ },
+ {
+  "metric": "FCP",
+  "value": 287.0507540926708,
+  "index": 116
+ },
+ {
+  "metric": "FCP",
+  "value": 287.0507540932449,
+  "index": 117
+ },
+ {
+  "metric": "FCP",
+  "value": 301.40329179760573,
+  "index": 118
+ },
+ {
+  "metric": "FCP",
+  "value": 301.40329179730435,
+  "index": 117
+ },
+ {
+  "metric": "FCP",
+  "value": 301.4032917979072,
+  "index": 118
+ },
+ {
+  "metric": "FCP",
+  "value": 316.47345638748607,
+  "index": 119
+ },
+ {
+  "metric": "FCP",
+  "value": 316.4734563871696,
+  "index": 118
+ },
+ {
+  "metric": "FCP",
+  "value": 316.47345638780257,
+  "index": 119
+ },
+ {
+  "metric": "FCP",
+  "value": 332.29712920686035,
+  "index": 120
+ },
+ {
+  "metric": "FCP",
+  "value": 332.29712920652804,
+  "index": 119
+ },
+ {
+  "metric": "FCP",
+  "value": 332.29712920719265,
+  "index": 120
+ },
+ {
+  "metric": "FCP",
+  "value": 348.9119856672034,
+  "index": 121
+ },
+ {
+  "metric": "FCP",
+  "value": 348.9119856668545,
+  "index": 120
+ },
+ {
+  "metric": "FCP",
+  "value": 348.91198566755236,
+  "index": 121
+ },
+ {
+  "metric": "FCP",
+  "value": 366.3575849505636,
+  "index": 121
+ },
+ {
+  "metric": "FCP",
+  "value": 366.35758495019724,
+  "index": 121
+ },
+ {
+  "metric": "FCP",
+  "value": 366.35758495093,
+  "index": 122
+ },
+ {
+  "metric": "FCP",
+  "value": 384.6754641980918,
+  "index": 122
+ },
+ {
+  "metric": "FCP",
+  "value": 384.67546419770713,
+  "index": 122
+ },
+ {
+  "metric": "FCP",
+  "value": 384.6754641984765,
+  "index": 123
+ },
+ {
+  "metric": "FCP",
+  "value": 403.9092374079964,
+  "index": 123
+ },
+ {
+  "metric": "FCP",
+  "value": 403.9092374075925,
+  "index": 123
+ },
+ {
+  "metric": "FCP",
+  "value": 403.9092374084003,
+  "index": 124
+ },
+ {
+  "metric": "FCP",
+  "value": 424.1046992783962,
+  "index": 124
+ },
+ {
+  "metric": "FCP",
+  "value": 424.1046992779721,
+  "index": 124
+ },
+ {
+  "metric": "FCP",
+  "value": 424.10469927882036,
+  "index": 125
+ },
+ {
+  "metric": "FCP",
+  "value": 445.30993424231605,
+  "index": 126
+ },
+ {
+  "metric": "FCP",
+  "value": 445.30993424187074,
+  "index": 125
+ },
+ {
+  "metric": "FCP",
+  "value": 445.3099342427614,
+  "index": 126
+ },
+ {
+  "metric": "FCP",
+  "value": 467.57543095443185,
+  "index": 127
+ },
+ {
+  "metric": "FCP",
+  "value": 467.5754309539643,
+  "index": 126
+ },
+ {
+  "metric": "FCP",
+  "value": 467.57543095489945,
+  "index": 127
+ },
+ {
+  "metric": "FCP",
+  "value": 490.95420250215346,
+  "index": 128
+ },
+ {
+  "metric": "FCP",
+  "value": 490.9542025016625,
+  "index": 127
+ },
+ {
+  "metric": "FCP",
+  "value": 490.9542025026445,
+  "index": 128
+ },
+ {
+  "metric": "FCP",
+  "value": 515.5019126272612,
+  "index": 128
+ },
+ {
+  "metric": "FCP",
+  "value": 515.5019126267457,
+  "index": 128
+ },
+ {
+  "metric": "FCP",
+  "value": 515.5019126277767,
+  "index": 129
+ },
+ {
+  "metric": "FCP",
+  "value": 541.2770082586243,
+  "index": 129
+ },
+ {
+  "metric": "FCP",
+  "value": 541.277008258083,
+  "index": 129
+ },
+ {
+  "metric": "FCP",
+  "value": 541.2770082591657,
+  "index": 130
+ },
+ {
+  "metric": "FCP",
+  "value": 568.3408586715555,
+  "index": 131
+ },
+ {
+  "metric": "FCP",
+  "value": 568.3408586709871,
+  "index": 130
+ },
+ {
+  "metric": "FCP",
+  "value": 568.3408586721239,
+  "index": 131
+ },
+ {
+  "metric": "FCP",
+  "value": 739,
+  "index": 136
+ },
+ {
+  "metric": "FCP",
+  "value": 69651.58452452968,
+  "index": 229
+ },
+ {
+  "metric": "FCP",
+  "value": 47428,
+  "index": 221
+ },
+ {
+  "metric": "FCP",
+  "value": 19630,
+  "index": 203
+ },
+ {
+  "metric": "FCP",
+  "value": 78563,
+  "index": 232
+ },
+ {
+  "metric": "FCP",
+  "value": 22095.02323417169,
+  "index": 206
+ },
+ {
+  "metric": "FCP",
+  "value": 71601,
+  "index": 230
+ },
+ {
+  "metric": "FCP",
+  "value": 46946,
+  "index": 221
+ },
+ {
+  "metric": "FCP",
+  "value": 88227,
+  "index": 234
+ },
+ {
+  "metric": "FCP",
+  "value": 53436,
+  "index": 224
+ },
+ {
+  "metric": "FCP",
+  "value": 91729.80721498803,
+  "index": 235
+ },
+ {
+  "metric": "FCP",
+  "value": 42237,
+  "index": 219
+ },
+ {
+  "metric": "FCP",
+  "value": 117179.05257780828,
+  "index": 240
+ },
+ {
+  "metric": "FCP",
+  "value": 57890,
+  "index": 225
+ },
+ {
+  "metric": "FCP",
+  "value": 112839.99693059627,
+  "index": 239
+ },
+ {
+  "metric": "FCP",
+  "value": 77613.49408016216,
+  "index": 231
+ },
+ {
+  "metric": "FCP",
+  "value": 107380.09427111734,
+  "index": 238
+ },
+ {
+  "metric": "FCP",
+  "value": 100876,
+  "index": 237
+ },
+ {
+  "metric": "FCP",
+  "value": 41812.14130595137,
+  "index": 219
+ },
+ {
+  "metric": "FCP",
+  "value": 6807.45395835956,
+  "index": 181
+ },
+ {
+  "metric": "FCP",
+  "value": 112699,
+  "index": 239
+ },
+ {
+  "metric": "FCP",
+  "value": 61184.58216636853,
+  "index": 226
+ },
+ {
+  "metric": "FCP",
+  "value": 10694,
+  "index": 191
+ },
+ {
+  "metric": "FCP",
+  "value": 114047,
+  "index": 239
+ },
+ {
+  "metric": "FCP",
+  "value": 115583.57114601223,
+  "index": 239
+ },
+ {
+  "metric": "FCP",
+  "value": 1472.8469115003406,
+  "index": 150
+ },
+ {
+  "metric": "FCP",
+  "value": 83803,
+  "index": 233
+ },
+ {
+  "metric": "FCP",
+  "value": 7072,
+  "index": 182
+ },
+ {
+  "metric": "FCP",
+  "value": 42189.24904043888,
+  "index": 219
+ },
+ {
+  "metric": "FCP",
+  "value": 7212,
+  "index": 183
+ },
+ {
+  "metric": "FCP",
+  "value": 96481,
+  "index": 236
+ },
+ {
+  "metric": "FCP",
+  "value": 87869,
+  "index": 234
+ },
+ {
+  "metric": "FCP",
+  "value": 53846.848636914896,
+  "index": 224
+ },
+ {
+  "metric": "FCP",
+  "value": 34745.592996040104,
+  "index": 215
+ },
+ {
+  "metric": "FCP",
+  "value": 25728,
+  "index": 209
+ },
+ {
+  "metric": "FCP",
+  "value": 58391.195367882174,
+  "index": 225
+ },
+ {
+  "metric": "FCP",
+  "value": 111339,
+  "index": 239
+ },
+ {
+  "metric": "FCP",
+  "value": 40805,
+  "index": 218
+ },
+ {
+  "metric": "FCP",
+  "value": 65355,
+  "index": 228
+ },
+ {
+  "metric": "FCP",
+  "value": 4913,
+  "index": 175
+ },
+ {
+  "metric": "FCP",
+  "value": 7893,
+  "index": 184
+ },
+ {
+  "metric": "FCP",
+  "value": 35533.52643102116,
+  "index": 215
+ },
+ {
+  "metric": "FCP",
+  "value": 86884,
+  "index": 234
+ },
+ {
+  "metric": "FCP",
+  "value": 112438.0515750012,
+  "index": 239
+ },
+ {
+  "metric": "FCP",
+  "value": 35706,
+  "index": 215
+ },
+ {
+  "metric": "FCP",
+  "value": 80692.02244157594,
+  "index": 232
+ },
+ {
+  "metric": "FCP",
+  "value": 57764,
+  "index": 225
+ },
+ {
+  "metric": "FCP",
+  "value": 78456,
+  "index": 231
+ },
+ {
+  "metric": "FCP",
+  "value": 112100,
+  "index": 239
+ },
+ {
+  "metric": "FCP",
+  "value": 11052.473388658229,
+  "index": 191
+ },
+ {
+  "metric": "FCP",
+  "value": 41786.225933809365,
+  "index": 219
+ },
+ {
+  "metric": "FCP",
+  "value": 74080,
+  "index": 230
+ },
+ {
+  "metric": "FCP",
+  "value": 108940,
+  "index": 238
+ },
+ {
+  "metric": "FCP",
+  "value": 36858,
+  "index": 216
+ },
+ {
+  "metric": "FCP",
+  "value": 40022,
+  "index": 218
+ },
+ {
+  "metric": "FCP",
+  "value": 12145,
+  "index": 193
+ },
+ {
+  "metric": "FCP",
+  "value": 23239.483080349288,
+  "index": 207
+ },
+ {
+  "metric": "FCP",
+  "value": 14367.325889250395,
+  "index": 197
+ },
+ {
+  "metric": "FCP",
+  "value": 29709,
+  "index": 212
+ },
+ {
+  "metric": "FCP",
+  "value": 2517,
+  "index": 161
+ },
+ {
+  "metric": "FCP",
+  "value": 25209,
+  "index": 208
+ },
+ {
+  "metric": "FCP",
+  "value": 29234.880434960076,
+  "index": 211
+ },
+ {
+  "metric": "FCP",
+  "value": 94604,
+  "index": 235
+ },
+ {
+  "metric": "FCP",
+  "value": 11317,
+  "index": 192
+ },
+ {
+  "metric": "FCP",
+  "value": 104897.97345575951,
+  "index": 237
+ },
+ {
+  "metric": "FCP",
+  "value": 112763,
+  "index": 239
+ },
+ {
+  "metric": "FCP",
+  "value": 68035.59353424773,
+  "index": 229
+ },
+ {
+  "metric": "FCP",
+  "value": 14362,
+  "index": 197
+ },
+ {
+  "metric": "FCP",
+  "value": 92293,
+  "index": 235
+ },
+ {
+  "metric": "FCP",
+  "value": 38603,
+  "index": 217
+ },
+ {
+  "metric": "FCP",
+  "value": 42682.338066822325,
+  "index": 219
+ },
+ {
+  "metric": "FCP",
+  "value": 96268,
+  "index": 236
+ },
+ {
+  "metric": "FCP",
+  "value": 73699.21994527872,
+  "index": 230
+ },
+ {
+  "metric": "FCP",
+  "value": 45310,
+  "index": 220
+ },
+ {
+  "metric": "FCP",
+  "value": 79180,
+  "index": 232
+ },
+ {
+  "metric": "FCP",
+  "value": 39170,
+  "index": 217
+ },
+ {
+  "metric": "FCP",
+  "value": 31149,
+  "index": 213
+ },
+ {
+  "metric": "FCP",
+  "value": 68482.52649367851,
+  "index": 229
+ },
+ {
+  "metric": "FCP",
+  "value": 118106.60727363726,
+  "index": 240
+ },
+ {
+  "metric": "FCP",
+  "value": 41509.30901404749,
+  "index": 218
+ },
+ {
+  "metric": "FCP",
+  "value": 66430.02013409628,
+  "index": 228
+ },
+ {
+  "metric": "FCP",
+  "value": 6090.429721558905,
+  "index": 179
+ },
+ {
+  "metric": "FCP",
+  "value": 33916,
+  "index": 214
+ },
+ {
+  "metric": "FCP",
+  "value": 88889,
+  "index": 234
+ },
+ {
+  "metric": "FCP",
+  "value": 70444.93974755966,
+  "index": 229
+ },
+ {
+  "metric": "FCP",
+  "value": 52043.58216314091,
+  "index": 223
+ },
+ {
+  "metric": "FCP",
+  "value": 88243,
+  "index": 234
+ },
+ {
+  "metric": "FCP",
+  "value": 92251,
+  "index": 235
+ },
+ {
+  "metric": "TTFB",
+  "value": 0,
+  "index": 0
+ },
+ {
+  "metric": "TTFB",
+  "value": 0,
+  "index": 0
+ },
+ {
+  "metric": "TTFB",
+  "value": -1,
+  "index": 0
+ },
+ {
+  "metric": "TTFB",
+  "value": -0.001,
+  "index": 0
+ },
+ {
+  "metric": "TTFB",
+  "value": -120000,
+  "index": 0
+ },
+ {
+  "metric": "TTFB",
+  "value": 1e-12,
+  "index": 1
+ },
+ {
+  "metric": "TTFB",
+  "value": 5e-324,
+  "index": 1
+ },
+ {
+  "metric": "TTFB",
+  "value": 0.5,
+  "index": 1
+ },
+ {
+  "metric": "TTFB",
+  "value": 0.999999,
+  "index": 1
+ },
+ {
+  "metric": "TTFB",
+  "value": 1,
+  "index": 1
+ },
+ {
+  "metric": "TTFB",
+  "value": 1.0000001,
+  "index": 1
+ },
+ {
+  "metric": "TTFB",
+  "value": 1.05,
+  "index": 2
+ },
+ {
+  "metric": "TTFB",
+  "value": 1.025,
+  "index": 1
+ },
+ {
+  "metric": "TTFB",
+  "value": 2,
+  "index": 15
+ },
+ {
+  "metric": "TTFB",
+  "value": 10,
+  "index": 48
+ },
+ {
+  "metric": "TTFB",
+  "value": 100,
+  "index": 95
+ },
+ {
+  "metric": "TTFB",
+  "value": 1000,
+  "index": 142
+ },
+ {
+  "metric": "TTFB",
+  "value": 120000,
+  "index": 240
+ },
+ {
+  "metric": "TTFB",
+  "value": 1000000000,
+  "index": 425
+ },
+ {
+  "metric": "TTFB",
+  "value": 1,
+  "index": 1
+ },
+ {
+  "metric": "TTFB",
+  "value": 0.999999999999,
+  "index": 1
+ },
+ {
+  "metric": "TTFB",
+  "value": 1.000000000001,
+  "index": 1
+ },
+ {
+  "metric": "TTFB",
+  "value": 1.05,
+  "index": 2
+ },
+ {
+  "metric": "TTFB",
+  "value": 1.04999999999895,
+  "index": 1
+ },
+ {
+  "metric": "TTFB",
+  "value": 1.05000000000105,
+  "index": 2
+ },
+ {
+  "metric": "TTFB",
+  "value": 1.1025,
+  "index": 2
+ },
+ {
+  "metric": "TTFB",
+  "value": 1.1024999999988976,
+  "index": 2
+ },
+ {
+  "metric": "TTFB",
+  "value": 1.1025000000011027,
+  "index": 3
+ },
+ {
+  "metric": "TTFB",
+  "value": 1.1576250000000001,
+  "index": 3
+ },
+ {
+  "metric": "TTFB",
+  "value": 1.1576249999988426,
+  "index": 3
+ },
+ {
+  "metric": "TTFB",
+  "value": 1.1576250000011579,
+  "index": 4
+ },
+ {
+  "metric": "TTFB",
+  "value": 1.2155062500000002,
+  "index": 5
+ },
+ {
+  "metric": "TTFB",
+  "value": 1.2155062499987848,
+  "index": 4
+ },
+ {
+  "metric": "TTFB",
+  "value": 1.215506250001216,
+  "index": 5
+ },
+ {
+  "metric": "TTFB",
+  "value": 1.2762815625000004,
+  "index": 6
+ },
+ {
+  "metric": "TTFB",
+  "value": 1.276281562498724,
+  "index": 5
+ },
+ {
+  "metric": "TTFB",
+  "value": 1.2762815625012767,
+  "index": 6
+ },
+ {
+  "metric": "TTFB",
+  "value": 1.3400956406250004,
+  "index": 7
+ },
+ {
+  "metric": "TTFB",
+  "value": 1.3400956406236604,
+  "index": 6
+ },
+ {
+  "metric": "TTFB",
+  "value": 1.3400956406263407,
+  "index": 7
+ },
+ {
+  "metric": "TTFB",
+  "value": 1.4071004226562505,
+  "index": 8
+ },
+ {
+  "metric": "TTFB",
+  "value": 1.4071004226548434,
+  "index": 7
+ },
+ {
+  "metric": "TTFB",
+  "value": 1.4071004226576578,
+  "index": 8
+ },
+ {
+  "metric": "TTFB",
+  "value": 1.477455443789063,
+  "index": 9
+ },
+ {
+  "metric": "TTFB",
+  "value": 1.4774554437875855,
+  "index": 8
+ },
+ {
+  "metric": "TTFB",
+  "value": 1.4774554437905405,
+  "index": 9
+ },
+ {
+  "metric": "TTFB",
+  "value": 1.5513282159785162,
+  "index": 10
+ },
+ {
+  "metric": "TTFB",
+  "value": 1.551328215976965,
+  "index": 9
+ },
+ {
+  "metric": "TTFB",
+  "value": 1.5513282159800676,
+  "index": 10
+ },
+ {
+  "metric": "TTFB",
+  "value": 1.628894626777442,
+  "index": 10
+ },
+ {
+  "metric": "TTFB",
+  "value": 1.628894626775813,
+  "index": 10
+ },
+ {
+  "metric": "TTFB",
+  "value": 1.6288946267790712,
+  "index": 11
+ },
+ {
+  "metric": "TTFB",
+  "value": 1.7103393581163142,
+  "index": 11
+ },
+ {
+  "metric": "TTFB",
+  "value": 1.7103393581146038,
+  "index": 11
+ },
+ {
+  "metric": "TTFB",
+  "value": 1.7103393581180246,
+  "index": 12
+ },
+ {
+  "metric": "TTFB",
+  "value": 1.79585632602213,
+  "index": 13
+ },
+ {
+  "metric": "TTFB",
+  "value": 1.7958563260203342,
+  "index": 12
+ },
+ {
+  "metric": "TTFB",
+  "value": 1.7958563260239262,
+  "index": 13
+ },
+ {
+  "metric": "TTFB",
+  "value": 1.8856491423232367,
+  "index": 14
+ },
+ {
+  "metric": "TTFB",
+  "value": 1.885649142321351,
+  "index": 13
+ },
+ {
+  "metric": "TTFB",
+  "value": 1.8856491423251225,
+  "index": 14
+ },
+ {
+  "metric": "TTFB",
+  "value": 1.9799315994393987,
+  "index": 15
+ },
+ {
+  "metric": "TTFB",
+  "value": 1.9799315994374187,
+  "index": 14
+ },
+ {
+  "metric": "TTFB",
+  "value": 1.9799315994413789,
+  "index": 15
+ },
+ {
+  "metric": "TTFB",
+  "value": 2.0789281794113688,
+  "index": 16
+ },
+ {
+  "metric": "TTFB",
+  "value": 2.07892817940929,
+  "index": 15
+ },
+ {
+  "metric": "TTFB",
+  "value": 2.078928179413448,
+  "index": 16
+ },
+ {
+  "metric": "TTFB",
+  "value": 2.182874588381937,
+  "index": 16
+ },
+ {
+  "metric": "TTFB",
+  "value": 2.1828745883797542,
+  "index": 16
+ },
+ {
+  "metric": "TTFB",
+  "value": 2.18287458838412,
+  "index": 17
+ },
+ {
+  "metric": "TTFB",
+  "value": 2.292018317801034,
+  "index": 17
+ },
+ {
+  "metric": "TTFB",
+  "value": 2.292018317798742,
+  "index": 17
+ },
+ {
+  "metric": "TTFB",
+  "value": 2.2920183178033264,
+  "index": 18
+ },
+ {
+  "metric": "TTFB",
+  "value": 2.4066192336910857,
+  "index": 18
+ },
+ {
+  "metric": "TTFB",
+  "value": 2.406619233688679,
+  "index": 18
+ },
+ {
+  "metric": "TTFB",
+  "value": 2.4066192336934926,
+  "index": 19
+ },
+ {
+  "metric": "TTFB",
+  "value": 2.5269501953756404,
+  "index": 20
+ },
+ {
+  "metric": "TTFB",
+  "value": 2.5269501953731135,
+  "index": 19
+ },
+ {
+  "metric": "TTFB",
+  "value": 2.5269501953781677,
+  "index": 20
+ },
+ {
+  "metric": "TTFB",
+  "value": 2.653297705144422,
+  "index": 20
+ },
+ {
+  "metric": "TTFB",
+  "value": 2.6532977051417688,
+  "index": 20
+ },
+ {
+  "metric": "TTFB",
+  "value": 2.6532977051470756,
+  "index": 21
+ },
+ {
+  "metric": "TTFB",
+  "value": 2.7859625904016436,
+  "index": 21
+ },
+ {
+  "metric": "TTFB",
+  "value": 2.785962590398858,
+  "index": 21
+ },
+ {
+  "metric": "TTFB",
+  "value": 2.78596259040443,
+  "index": 22
+ },
+ {
+  "metric": "TTFB",
+  "value": 2.925260719921726,
+  "index": 23
+ },
+ {
+  "metric": "TTFB",
+  "value": 2.9252607199188008,
+  "index": 22
+ },
+ {
+  "metric": "TTFB",
+  "value": 2.9252607199246516,
+  "index": 23
+ },
+ {
+  "metric": "TTFB",
+  "value": 3.0715237559178123,
+  "index": 23
+ },
+ {
+  "metric": "TTFB",
+  "value": 3.071523755914741,
+  "index": 23
+ },
+ {
+  "metric": "TTFB",
+  "value": 3.071523755920884,
+  "index": 24
+ },
+ {
+  "metric": "TTFB",
+  "value": 3.225099943713703,
+  "index": 24
+ },
+ {
+  "metric": "TTFB",
+  "value": 3.225099943710478,
+  "index": 24
+ },
+ {
+  "metric": "TTFB",
+  "value": 3.2250999437169283,
+  "index": 25
+ },
+ {
+  "metric": "TTFB",
+  "value": 3.3863549408993885,
+  "index": 25
+ },
+ {
+  "metric": "TTFB",
+  "value": 3.3863549408960023,
+  "index": 25
+ },
+ {
+  "metric": "TTFB",
+  "value": 3.386354940902775,
+  "index": 26
+ },
+ {
+  "metric": "TTFB",
+  "value": 3.555672687944358,
+  "index": 26
+ },
+ {
+  "metric": "TTFB",
+  "value": 3.5556726879408025,
+  "index": 26
+ },
+ {
+  "metric": "TTFB",
+  "value": 3.5556726879479137,
+  "index": 27
+ },
+ {
+  "metric": "TTFB",
+  "value": 3.733456322341576,
+  "index": 27
+ },
+ {
+  "metric": "TTFB",
+  "value": 3.7334563223378425,
+  "index": 27
+ },
+ {
+  "metric": "TTFB",
+  "value": 3.73345632234531,
+  "index": 28
+ },
+ {
+  "metric": "TTFB",
+  "value": 3.920129138458655,
+  "index": 29
+ },
+ {
+  "metric": "TTFB",
+  "value": 3.920129138454735,
+  "index": 28
+ },
+ {
+  "metric": "TTFB",
+  "value": 3.9201291384625754,
+  "index": 29
+ },
+ {
+  "metric": "TTFB",
+  "value": 4.116135595381588,
+  "index": 30
+ },
+ {
+  "metric": "TTFB",
+  "value": 4.1161355953774725,
+  "index": 29
+ },
+ {
+  "metric": "TTFB",
+  "value": 4.116135595385705,
+  "index": 30
+ },
+ {
+  "metric": "TTFB",
+  "value": 4.321942375150668,
+  "index": 31
+ },
+ {
+  "metric": "TTFB",
+  "value": 4.321942375146346,
+  "index": 30
+ },
+ {
+  "metric": "TTFB",
+  "value": 4.321942375154991,
+  "index": 31
+ },
+ {
+  "metric": "TTFB",
+  "value": 4.538039493908201,
+  "index": 31
+ },
+ {
+  "metric": "TTFB",
+  "value": 4.538039493903663,
+  "index": 31
+ },
+ {
+  "metric": "TTFB",
+  "value": 4.5380394939127395,
+  "index": 32
+ },
+ {
+  "metric": "TTFB",
+  "value": 4.764941468603611,
+  "index": 33
+ },
+ {
+  "metric": "TTFB",
+  "value": 4.764941468598846,
+  "index": 32
+ },
+ {
+  "metric": "TTFB",
+  "value": 4.764941468608376,
+  "index": 33
+ },
+ {
+  "metric": "TTFB",
+  "value": 5.003188542033792,
+  "index": 34
+ },
+ {
+  "metric": "TTFB",
+  "value": 5.003188542028789,
+  "index": 33
+ },
+ {
+  "metric": "TTFB",
+  "value": 5.003188542038796,
+  "index": 34
+ },
+ {
+  "metric": "TTFB",
+  "value": 5.253347969135482,
+  "index": 34
+ },
+ {
+  "metric": "TTFB",
+  "value": 5.253347969130228,
+  "index": 34
+ },
+ {
+  "metric": "TTFB",
+  "value": 5.253347969140735,
+  "index": 35
+ },
+ {
+  "metric": "TTFB",
+  "value": 5.5160153675922565,
+  "index": 36
+ },
+ {
+  "metric": "TTFB",
+  "value": 5.516015367586741,
+  "index": 35
+ },
+ {
+  "metric": "TTFB",
+  "value": 5.516015367597773,
+  "index": 36
+ },
+ {
+  "metric": "TTFB",
+  "value": 5.791816135971869,
+  "index": 36
+ },
+ {
+  "metric": "TTFB",
+  "value": 5.791816135966077,
+  "index": 36
+ },
+ {
+  "metric": "TTFB",
+  "value": 5.791816135977662,
+  "index": 37
+ },
+ {
+  "metric": "TTFB",
+  "value": 6.081406942770463,
+  "index": 38
+ },
+ {
+  "metric": "TTFB",
+  "value": 6.0814069427643815,
+  "index": 37
+ },
+ {
+  "metric": "TTFB",
+  "value": 6.081406942776545,
+  "index": 38
+ },
+ {
+  "metric": "TTFB",
+  "value": 6.385477289908986,
+  "index": 38
+ },
+ {
+  "metric": "TTFB",
+  "value": 6.385477289902601,
+  "index": 38
+ },
+ {
+  "metric": "TTFB",
+  "value": 6.3854772899153724,
+  "index": 39
+ },
+ {
+  "metric": "TTFB",
+  "value": 6.704751154404436,
+  "index": 40
+ },
+ {
+  "metric": "TTFB",
+  "value": 6.704751154397731,
+  "index": 39
+ },
+ {
+  "metric": "TTFB",
+  "value": 6.704751154411142,
+  "index": 40
+ },
+ {
+  "metric": "TTFB",
+  "value": 7.039988712124658,
+  "index": 40
+ },
+ {
+  "metric": "TTFB",
+  "value": 7.039988712117618,
+  "index": 40
+ },
+ {
+  "metric": "TTFB",
+  "value": 7.039988712131699,
+  "index": 41
+ },
+ {
+  "metric": "TTFB",
+  "value": 7.391988147730891,
+  "index": 41
+ },
+ {
+  "metric": "TTFB",
+  "value": 7.3919881477235,
+  "index": 41
+ },
+ {
+  "metric": "TTFB",
+  "value": 7.391988147738283,
+  "index": 42
+ },
+ {
+  "metric": "TTFB",
+  "value": 7.761587555117436,
+  "index": 42
+ },
+ {
+  "metric": "TTFB",
+  "value": 7.761587555109674,
+  "index": 42
+ },
+ {
+  "metric": "TTFB",
+  "value": 7.761587555125199,
+  "index": 43
+ },
+ {
+  "metric": "TTFB",
+  "value": 8.14966693287331,
+  "index": 44
+ },
+ {
+  "metric": "TTFB",
+  "value": 8.14966693286516,
+  "index": 43
+ },
+ {
+  "metric": "TTFB",
+  "value": 8.149666932881459,
+  "index": 44
+ },
+ {
+  "metric": "TTFB",
+  "value": 8.557150279516975,
+  "index": 45
+ },
+ {
+  "metric": "TTFB",
+  "value": 8.557150279508418,
+  "index": 44
+ },
+ {
+  "metric": "TTFB",
+  "value": 8.557150279525533,
+  "index": 45
+ },
+ {
+  "metric": "TTFB",
+  "value": 8.985007793492823,
+  "index": 45
+ },
+ {
+  "metric": "TTFB",
+  "value": 8.985007793483838,
+  "index": 45
+ },
+ {
+  "metric": "TTFB",
+  "value": 8.98500779350181,
+  "index": 46
+ },
+ {
+  "metric": "TTFB",
+  "value": 9.434258183167465,
+  "index": 46
+ },
+ {
+  "metric": "TTFB",
+  "value": 9.43425818315803,
+  "index": 46
+ },
+ {
+  "metric": "TTFB",
+  "value": 9.4342581831769,
+  "index": 47
+ },
+ {
+  "metric": "TTFB",
+  "value": 9.905971092325839,
+  "index": 48
+ },
+ {
+  "metric": "TTFB",
+  "value": 9.905971092315934,
+  "index": 47
+ },
+ {
+  "metric": "TTFB",
+  "value": 9.905971092335745,
+  "index": 48
+ },
+ {
+  "metric": "TTFB",
+  "value": 10.401269646942131,
+  "index": 49
+ },
+ {
+  "metric": "TTFB",
+  "value": 10.40126964693173,
+  "index": 48
+ },
+ {
+  "metric": "TTFB",
+  "value": 10.401269646952533,
+  "index": 49
+ },
+ {
+  "metric": "TTFB",
+  "value": 10.921333129289238,
+  "index": 49
+ },
+ {
+  "metric": "TTFB",
+  "value": 10.921333129278317,
+  "index": 49
+ },
+ {
+  "metric": "TTFB",
+  "value": 10.92133312930016,
+  "index": 50
+ },
+ {
+  "metric": "TTFB",
+  "value": 11.4673997857537,
+  "index": 50
+ },
+ {
+  "metric": "TTFB",
+  "value": 11.467399785742234,
+  "index": 50
+ },
+ {
+  "metric": "TTFB",
+  "value": 11.467399785765169,
+  "index": 51
+ },
+ {
+  "metric": "TTFB",
+  "value": 12.040769775041387,
+  "index": 52
+ },
+ {
+  "metric": "TTFB",
+  "value": 12.040769775029347,
+  "index": 51
+ },
+ {
+  "metric": "TTFB",
+  "value": 12.040769775053429,
+  "index": 52
+ },
+ {
+  "metric": "TTFB",
+  "value": 12.642808263793455,
+  "index": 52
+ },
+ {
+  "metric": "TTFB",
+  "value": 12.642808263780813,
+  "index": 52
+ },
+ {
+  "metric": "TTFB",
+  "value": 12.6428082638061,
+  "index": 53
+ },
+ {
+  "metric": "TTFB",
+  "value": 13.27494867698313,
+  "index": 53
+ },
+ {
+  "metric": "TTFB",
+  "value": 13.274948676969855,
+  "index": 53
+ },
+ {
+  "metric": "TTFB",
+  "value": 13.274948676996406,
+  "index": 54
+ },
+ {
+  "metric": "TTFB",
+  "value": 13.938696110832286,
+  "index": 54
+ },
+ {
+  "metric": "TTFB",
+  "value": 13.938696110818347,
+  "index": 54
+ },
+ {
+  "metric": "TTFB",
+  "value": 13.938696110846225,
+  "index": 55
+ },
+ {
+  "metric": "TTFB",
+  "value": 14.6356309163739,
+  "index": 56
+ },
+ {
+  "metric": "TTFB",
+  "value": 14.635630916359265,
+  "index": 55
+ },
+ {
+  "metric": "TTFB",
+  "value": 14.635630916388537,
+  "index": 56
+ },
+ {
+  "metric": "TTFB",
+  "value": 15.367412462192597,
+  "index": 57
+ },
+ {
+  "metric": "TTFB",
+  "value": 15.36741246217723,
+  "index": 56
+ },
+ {
+  "metric": "TTFB",
+  "value": 15.367412462207966,
+  "index": 57
+ },
+ {
+  "metric": "TTFB",
+  "value": 16.135783085302226,
+  "index": 57
+ },
+ {
+  "metric": "TTFB",
+  "value": 16.13578308528609,
+  "index": 57
+ },
+ {
+  "metric": "TTFB",
+  "value": 16.135783085318362,
+  "index": 58
+ },
+ {
+  "metric": "TTFB",
+  "value": 16.94257223956734,
+  "index": 58
+ },
+ {
+  "metric": "TTFB",
+  "value": 16.942572239550397,
+  "index": 58
+ },
+ {
+  "metric": "TTFB",
+  "value": 16.942572239584283,
+  "index": 59
+ },
+ {
+  "metric": "TTFB",
+  "value": 17.789700851545707,
+  "index": 60
+ },
+ {
+  "metric": "TTFB",
+  "value": 17.78970085152792,
+  "index": 59
+ },
+ {
+  "metric": "TTFB",
+  "value": 17.7897008515635,
+  "index": 60
+ },
+ {
+  "metric": "TTFB",
+  "value": 18.679185894122995,
+  "index": 61
+ },
+ {
+  "metric": "TTFB",
+  "value": 18.679185894104315,
+  "index": 60
+ },
+ {
+  "metric": "TTFB",
+  "value": 18.679185894141675,
+  "index": 61
+ },
+ {
+  "metric": "TTFB",
+  "value": 19.613145188829144,
+  "index": 61
+ },
+ {
+  "metric": "TTFB",
+  "value": 19.613145188809533,
+  "index": 61
+ },
+ {
+  "metric": "TTFB",
+  "value": 19.61314518884876,
+  "index": 62
+ },
+ {
+  "metric": "TTFB",
+  "value": 20.5938024482706,
+  "index": 62
+ },
+ {
+  "metric": "TTFB",
+  "value": 20.593802448250006,
+  "index": 62
+ },
+ {
+  "metric": "TTFB",
+  "value": 20.593802448291196,
+  "index": 63
+ },
+ {
+  "metric": "TTFB",
+  "value": 21.62349257068413,
+  "index": 64
+ },
+ {
+  "metric": "TTFB",
+  "value": 21.62349257066251,
+  "index": 63
+ },
+ {
+  "metric": "TTFB",
+  "value": 21.623492570705757,
+  "index": 64
+ },
+ {
+  "metric": "TTFB",
+  "value": 22.70466719921834,
+  "index": 64
+ },
+ {
+  "metric": "TTFB",
+  "value": 22.704667199195633,
+  "index": 64
+ },
+ {
+  "metric": "TTFB",
+  "value": 22.704667199241044,
+  "index": 65
+ },
+ {
+  "metric": "TTFB",
+  "value": 23.83990055917926,
+  "index": 66
+ },
+ {
+  "metric": "TTFB",
+  "value": 23.83990055915542,
+  "index": 65
+ },
+ {
+  "metric": "TTFB",
+  "value": 23.8399005592031,
+  "index": 66
+ },
+ {
+  "metric": "TTFB",
+  "value": 25.031895587138223,
+  "index": 67
+ },
+ {
+  "metric": "TTFB",
+  "value": 25.03189558711319,
+  "index": 66
+ },
+ {
+  "metric": "TTFB",
+  "value": 25.031895587163255,
+  "index": 67
+ },
+ {
+  "metric": "TTFB",
+  "value": 26.283490366495133,
+  "index": 68
+ },
+ {
+  "metric": "TTFB",
+  "value": 26.28349036646885,
+  "index": 67
+ },
+ {
+  "metric": "TTFB",
+  "value": 26.28349036652142,
+  "index": 68
+ },
+ {
+  "metric": "TTFB",
+  "value": 27.597664884819892,
+  "index": 68
+ },
+ {
+  "metric": "TTFB",
+  "value": 27.597664884792295,
+  "index": 68
+ },
+ {
+  "metric": "TTFB",
+  "value": 27.597664884847493,
+  "index": 69
+ },
+ {
+  "metric": "TTFB",
+  "value": 28.97754812906089,
+  "index": 70
+ },
+ {
+  "metric": "TTFB",
+  "value": 28.977548129031913,
+  "index": 69
+ },
+ {
+  "metric": "TTFB",
+  "value": 28.977548129089868,
+  "index": 70
+ },
+ {
+  "metric": "TTFB",
+  "value": 30.426425535513935,
+  "index": 71
+ },
+ {
+  "metric": "TTFB",
+  "value": 30.42642553548351,
+  "index": 70
+ },
+ {
+  "metric": "TTFB",
+  "value": 30.426425535544364,
+  "index": 71
+ },
+ {
+  "metric": "TTFB",
+  "value": 31.947746812289633,
+  "index": 72
+ },
+ {
+  "metric": "TTFB",
+  "value": 31.947746812257687,
+  "index": 71
+ },
+ {
+  "metric": "TTFB",
+  "value": 31.947746812321583,
+  "index": 72
+ },
+ {
+  "metric": "TTFB",
+  "value": 33.54513415290411,
+  "index": 72
+ },
+ {
+  "metric": "TTFB",
+  "value": 33.54513415287057,
+  "index": 72
+ },
+ {
+  "metric": "TTFB",
+  "value": 33.545134152937656,
+  "index": 73
+ },
+ {
+  "metric": "TTFB",
+  "value": 35.222390860549325,
+  "index": 74
+ },
+ {
+  "metric": "TTFB",
+  "value": 35.2223908605141,
+  "index": 73
+ },
+ {
+  "metric": "TTFB",
+  "value": 35.222390860584554,
+  "index": 74
+ },
+ {
+  "metric": "TTFB",
+  "value": 36.98351040357679,
+  "index": 75
+ },
+ {
+  "metric": "TTFB",
+  "value": 36.9835104035398,
+  "index": 74
+ },
+ {
+  "metric": "TTFB",
+  "value": 36.98351040361377,
+  "index": 75
+ },
+ {
+  "metric": "TTFB",
+  "value": 38.83268592375563,
+  "index": 76
+ },
+ {
+  "metric": "TTFB",
+  "value": 38.8326859237168,
+  "index": 75
+ },
+ {
+  "metric": "TTFB",
+  "value": 38.83268592379447,
+  "index": 76
+ },
+ {
+  "metric": "TTFB",
+  "value": 40.77432021994341,
+  "index": 76
+ },
+ {
+  "metric": "TTFB",
+  "value": 40.77432021990264,
+  "index": 76
+ },
+ {
+  "metric": "TTFB",
+  "value": 40.77432021998419,
+  "index": 77
+ },
+ {
+  "metric": "TTFB",
+  "value": 42.81303623094059,
+  "index": 78
+ },
+ {
+  "metric": "TTFB",
+  "value": 42.81303623089778,
+  "index": 77
+ },
+ {
+  "metric": "TTFB",
+  "value": 42.81303623098341,
+  "index": 78
+ },
+ {
+  "metric": "TTFB",
+  "value": 44.95368804248762,
+  "index": 79
+ },
+ {
+  "metric": "TTFB",
+  "value": 44.953688042442664,
+  "index": 78
+ },
+ {
+  "metric": "TTFB",
+  "value": 44.953688042532576,
+  "index": 79
+ },
+ {
+  "metric": "TTFB",
+  "value": 47.201372444612,
+  "index": 80
+ },
+ {
+  "metric": "TTFB",
+  "value": 47.2013724445648,
+  "index": 79
+ },
+ {
+  "metric": "TTFB",
+  "value": 47.20137244465921,
+  "index": 80
+ },
+ {
+  "metric": "TTFB",
+  "value": 49.561441066842605,
+  "index": 81
+ },
+ {
+  "metric": "TTFB",
+  "value": 49.561441066793044,
+  "index": 80
+ },
+ {
+  "metric": "TTFB",
+  "value": 49.56144106689217,
+  "index": 81
+ },
+ {
+  "metric": "TTFB",
+  "value": 52.039513120184736,
+  "index": 82
+ },
+ {
+  "metric": "TTFB",
+  "value": 52.039513120132696,
+  "index": 81
+ },
+ {
+  "metric": "TTFB",
+  "value": 52.03951312023678,
+  "index": 82
+ },
+ {
+  "metric": "TTFB",
+  "value": 54.641488776193974,
+  "index": 82
+ },
+ {
+  "metric": "TTFB",
+  "value": 54.64148877613933,
+  "index": 82
+ },
+ {
+  "metric": "TTFB",
+  "value": 54.64148877624862,
+  "index": 83
+ },
+ {
+  "metric": "TTFB",
+  "value": 57.37356321500368,
+  "index": 83
+ },
+ {
+  "metric": "TTFB",
+  "value": 57.37356321494631,
+  "index": 83
+ },
+ {
+  "metric": "TTFB",
+  "value": 57.373563215061054,
+  "index": 84
+ },
+ {
+  "metric": "TTFB",
+  "value": 60.24224137575386,
+  "index": 84
+ },
+ {
+  "metric": "TTFB",
+  "value": 60.242241375693624,
+  "index": 84
+ },
+ {
+  "metric": "TTFB",
+  "value": 60.24224137581411,
+  "index": 85
+ },
+ {
+  "metric": "TTFB",
+  "value": 63.25435344454156,
+  "index": 86
+ },
+ {
+  "metric": "TTFB",
+  "value": 63.254353444478305,
+  "index": 85
+ },
+ {
+  "metric": "TTFB",
+  "value": 63.25435344460482,
+  "index": 86
+ },
+ {
+  "metric": "TTFB",
+  "value": 66.41707111676864,
+  "index": 87
+ },
+ {
+  "metric": "TTFB",
+  "value": 66.41707111670222,
+  "index": 86
+ },
+ {
+  "metric": "TTFB",
+  "value": 66.41707111683506,
+  "index": 87
+ },
+ {
+  "metric": "TTFB",
+  "value": 69.73792467260708,
+  "index": 88
+ },
+ {
+  "metric": "TTFB",
+  "value": 69.73792467253735,
+  "index": 87
+ },
+ {
+  "metric": "TTFB",
+  "value": 69.73792467267683,
+  "index": 88
+ },
+ {
+  "metric": "TTFB",
+  "value": 73.22482090623743,
+  "index": 89
+ },
+ {
+  "metric": "TTFB",
+  "value": 73.2248209061642,
+  "index": 88
+ },
+ {
+  "metric": "TTFB",
+  "value": 73.22482090631065,
+  "index": 89
+ },
+ {
+  "metric": "TTFB",
+  "value": 76.88606195154931,
+  "index": 90
+ },
+ {
+  "metric": "TTFB",
+  "value": 76.88606195147243,
+  "index": 89
+ },
+ {
+  "metric": "TTFB",
+  "value": 76.8860619516262,
+  "index": 90
+ },
+ {
+  "metric": "TTFB",
+  "value": 80.73036504912677,
+  "index": 90
+ },
+ {
+  "metric": "TTFB",
+  "value": 80.73036504904604,
+  "index": 90
+ },
+ {
+  "metric": "TTFB",
+  "value": 80.7303650492075,
+  "index": 91
+ },
+ {
+  "metric": "TTFB",
+  "value": 84.76688330158312,
+  "index": 91
+ },
+ {
+  "metric": "TTFB",
+  "value": 84.76688330149835,
+  "index": 91
+ },
+ {
+  "metric": "TTFB",
+  "value": 84.76688330166789,
+  "index": 92
+ },
+ {
+  "metric": "TTFB",
+  "value": 89.00522746666228,
+  "index": 92
+ },
+ {
+  "metric": "TTFB",
+  "value": 89.00522746657327,
+  "index": 92
+ },
+ {
+  "metric": "TTFB",
+  "value": 89.0052274667513,
+  "index": 93
+ },
+ {
+  "metric": "TTFB",
+  "value": 93.4554888399954,
+  "index": 94
+ },
+ {
+  "metric": "TTFB",
+  "value": 93.45548883990195,
+  "index": 93
+ },
+ {
+  "metric": "TTFB",
+  "value": 93.45548884008886,
+  "index": 94
+ },
+ {
+  "metric": "TTFB",
+  "value": 98.12826328199516,
+  "index": 95
+ },
+ {
+  "metric": "TTFB",
+  "value": 98.12826328189703,
+  "index": 94
+ },
+ {
+  "metric": "TTFB",
+  "value": 98.1282632820933,
+  "index": 95
+ },
+ {
+  "metric": "TTFB",
+  "value": 103.03467644609493,
+  "index": 96
+ },
+ {
+  "metric": "TTFB",
+  "value": 103.0346764459919,
+  "index": 95
+ },
+ {
+  "metric": "TTFB",
+  "value": 103.03467644619798,
+  "index": 96
+ },
+ {
+  "metric": "TTFB",
+  "value": 108.18641026839968,
+  "index": 97
+ },
+ {
+  "metric": "TTFB",
+  "value": 108.1864102682915,
+  "index": 96
+ },
+ {
+  "metric": "TTFB",
+  "value": 108.18641026850788,
+  "index": 97
+ },
+ {
+  "metric": "TTFB",
+  "value": 113.59573078181967,
+  "index": 98
+ },
+ {
+  "metric": "TTFB",
+  "value": 113.59573078170608,
+  "index": 97
+ },
+ {
+  "metric": "TTFB",
+  "value": 113.59573078193327,
+  "index": 98
+ },
+ {
+  "metric": "TTFB",
+  "value": 119.27551732091065,
+  "index": 98
+ },
+ {
+  "metric": "TTFB",
+  "value": 119.27551732079138,
+  "index": 98
+ },
+ {
+  "metric": "TTFB",
+  "value": 119.27551732102994,
+  "index": 99
+ },
+ {
+  "metric": "TTFB",
+  "value": 125.23929318695619,
+  "index": 99
+ },
+ {
+  "metric": "TTFB",
+  "value": 125.23929318683095,
+  "index": 99
+ },
+ {
+  "metric": "TTFB",
+  "value": 125.23929318708144,
+  "index": 100
+ },
+ {
+  "metric": "TTFB",
+  "value": 131.50125784630401,
+  "index": 100
+ },
+ {
+  "metric": "TTFB",
+  "value": 131.5012578461725,
+  "index": 100
+ },
+ {
+  "metric": "TTFB",
+  "value": 131.50125784643552,
+  "index": 101
+ },
+ {
+  "metric": "TTFB",
+  "value": 138.07632073861922,
+  "index": 102
+ },
+ {
+  "metric": "TTFB",
+  "value": 138.07632073848114,
+  "index": 101
+ },
+ {
+  "metric": "TTFB",
+  "value": 138.07632073875732,
+  "index": 102
+ },
+ {
+  "metric": "TTFB",
+  "value": 144.9801367755502,
+  "index": 103
+ },
+ {
+  "metric": "TTFB",
+  "value": 144.9801367754052,
+  "index": 102
+ },
+ {
+  "metric": "TTFB",
+  "value": 144.98013677569517,
+  "index": 103
+ },
+ {
+  "metric": "TTFB",
+  "value": 152.2291436143277,
+  "index": 104
+ },
+ {
+  "metric": "TTFB",
+  "value": 152.22914361417548,
+  "index": 103
+ },
+ {
+  "metric": "TTFB",
+  "value": 152.22914361447997,
+  "index": 104
+ },
+ {
+  "metric": "TTFB",
+  "value": 159.84060079504408,
+  "index": 105
+ },
+ {
+  "metric": "TTFB",
+  "value": 159.84060079488424,
+  "index": 104
+ },
+ {
+  "metric": "TTFB",
+  "value": 159.84060079520393,
+  "index": 105
+ },
+ {
+  "metric": "TTFB",
+  "value": 167.8326308347963,
+  "index": 105
+ },
+ {
+  "metric": "TTFB",
+  "value": 167.83263083462847,
+  "index": 105
+ },
+ {
+  "metric": "TTFB",
+  "value": 167.83263083496416,
+  "index": 106
+ },
+ {
+  "metric": "TTFB",
+  "value": 176.22426237653613,
+  "index": 106
+ },
+ {
+  "metric": "TTFB",
+  "value": 176.22426237635992,
+  "index": 106
+ },
+ {
+  "metric": "TTFB",
+  "value": 176.22426237671237,
+  "index": 107
+ },
+ {
+  "metric": "TTFB",
+  "value": 185.03547549536293,
+  "index": 107
+ },
+ {
+  "metric": "TTFB",
+  "value": 185.0354754951779,
+  "index": 107
+ },
+ {
+  "metric": "TTFB",
+  "value": 185.03547549554798,
+  "index": 108
+ },
+ {
+  "metric": "TTFB",
+  "value": 194.2872492701311,
+  "index": 108
+ },
+ {
+  "metric": "TTFB",
+  "value": 194.2872492699368,
+  "index": 108
+ },
+ {
+  "metric": "TTFB",
+  "value": 194.2872492703254,
+  "index": 109
+ },
+ {
+  "metric": "TTFB",
+  "value": 204.00161173363765,
+  "index": 110
+ },
+ {
+  "metric": "TTFB",
+  "value": 204.00161173343363,
+  "index": 109
+ },
+ {
+  "metric": "TTFB",
+  "value": 204.00161173384166,
+  "index": 110
+ },
+ {
+  "metric": "TTFB",
+  "value": 214.20169232031955,
+  "index": 111
+ },
+ {
+  "metric": "TTFB",
+  "value": 214.20169232010537,
+  "index": 110
+ },
+ {
+  "metric": "TTFB",
+  "value": 214.20169232053377,
+  "index": 111
+ },
+ {
+  "metric": "TTFB",
+  "value": 224.91177693633554,
+  "index": 112
+ },
+ {
+  "metric": "TTFB",
+  "value": 224.91177693611064,
+  "index": 111
+ },
+ {
+  "metric": "TTFB",
+  "value": 224.91177693656047,
+  "index": 112
+ },
+ {
+  "metric": "TTFB",
+  "value": 236.15736578315233,
+  "index": 113
+ },
+ {
+  "metric": "TTFB",
+  "value": 236.15736578291617,
+  "index": 112
+ },
+ {
+  "metric": "TTFB",
+  "value": 236.1573657833885,
+  "index": 113
+ },
+ {
+  "metric": "TTFB",
+  "value": 247.96523407230995,
+  "index": 113
+ },
+ {
+  "metric": "TTFB",
+  "value": 247.965234072062,
+  "index": 113
+ },
+ {
+  "metric": "TTFB",
+  "value": 247.96523407255793,
+  "index": 114
+ },
+ {
+  "metric": "TTFB",
+  "value": 260.36349577592546,
+  "index": 114
+ },
+ {
+  "metric": "TTFB",
+  "value": 260.3634957756651,
+  "index": 114
+ },
+ {
+  "metric": "TTFB",
+  "value": 260.36349577618586,
+  "index": 115
+ },
+ {
+  "metric": "TTFB",
+  "value": 273.38167056472173,
+  "index": 115
+ },
+ {
+  "metric": "TTFB",
+  "value": 273.38167056444837,
+  "index": 115
+ },
+ {
+  "metric": "TTFB",
+  "value": 273.38167056499515,
+  "index": 116
+ },
+ {
+  "metric": "TTFB",
+  "value": 287.05075409295785,
+  "index": 116
+ },
+ {
+  "metric": "TTFB",
+  "value": 287.0507540926708,
+  "index": 116
+ },
+ {
+  "metric": "TTFB",
+  "value": 287.0507540932449,
+  "index": 117
+ },
+ {
+  "metric": "TTFB",
+  "value": 301.40329179760573,
+  "index": 118
+ },
+ {
+  "metric": "TTFB",
+  "value": 301.40329179730435,
+  "index": 117
+ },
+ {
+  "metric": "TTFB",
+  "value": 301.4032917979072,
+  "index": 118
+ },
+ {
+  "metric": "TTFB",
+  "value": 316.47345638748607,
+  "index": 119
+ },
+ {
+  "metric": "TTFB",
+  "value": 316.4734563871696,
+  "index": 118
+ },
+ {
+  "metric": "TTFB",
+  "value": 316.47345638780257,
+  "index": 119
+ },
+ {
+  "metric": "TTFB",
+  "value": 332.29712920686035,
+  "index": 120
+ },
+ {
+  "metric": "TTFB",
+  "value": 332.29712920652804,
+  "index": 119
+ },
+ {
+  "metric": "TTFB",
+  "value": 332.29712920719265,
+  "index": 120
+ },
+ {
+  "metric": "TTFB",
+  "value": 348.9119856672034,
+  "index": 121
+ },
+ {
+  "metric": "TTFB",
+  "value": 348.9119856668545,
+  "index": 120
+ },
+ {
+  "metric": "TTFB",
+  "value": 348.91198566755236,
+  "index": 121
+ },
+ {
+  "metric": "TTFB",
+  "value": 366.3575849505636,
+  "index": 121
+ },
+ {
+  "metric": "TTFB",
+  "value": 366.35758495019724,
+  "index": 121
+ },
+ {
+  "metric": "TTFB",
+  "value": 366.35758495093,
+  "index": 122
+ },
+ {
+  "metric": "TTFB",
+  "value": 384.6754641980918,
+  "index": 122
+ },
+ {
+  "metric": "TTFB",
+  "value": 384.67546419770713,
+  "index": 122
+ },
+ {
+  "metric": "TTFB",
+  "value": 384.6754641984765,
+  "index": 123
+ },
+ {
+  "metric": "TTFB",
+  "value": 403.9092374079964,
+  "index": 123
+ },
+ {
+  "metric": "TTFB",
+  "value": 403.9092374075925,
+  "index": 123
+ },
+ {
+  "metric": "TTFB",
+  "value": 403.9092374084003,
+  "index": 124
+ },
+ {
+  "metric": "TTFB",
+  "value": 424.1046992783962,
+  "index": 124
+ },
+ {
+  "metric": "TTFB",
+  "value": 424.1046992779721,
+  "index": 124
+ },
+ {
+  "metric": "TTFB",
+  "value": 424.10469927882036,
+  "index": 125
+ },
+ {
+  "metric": "TTFB",
+  "value": 445.30993424231605,
+  "index": 126
+ },
+ {
+  "metric": "TTFB",
+  "value": 445.30993424187074,
+  "index": 125
+ },
+ {
+  "metric": "TTFB",
+  "value": 445.3099342427614,
+  "index": 126
+ },
+ {
+  "metric": "TTFB",
+  "value": 467.57543095443185,
+  "index": 127
+ },
+ {
+  "metric": "TTFB",
+  "value": 467.5754309539643,
+  "index": 126
+ },
+ {
+  "metric": "TTFB",
+  "value": 467.57543095489945,
+  "index": 127
+ },
+ {
+  "metric": "TTFB",
+  "value": 490.95420250215346,
+  "index": 128
+ },
+ {
+  "metric": "TTFB",
+  "value": 490.9542025016625,
+  "index": 127
+ },
+ {
+  "metric": "TTFB",
+  "value": 490.9542025026445,
+  "index": 128
+ },
+ {
+  "metric": "TTFB",
+  "value": 515.5019126272612,
+  "index": 128
+ },
+ {
+  "metric": "TTFB",
+  "value": 515.5019126267457,
+  "index": 128
+ },
+ {
+  "metric": "TTFB",
+  "value": 515.5019126277767,
+  "index": 129
+ },
+ {
+  "metric": "TTFB",
+  "value": 541.2770082586243,
+  "index": 129
+ },
+ {
+  "metric": "TTFB",
+  "value": 541.277008258083,
+  "index": 129
+ },
+ {
+  "metric": "TTFB",
+  "value": 541.2770082591657,
+  "index": 130
+ },
+ {
+  "metric": "TTFB",
+  "value": 568.3408586715555,
+  "index": 131
+ },
+ {
+  "metric": "TTFB",
+  "value": 568.3408586709871,
+  "index": 130
+ },
+ {
+  "metric": "TTFB",
+  "value": 568.3408586721239,
+  "index": 131
+ },
+ {
+  "metric": "TTFB",
+  "value": 101677.40199517326,
+  "index": 237
+ },
+ {
+  "metric": "TTFB",
+  "value": 98613,
+  "index": 236
+ },
+ {
+  "metric": "TTFB",
+  "value": 85307,
+  "index": 233
+ },
+ {
+  "metric": "TTFB",
+  "value": 76197.26443372812,
+  "index": 231
+ },
+ {
+  "metric": "TTFB",
+  "value": 82179,
+  "index": 232
+ },
+ {
+  "metric": "TTFB",
+  "value": 94973,
+  "index": 235
+ },
+ {
+  "metric": "TTFB",
+  "value": 34939,
+  "index": 215
+ },
+ {
+  "metric": "TTFB",
+  "value": 5775,
+  "index": 178
+ },
+ {
+  "metric": "TTFB",
+  "value": 16831.886941455137,
+  "index": 200
+ },
+ {
+  "metric": "TTFB",
+  "value": 25980.379321526925,
+  "index": 209
+ },
+ {
+  "metric": "TTFB",
+  "value": 106982.40345585447,
+  "index": 238
+ },
+ {
+  "metric": "TTFB",
+  "value": 685,
+  "index": 134
+ },
+ {
+  "metric": "TTFB",
+  "value": 23342.862281434547,
+  "index": 207
+ },
+ {
+  "metric": "TTFB",
+  "value": 67900.1798774199,
+  "index": 229
+ },
+ {
+  "metric": "TTFB",
+  "value": 57132,
+  "index": 225
+ },
+ {
+  "metric": "TTFB",
+  "value": 102316.74555577926,
+  "index": 237
+ },
+ {
+  "metric": "TTFB",
+  "value": 2347.05536894964,
+  "index": 160
+ },
+ {
+  "metric": "TTFB",
+  "value": 100940,
+  "index": 237
+ },
+ {
+  "metric": "TTFB",
+  "value": 111322,
+  "index": 239
+ },
+ {
+  "metric": "TTFB",
+  "value": 6180,
+  "index": 179
+ },
+ {
+  "metric": "TTFB",
+  "value": 10209.719607446033,
+  "index": 190
+ },
+ {
+  "metric": "TTFB",
+  "value": 71669,
+  "index": 230
+ },
+ {
+  "metric": "TTFB",
+  "value": 107611,
+  "index": 238
+ },
+ {
+  "metric": "TTFB",
+  "value": 67975,
+  "index": 229
+ },
+ {
+  "metric": "TTFB",
+  "value": 79266,
+  "index": 232
+ },
+ {
+  "metric": "TTFB",
+  "value": 4556,
+  "index": 173
+ },
+ {
+  "metric": "TTFB",
+  "value": 32666,
+  "index": 214
+ },
+ {
+  "metric": "TTFB",
+  "value": 45946.1530102989,
+  "index": 221
+ },
+ {
+  "metric": "TTFB",
+  "value": 16903,
+  "index": 200
+ },
+ {
+  "metric": "TTFB",
+  "value": 45188.69015899881,
+  "index": 220
+ },
+ {
+  "metric": "TTFB",
+  "value": 108257,
+  "index": 238
+ },
+ {
+  "metric": "TTFB",
+  "value": 17914.47006077405,
+  "index": 201
+ },
+ {
+  "metric": "TTFB",
+  "value": 101063,
+  "index": 237
+ },
+ {
+  "metric": "TTFB",
+  "value": 86343,
+  "index": 233
+ },
+ {
+  "metric": "TTFB",
+  "value": 110596.23055482419,
+  "index": 239
+ },
+ {
+  "metric": "TTFB",
+  "value": 71996,
+  "index": 230
+ },
+ {
+  "metric": "TTFB",
+  "value": 41607,
+  "index": 218
+ },
+ {
+  "metric": "TTFB",
+  "value": 64657,
+  "index": 228
+ },
+ {
+  "metric": "TTFB",
+  "value": 30443,
+  "index": 212
+ },
+ {
+  "metric": "TTFB",
+  "value": 97169.00562357594,
+  "index": 236
+ },
+ {
+  "metric": "TTFB",
+  "value": 8582.413052873932,
+  "index": 186
+ },
+ {
+  "metric": "TTFB",
+  "value": 108893.37657713966,
+  "index": 238
+ },
+ {
+  "metric": "TTFB",
+  "value": 14918,
+  "index": 197
+ },
+ {
+  "metric": "TTFB",
+  "value": 58647.074048599425,
+  "index": 226
+ },
+ {
+  "metric": "TTFB",
+  "value": 26426,
+  "index": 209
+ },
+ {
+  "metric": "TTFB",
+  "value": 43748,
+  "index": 220
+ },
+ {
+  "metric": "TTFB",
+  "value": 73248,
+  "index": 230
+ },
+ {
+  "metric": "TTFB",
+  "value": 88647,
+  "index": 234
+ },
+ {
+  "metric": "TTFB",
+  "value": 21682,
+  "index": 205
+ },
+ {
+  "metric": "TTFB",
+  "value": 26102,
+  "index": 209
+ },
+ {
+  "metric": "TTFB",
+  "value": 118304.12331256185,
+  "index": 240
+ },
+ {
+  "metric": "TTFB",
+  "value": 57834,
+  "index": 225
+ },
+ {
+  "metric": "TTFB",
+  "value": 104869,
+  "index": 237
+ },
+ {
+  "metric": "TTFB",
+  "value": 85465.00308716758,
+  "index": 233
+ },
+ {
+  "metric": "TTFB",
+  "value": 35480.914199658146,
+  "index": 215
+ },
+ {
+  "metric": "TTFB",
+  "value": 79928,
+  "index": 232
+ },
+ {
+  "metric": "TTFB",
+  "value": 14528.196661868975,
+  "index": 197
+ },
+ {
+  "metric": "TTFB",
+  "value": 55950,
+  "index": 225
+ },
+ {
+  "metric": "TTFB",
+  "value": 30256.43729215318,
+  "index": 212
+ },
+ {
+  "metric": "TTFB",
+  "value": 67990.06062583487,
+  "index": 229
+ },
+ {
+  "metric": "TTFB",
+  "value": 56333,
+  "index": 225
+ },
+ {
+  "metric": "TTFB",
+  "value": 71761,
+  "index": 230
+ },
+ {
+  "metric": "TTFB",
+  "value": 110530,
+  "index": 239
+ },
+ {
+  "metric": "TTFB",
+  "value": 10428.183126141874,
+  "index": 190
+ },
+ {
+  "metric": "TTFB",
+  "value": 55802,
+  "index": 225
+ },
+ {
+  "metric": "TTFB",
+  "value": 103941,
+  "index": 237
+ },
+ {
+  "metric": "TTFB",
+  "value": 39369,
+  "index": 217
+ },
+ {
+  "metric": "TTFB",
+  "value": 102001,
+  "index": 237
+ },
+ {
+  "metric": "TTFB",
+  "value": 104957,
+  "index": 237
+ },
+ {
+  "metric": "TTFB",
+  "value": 79589,
+  "index": 232
+ },
+ {
+  "metric": "TTFB",
+  "value": 52314,
+  "index": 223
+ },
+ {
+  "metric": "TTFB",
+  "value": 54449.474042434216,
+  "index": 224
+ },
+ {
+  "metric": "TTFB",
+  "value": 99750,
+  "index": 236
+ },
+ {
+  "metric": "TTFB",
+  "value": 24686,
+  "index": 208
+ },
+ {
+  "metric": "TTFB",
+  "value": 17771,
+  "index": 201
+ },
+ {
+  "metric": "TTFB",
+  "value": 99677,
+  "index": 236
+ },
+ {
+  "metric": "TTFB",
+  "value": 93009,
+  "index": 235
+ },
+ {
+  "metric": "TTFB",
+  "value": 15325,
+  "index": 198
+ },
+ {
+  "metric": "TTFB",
+  "value": 16659,
+  "index": 200
+ },
+ {
+  "metric": "TTFB",
+  "value": 50602.84230174716,
+  "index": 223
+ },
+ {
+  "metric": "TTFB",
+  "value": 35135,
+  "index": 215
+ },
+ {
+  "metric": "TTFB",
+  "value": 46545.22165806185,
+  "index": 221
+ },
+ {
+  "metric": "TTFB",
+  "value": 81075,
+  "index": 232
+ },
+ {
+  "metric": "TTFB",
+  "value": 19277,
+  "index": 203
+ },
+ {
+  "metric": "TTFB",
+  "value": 73694,
+  "index": 230
+ },
+ {
+  "metric": "TTFB",
+  "value": 15328,
+  "index": 198
+ },
+ {
+  "metric": "TTFB",
+  "value": 108567,
+  "index": 238
+ },
+ {
+  "metric": "TTFB",
+  "value": 111512.93912870699,
+  "index": 239
+ }
+]

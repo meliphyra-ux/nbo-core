@@ -1,0 +1,9 @@
+{
+  "method": "GET",
+  "path": "/assets/shared.js",
+  "expectStatus": 200,
+  "expectHeaders": {
+    "x-nbo-deployment-id": "{{contentId}}"
+  },
+  "expectBodyContains": "shared from B"
+}

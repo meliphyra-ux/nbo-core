@@ -1,0 +1,1 @@
+{ "method": "GET", "path": "/plain-static", "expectStatus": 200, "expectBodyContains": "plain-static" }

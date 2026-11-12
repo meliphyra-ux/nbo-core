@@ -1,0 +1,12 @@
+{
+  "action": "opened",
+  "number": 42,
+  "pull_request": {
+    "number": 42,
+    "state": "open",
+    "head": { "ref": "feature/x", "sha": "3333333333333333333333333333333333333333", "repo": { "id": 2000, "full_name": "mallory/web" } },
+    "base": { "ref": "main", "sha": "0000000000000000000000000000000000000abc", "repo": { "id": 1000, "full_name": "acme/web" } }
+  },
+  "repository": { "id": 1000, "full_name": "acme/web" },
+  "sender": { "login": "octocat" }
+}

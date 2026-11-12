@@ -1,0 +1,8 @@
+{
+  "method": "GET",
+  "path": "/echo/host",
+  "expectStatus": 200,
+  "expectHeaders": {
+    "x-echo-forwarded-host": "{{host}}"
+  }
+}

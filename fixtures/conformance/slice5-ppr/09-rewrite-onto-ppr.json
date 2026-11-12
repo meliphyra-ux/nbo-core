@@ -1,0 +1,1 @@
+{"method":"GET","path":"/alias-ppr","headers":{"cookie":"ppr-visitor=carol"},"expectStatus":200,"expectBodyContains":"visitor:carol","expectHeaders":{"cache-control":"private, no-store"}}

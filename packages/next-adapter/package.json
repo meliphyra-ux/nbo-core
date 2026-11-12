@@ -1,0 +1,18 @@
+{
+  "name": "@nbo/next-adapter",
+  "version": "0.0.0",
+  "license": "FSL-1.1-ALv2",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@nbo/writer": "workspace:*",
+    "next": "16.4.2"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.4"
+  }
+}

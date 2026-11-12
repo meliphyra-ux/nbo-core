@@ -1,0 +1,1 @@
+{"method":"GET","path":"/hole-redirect","expectStatus":200,"expectBodyContains":"http-equiv=\"refresh\" content=\"1;url=/plain-static\""}

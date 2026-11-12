@@ -1,0 +1,34 @@
+# Dependencies and build output: the image installs and builds its own.
+**/node_modules
+**/dist
+**/.next
+**/.nbo
+**/.turbo
+**/.vite
+**/coverage
+
+# Not part of NBO core. platform/ is the parked dashboard, outside the workspace.
+.git
+platform
+.claude
+.impeccable
+
+# The Terraform provider is a separate Go module: its own build stage compiles
+# it, and the builder stage drops the sources. Only local binaries stay out.
+packages/terraform-provider/terraform-provider*
+
+# The Rust edge builds in its own image; local cargo output stays out.
+packages/edge-rs/target
+
+# Local data and secrets must never reach an image layer.
+**/.env*
+**/*.key
+**/*.db
+**/*.db-*
+**/*.log
+artifacts
+
+# Fixtures are test sites. Only their package.json files stay, so the
+# workspace still matches pnpm-lock.yaml for the frozen install.
+fixtures/**
+!fixtures/*/package.json

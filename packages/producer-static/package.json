@@ -1,0 +1,26 @@
+{
+  "name": "@nbo/producer-static",
+  "version": "0.0.0",
+  "license": "FSL-1.1-ALv2",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "nbo-producer-static": "src/cli.ts"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@nbo/writer": "workspace:*"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "^24.0.0",
+    "typescript": "7.0.2",
+    "vitest": "^3.2.4"
+  }
+}

@@ -1,0 +1,1 @@
+{ "method": "GET", "path": "/isr-demo", "expectStatus": 200, "expectBodyContains": "NBO Slice 4 ISR fixture" }

@@ -1,0 +1,6 @@
+{
+  "method": "GET",
+  "path": "/file.svg",
+  "expectStatus": 200,
+  "expectBodySha256": "sha256:2b67812c325c199a02536cdbeea0c593a72f707d323b72ee3e08dbab06753bd4"
+}

@@ -1,0 +1,3634 @@
+[
+ {
+  "visitorId": "85b1376818e8f06da2eaca7ae48fadd3",
+  "backends": [
+   {
+    "id": "env_a",
+    "url": "http://10.0.0.1:8080",
+    "weight": 1
+   },
+   {
+    "id": "env_b",
+    "url": "http://10.0.0.2:8080",
+    "weight": 99
+   }
+  ],
+  "pick": 1,
+  "url": "http://10.0.0.2:8080"
+ },
+ {
+  "visitorId": "11c58f7b35d399da75b2e27a30d1da8a",
+  "backends": [
+   {
+    "id": "env_a",
+    "url": "http://10.0.0.1:8080",
+    "weight": 1
+   },
+   {
+    "id": "env_b",
+    "url": "http://10.0.0.2:8080",
+    "weight": 99
+   }
+  ],
+  "pick": 1,
+  "url": "http://10.0.0.2:8080"
+ },
+ {
+  "visitorId": "8b673765b320272470548adc2a0c26ed",
+  "backends": [
+   {
+    "id": "env_a",
+    "url": "http://10.0.0.1:8080",
+    "weight": 1
+   },
+   {
+    "id": "env_b",
+    "url": "http://10.0.0.2:8080",
+    "weight": 99
+   }
+  ],
+  "pick": 1,
+  "url": "http://10.0.0.2:8080"
+ },
+ {
+  "visitorId": "2fb680a05f56ca50fe6d99073e3a90a5",
+  "backends": [
+   {
+    "id": "env_a",
+    "url": "http://10.0.0.1:8080",
+    "weight": 1
+   },
+   {
+    "id": "env_b",
+    "url": "http://10.0.0.2:8080",
+    "weight": 99
+   }
+  ],
+  "pick": 1,
+  "url": "http://10.0.0.2:8080"
+ },
+ {
+  "visitorId": "a7e4bd33117c3485490a6f2605a48f5a",
+  "backends": [
+   {
+    "id": "env_a",
+    "url": "http://10.0.0.1:8080",
+    "weight": 1
+   },
+   {
+    "id": "env_b",
+    "url": "http://10.0.0.2:8080",
+    "weight": 99
+   }
+  ],
+  "pick": 1,
+  "url": "http://10.0.0.2:8080"
+ },
+ {
+  "visitorId": "c8d9502e5c270cf2f0cf58d7b429c470",
+  "backends": [
+   {
+    "id": "env_a",
+    "url": "http://10.0.0.1:8080",
+    "weight": 1
+   },
+   {
+    "id": "env_b",
+    "url": "http://10.0.0.2:8080",
+    "weight": 99
+   }
+  ],
+  "pick": 1,
+  "url": "http://10.0.0.2:8080"
+ },
+ {
+  "visitorId": "bbdafd005a5865105ed7de2f3fffaea0",
+  "backends": [
+   {
+    "id": "env_a",
+    "url": "http://10.0.0.1:8080",
+    "weight": 1
+   },
+   {
+    "id": "env_b",
+    "url": "http://10.0.0.2:8080",
+    "weight": 99
+   }
+  ],
+  "pick": 1,
+  "url": "http://10.0.0.2:8080"
+ },
+ {
+  "visitorId": "53e4d405849a07bbfe04a40c526a4801",
+  "backends": [
+   {
+    "id": "env_a",
+    "url": "http://10.0.0.1:8080",
+    "weight": 1
+   },
+   {
+    "id": "env_b",
+    "url": "http://10.0.0.2:8080",
+    "weight": 99
+   }
+  ],
+  "pick": 1,
+  "url": "http://10.0.0.2:8080"
+ },
+ {
+  "visitorId": "999585b486b435f2686d6a24b1589cbe",
+  "backends": [
+   {
+    "id": "env_a",
+    "url": "http://10.0.0.1:8080",
+    "weight": 1
+   },
+   {
+    "id": "env_b",
+    "url": "http://10.0.0.2:8080",
+    "weight": 99
+   }
+  ],
+  "pick": 1,
+  "url": "http://10.0.0.2:8080"
+ },
+ {
+  "visitorId": "690a891099668530034b480a72ced8af",
+  "backends": [
+   {
+    "id": "env_a",
+    "url": "http://10.0.0.1:8080",
+    "weight": 1
+   },
+   {
+    "id": "env_b",
+    "url": "http://10.0.0.2:8080",
+    "weight": 99
+   }
+  ],
+  "pick": 1,
+  "url": "http://10.0.0.2:8080"
+ },
+ {
+  "visitorId": "e12075f1d382f50a7790718e1f74daff",
+  "backends": [
+   {
+    "id": "env_a",
+    "url": "http://10.0.0.1:8080",
+    "weight": 1
+   },
+   {
+    "id": "env_b",
+    "url": "http://10.0.0.2:8080",
+    "weight": 99
+   }
+  ],
+  "pick": 1,
+  "url": "http://10.0.0.2:8080"
+ },
+ {
+  "visitorId": "4206f4d30d729fab8894f38844740f37",
+  "backends": [
+   {
+    "id": "env_a",
+    "url": "http://10.0.0.1:8080",
+    "weight": 1
+   },
+   {
+    "id": "env_b",
+    "url": "http://10.0.0.2:8080",
+    "weight": 99
+   }
+  ],
+  "pick": 1,
+  "url": "http://10.0.0.2:8080"
+ },
+ {
+  "visitorId": "d0a59a881f9c99fa68682e85f4568bd7",
+  "backends": [
+   {
+    "id": "env_a",
+    "url": "http://10.0.0.1:8080",
+    "weight": 99
+   },
+   {
+    "id": "env_b",
+    "url": "http://10.0.0.2:8080",
+    "weight": 1
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.0.1:8080"
+ },
+ {
+  "visitorId": "05e86ef85cad23d3330d34e8509f8357",
+  "backends": [
+   {
+    "id": "env_a",
+    "url": "http://10.0.0.1:8080",
+    "weight": 99
+   },
+   {
+    "id": "env_b",
+    "url": "http://10.0.0.2:8080",
+    "weight": 1
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.0.1:8080"
+ },
+ {
+  "visitorId": "7aafe33a81399397364347a7d28fbf28",
+  "backends": [
+   {
+    "id": "env_a",
+    "url": "http://10.0.0.1:8080",
+    "weight": 99
+   },
+   {
+    "id": "env_b",
+    "url": "http://10.0.0.2:8080",
+    "weight": 1
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.0.1:8080"
+ },
+ {
+  "visitorId": "2fd8ace2ba3787d7754025c1203f610e",
+  "backends": [
+   {
+    "id": "env_a",
+    "url": "http://10.0.0.1:8080",
+    "weight": 99
+   },
+   {
+    "id": "env_b",
+    "url": "http://10.0.0.2:8080",
+    "weight": 1
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.0.1:8080"
+ },
+ {
+  "visitorId": "6c7daab7bf07e0dd23900fad535af24e",
+  "backends": [
+   {
+    "id": "env_a",
+    "url": "http://10.0.0.1:8080",
+    "weight": 99
+   },
+   {
+    "id": "env_b",
+    "url": "http://10.0.0.2:8080",
+    "weight": 1
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.0.1:8080"
+ },
+ {
+  "visitorId": "acd2da1213af466e2f805eef0b84487f",
+  "backends": [
+   {
+    "id": "env_a",
+    "url": "http://10.0.0.1:8080",
+    "weight": 99
+   },
+   {
+    "id": "env_b",
+    "url": "http://10.0.0.2:8080",
+    "weight": 1
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.0.1:8080"
+ },
+ {
+  "visitorId": "f798c77b84f8c51c66e5f4babed23055",
+  "backends": [
+   {
+    "id": "env_a",
+    "url": "http://10.0.0.1:8080",
+    "weight": 99
+   },
+   {
+    "id": "env_b",
+    "url": "http://10.0.0.2:8080",
+    "weight": 1
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.0.1:8080"
+ },
+ {
+  "visitorId": "6093b1f4f024a46bea60019a16b881a0",
+  "backends": [
+   {
+    "id": "env_a",
+    "url": "http://10.0.0.1:8080",
+    "weight": 99
+   },
+   {
+    "id": "env_b",
+    "url": "http://10.0.0.2:8080",
+    "weight": 1
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.0.1:8080"
+ },
+ {
+  "visitorId": "e9a30f77dd55d10c6a5c142f15634554",
+  "backends": [
+   {
+    "id": "env_a",
+    "url": "http://10.0.0.1:8080",
+    "weight": 99
+   },
+   {
+    "id": "env_b",
+    "url": "http://10.0.0.2:8080",
+    "weight": 1
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.0.1:8080"
+ },
+ {
+  "visitorId": "988b395d9c387d500e7a8553815e9320",
+  "backends": [
+   {
+    "id": "env_a",
+    "url": "http://10.0.0.1:8080",
+    "weight": 99
+   },
+   {
+    "id": "env_b",
+    "url": "http://10.0.0.2:8080",
+    "weight": 1
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.0.1:8080"
+ },
+ {
+  "visitorId": "095cff236a8976f7586263762cce6e49",
+  "backends": [
+   {
+    "id": "env_a",
+    "url": "http://10.0.0.1:8080",
+    "weight": 99
+   },
+   {
+    "id": "env_b",
+    "url": "http://10.0.0.2:8080",
+    "weight": 1
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.0.1:8080"
+ },
+ {
+  "visitorId": "c5b1fe3d567ff90681535c64f36ee137",
+  "backends": [
+   {
+    "id": "env_a",
+    "url": "http://10.0.0.1:8080",
+    "weight": 99
+   },
+   {
+    "id": "env_b",
+    "url": "http://10.0.0.2:8080",
+    "weight": 1
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.0.1:8080"
+ },
+ {
+  "visitorId": "9fd755d2695f6355043e61f96b966f75",
+  "backends": [
+   {
+    "id": "env_a",
+    "url": "http://10.0.0.1:8080",
+    "weight": 33
+   },
+   {
+    "id": "env_b",
+    "url": "http://10.0.0.2:8080",
+    "weight": 33
+   },
+   {
+    "id": "env_c",
+    "url": "http://10.0.0.3:8080",
+    "weight": 34
+   }
+  ],
+  "pick": 1,
+  "url": "http://10.0.0.2:8080"
+ },
+ {
+  "visitorId": "3512e790522b705090a03618915c8aba",
+  "backends": [
+   {
+    "id": "env_a",
+    "url": "http://10.0.0.1:8080",
+    "weight": 33
+   },
+   {
+    "id": "env_b",
+    "url": "http://10.0.0.2:8080",
+    "weight": 33
+   },
+   {
+    "id": "env_c",
+    "url": "http://10.0.0.3:8080",
+    "weight": 34
+   }
+  ],
+  "pick": 2,
+  "url": "http://10.0.0.3:8080"
+ },
+ {
+  "visitorId": "68dee2ddbf79b52b911fe60c9b5d6d6e",
+  "backends": [
+   {
+    "id": "env_a",
+    "url": "http://10.0.0.1:8080",
+    "weight": 33
+   },
+   {
+    "id": "env_b",
+    "url": "http://10.0.0.2:8080",
+    "weight": 33
+   },
+   {
+    "id": "env_c",
+    "url": "http://10.0.0.3:8080",
+    "weight": 34
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.0.1:8080"
+ },
+ {
+  "visitorId": "8befd7b4d7aff751c424d109ed956f9c",
+  "backends": [
+   {
+    "id": "env_a",
+    "url": "http://10.0.0.1:8080",
+    "weight": 33
+   },
+   {
+    "id": "env_b",
+    "url": "http://10.0.0.2:8080",
+    "weight": 33
+   },
+   {
+    "id": "env_c",
+    "url": "http://10.0.0.3:8080",
+    "weight": 34
+   }
+  ],
+  "pick": 1,
+  "url": "http://10.0.0.2:8080"
+ },
+ {
+  "visitorId": "9d17c9359f8adc82de607c4ea2edd0e7",
+  "backends": [
+   {
+    "id": "env_a",
+    "url": "http://10.0.0.1:8080",
+    "weight": 33
+   },
+   {
+    "id": "env_b",
+    "url": "http://10.0.0.2:8080",
+    "weight": 33
+   },
+   {
+    "id": "env_c",
+    "url": "http://10.0.0.3:8080",
+    "weight": 34
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.0.1:8080"
+ },
+ {
+  "visitorId": "b0111610f5f81e2e31929f4468ea41bd",
+  "backends": [
+   {
+    "id": "env_a",
+    "url": "http://10.0.0.1:8080",
+    "weight": 33
+   },
+   {
+    "id": "env_b",
+    "url": "http://10.0.0.2:8080",
+    "weight": 33
+   },
+   {
+    "id": "env_c",
+    "url": "http://10.0.0.3:8080",
+    "weight": 34
+   }
+  ],
+  "pick": 2,
+  "url": "http://10.0.0.3:8080"
+ },
+ {
+  "visitorId": "183d8c707743c6833c5b3c21c9cfdb66",
+  "backends": [
+   {
+    "id": "env_a",
+    "url": "http://10.0.0.1:8080",
+    "weight": 33
+   },
+   {
+    "id": "env_b",
+    "url": "http://10.0.0.2:8080",
+    "weight": 33
+   },
+   {
+    "id": "env_c",
+    "url": "http://10.0.0.3:8080",
+    "weight": 34
+   }
+  ],
+  "pick": 1,
+  "url": "http://10.0.0.2:8080"
+ },
+ {
+  "visitorId": "0e61e8fb0f4eaf06489d893faa4a2243",
+  "backends": [
+   {
+    "id": "env_a",
+    "url": "http://10.0.0.1:8080",
+    "weight": 33
+   },
+   {
+    "id": "env_b",
+    "url": "http://10.0.0.2:8080",
+    "weight": 33
+   },
+   {
+    "id": "env_c",
+    "url": "http://10.0.0.3:8080",
+    "weight": 34
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.0.1:8080"
+ },
+ {
+  "visitorId": "65a083de53cf4cad13fdf231c1094fea",
+  "backends": [
+   {
+    "id": "env_a",
+    "url": "http://10.0.0.1:8080",
+    "weight": 33
+   },
+   {
+    "id": "env_b",
+    "url": "http://10.0.0.2:8080",
+    "weight": 33
+   },
+   {
+    "id": "env_c",
+    "url": "http://10.0.0.3:8080",
+    "weight": 34
+   }
+  ],
+  "pick": 2,
+  "url": "http://10.0.0.3:8080"
+ },
+ {
+  "visitorId": "59e8841ea041c2f96ff2704d64bfb329",
+  "backends": [
+   {
+    "id": "env_a",
+    "url": "http://10.0.0.1:8080",
+    "weight": 33
+   },
+   {
+    "id": "env_b",
+    "url": "http://10.0.0.2:8080",
+    "weight": 33
+   },
+   {
+    "id": "env_c",
+    "url": "http://10.0.0.3:8080",
+    "weight": 34
+   }
+  ],
+  "pick": 2,
+  "url": "http://10.0.0.3:8080"
+ },
+ {
+  "visitorId": "4dabbfaa7252c1cae7157b9c3a47ae4c",
+  "backends": [
+   {
+    "id": "env_a",
+    "url": "http://10.0.0.1:8080",
+    "weight": 33
+   },
+   {
+    "id": "env_b",
+    "url": "http://10.0.0.2:8080",
+    "weight": 33
+   },
+   {
+    "id": "env_c",
+    "url": "http://10.0.0.3:8080",
+    "weight": 34
+   }
+  ],
+  "pick": 2,
+  "url": "http://10.0.0.3:8080"
+ },
+ {
+  "visitorId": "ac2087c06d497cadcce719e12630a9b8",
+  "backends": [
+   {
+    "id": "env_a",
+    "url": "http://10.0.0.1:8080",
+    "weight": 33
+   },
+   {
+    "id": "env_b",
+    "url": "http://10.0.0.2:8080",
+    "weight": 33
+   },
+   {
+    "id": "env_c",
+    "url": "http://10.0.0.3:8080",
+    "weight": 34
+   }
+  ],
+  "pick": 1,
+  "url": "http://10.0.0.2:8080"
+ },
+ {
+  "visitorId": "89350b1fb0eb038aae96eef272573a0f",
+  "backends": [
+   {
+    "url": "https://a.example",
+    "weight": 50
+   },
+   {
+    "id": "env_b",
+    "url": "https://b.example",
+    "weight": 50
+   }
+  ],
+  "pick": 0,
+  "url": "https://a.example"
+ },
+ {
+  "visitorId": "13b348469f283a8ba9cc31ec013fae3c",
+  "backends": [
+   {
+    "url": "https://a.example",
+    "weight": 50
+   },
+   {
+    "id": "env_b",
+    "url": "https://b.example",
+    "weight": 50
+   }
+  ],
+  "pick": 1,
+  "url": "https://b.example"
+ },
+ {
+  "visitorId": "d2ebde91e99119ef78d54937eefc042f",
+  "backends": [
+   {
+    "url": "https://a.example",
+    "weight": 50
+   },
+   {
+    "id": "env_b",
+    "url": "https://b.example",
+    "weight": 50
+   }
+  ],
+  "pick": 0,
+  "url": "https://a.example"
+ },
+ {
+  "visitorId": "4521a7339e1173d8bbe88e29c97ade78",
+  "backends": [
+   {
+    "url": "https://a.example",
+    "weight": 50
+   },
+   {
+    "id": "env_b",
+    "url": "https://b.example",
+    "weight": 50
+   }
+  ],
+  "pick": 0,
+  "url": "https://a.example"
+ },
+ {
+  "visitorId": "bad5d3b47461f71dc32bac23b52f2b89",
+  "backends": [
+   {
+    "url": "https://a.example",
+    "weight": 50
+   },
+   {
+    "id": "env_b",
+    "url": "https://b.example",
+    "weight": 50
+   }
+  ],
+  "pick": 1,
+  "url": "https://b.example"
+ },
+ {
+  "visitorId": "8369b34edca12d81527e7c9d04b6942a",
+  "backends": [
+   {
+    "url": "https://a.example",
+    "weight": 50
+   },
+   {
+    "id": "env_b",
+    "url": "https://b.example",
+    "weight": 50
+   }
+  ],
+  "pick": 0,
+  "url": "https://a.example"
+ },
+ {
+  "visitorId": "996ac1aa623034f780012dce6110e53c",
+  "backends": [
+   {
+    "url": "https://a.example",
+    "weight": 50
+   },
+   {
+    "id": "env_b",
+    "url": "https://b.example",
+    "weight": 50
+   }
+  ],
+  "pick": 1,
+  "url": "https://b.example"
+ },
+ {
+  "visitorId": "30db3e69c6bca67ce4df2e62dc5d5a70",
+  "backends": [
+   {
+    "url": "https://a.example",
+    "weight": 50
+   },
+   {
+    "id": "env_b",
+    "url": "https://b.example",
+    "weight": 50
+   }
+  ],
+  "pick": 0,
+  "url": "https://a.example"
+ },
+ {
+  "visitorId": "e93f314af30b370982b083e89dd09024",
+  "backends": [
+   {
+    "url": "https://a.example",
+    "weight": 50
+   },
+   {
+    "id": "env_b",
+    "url": "https://b.example",
+    "weight": 50
+   }
+  ],
+  "pick": 0,
+  "url": "https://a.example"
+ },
+ {
+  "visitorId": "1fb09b2a8b3515cee9dad64962524298",
+  "backends": [
+   {
+    "url": "https://a.example",
+    "weight": 50
+   },
+   {
+    "id": "env_b",
+    "url": "https://b.example",
+    "weight": 50
+   }
+  ],
+  "pick": 0,
+  "url": "https://a.example"
+ },
+ {
+  "visitorId": "a9fd9d8fd8ff0094a62a254dc06ec804",
+  "backends": [
+   {
+    "url": "https://a.example",
+    "weight": 50
+   },
+   {
+    "id": "env_b",
+    "url": "https://b.example",
+    "weight": 50
+   }
+  ],
+  "pick": 0,
+  "url": "https://a.example"
+ },
+ {
+  "visitorId": "2b4949747208cd65f4232c3fd22f78da",
+  "backends": [
+   {
+    "url": "https://a.example",
+    "weight": 50
+   },
+   {
+    "id": "env_b",
+    "url": "https://b.example",
+    "weight": 50
+   }
+  ],
+  "pick": 0,
+  "url": "https://a.example"
+ },
+ {
+  "visitorId": "e2b4c5df45b447259dd82a5096e4aa8a",
+  "backends": [
+   {
+    "url": "https://a.example",
+    "weight": 1
+   },
+   {
+    "url": "https://b.example",
+    "weight": 0
+   },
+   {
+    "url": "https://c.example/base",
+    "weight": 3
+   }
+  ],
+  "pick": 2,
+  "url": "https://c.example/base"
+ },
+ {
+  "visitorId": "e070256da36a68ea173efc55a9f027f0",
+  "backends": [
+   {
+    "url": "https://a.example",
+    "weight": 1
+   },
+   {
+    "url": "https://b.example",
+    "weight": 0
+   },
+   {
+    "url": "https://c.example/base",
+    "weight": 3
+   }
+  ],
+  "pick": 2,
+  "url": "https://c.example/base"
+ },
+ {
+  "visitorId": "4a55c66a475b84e52dfcbb8a86ac7e86",
+  "backends": [
+   {
+    "url": "https://a.example",
+    "weight": 1
+   },
+   {
+    "url": "https://b.example",
+    "weight": 0
+   },
+   {
+    "url": "https://c.example/base",
+    "weight": 3
+   }
+  ],
+  "pick": 2,
+  "url": "https://c.example/base"
+ },
+ {
+  "visitorId": "3b54c29cf876562ec8f34ca6f66a1afe",
+  "backends": [
+   {
+    "url": "https://a.example",
+    "weight": 1
+   },
+   {
+    "url": "https://b.example",
+    "weight": 0
+   },
+   {
+    "url": "https://c.example/base",
+    "weight": 3
+   }
+  ],
+  "pick": 0,
+  "url": "https://a.example"
+ },
+ {
+  "visitorId": "91b0182e424a45da86cb30c84274116a",
+  "backends": [
+   {
+    "url": "https://a.example",
+    "weight": 1
+   },
+   {
+    "url": "https://b.example",
+    "weight": 0
+   },
+   {
+    "url": "https://c.example/base",
+    "weight": 3
+   }
+  ],
+  "pick": 2,
+  "url": "https://c.example/base"
+ },
+ {
+  "visitorId": "aadf3a4fea6ba55b41243c4a3548fe3a",
+  "backends": [
+   {
+    "url": "https://a.example",
+    "weight": 1
+   },
+   {
+    "url": "https://b.example",
+    "weight": 0
+   },
+   {
+    "url": "https://c.example/base",
+    "weight": 3
+   }
+  ],
+  "pick": 2,
+  "url": "https://c.example/base"
+ },
+ {
+  "visitorId": "05422d19ec808205b92f19fe059d48b5",
+  "backends": [
+   {
+    "url": "https://a.example",
+    "weight": 1
+   },
+   {
+    "url": "https://b.example",
+    "weight": 0
+   },
+   {
+    "url": "https://c.example/base",
+    "weight": 3
+   }
+  ],
+  "pick": 0,
+  "url": "https://a.example"
+ },
+ {
+  "visitorId": "6c52e890ca41cf7e1f6490d703d46ece",
+  "backends": [
+   {
+    "url": "https://a.example",
+    "weight": 1
+   },
+   {
+    "url": "https://b.example",
+    "weight": 0
+   },
+   {
+    "url": "https://c.example/base",
+    "weight": 3
+   }
+  ],
+  "pick": 0,
+  "url": "https://a.example"
+ },
+ {
+  "visitorId": "fe640f03cdf21b61e21543148e10dd74",
+  "backends": [
+   {
+    "url": "https://a.example",
+    "weight": 1
+   },
+   {
+    "url": "https://b.example",
+    "weight": 0
+   },
+   {
+    "url": "https://c.example/base",
+    "weight": 3
+   }
+  ],
+  "pick": 2,
+  "url": "https://c.example/base"
+ },
+ {
+  "visitorId": "5ea055766140a61a017cb8b88caef5ad",
+  "backends": [
+   {
+    "url": "https://a.example",
+    "weight": 1
+   },
+   {
+    "url": "https://b.example",
+    "weight": 0
+   },
+   {
+    "url": "https://c.example/base",
+    "weight": 3
+   }
+  ],
+  "pick": 0,
+  "url": "https://a.example"
+ },
+ {
+  "visitorId": "3a3e04545498d7fe97a55728de4da26c",
+  "backends": [
+   {
+    "url": "https://a.example",
+    "weight": 1
+   },
+   {
+    "url": "https://b.example",
+    "weight": 0
+   },
+   {
+    "url": "https://c.example/base",
+    "weight": 3
+   }
+  ],
+  "pick": 2,
+  "url": "https://c.example/base"
+ },
+ {
+  "visitorId": "82ee89c04430105fd5761314383ebc25",
+  "backends": [
+   {
+    "url": "https://a.example",
+    "weight": 1
+   },
+   {
+    "url": "https://b.example",
+    "weight": 0
+   },
+   {
+    "url": "https://c.example/base",
+    "weight": 3
+   }
+  ],
+  "pick": 0,
+  "url": "https://a.example"
+ },
+ {
+  "visitorId": "80a57d31c46ecf9ef10bcb8c15722a6a",
+  "backends": [
+   {
+    "id": "only",
+    "url": "http://10.0.0.9",
+    "weight": 1
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.0.9"
+ },
+ {
+  "visitorId": "ba3a7dc21bf5e3f221439d3b9ca72d70",
+  "backends": [
+   {
+    "id": "only",
+    "url": "http://10.0.0.9",
+    "weight": 1
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.0.9"
+ },
+ {
+  "visitorId": "5914ec9c833dd86b37fcaced62eb4397",
+  "backends": [
+   {
+    "id": "only",
+    "url": "http://10.0.0.9",
+    "weight": 1
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.0.9"
+ },
+ {
+  "visitorId": "862cbf38a92a131028fea6d80589e29c",
+  "backends": [
+   {
+    "id": "only",
+    "url": "http://10.0.0.9",
+    "weight": 1
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.0.9"
+ },
+ {
+  "visitorId": "2afaeb8363199cf32a431f3c52d07971",
+  "backends": [
+   {
+    "id": "only",
+    "url": "http://10.0.0.9",
+    "weight": 1
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.0.9"
+ },
+ {
+  "visitorId": "54926e55a32168548f05a615e97606a8",
+  "backends": [
+   {
+    "id": "only",
+    "url": "http://10.0.0.9",
+    "weight": 1
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.0.9"
+ },
+ {
+  "visitorId": "74b31eb5b0e11effe6fc0c1cd979b804",
+  "backends": [
+   {
+    "id": "only",
+    "url": "http://10.0.0.9",
+    "weight": 1
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.0.9"
+ },
+ {
+  "visitorId": "abe0a82aceeee72304bca042d5d50563",
+  "backends": [
+   {
+    "id": "only",
+    "url": "http://10.0.0.9",
+    "weight": 1
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.0.9"
+ },
+ {
+  "visitorId": "9b8d9360d399d2150b8778f4d6b866d3",
+  "backends": [
+   {
+    "id": "only",
+    "url": "http://10.0.0.9",
+    "weight": 1
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.0.9"
+ },
+ {
+  "visitorId": "9c3a7c8632c58c1b0378cf6320d73913",
+  "backends": [
+   {
+    "id": "only",
+    "url": "http://10.0.0.9",
+    "weight": 1
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.0.9"
+ },
+ {
+  "visitorId": "9d9b918754a18573436be71dc7a25a11",
+  "backends": [
+   {
+    "id": "only",
+    "url": "http://10.0.0.9",
+    "weight": 1
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.0.9"
+ },
+ {
+  "visitorId": "4ad775e0a862df69f1a9de150c8aa7ed",
+  "backends": [
+   {
+    "id": "only",
+    "url": "http://10.0.0.9",
+    "weight": 1
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.0.9"
+ },
+ {
+  "visitorId": "0c9de3c3a45720e669840d9981fcf5f6",
+  "backends": [
+   {
+    "id": "z",
+    "url": "http://10.0.0.1",
+    "weight": 0
+   }
+  ],
+  "error": "edge: target \"golden.test\" has no pickable backend"
+ },
+ {
+  "visitorId": "69c50d2f3e1a41bef2e2d5ef2994ed9f",
+  "backends": [],
+  "error": "edge: target \"golden.test\" has no pickable backend"
+ },
+ {
+  "visitorId": "ac9d0ca5860bf5751ca517dcba5b2e3d",
+  "backends": [
+   {
+    "url": "https://b0.example/base",
+    "weight": 458
+   },
+   {
+    "url": "https://b1.example/base",
+    "weight": 609
+   }
+  ],
+  "pick": 1,
+  "url": "https://b1.example/base"
+ },
+ {
+  "visitorId": "86654996769612b11affb7c62b44bb59",
+  "backends": [
+   {
+    "id": "e2dff7302",
+    "url": "http://10.0.1.1:8080",
+    "weight": 1
+   },
+   {
+    "url": "http://10.0.2.2:8080",
+    "weight": 1
+   },
+   {
+    "id": "e43a45dee",
+    "url": "https://b2.example/base",
+    "weight": 1000
+   }
+  ],
+  "pick": 2,
+  "url": "https://b2.example/base"
+ },
+ {
+  "visitorId": "abe4b2a3f28bbd3c7dcd8f21a40788cc",
+  "backends": [
+   {
+    "id": "e736ec0bf",
+    "url": "https://b0.example/base",
+    "weight": 50
+   },
+   {
+    "url": "http://10.0.1.2:8080",
+    "weight": 5
+   },
+   {
+    "url": "http://10.0.2.3:8080",
+    "weight": 597
+   },
+   {
+    "id": "env_3",
+    "url": "http://10.0.2.4:8080",
+    "weight": 1
+   }
+  ],
+  "pick": 2,
+  "url": "http://10.0.2.3:8080"
+ },
+ {
+  "visitorId": "43c145539f5fafdb695b409312b5425c",
+  "backends": [
+   {
+    "url": "https://b0.example/base",
+    "weight": 366
+   },
+   {
+    "id": "ee6a1e912",
+    "url": "https://b1.example",
+    "weight": 33
+   }
+  ],
+  "pick": 0,
+  "url": "https://b0.example/base"
+ },
+ {
+  "visitorId": "76916c92fdaf19f5bf26f4498c3ed9ca",
+  "backends": [
+   {
+    "id": "env_0",
+    "url": "http://10.0.0.1:8080",
+    "weight": 33
+   },
+   {
+    "id": "e7d768bf5",
+    "url": "http://10.0.0.2:8080",
+    "weight": 99
+   },
+   {
+    "id": "env_2",
+    "url": "http://10.0.1.3:8080",
+    "weight": 1
+   }
+  ],
+  "pick": 1,
+  "url": "http://10.0.0.2:8080"
+ },
+ {
+  "visitorId": "8a309982bc3ea62e322bbda66ea1b34f",
+  "backends": [
+   {
+    "id": "env_0",
+    "url": "https://b0.example",
+    "weight": 34
+   },
+   {
+    "id": "env_1",
+    "url": "http://10.0.3.2:8080",
+    "weight": 33
+   },
+   {
+    "id": "e97059986",
+    "url": "https://b2.example",
+    "weight": 50
+   }
+  ],
+  "pick": 2,
+  "url": "https://b2.example"
+ },
+ {
+  "visitorId": "30a5c91f8c19143efa708085f2740b4f",
+  "backends": [
+   {
+    "id": "env_0",
+    "url": "https://b0.example/base",
+    "weight": 1000
+   },
+   {
+    "id": "env_1",
+    "url": "http://10.0.0.2:8080",
+    "weight": 369
+   },
+   {
+    "id": "env_2",
+    "url": "https://b2.example/base",
+    "weight": 5
+   }
+  ],
+  "pick": 0,
+  "url": "https://b0.example/base"
+ },
+ {
+  "visitorId": "06f9c215b84ef3100d984065914679c1",
+  "backends": [
+   {
+    "url": "https://b0.example",
+    "weight": 54
+   },
+   {
+    "id": "e346ed539",
+    "url": "http://10.0.3.2:8080",
+    "weight": 10
+   }
+  ],
+  "pick": 0,
+  "url": "https://b0.example"
+ },
+ {
+  "visitorId": "2c80781536a60db6daf08c963ce3d079",
+  "backends": [
+   {
+    "id": "env_0",
+    "url": "https://b0.example",
+    "weight": 2
+   },
+   {
+    "id": "e7c7a2fae",
+    "url": "http://10.0.0.2:8080",
+    "weight": 100
+   },
+   {
+    "id": "e7567e201",
+    "url": "https://b2.example",
+    "weight": 10
+   },
+   {
+    "url": "http://10.0.1.4:8080",
+    "weight": 1
+   }
+  ],
+  "pick": 1,
+  "url": "http://10.0.0.2:8080"
+ },
+ {
+  "visitorId": "73291e05f2209f4e85665eeaafa5bc74",
+  "backends": [
+   {
+    "id": "env_0",
+    "url": "https://b0.example",
+    "weight": 978
+   },
+   {
+    "id": "edfa9a2f7",
+    "url": "http://10.0.3.2:8080",
+    "weight": 2
+   }
+  ],
+  "pick": 0,
+  "url": "https://b0.example"
+ },
+ {
+  "visitorId": "498c1b0536892cc47fe0fedaa4ef91f1",
+  "backends": [
+   {
+    "url": "https://b0.example/base",
+    "weight": 50
+   },
+   {
+    "id": "e0a6818c6",
+    "url": "http://10.0.0.2:8080",
+    "weight": 99
+   },
+   {
+    "url": "https://b2.example/base",
+    "weight": 3
+   }
+  ],
+  "pick": 1,
+  "url": "http://10.0.0.2:8080"
+ },
+ {
+  "visitorId": "a0ed94f410c3b8bbdfe2372bbd5d3edf",
+  "backends": [
+   {
+    "id": "e8d739dc5",
+    "url": "https://b0.example/base",
+    "weight": 107
+   }
+  ],
+  "pick": 0,
+  "url": "https://b0.example/base"
+ },
+ {
+  "visitorId": "cd248d0feb4708fa18e397bfab21c2a3",
+  "backends": [
+   {
+    "id": "env_0",
+    "url": "http://10.0.0.1:8080",
+    "weight": 34
+   },
+   {
+    "id": "e57b89a76",
+    "url": "http://10.0.1.2:8080",
+    "weight": 33
+   },
+   {
+    "url": "https://b2.example",
+    "weight": 0
+   },
+   {
+    "id": "env_3",
+    "url": "http://10.0.2.4:8080",
+    "weight": 50
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.0.1:8080"
+ },
+ {
+  "visitorId": "0fafad1cc7284ec689937f673e5bf881",
+  "backends": [
+   {
+    "id": "env_0",
+    "url": "http://10.0.0.1:8080",
+    "weight": 1
+   },
+   {
+    "url": "http://10.0.3.2:8080",
+    "weight": 50
+   }
+  ],
+  "pick": 1,
+  "url": "http://10.0.3.2:8080"
+ },
+ {
+  "visitorId": "5aaffa8beb6b1cc963496b73b0f51cf8",
+  "backends": [
+   {
+    "id": "env_0",
+    "url": "https://b0.example",
+    "weight": 5
+   },
+   {
+    "url": "https://b1.example",
+    "weight": 5
+   },
+   {
+    "url": "http://10.0.3.3:8080",
+    "weight": 99
+   },
+   {
+    "url": "http://10.0.3.4:8080",
+    "weight": 1000
+   }
+  ],
+  "pick": 3,
+  "url": "http://10.0.3.4:8080"
+ },
+ {
+  "visitorId": "a526ef2a4e5016aaaa3356bb3d6e8390",
+  "backends": [
+   {
+    "id": "e5664ccb8",
+    "url": "http://10.0.2.1:8080",
+    "weight": 33
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.2.1:8080"
+ },
+ {
+  "visitorId": "d11c96154113c783027b15c41fd66701",
+  "backends": [
+   {
+    "url": "https://b0.example/base",
+    "weight": 3
+   },
+   {
+    "id": "ea1d38e57",
+    "url": "https://b1.example/base",
+    "weight": 998
+   },
+   {
+    "url": "http://10.0.0.3:8080",
+    "weight": 332
+   }
+  ],
+  "pick": 1,
+  "url": "https://b1.example/base"
+ },
+ {
+  "visitorId": "f8e591d266017d72e003874ce5504046",
+  "backends": [
+   {
+    "id": "e3144320f",
+    "url": "http://10.0.2.1:8080",
+    "weight": 100
+   },
+   {
+    "id": "e933b25d9",
+    "url": "https://b1.example",
+    "weight": 288
+   },
+   {
+    "id": "e109b1d47",
+    "url": "https://b2.example",
+    "weight": 100
+   }
+  ],
+  "pick": 1,
+  "url": "https://b1.example"
+ },
+ {
+  "visitorId": "7dfd2df808b9d1c2eca95444c2c7a243",
+  "backends": [
+   {
+    "url": "https://b0.example",
+    "weight": 1000
+   },
+   {
+    "id": "env_1",
+    "url": "http://10.0.2.2:8080",
+    "weight": 0
+   },
+   {
+    "id": "env_2",
+    "url": "http://10.0.1.3:8080",
+    "weight": 593
+   }
+  ],
+  "pick": 2,
+  "url": "http://10.0.1.3:8080"
+ },
+ {
+  "visitorId": "4ad45ca5f8b9c9216a31478f6c4c9eab",
+  "backends": [
+   {
+    "url": "https://b0.example",
+    "weight": 99
+   },
+   {
+    "url": "http://10.0.3.2:8080",
+    "weight": 33
+   },
+   {
+    "url": "http://10.0.1.3:8080",
+    "weight": 1
+   },
+   {
+    "url": "http://10.0.1.4:8080",
+    "weight": 1
+   }
+  ],
+  "pick": 0,
+  "url": "https://b0.example"
+ },
+ {
+  "visitorId": "d7a128706c234e4354e0f7f08aeca3f2",
+  "backends": [
+   {
+    "id": "env_0",
+    "url": "https://b0.example/base",
+    "weight": 677
+   },
+   {
+    "id": "ef6d3915d",
+    "url": "https://b1.example/base",
+    "weight": 2
+   }
+  ],
+  "pick": 0,
+  "url": "https://b0.example/base"
+ },
+ {
+  "visitorId": "e89cfa5709299324921dc904dec6e7d2",
+  "backends": [
+   {
+    "id": "env_0",
+    "url": "https://b0.example",
+    "weight": 2
+   }
+  ],
+  "pick": 0,
+  "url": "https://b0.example"
+ },
+ {
+  "visitorId": "97fb752c3d1a0e603c5023ab35a3cfaa",
+  "backends": [
+   {
+    "id": "env_0",
+    "url": "https://b0.example/base",
+    "weight": 50
+   }
+  ],
+  "pick": 0,
+  "url": "https://b0.example/base"
+ },
+ {
+  "visitorId": "7dc50aa929249993766c1c33e2242452",
+  "backends": [
+   {
+    "id": "env_0",
+    "url": "https://b0.example",
+    "weight": 308
+   },
+   {
+    "url": "http://10.0.1.2:8080",
+    "weight": 1
+   },
+   {
+    "id": "e2d5aa093",
+    "url": "http://10.0.2.3:8080",
+    "weight": 0
+   },
+   {
+    "id": "env_3",
+    "url": "https://b3.example",
+    "weight": 34
+   }
+  ],
+  "pick": 0,
+  "url": "https://b0.example"
+ },
+ {
+  "visitorId": "31bc8021bc638628b8f0065c4926194a",
+  "backends": [
+   {
+    "url": "http://10.0.0.1:8080",
+    "weight": 1
+   },
+   {
+    "id": "ec7eb91bc",
+    "url": "http://10.0.1.2:8080",
+    "weight": 10
+   },
+   {
+    "url": "http://10.0.3.3:8080",
+    "weight": 67
+   },
+   {
+    "id": "eca03b2be",
+    "url": "http://10.0.3.4:8080",
+    "weight": 5
+   }
+  ],
+  "pick": 2,
+  "url": "http://10.0.3.3:8080"
+ },
+ {
+  "visitorId": "0e9a8a2de6704f2c4441cf29183eca3c",
+  "backends": [
+   {
+    "url": "https://b0.example",
+    "weight": 1
+   },
+   {
+    "url": "http://10.0.2.2:8080",
+    "weight": 230
+   }
+  ],
+  "pick": 1,
+  "url": "http://10.0.2.2:8080"
+ },
+ {
+  "visitorId": "a77c433586f60f9a81e89381e1564a5f",
+  "backends": [
+   {
+    "id": "env_0",
+    "url": "http://10.0.3.1:8080",
+    "weight": 62
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.3.1:8080"
+ },
+ {
+  "visitorId": "5ad252d7e7b858b574532e23591de776",
+  "backends": [
+   {
+    "url": "https://b0.example",
+    "weight": 50
+   },
+   {
+    "id": "ef3afc6f4",
+    "url": "http://10.0.0.2:8080",
+    "weight": 99
+   },
+   {
+    "id": "env_2",
+    "url": "https://b2.example/base",
+    "weight": 3
+   },
+   {
+    "id": "env_3",
+    "url": "https://b3.example",
+    "weight": 1000
+   }
+  ],
+  "pick": 3,
+  "url": "https://b3.example"
+ },
+ {
+  "visitorId": "c59acb9c75f5d49abfe55f5fb32c1519",
+  "backends": [
+   {
+    "id": "eb7c2d084",
+    "url": "https://b0.example",
+    "weight": 5
+   }
+  ],
+  "pick": 0,
+  "url": "https://b0.example"
+ },
+ {
+  "visitorId": "14b8dcfd535bd753812ed3424c20a1c4",
+  "backends": [
+   {
+    "url": "http://10.0.2.1:8080",
+    "weight": 74
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.2.1:8080"
+ },
+ {
+  "visitorId": "43a71d5460f3bc8dd9903c52fe357ce8",
+  "backends": [
+   {
+    "id": "edde07c31",
+    "url": "https://b0.example/base",
+    "weight": 34
+   },
+   {
+    "id": "env_1",
+    "url": "http://10.0.3.2:8080",
+    "weight": 1
+   },
+   {
+    "id": "ec18d39fa",
+    "url": "http://10.0.1.3:8080",
+    "weight": 5
+   },
+   {
+    "id": "env_3",
+    "url": "http://10.0.0.4:8080",
+    "weight": 10
+   }
+  ],
+  "pick": 0,
+  "url": "https://b0.example/base"
+ },
+ {
+  "visitorId": "a973869262a9c1ff5182f06f5f247fbb",
+  "backends": [
+   {
+    "url": "http://10.0.3.1:8080",
+    "weight": 2
+   },
+   {
+    "url": "https://b1.example",
+    "weight": 1
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.3.1:8080"
+ },
+ {
+  "visitorId": "dd596b5f29149d62f2a83b7db67a525a",
+  "backends": [
+   {
+    "url": "https://b0.example",
+    "weight": 384
+   },
+   {
+    "id": "env_1",
+    "url": "https://b1.example/base",
+    "weight": 99
+   },
+   {
+    "id": "e3c2b2ac3",
+    "url": "http://10.0.1.3:8080",
+    "weight": 50
+   }
+  ],
+  "pick": 0,
+  "url": "https://b0.example"
+ },
+ {
+  "visitorId": "3b44bf4baab851cf46e52db3476ea543",
+  "backends": [
+   {
+    "id": "env_0",
+    "url": "http://10.0.3.1:8080",
+    "weight": 10
+   },
+   {
+    "id": "env_1",
+    "url": "http://10.0.2.2:8080",
+    "weight": 100
+   }
+  ],
+  "pick": 1,
+  "url": "http://10.0.2.2:8080"
+ },
+ {
+  "visitorId": "4ed3779b56a693e21f7d547462073e7b",
+  "backends": [
+   {
+    "id": "e4fa373a2",
+    "url": "https://b0.example/base",
+    "weight": 50
+   },
+   {
+    "id": "env_1",
+    "url": "http://10.0.0.2:8080",
+    "weight": 88
+   },
+   {
+    "url": "http://10.0.2.3:8080",
+    "weight": 5
+   },
+   {
+    "url": "https://b3.example/base",
+    "weight": 33
+   }
+  ],
+  "pick": 0,
+  "url": "https://b0.example/base"
+ },
+ {
+  "visitorId": "684600c7179559393df9219fc62a6f2e",
+  "backends": [
+   {
+    "id": "e3c20c302",
+    "url": "https://b0.example",
+    "weight": 1
+   },
+   {
+    "url": "http://10.0.1.2:8080",
+    "weight": 100
+   },
+   {
+    "url": "https://b2.example/base",
+    "weight": 941
+   }
+  ],
+  "pick": 2,
+  "url": "https://b2.example/base"
+ },
+ {
+  "visitorId": "7d70d20657a1cb080b0b1446932ac55f",
+  "backends": [
+   {
+    "id": "env_0",
+    "url": "https://b0.example/base",
+    "weight": 3
+   }
+  ],
+  "pick": 0,
+  "url": "https://b0.example/base"
+ },
+ {
+  "visitorId": "f8718b3fada6a0bba1429d0cea1b2223",
+  "backends": [
+   {
+    "url": "http://10.0.0.1:8080",
+    "weight": 3
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.0.1:8080"
+ },
+ {
+  "visitorId": "5bd76cfd785ae1507fdecb1b1b8192ed",
+  "backends": [
+   {
+    "url": "https://b0.example",
+    "weight": 1
+   }
+  ],
+  "pick": 0,
+  "url": "https://b0.example"
+ },
+ {
+  "visitorId": "a35aac0ff47e5993993223ef10cda78a",
+  "backends": [
+   {
+    "id": "env_0",
+    "url": "http://10.0.0.1:8080",
+    "weight": 100
+   },
+   {
+    "id": "eeeada253",
+    "url": "https://b1.example/base",
+    "weight": 0
+   },
+   {
+    "id": "e7f036b33",
+    "url": "https://b2.example/base",
+    "weight": 444
+   },
+   {
+    "url": "https://b3.example",
+    "weight": 100
+   }
+  ],
+  "pick": 3,
+  "url": "https://b3.example"
+ },
+ {
+  "visitorId": "acb2a199b6aa6826d910ba2ea22b2d64",
+  "backends": [
+   {
+    "url": "http://10.0.2.1:8080",
+    "weight": 0
+   },
+   {
+    "id": "e947f0fe4",
+    "url": "http://10.0.2.2:8080",
+    "weight": 3
+   },
+   {
+    "url": "https://b2.example/base",
+    "weight": 100
+   }
+  ],
+  "pick": 2,
+  "url": "https://b2.example/base"
+ },
+ {
+  "visitorId": "694c1415eb88d9fcb0d01aaf6e31c3d5",
+  "backends": [
+   {
+    "id": "env_0",
+    "url": "http://10.0.3.1:8080",
+    "weight": 928
+   },
+   {
+    "url": "https://b1.example",
+    "weight": 10
+   },
+   {
+    "url": "https://b2.example/base",
+    "weight": 0
+   },
+   {
+    "id": "env_3",
+    "url": "https://b3.example",
+    "weight": 33
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.3.1:8080"
+ },
+ {
+  "visitorId": "fa26028b5b1f0668accf759d505ea948",
+  "backends": [
+   {
+    "url": "http://10.0.2.1:8080",
+    "weight": 34
+   },
+   {
+    "id": "e25e1a953",
+    "url": "https://b1.example",
+    "weight": 1
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.2.1:8080"
+ },
+ {
+  "visitorId": "187594ba8065e5bf86ef21af37c1b2e3",
+  "backends": [
+   {
+    "id": "efc53a882",
+    "url": "http://10.0.2.1:8080",
+    "weight": 18
+   },
+   {
+    "id": "env_1",
+    "url": "https://b1.example/base",
+    "weight": 99
+   },
+   {
+    "id": "env_2",
+    "url": "https://b2.example",
+    "weight": 1
+   },
+   {
+    "url": "http://10.0.2.4:8080",
+    "weight": 627
+   }
+  ],
+  "pick": 1,
+  "url": "https://b1.example/base"
+ },
+ {
+  "visitorId": "2b92e9b9d9979ff19105f1abe31a64ab",
+  "backends": [
+   {
+    "url": "http://10.0.3.1:8080",
+    "weight": 2
+   },
+   {
+    "id": "env_1",
+    "url": "http://10.0.1.2:8080",
+    "weight": 1
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.3.1:8080"
+ },
+ {
+  "visitorId": "a6608a31e08ea20dc6459e4d24ca7dc6",
+  "backends": [
+   {
+    "url": "http://10.0.1.1:8080",
+    "weight": 987
+   },
+   {
+    "id": "env_1",
+    "url": "https://b1.example/base",
+    "weight": 67
+   },
+   {
+    "id": "e47815334",
+    "url": "http://10.0.3.3:8080",
+    "weight": 909
+   }
+  ],
+  "pick": 1,
+  "url": "https://b1.example/base"
+ },
+ {
+  "visitorId": "118f97a74189fb4e367144ac99ee289b",
+  "backends": [
+   {
+    "url": "http://10.0.2.1:8080",
+    "weight": 100
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.2.1:8080"
+ },
+ {
+  "visitorId": "814a822c2a62c8f92548c594979d3c29",
+  "backends": [
+   {
+    "id": "e8a1fb1ee",
+    "url": "http://10.0.2.1:8080",
+    "weight": 33
+   },
+   {
+    "id": "env_1",
+    "url": "http://10.0.2.2:8080",
+    "weight": 339
+   },
+   {
+    "id": "ec13fefce",
+    "url": "https://b2.example",
+    "weight": 0
+   },
+   {
+    "id": "e72dec21e",
+    "url": "https://b3.example",
+    "weight": 1
+   }
+  ],
+  "pick": 1,
+  "url": "http://10.0.2.2:8080"
+ },
+ {
+  "visitorId": "2bdc5c067d818441ec6d56c3f0629c42",
+  "backends": [
+   {
+    "url": "https://b0.example",
+    "weight": 34
+   },
+   {
+    "id": "env_1",
+    "url": "https://b1.example",
+    "weight": 2
+   },
+   {
+    "url": "https://b2.example",
+    "weight": 10
+   },
+   {
+    "id": "eb6a92e16",
+    "url": "https://b3.example",
+    "weight": 0
+   }
+  ],
+  "pick": 0,
+  "url": "https://b0.example"
+ },
+ {
+  "visitorId": "7dd9616cda7559d05b376c46e60d7546",
+  "backends": [
+   {
+    "id": "e35b0837a",
+    "url": "http://10.0.3.1:8080",
+    "weight": 50
+   },
+   {
+    "id": "env_1",
+    "url": "https://b1.example",
+    "weight": 100
+   },
+   {
+    "url": "https://b2.example",
+    "weight": 5
+   }
+  ],
+  "pick": 2,
+  "url": "https://b2.example"
+ },
+ {
+  "visitorId": "6943faba4915c17988ca70d0ef89cf17",
+  "backends": [
+   {
+    "url": "http://10.0.3.1:8080",
+    "weight": 34
+   },
+   {
+    "id": "e93bdd109",
+    "url": "http://10.0.3.2:8080",
+    "weight": 0
+   },
+   {
+    "url": "https://b2.example/base",
+    "weight": 10
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.3.1:8080"
+ },
+ {
+  "visitorId": "1e32139437cb05fe4f941b4fb6b37f0c",
+  "backends": [
+   {
+    "url": "https://b0.example",
+    "weight": 50
+   },
+   {
+    "id": "env_1",
+    "url": "https://b1.example/base",
+    "weight": 3
+   },
+   {
+    "id": "env_2",
+    "url": "http://10.0.0.3:8080",
+    "weight": 2
+   },
+   {
+    "id": "env_3",
+    "url": "http://10.0.1.4:8080",
+    "weight": 535
+   }
+  ],
+  "pick": 3,
+  "url": "http://10.0.1.4:8080"
+ },
+ {
+  "visitorId": "ba2b63ec59b9c369341e41da2969af25",
+  "backends": [
+   {
+    "url": "http://10.0.3.1:8080",
+    "weight": 5
+   },
+   {
+    "id": "env_1",
+    "url": "http://10.0.0.2:8080",
+    "weight": 1
+   },
+   {
+    "url": "http://10.0.1.3:8080",
+    "weight": 436
+   }
+  ],
+  "pick": 2,
+  "url": "http://10.0.1.3:8080"
+ },
+ {
+  "visitorId": "c68a1401be2876467cfe46776bbdde9c",
+  "backends": [
+   {
+    "url": "http://10.0.1.1:8080",
+    "weight": 10
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.1.1:8080"
+ },
+ {
+  "visitorId": "d695de8062be0613d666b80cb456fd8b",
+  "backends": [
+   {
+    "id": "env_0",
+    "url": "https://b0.example/base",
+    "weight": 3
+   }
+  ],
+  "pick": 0,
+  "url": "https://b0.example/base"
+ },
+ {
+  "visitorId": "36086cc8e82c5548761a27e4556f3f28",
+  "backends": [
+   {
+    "url": "https://b0.example",
+    "weight": 587
+   }
+  ],
+  "pick": 0,
+  "url": "https://b0.example"
+ },
+ {
+  "visitorId": "a7df55698ece792d03b976cddb858c87",
+  "backends": [
+   {
+    "id": "env_0",
+    "url": "http://10.0.2.1:8080",
+    "weight": 2
+   },
+   {
+    "id": "ecdd4711b",
+    "url": "https://b1.example",
+    "weight": 1
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.2.1:8080"
+ },
+ {
+  "visitorId": "3ab892a0a56bed39f28742afbd9041a9",
+  "backends": [
+   {
+    "url": "http://10.0.3.1:8080",
+    "weight": 434
+   },
+   {
+    "id": "e38a7d249",
+    "url": "http://10.0.3.2:8080",
+    "weight": 609
+   },
+   {
+    "url": "http://10.0.3.3:8080",
+    "weight": 1
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.3.1:8080"
+ },
+ {
+  "visitorId": "de65b418d54762254a337c1b9c085d7c",
+  "backends": [
+   {
+    "id": "env_0",
+    "url": "http://10.0.0.1:8080",
+    "weight": 3
+   },
+   {
+    "id": "env_1",
+    "url": "https://b1.example/base",
+    "weight": 99
+   },
+   {
+    "id": "env_2",
+    "url": "https://b2.example",
+    "weight": 5
+   }
+  ],
+  "pick": 1,
+  "url": "https://b1.example/base"
+ },
+ {
+  "visitorId": "7a6e4e595a6402d96790b3905d3b87af",
+  "backends": [
+   {
+    "url": "http://10.0.1.1:8080",
+    "weight": 1
+   },
+   {
+    "id": "env_1",
+    "url": "http://10.0.0.2:8080",
+    "weight": 1
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.1.1:8080"
+ },
+ {
+  "visitorId": "c7d2aab0a03dafc69d243aaf5cfac6d5",
+  "backends": [
+   {
+    "id": "ec8e6520c",
+    "url": "http://10.0.2.1:8080",
+    "weight": 835
+   },
+   {
+    "id": "ed2380303",
+    "url": "https://b1.example",
+    "weight": 1
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.2.1:8080"
+ },
+ {
+  "visitorId": "343d01c0bc7a68388654b77a7219093e",
+  "backends": [
+   {
+    "id": "env_0",
+    "url": "http://10.0.1.1:8080",
+    "weight": 33
+   },
+   {
+    "id": "ef06236eb",
+    "url": "http://10.0.3.2:8080",
+    "weight": 34
+   },
+   {
+    "id": "env_2",
+    "url": "https://b2.example/base",
+    "weight": 3
+   }
+  ],
+  "pick": 1,
+  "url": "http://10.0.3.2:8080"
+ },
+ {
+  "visitorId": "f87fb91117f23fbb94a528139d781e82",
+  "backends": [
+   {
+    "id": "eae20511e",
+    "url": "https://b0.example",
+    "weight": 33
+   },
+   {
+    "id": "e997bea15",
+    "url": "https://b1.example",
+    "weight": 847
+   },
+   {
+    "id": "e592666db",
+    "url": "https://b2.example",
+    "weight": 10
+   }
+  ],
+  "pick": 1,
+  "url": "https://b1.example"
+ },
+ {
+  "visitorId": "bc5582df77958f892075cc331a480d99",
+  "backends": [
+   {
+    "url": "https://b0.example",
+    "weight": 33
+   },
+   {
+    "url": "https://b1.example",
+    "weight": 361
+   },
+   {
+    "id": "env_2",
+    "url": "http://10.0.2.3:8080",
+    "weight": 2
+   }
+  ],
+  "pick": 0,
+  "url": "https://b0.example"
+ },
+ {
+  "visitorId": "c364d225dfb8f2d9021f60a4b773f29b",
+  "backends": [
+   {
+    "url": "https://b0.example",
+    "weight": 3
+   },
+   {
+    "id": "e414b273f",
+    "url": "http://10.0.2.2:8080",
+    "weight": 5
+   },
+   {
+    "url": "https://b2.example",
+    "weight": 99
+   }
+  ],
+  "pick": 2,
+  "url": "https://b2.example"
+ },
+ {
+  "visitorId": "ed132101d850706c3ae6f08bde1755c7",
+  "backends": [
+   {
+    "id": "e6a28118d",
+    "url": "http://10.0.0.1:8080",
+    "weight": 894
+   },
+   {
+    "id": "env_1",
+    "url": "https://b1.example",
+    "weight": 10
+   },
+   {
+    "id": "e60608db9",
+    "url": "http://10.0.3.3:8080",
+    "weight": 244
+   }
+  ],
+  "pick": 2,
+  "url": "http://10.0.3.3:8080"
+ },
+ {
+  "visitorId": "c12ccad6d00ef60697cd5b09733e77b0",
+  "backends": [
+   {
+    "id": "eb7420aa4",
+    "url": "http://10.0.1.1:8080",
+    "weight": 99
+   },
+   {
+    "url": "http://10.0.2.2:8080",
+    "weight": 1
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.1.1:8080"
+ },
+ {
+  "visitorId": "53a0bed985426a60f4f4b8581e31cfe8",
+  "backends": [
+   {
+    "id": "eb8a2bb7f",
+    "url": "http://10.0.3.1:8080",
+    "weight": 10
+   },
+   {
+    "id": "env_1",
+    "url": "http://10.0.3.2:8080",
+    "weight": 1000
+   },
+   {
+    "id": "ebc9203b5",
+    "url": "https://b2.example/base",
+    "weight": 1000
+   }
+  ],
+  "pick": 1,
+  "url": "http://10.0.3.2:8080"
+ },
+ {
+  "visitorId": "26642da86e4f80a1ee93d9a1f6368705",
+  "backends": [
+   {
+    "id": "ee6649623",
+    "url": "http://10.0.0.1:8080",
+    "weight": 50
+   },
+   {
+    "url": "https://b1.example",
+    "weight": 1000
+   },
+   {
+    "url": "http://10.0.0.3:8080",
+    "weight": 0
+   },
+   {
+    "id": "env_3",
+    "url": "https://b3.example",
+    "weight": 33
+   }
+  ],
+  "pick": 1,
+  "url": "https://b1.example"
+ },
+ {
+  "visitorId": "dd63bb5694feb3ff4f4529d349d91959",
+  "backends": [
+   {
+    "url": "http://10.0.1.1:8080",
+    "weight": 5
+   },
+   {
+    "id": "env_1",
+    "url": "http://10.0.2.2:8080",
+    "weight": 1000
+   },
+   {
+    "id": "env_2",
+    "url": "http://10.0.3.3:8080",
+    "weight": 100
+   }
+  ],
+  "pick": 1,
+  "url": "http://10.0.2.2:8080"
+ },
+ {
+  "visitorId": "1075b04867e64a650c224c4bef860a3c",
+  "backends": [
+   {
+    "id": "e8f3127b1",
+    "url": "http://10.0.0.1:8080",
+    "weight": 832
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.0.1:8080"
+ },
+ {
+  "visitorId": "3b6c33e4da7cd6f3787ead6e2bc12aac",
+  "backends": [
+   {
+    "url": "https://b0.example",
+    "weight": 34
+   },
+   {
+    "url": "https://b1.example/base",
+    "weight": 100
+   },
+   {
+    "url": "http://10.0.3.3:8080",
+    "weight": 50
+   }
+  ],
+  "pick": 2,
+  "url": "http://10.0.3.3:8080"
+ },
+ {
+  "visitorId": "1f84f5e8cc7cf1c4c8f4456a0de0d54d",
+  "backends": [
+   {
+    "id": "e5bc9af4c",
+    "url": "http://10.0.2.1:8080",
+    "weight": 1
+   },
+   {
+    "id": "e3536f7ca",
+    "url": "https://b1.example",
+    "weight": 497
+   }
+  ],
+  "pick": 1,
+  "url": "https://b1.example"
+ },
+ {
+  "visitorId": "07f72991a4ff8b7f41996a6914a98b73",
+  "backends": [
+   {
+    "id": "env_0",
+    "url": "http://10.0.2.1:8080",
+    "weight": 3
+   },
+   {
+    "url": "http://10.0.2.2:8080",
+    "weight": 986
+   },
+   {
+    "url": "http://10.0.0.3:8080",
+    "weight": 1
+   }
+  ],
+  "pick": 1,
+  "url": "http://10.0.2.2:8080"
+ },
+ {
+  "visitorId": "7a1d9f85df06a3382cf1736cb6936b69",
+  "backends": [
+   {
+    "id": "e6085b2d4",
+    "url": "https://b0.example/base",
+    "weight": 34
+   }
+  ],
+  "pick": 0,
+  "url": "https://b0.example/base"
+ },
+ {
+  "visitorId": "0026a613517839f40f1fe37b54bb4c03",
+  "backends": [
+   {
+    "id": "e627c2ec6",
+    "url": "https://b0.example/base",
+    "weight": 0
+   },
+   {
+    "id": "env_1",
+    "url": "https://b1.example/base",
+    "weight": 1
+   },
+   {
+    "id": "env_2",
+    "url": "http://10.0.1.3:8080",
+    "weight": 99
+   },
+   {
+    "id": "env_3",
+    "url": "http://10.0.3.4:8080",
+    "weight": 34
+   }
+  ],
+  "pick": 2,
+  "url": "http://10.0.1.3:8080"
+ },
+ {
+  "visitorId": "c490d7427b0d7f2d0acd798aef13dff5",
+  "backends": [
+   {
+    "id": "env_0",
+    "url": "http://10.0.1.1:8080",
+    "weight": 1
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.1.1:8080"
+ },
+ {
+  "visitorId": "f9eb7d6bc11df15f3ba4949c8625fb2e",
+  "backends": [
+   {
+    "id": "env_0",
+    "url": "https://b0.example/base",
+    "weight": 979
+   }
+  ],
+  "pick": 0,
+  "url": "https://b0.example/base"
+ },
+ {
+  "visitorId": "85d891941f4b6ad021494a11df9b26f7",
+  "backends": [
+   {
+    "id": "env_0",
+    "url": "https://b0.example",
+    "weight": 1
+   },
+   {
+    "id": "env_1",
+    "url": "https://b1.example/base",
+    "weight": 113
+   },
+   {
+    "url": "http://10.0.3.3:8080",
+    "weight": 34
+   }
+  ],
+  "pick": 1,
+  "url": "https://b1.example/base"
+ },
+ {
+  "visitorId": "7a10b2a0d501c174bb893b3780ff22f5",
+  "backends": [
+   {
+    "url": "https://b0.example",
+    "weight": 2
+   },
+   {
+    "id": "e78bd930b",
+    "url": "http://10.0.1.2:8080",
+    "weight": 3
+   },
+   {
+    "id": "ec8aa6462",
+    "url": "http://10.0.0.3:8080",
+    "weight": 99
+   }
+  ],
+  "pick": 2,
+  "url": "http://10.0.0.3:8080"
+ },
+ {
+  "visitorId": "b70acec0cd23096f857244dd7bc9f2fd",
+  "backends": [
+   {
+    "id": "env_0",
+    "url": "http://10.0.1.1:8080",
+    "weight": 930
+   },
+   {
+    "id": "env_1",
+    "url": "https://b1.example/base",
+    "weight": 100
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.1.1:8080"
+ },
+ {
+  "visitorId": "01f7c6cf64d2e6e43941fc1e0d00225a",
+  "backends": [
+   {
+    "url": "https://b0.example/base",
+    "weight": 50
+   },
+   {
+    "id": "env_1",
+    "url": "http://10.0.2.2:8080",
+    "weight": 5
+   },
+   {
+    "id": "e8057194f",
+    "url": "https://b2.example",
+    "weight": 33
+   }
+  ],
+  "pick": 0,
+  "url": "https://b0.example/base"
+ },
+ {
+  "visitorId": "59c5301c5e7ce535c4e99cc533d2dbd6",
+  "backends": [
+   {
+    "url": "https://b0.example",
+    "weight": 99
+   },
+   {
+    "id": "e1a38cd20",
+    "url": "https://b1.example",
+    "weight": 100
+   }
+  ],
+  "pick": 0,
+  "url": "https://b0.example"
+ },
+ {
+  "visitorId": "f243cdb6b9037a4dbdce859871c003cc",
+  "backends": [
+   {
+    "id": "env_0",
+    "url": "http://10.0.1.1:8080",
+    "weight": 1000
+   },
+   {
+    "url": "http://10.0.1.2:8080",
+    "weight": 10
+   },
+   {
+    "url": "http://10.0.2.3:8080",
+    "weight": 3
+   },
+   {
+    "id": "e06948da8",
+    "url": "https://b3.example",
+    "weight": 776
+   }
+  ],
+  "pick": 3,
+  "url": "https://b3.example"
+ },
+ {
+  "visitorId": "514eb2bf42f13ff1e4d667a49123d6a2",
+  "backends": [
+   {
+    "id": "e836860f4",
+    "url": "https://b0.example/base",
+    "weight": 435
+   }
+  ],
+  "pick": 0,
+  "url": "https://b0.example/base"
+ },
+ {
+  "visitorId": "c93825c64d4b9034f6fd4f1cec68819e",
+  "backends": [
+   {
+    "url": "https://b0.example/base",
+    "weight": 1
+   }
+  ],
+  "pick": 0,
+  "url": "https://b0.example/base"
+ },
+ {
+  "visitorId": "1c0953fd1d87bfe0b82f67220d9ccd19",
+  "backends": [
+   {
+    "id": "env_0",
+    "url": "http://10.0.0.1:8080",
+    "weight": 99
+   },
+   {
+    "url": "https://b1.example",
+    "weight": 99
+   },
+   {
+    "id": "e3a8ece7a",
+    "url": "http://10.0.3.3:8080",
+    "weight": 50
+   },
+   {
+    "url": "https://b3.example",
+    "weight": 50
+   }
+  ],
+  "pick": 1,
+  "url": "https://b1.example"
+ },
+ {
+  "visitorId": "496a17a06614606cb55d66f065a2074d",
+  "backends": [
+   {
+    "url": "http://10.0.3.1:8080",
+    "weight": 10
+   },
+   {
+    "id": "env_1",
+    "url": "https://b1.example",
+    "weight": 99
+   },
+   {
+    "url": "http://10.0.3.3:8080",
+    "weight": 246
+   }
+  ],
+  "pick": 1,
+  "url": "https://b1.example"
+ },
+ {
+  "visitorId": "a1ac58157667bc5bf80c2842906a13f2",
+  "backends": [
+   {
+    "id": "env_0",
+    "url": "http://10.0.0.1:8080",
+    "weight": 100
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.0.1:8080"
+ },
+ {
+  "visitorId": "cb54119aa91f421efcc88c5ba205cb1b",
+  "backends": [
+   {
+    "url": "https://b0.example",
+    "weight": 50
+   },
+   {
+    "id": "env_1",
+    "url": "http://10.0.2.2:8080",
+    "weight": 10
+   },
+   {
+    "id": "env_2",
+    "url": "http://10.0.0.3:8080",
+    "weight": 161
+   }
+  ],
+  "pick": 2,
+  "url": "http://10.0.0.3:8080"
+ },
+ {
+  "visitorId": "04dbc0a01daee2b7dde1c6a089be9256",
+  "backends": [
+   {
+    "id": "edbb148fa",
+    "url": "https://b0.example",
+    "weight": 1
+   },
+   {
+    "id": "ead7db047",
+    "url": "https://b1.example/base",
+    "weight": 2
+   },
+   {
+    "id": "env_2",
+    "url": "https://b2.example/base",
+    "weight": 33
+   },
+   {
+    "url": "https://b3.example",
+    "weight": 10
+   }
+  ],
+  "pick": 2,
+  "url": "https://b2.example/base"
+ },
+ {
+  "visitorId": "4f1904b27169043339891eec75a3a22d",
+  "backends": [
+   {
+    "url": "http://10.0.3.1:8080",
+    "weight": 99
+   },
+   {
+    "url": "https://b1.example/base",
+    "weight": 50
+   },
+   {
+    "url": "http://10.0.0.3:8080",
+    "weight": 70
+   },
+   {
+    "url": "https://b3.example",
+    "weight": 891
+   }
+  ],
+  "pick": 3,
+  "url": "https://b3.example"
+ },
+ {
+  "visitorId": "7d1bc3f3181153785813e4bf64debf56",
+  "backends": [
+   {
+    "id": "env_0",
+    "url": "http://10.0.2.1:8080",
+    "weight": 1
+   },
+   {
+    "id": "e79453833",
+    "url": "http://10.0.3.2:8080",
+    "weight": 3
+   }
+  ],
+  "pick": 1,
+  "url": "http://10.0.3.2:8080"
+ },
+ {
+  "visitorId": "ffaa1b3b35074668e7421fd81fd3801a",
+  "backends": [
+   {
+    "id": "e87ea0fb1",
+    "url": "https://b0.example",
+    "weight": 34
+   },
+   {
+    "id": "env_1",
+    "url": "https://b1.example",
+    "weight": 50
+   },
+   {
+    "id": "env_2",
+    "url": "https://b2.example/base",
+    "weight": 0
+   }
+  ],
+  "pick": 0,
+  "url": "https://b0.example"
+ },
+ {
+  "visitorId": "e6400400efe520541b3b98cef0375e2e",
+  "backends": [
+   {
+    "url": "https://b0.example",
+    "weight": 10
+   }
+  ],
+  "pick": 0,
+  "url": "https://b0.example"
+ },
+ {
+  "visitorId": "cf8facababff27dc08da5d1abf314d8a",
+  "backends": [
+   {
+    "url": "https://b0.example/base",
+    "weight": 99
+   },
+   {
+    "url": "https://b1.example",
+    "weight": 943
+   },
+   {
+    "id": "env_2",
+    "url": "http://10.0.1.3:8080",
+    "weight": 99
+   },
+   {
+    "id": "env_3",
+    "url": "http://10.0.3.4:8080",
+    "weight": 1
+   }
+  ],
+  "pick": 1,
+  "url": "https://b1.example"
+ },
+ {
+  "visitorId": "4170c97c2ddf42cba0ce83eed33ab97d",
+  "backends": [
+   {
+    "id": "env_0",
+    "url": "https://b0.example",
+    "weight": 1
+   },
+   {
+    "url": "http://10.0.0.2:8080",
+    "weight": 99
+   },
+   {
+    "id": "env_2",
+    "url": "http://10.0.2.3:8080",
+    "weight": 1
+   }
+  ],
+  "pick": 1,
+  "url": "http://10.0.0.2:8080"
+ },
+ {
+  "visitorId": "3b706c371c5b00eb39321eb8573d36da",
+  "backends": [
+   {
+    "url": "http://10.0.1.1:8080",
+    "weight": 34
+   },
+   {
+    "url": "https://b1.example",
+    "weight": 870
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.1.1:8080"
+ },
+ {
+  "visitorId": "8f996e711887358d658e2a4947fddafe",
+  "backends": [
+   {
+    "url": "http://10.0.2.1:8080",
+    "weight": 100
+   },
+   {
+    "id": "env_1",
+    "url": "https://b1.example/base",
+    "weight": 50
+   }
+  ],
+  "pick": 1,
+  "url": "https://b1.example/base"
+ },
+ {
+  "visitorId": "09b613ce51d7ed32143979311f41c98e",
+  "backends": [
+   {
+    "url": "https://b0.example/base",
+    "weight": 694
+   },
+   {
+    "url": "https://b1.example",
+    "weight": 1
+   },
+   {
+    "url": "https://b2.example",
+    "weight": 1
+   }
+  ],
+  "pick": 0,
+  "url": "https://b0.example/base"
+ },
+ {
+  "visitorId": "b942fb403aeb98573e6598cfecf72368",
+  "backends": [
+   {
+    "url": "http://10.0.0.1:8080",
+    "weight": 2
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.0.1:8080"
+ },
+ {
+  "visitorId": "662d284804e4f27c175f3760fcfed2ab",
+  "backends": [
+   {
+    "url": "http://10.0.3.1:8080",
+    "weight": 33
+   },
+   {
+    "id": "ee90f1541",
+    "url": "http://10.0.0.2:8080",
+    "weight": 1
+   },
+   {
+    "url": "https://b2.example/base",
+    "weight": 1
+   },
+   {
+    "id": "env_3",
+    "url": "http://10.0.1.4:8080",
+    "weight": 10
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.3.1:8080"
+ },
+ {
+  "visitorId": "723df2ef7d677ced7a0b8c9c92d54ed7",
+  "backends": [
+   {
+    "url": "http://10.0.1.1:8080",
+    "weight": 933
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.1.1:8080"
+ },
+ {
+  "visitorId": "c4f166bb06f15d05451b4803b389b7a9",
+  "backends": [
+   {
+    "id": "env_0",
+    "url": "http://10.0.1.1:8080",
+    "weight": 0
+   },
+   {
+    "url": "http://10.0.1.2:8080",
+    "weight": 470
+   },
+   {
+    "id": "e5b012d72",
+    "url": "http://10.0.0.3:8080",
+    "weight": 33
+   },
+   {
+    "id": "env_3",
+    "url": "http://10.0.0.4:8080",
+    "weight": 1
+   }
+  ],
+  "pick": 2,
+  "url": "http://10.0.0.3:8080"
+ },
+ {
+  "visitorId": "043ebe212bd9c05fb22fea92ba79d83e",
+  "backends": [
+   {
+    "id": "env_0",
+    "url": "https://b0.example/base",
+    "weight": 34
+   },
+   {
+    "id": "env_1",
+    "url": "http://10.0.2.2:8080",
+    "weight": 1
+   },
+   {
+    "id": "e1e283ca8",
+    "url": "https://b2.example",
+    "weight": 5
+   },
+   {
+    "url": "http://10.0.3.4:8080",
+    "weight": 99
+   }
+  ],
+  "pick": 0,
+  "url": "https://b0.example/base"
+ },
+ {
+  "visitorId": "1c5f516b50f4364ba26b64a71c526d35",
+  "backends": [
+   {
+    "id": "env_0",
+    "url": "http://10.0.0.1:8080",
+    "weight": 1
+   },
+   {
+    "id": "env_1",
+    "url": "http://10.0.2.2:8080",
+    "weight": 33
+   }
+  ],
+  "pick": 1,
+  "url": "http://10.0.2.2:8080"
+ },
+ {
+  "visitorId": "21e8f29ba5510b3060497ad6afc0453a",
+  "backends": [
+   {
+    "id": "ebae6c5ea",
+    "url": "https://b0.example",
+    "weight": 33
+   },
+   {
+    "id": "e8df74af1",
+    "url": "https://b1.example",
+    "weight": 5
+   }
+  ],
+  "pick": 0,
+  "url": "https://b0.example"
+ },
+ {
+  "visitorId": "37a8ec1255d41b604259f404e7c2202c",
+  "backends": [
+   {
+    "id": "eb0efe03a",
+    "url": "https://b0.example",
+    "weight": 1000
+   }
+  ],
+  "pick": 0,
+  "url": "https://b0.example"
+ },
+ {
+  "visitorId": "4aa0633e97e32a51a66e05740a1ec034",
+  "backends": [
+   {
+    "id": "e5863c712",
+    "url": "https://b0.example/base",
+    "weight": 388
+   },
+   {
+    "id": "ef92a3f8c",
+    "url": "https://b1.example",
+    "weight": 15
+   },
+   {
+    "url": "http://10.0.2.3:8080",
+    "weight": 86
+   }
+  ],
+  "pick": 2,
+  "url": "http://10.0.2.3:8080"
+ },
+ {
+  "visitorId": "66cb7483ee09440cde9b3d08a005494d",
+  "backends": [
+   {
+    "id": "e03bc0eae",
+    "url": "http://10.0.1.1:8080",
+    "weight": 100
+   },
+   {
+    "url": "http://10.0.1.2:8080",
+    "weight": 1000
+   },
+   {
+    "url": "https://b2.example/base",
+    "weight": 909
+   }
+  ],
+  "pick": 2,
+  "url": "https://b2.example/base"
+ },
+ {
+  "visitorId": "7e8ab6b6ad2c9cc38ac61ec32fffc096",
+  "backends": [
+   {
+    "url": "http://10.0.3.1:8080",
+    "weight": 50
+   },
+   {
+    "url": "https://b1.example/base",
+    "weight": 99
+   }
+  ],
+  "pick": 1,
+  "url": "https://b1.example/base"
+ },
+ {
+  "visitorId": "9e364d5d6037605b8d1a7c2409ba936e",
+  "backends": [
+   {
+    "url": "https://b0.example",
+    "weight": 33
+   },
+   {
+    "url": "https://b1.example",
+    "weight": 3
+   },
+   {
+    "url": "https://b2.example/base",
+    "weight": 2
+   }
+  ],
+  "pick": 0,
+  "url": "https://b0.example"
+ },
+ {
+  "visitorId": "17a49139845398f85e12f7ebab84db95",
+  "backends": [
+   {
+    "url": "https://b0.example",
+    "weight": 2
+   },
+   {
+    "url": "http://10.0.2.2:8080",
+    "weight": 100
+   }
+  ],
+  "pick": 1,
+  "url": "http://10.0.2.2:8080"
+ },
+ {
+  "visitorId": "07c96bd6c551a30f99b2811cf91d1d5a",
+  "backends": [
+   {
+    "url": "https://b0.example",
+    "weight": 1
+   },
+   {
+    "url": "https://b1.example",
+    "weight": 10
+   },
+   {
+    "url": "http://10.0.2.3:8080",
+    "weight": 884
+   },
+   {
+    "id": "e3c83909a",
+    "url": "https://b3.example",
+    "weight": 1000
+   }
+  ],
+  "pick": 3,
+  "url": "https://b3.example"
+ },
+ {
+  "visitorId": "c698f83e3d3a3b95413efc024034f764",
+  "backends": [
+   {
+    "url": "http://10.0.3.1:8080",
+    "weight": 34
+   },
+   {
+    "url": "https://b1.example/base",
+    "weight": 0
+   },
+   {
+    "url": "https://b2.example/base",
+    "weight": 962
+   }
+  ],
+  "pick": 0,
+  "url": "http://10.0.3.1:8080"
+ },
+ {
+  "visitorId": "579917e521fcc41b1d0f3de1157ec1e0",
+  "backends": [
+   {
+    "url": "https://b0.example/base",
+    "weight": 1
+   },
+   {
+    "id": "env_1",
+    "url": "https://b1.example/base",
+    "weight": 1
+   },
+   {
+    "url": "http://10.0.2.3:8080",
+    "weight": 0
+   }
+  ],
+  "pick": 1,
+  "url": "https://b1.example/base"
+ },
+ {
+  "visitorId": "81224626260f9211e242a84722e1c586",
+  "backends": [
+   {
+    "id": "e1f152efb",
+    "url": "https://b0.example",
+    "weight": 1000
+   },
+   {
+    "url": "https://b1.example",
+    "weight": 0
+   },
+   {
+    "url": "http://10.0.2.3:8080",
+    "weight": 100
+   }
+  ],
+  "pick": 2,
+  "url": "http://10.0.2.3:8080"
+ },
+ {
+  "visitorId": "3c41e5ea59af48b81f07d1ff7d6a5cba",
+  "backends": [
+   {
+    "url": "http://10.0.2.1:8080",
+    "weight": 944
+   },
+   {
+    "url": "http://10.0.0.2:8080",
+    "weight": 989
+   }
+  ],
+  "pick": 1,
+  "url": "http://10.0.0.2:8080"
+ },
+ {
+  "visitorId": "c4c60c06b9023a31040fc14fee2d9c92",
+  "backends": [
+   {
+    "id": "e2c568745",
+    "url": "https://b0.example/base",
+    "weight": 166
+   },
+   {
+    "id": "e7c6b1861",
+    "url": "https://b1.example/base",
+    "weight": 1
+   },
+   {
+    "id": "env_2",
+    "url": "http://10.0.3.3:8080",
+    "weight": 345
+   }
+  ],
+  "pick": 0,
+  "url": "https://b0.example/base"
+ },
+ {
+  "visitorId": "166e63705ee5770e08a75224d52cda8b",
+  "backends": [
+   {
+    "url": "https://b0.example/base",
+    "weight": 34
+   },
+   {
+    "id": "e3be57322",
+    "url": "https://b1.example/base",
+    "weight": 99
+   },
+   {
+    "url": "https://b2.example",
+    "weight": 34
+   }
+  ],
+  "pick": 0,
+  "url": "https://b0.example/base"
+ },
+ {
+  "visitorId": "e8cd2c0e9f2af3d2da749e570ddeeb84",
+  "backends": [
+   {
+    "id": "env_0",
+    "url": "https://b0.example/base",
+    "weight": 477
+   },
+   {
+    "id": "ea50297a3",
+    "url": "http://10.0.2.2:8080",
+    "weight": 3
+   }
+  ],
+  "pick": 0,
+  "url": "https://b0.example/base"
+ },
+ {
+  "visitorId": "8ae4d89814c26739748cbf1b1c1a5802",
+  "backends": [
+   {
+    "url": "https://b0.example",
+    "weight": 706
+   },
+   {
+    "id": "e56a33823",
+    "url": "http://10.0.1.2:8080",
+    "weight": 10
+   },
+   {
+    "id": "eab1998f0",
+    "url": "http://10.0.0.3:8080",
+    "weight": 70
+   }
+  ],
+  "pick": 0,
+  "url": "https://b0.example"
+ },
+ {
+  "visitorId": "3b59c8c3c56aede101483ac70f911ff4",
+  "backends": [
+   {
+    "id": "ee9922982",
+    "url": "https://b0.example",
+    "weight": 34
+   },
+   {
+    "url": "http://10.0.2.2:8080",
+    "weight": 3
+   },
+   {
+    "id": "env_2",
+    "url": "http://10.0.1.3:8080",
+    "weight": 594
+   }
+  ],
+  "pick": 2,
+  "url": "http://10.0.1.3:8080"
+ },
+ {
+  "visitorId": "eabfef70965c3b5b8ebd42cf8abb98b5",
+  "backends": [
+   {
+    "id": "env_0",
+    "url": "https://b0.example",
+    "weight": 54
+   },
+   {
+    "url": "https://b1.example",
+    "weight": 690
+   }
+  ],
+  "pick": 1,
+  "url": "https://b1.example"
+ },
+ {
+  "visitorId": "0c865507bcb7dceba43fb1c9d4db3de9",
+  "backends": [
+   {
+    "id": "ef2969d1d",
+    "url": "http://10.0.3.1:8080",
+    "weight": 10
+   },
+   {
+    "url": "https://b1.example",
+    "weight": 540
+   },
+   {
+    "url": "https://b2.example",
+    "weight": 142
+   },
+   {
+    "id": "e7f6b3ce4",
+    "url": "https://b3.example",
+    "weight": 0
+   }
+  ],
+  "pick": 1,
+  "url": "https://b1.example"
+ },
+ {
+  "visitorId": "1bd326d2ff1383de450b85076ea0582f",
+  "backends": [
+   {
+    "id": "e9d4e333e",
+    "url": "http://10.0.0.1:8080",
+    "weight": 10
+   },
+   {
+    "url": "https://b1.example",
+    "weight": 538
+   }
+  ],
+  "pick": 1,
+  "url": "https://b1.example"
+ }
+]

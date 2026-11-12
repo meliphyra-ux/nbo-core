@@ -1,0 +1,368 @@
+# GitLab pipeline. The jobs are described in docs/ci.md.
+# Checked by scripts/ci/check-pipeline.mjs (pnpm test:ci runs its tests).
+#
+# Every job image comes through GitLab's dependency proxy and carries an exact
+# version. The pipeline only ever uses committed files: no job runs git add,
+# commit, push, stash, reset, checkout or clean.
+
+stages:
+  - check
+  - determinism
+  - targets
+
+# One pipeline per push: a merge request pipeline when a merge request is open,
+# a branch pipeline otherwise.
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      when: never
+    - if: $CI_COMMIT_BRANCH
+    - if: $CI_COMMIT_TAG
+
+variables:
+  GIT_STRATEGY: clone
+  npm_config_manage_package_manager_versions: "false"
+  TURBO_CACHE_DIR: .turbo/cache
+
+# -- shared pieces -----------------------------------------------------------
+
+.node:
+  image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/node:24.11.1-bookworm
+  before_script:
+    - npm install -g pnpm@11.25.0
+    - pnpm config set store-dir "$PWD/.pnpm-store"
+    - pnpm install --frozen-lockfile
+  cache:
+    - key:
+        files:
+          - pnpm-lock.yaml
+      paths:
+        - .pnpm-store
+      policy: pull
+    - key: turbo-$CI_COMMIT_REF_SLUG
+      fallback_keys:
+        - turbo-$CI_DEFAULT_BRANCH
+      paths:
+        - .turbo/cache
+      policy: pull
+
+# -- check -------------------------------------------------------------------
+
+# Install once, then build, type-check and test the workspace. The full
+# controlplane suite flakes at default parallelism, so vitest runs
+# with --maxWorkers=3.
+node-checks:
+  extends: .node
+  stage: check
+  timeout: 30m
+  cache:
+    - key:
+        files:
+          - pnpm-lock.yaml
+      paths:
+        - .pnpm-store
+      policy: pull-push
+    - key: turbo-$CI_COMMIT_REF_SLUG
+      fallback_keys:
+        - turbo-$CI_DEFAULT_BRANCH
+      paths:
+        - .turbo/cache
+      policy: pull-push
+  script:
+    - pnpm build
+    - pnpm check-types
+    - pnpm exec turbo run test -- --maxWorkers=3
+    - pnpm test:ci
+    - pnpm docs:check
+
+# pnpm lint reports about 95 errors that were there before the pipeline
+# (docs/points-to-improve-or-fix.md, item 16). It runs and shows them, but does
+# not fail the pipeline until they are fixed; then remove allow_failure.
+lint:
+  extends: .node
+  stage: check
+  timeout: 15m
+  allow_failure: true
+  script:
+    - pnpm lint
+
+terraform-provider:
+  image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/golang:1.25.8-bookworm
+  stage: check
+  timeout: 15m
+  variables:
+    GOMODCACHE: $CI_PROJECT_DIR/.go/pkg/mod
+    GOCACHE: $CI_PROJECT_DIR/.go/cache
+  cache:
+    - key:
+        files:
+          - packages/terraform-provider/go.sum
+      paths:
+        - .go/pkg/mod
+        - .go/cache
+  script:
+    - cd packages/terraform-provider
+    - go vet ./...
+    - go test ./...
+
+# The edge in Rust (packages/edge-rs, ADR 0005). The release binary goes to
+# edge-rust-blackbox as an artifact.
+rust:
+  image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/rust:1.96.0-bookworm
+  stage: check
+  timeout: 30m
+  tags:
+    - saas-linux-medium-amd64
+  variables:
+    CARGO_HOME: $CI_PROJECT_DIR/.cargo
+    CARGO_TARGET_DIR: $CI_PROJECT_DIR/.cargo-target
+  cache:
+    - key:
+        files:
+          - packages/edge-rs/Cargo.lock
+      paths:
+        - .cargo/registry
+        - .cargo-target
+  script:
+    - cd packages/edge-rs
+    - rustup component add clippy rustfmt
+    - cargo fmt --check
+    - cargo clippy --locked -- -D warnings
+    - cargo test --locked
+    - cargo build --release --locked
+  artifacts:
+    paths:
+      - .cargo-target/release/nbo-edge
+    expire_in: 1 day
+
+# The edge black-box suite against the Rust binary (node-checks runs it against
+# the Node edge as part of pnpm test).
+edge-rust-blackbox:
+  extends: .node
+  stage: check
+  timeout: 15m
+  needs:
+    - job: rust
+      artifacts: true
+  variables:
+    NBO_EDGE_IMPL: rust
+  script:
+    - pnpm --filter "@nbo/edge..." build
+    - chmod +x .cargo-target/release/nbo-edge
+    - NBO_EDGE_BIN="$PWD/.cargo-target/release/nbo-edge" pnpm --filter @nbo/edge exec vitest run src/__tests__/blackbox
+
+# -- determinism -------------------------------------------------------------
+
+# Building the same commit twice must give the same content id. Static sites and
+# the React SPA must match strictly. A fresh clone has no dist/, so each
+# determinism job first builds every package its scripts import (the checker
+# requires @nbo/writer among them).
+determinism-static:
+  extends: .node
+  stage: determinism
+  timeout: 30m
+  variables:
+    NBO_BUILD_ID: $CI_COMMIT_SHA
+  script:
+    - pnpm --filter "@nbo/cli..." --filter "@nbo/producer-static..." build
+    - bash scripts/verify-step0.sh
+
+# Next.js builds must give the same content id or differ only in pages the app
+# rendered at build time (prerender seeds, x-nbo-ppr.postponedState): the spec's
+# Determinism section, checked by scripts/ci/nbo-diff.mjs --classify. Any other
+# difference fails the pipeline. Each build must also pass nbo validate --strict.
+# Its .next/cache key is its own: no other job's builds feed the cache build 1
+# reads.
+determinism-next:
+  extends: .node
+  stage: determinism
+  timeout: 30m
+  variables:
+    NBO_BUILD_ID: $CI_COMMIT_SHA
+  cache:
+    - key:
+        files:
+          - pnpm-lock.yaml
+      paths:
+        - .pnpm-store
+      policy: pull
+    - key: determinism-next-$CI_COMMIT_REF_SLUG
+      fallback_keys:
+        - determinism-next-$CI_DEFAULT_BRANCH
+      paths:
+        - fixtures/next-app/.next/cache
+        - fixtures/ppr-app/.next/cache
+  script:
+    - pnpm --filter "@nbo/cli..." --filter "@nbo/next-adapter..." build
+    - bash scripts/ci/determinism-next.sh
+
+# -- targets -----------------------------------------------------------------
+
+# The Next.js harness against local nbo serve, then against a kind cluster made
+# inside the job (Docker-in-Docker). About 25 runner minutes: automatic on merge
+# requests, the default branch and schedules, manual elsewhere.
+kubernetes:
+  extends: .node
+  stage: targets
+  timeout: 45m
+  needs: []
+  tags:
+    - saas-linux-medium-amd64
+  resource_group: kubernetes-ci
+  services:
+    - name: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/docker:27.5.1-dind
+      alias: docker
+      command: ["--tls=false"]
+  variables:
+    GIT_STRATEGY: clone
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+    NBO_CI_DIND: "1"
+    NBO_KIND_CONFIG: scripts/ci/kind-config.yaml
+    # The cluster bootstrap-local-k8s.sh makes inside dind; nbo deploy kind-loads into it.
+    NBO_KIND_CLUSTER: nbo-local
+    NBO_INGRESS_NGINX_MANIFEST: https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.12.1/deploy/static/provider/kind/deploy.yaml
+    NBO_CERT_MANAGER_MANIFEST: https://github.com/cert-manager/cert-manager/releases/download/v1.16.2/cert-manager.yaml
+    NBO_BUILD_ID: $CI_COMMIT_SHA
+  cache:
+    - key:
+        files:
+          - pnpm-lock.yaml
+      paths:
+        - .pnpm-store
+      policy: pull
+    - key:
+        files:
+          - scripts/ci/install-tools.sh
+      paths:
+        - .ci-tools
+    - key: next-$CI_COMMIT_REF_SLUG
+      fallback_keys:
+        - next-$CI_DEFAULT_BRANCH
+      paths:
+        - fixtures/next-app/.next/cache
+        - fixtures/ppr-app/.next/cache
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - when: manual
+      allow_failure: true
+  before_script:
+    - npm install -g pnpm@11.25.0
+    - pnpm config set store-dir "$PWD/.pnpm-store"
+    - pnpm install --frozen-lockfile
+    - bash scripts/ci/install-tools.sh
+    - . .ci-tools/env.sh
+  script:
+    - docker info
+    - bash scripts/ci/dind-forward.sh
+    - bash scripts/bootstrap-local-k8s.sh
+    - bash scripts/ci/dind-forward.sh
+    - set -o pipefail
+    - bash scripts/ci/next-harness.sh serve 2>&1 | tee harness-serve.log
+    - grep -q "all checks passed" harness-serve.log
+    - bash scripts/ci/next-harness.sh kubernetes 2>&1 | tee harness.log
+    - grep -q "all checks passed" harness.log
+  # Logs only on failure, readable by developers only, gone in a day.
+  artifacts:
+    when: on_failure
+    access: developer
+    expire_in: 1 day
+    paths:
+      - harness.log
+      - harness-serve.log
+
+# The same checks against real Cloud Run. Only on protected refs with the
+# protected CI variable NBO_CI_GCP_KEY set, never on a merge request. The
+# refusing rules come first so no running rule can match before them.
+cloudrun:
+  extends: .node
+  stage: targets
+  timeout: 45m
+  needs: []
+  tags:
+    - saas-linux-medium-amd64
+  resource_group: cloudrun-ci
+  services:
+    - name: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/docker:27.5.1-dind
+      alias: docker
+      command: ["--tls=false"]
+  variables:
+    GIT_STRATEGY: clone
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+    NBO_BUILD_ID: $CI_COMMIT_SHA
+    NBO_CI_APP_PREFIX: ci-$CI_PIPELINE_ID-
+    NBO_GCP_PROJECT: $NBO_CI_GCP_PROJECT
+    NBO_GCP_REGION: $NBO_CI_GCP_REGION
+    NBO_AR_REPO: $NBO_CI_AR_REPO
+  # Holds the Google key: no cache at all, so nothing another job wrote is ever used here.
+  cache: []
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+    - if: $CI_COMMIT_REF_PROTECTED != "true"
+      when: never
+    - if: $NBO_CI_GCP_KEY == null || $NBO_CI_GCP_KEY == ""
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - when: manual
+      allow_failure: true
+  before_script:
+    - npm install -g pnpm@11.25.0
+    - pnpm config set store-dir "$PWD/.pnpm-store"
+    - pnpm install --frozen-lockfile
+    - bash scripts/ci/install-tools.sh --gcloud
+    - . .ci-tools/env.sh
+  script:
+    - gcloud auth activate-service-account --key-file "$NBO_CI_GCP_KEY"
+    - gcloud config set project "$NBO_CI_GCP_PROJECT"
+    - gcloud auth configure-docker "$NBO_CI_GCP_REGION-docker.pkg.dev" --quiet
+    - bash scripts/ci/cloudrun-cleanup.sh --janitor
+    - set -o pipefail
+    - bash scripts/ci/next-harness.sh cloudrun 2>&1 | tee harness.log
+    - grep -q "all checks passed" harness.log
+  # after_script runs in a fresh shell, so it activates the key again.
+  after_script:
+    - . .ci-tools/env.sh
+    - gcloud auth activate-service-account --key-file "$NBO_CI_GCP_KEY"
+    - bash scripts/ci/cloudrun-cleanup.sh --prefix "$NBO_CI_APP_PREFIX"
+  # Logs only on failure, readable by developers only, gone in a day.
+  artifacts:
+    when: on_failure
+    access: developer
+    expire_in: 1 day
+    paths:
+      - harness.log
+
+# Deletes ci- resources older than 3 hours, for jobs killed so hard that neither
+# the harness trap nor after_script ran.
+cloudrun-janitor:
+  image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/node:24.11.1-bookworm
+  stage: targets
+  timeout: 10m
+  needs: []
+  resource_group: cloudrun-ci
+  variables:
+    GIT_STRATEGY: clone
+    NBO_GCP_PROJECT: $NBO_CI_GCP_PROJECT
+    NBO_GCP_REGION: $NBO_CI_GCP_REGION
+    NBO_AR_REPO: $NBO_CI_AR_REPO
+  cache: []
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+    - if: $CI_COMMIT_REF_PROTECTED != "true"
+      when: never
+    - if: $NBO_CI_GCP_KEY == null || $NBO_CI_GCP_KEY == ""
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+  before_script:
+    - bash scripts/ci/install-tools.sh --gcloud
+    - . .ci-tools/env.sh
+  script:
+    - gcloud auth activate-service-account --key-file "$NBO_CI_GCP_KEY"
+    - gcloud config set project "$NBO_CI_GCP_PROJECT"
+    - bash scripts/ci/cloudrun-cleanup.sh --janitor

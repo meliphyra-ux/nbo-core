@@ -1,0 +1,35 @@
+{
+  "name": "@nbo/edge",
+  "version": "0.0.0",
+  "license": "FSL-1.1-ALv2",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "files": [
+    "dist"
+  ],
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "tsc && vitest run",
+    "test:blackbox": "tsc && vitest run src/__tests__/blackbox",
+    "golden": "tsc && node scripts/golden.ts",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@nbo/funcproxy": "workspace:*",
+    "@nbo/nodehost": "workspace:*",
+    "undici": "^7.0.0",
+    "web-vitals": "6.2.3"
+  },
+  "devDependencies": {
+    "@peculiar/x509": "1.14.3",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "^24.0.0",
+    "typescript": "7.0.2",
+    "vitest": "^3.2.4"
+  },
+  "bin": {
+    "edge": "dist/main.js"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "method": "GET",
+  "path": "/",
+  "expectStatus": 200,
+  "expectHeaderPatterns": { "x-nbo-deployment-id": "sha256:[0-9a-f]{64}" }
+}

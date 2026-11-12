@@ -1,0 +1,1 @@
+{ "method": "GET", "path": "/_nbo/image?url=/images.jpg&w=999&q=75", "expectStatus": 400 }

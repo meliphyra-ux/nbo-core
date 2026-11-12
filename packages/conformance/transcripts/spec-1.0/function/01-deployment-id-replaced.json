@@ -1,0 +1,12 @@
+{
+  "method": "GET",
+  "path": "/echo",
+  "headers": {
+    "x-nbo-deployment-id": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "expectStatus": 200,
+  "expectHeaders": {
+    "x-echo-deployment-id": "{{contentId}}",
+    "x-nbo-deployment-id": "{{contentId}}"
+  }
+}

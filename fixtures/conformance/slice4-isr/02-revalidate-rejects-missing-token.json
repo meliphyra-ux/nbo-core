@@ -1,0 +1,1 @@
+{ "method": "POST", "path": "/_nbo/revalidate", "body": "{\"paths\":[\"/isr-demo\"]}", "expectStatus": 401, "expectBodyContains": "unauthorized" }

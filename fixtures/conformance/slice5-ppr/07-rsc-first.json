@@ -1,0 +1,1 @@
+{"method":"GET","path":"/nav?_rsc=conformance","headers":{"rsc":"1"},"expectStatus":200,"expectHeaders":{"content-type":"text/x-component"}}

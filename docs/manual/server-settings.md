@@ -1,0 +1,129 @@
+# Server settings
+
+Everything you can set on an NBO server, in one place: the environment variables the programs read, the `.env` file Docker Compose uses, the ports, the files NBO keeps, and what NBO prints when it refuses to start. If you launch NBO with Docker Compose, read [Compose env file](#compose-env-file) first; it is the short list of things you can actually change there.
+
+An **environment variable** is a named setting handed to a program when it starts, such as `NBO_MODE=production`. NBO reads all of its settings **once, at startup**. To change one on a running server you set it and restart the program (with Compose: `docker compose up -d`, which recreates the container when its settings changed). The tables say which settings are safe to change that way and which ones need care.
+
+Two kinds of variables are left out on purpose. Some are set by NBO itself inside the apps and clusters it deploys, so you never set them (for example the page cache address and the secret an app uses for revalidation). Others only exist so NBO's own tests can run, such as shortening a timeout or pointing the edge at a fake Kubernetes. The list of both, with a reason for each, is in `scripts/docs/env-allowlist.json`, and `pnpm docs:check` fails when the code reads a variable that is neither in this chapter nor in that list. The variables the continuous-integration pipeline uses are in `docs/ci.md`.
+
+## Control-plane
+
+The control-plane is NBO's server: the database, the build queue and the API. These are read when it starts, in `packages/controlplane`.
+
+"Dev" means the default mode you get when you start NBO from the repository for your own computer. "Production" means `NBO_MODE=production`, which is what Compose sets. See [Launch NBO on a server](../production.md).
+
+| Variable | Default | What it does | Dev or production | Change it on a running server? |
+| --- | --- | --- | --- | --- |
+| `NBO_MODE` | `dev` | `dev` or `production`. In production, deploys go through the clouds you connected with `nbo-server connect`; in dev they go to a local `kind` cluster. Anything else stops NBO from starting. | Both | No. Switching an existing database between modes leaves projects pointing at clouds of the other mode. Pick one when you set the server up. |
+| `NBO_CONTROL_PLANE_DB` | none, required | Path of the SQLite database file. | Both | No. Moving it means moving the file too; NBO starts with an empty database at a new path. |
+| `NBO_CONTROL_PLANE_ADDR` | `127.0.0.1:8081` | `host:port` to listen on. The default is loopback, so only the same computer can reach it. Compose sets `0.0.0.0:8081` inside the container and publishes the port on the host's loopback only. | Both | Yes, with a restart. Keep it on loopback unless a proxy in front of it is the only way in. |
+| `NBO_SECRET_KEY_FILE` | `nbo-secret.key` next to the database | The file with the 32-byte key that seals stored credentials. Created on first start if no secrets are stored yet. | Both | No. A different key cannot open what the old one sealed, and NBO refuses to start. Back this file up with the database. |
+| `NBO_ARTIFACTS_DIR` | `artifacts/` next to the database | Where a copy of each build's output is kept: the newest 20 successful builds per project plus every live build; older ones are removed. | Both | Yes, with a restart, but builds kept in the old folder are no longer found. Their pages then say the details aren't available. |
+| `NBO_PUBLIC_URL` | not set | NBO's own `https://` address, for example `https://nbo.example.com`: no path, no query, no user name. It only lets two kinds of request reach NBO through Caddy (`compose.public.yaml`): requests that carry an API token, and the per-project push webhooks, which check their own signature. Anything else for that address gets 403, including API calls without a token; only `/healthz` answers everyone. | Production | Yes, with a restart. A bad value stops NBO from starting. |
+| `NBO_LB_ANNOTATIONS` | not set | Comma-separated `key=value` annotations put on the load balancers of the edge and the relays, for clouds that need them. Optional on Hetzner, where NBO finds the location itself; when set, it wins. | Production | Yes. Applies to the next edge install or reinstall. |
+| `NBO_EDGE_IMPL` | not set | Which edge image NBO builds when it installs the edge: unset or `ts` is the Node edge, `rust` is the Rust edge. Any other value stops the install. | Production | Yes. Then run `nbo-server edge reinstall`. |
+| `NBO_TERRAFORM_PROVIDER_DIR` | not set; Compose sets `/app/terraform-provider/dist` | Folder with the Terraform provider files, offered for download at `GET /system/terraform-provider/{platform}`. Inside it, one folder per platform, `<os>_<arch>/terraform-provider-nbo_v0.1.0`. Not set, that route answers 404. | Both | Yes, with a restart. |
+| `NBO_EDGE_ADMIN_URL` | `http://127.0.0.1:9444` | Where the control-plane sends each project's traffic split in dev mode (the local edge's admin API). | Dev. Production mode still has the setting, but the cluster edge gets its routes from the cluster, not from this address. | Yes, with a restart. |
+| `NBO_EDGE_PUBLIC_PORT` | `9443` | The port written into project addresses in dev mode, for example `http://my-site.127.0.0.1.sslip.io:9443`. | Dev | Yes, with a restart. It should match the edge's `NBO_EDGE_ADDR` port. |
+
+The control-plane also reads `TEMP`, `TMP` and `TMPDIR`, because it clones and builds your repositories in the system's temporary folder. Builds are large, so point it at a roomy disk; Compose sets all three to `/data/tmp` on the data volume.
+
+## nbo-server
+
+`nbo-server` is the setup command inside the NBO container (`docker compose exec nbo nbo-server help`). It connects clouds, installs the edge, sets domains and makes API tokens by calling the control-plane's API with no token, so it must reach the control-plane on loopback. It reads one setting, besides `NBO_CONTROL_PLANE_ADDR` above:
+
+| Variable | Default | What it does | Dev or production | Change it on a running server? |
+| --- | --- | --- | --- | --- |
+| `NBO_SERVER_URL` | `http://127.0.0.1:<port>`, the port taken from `NBO_CONTROL_PLANE_ADDR` (8081 when unset) | Where `nbo-server` sends its requests, for a control-plane listening on another port or loopback address of the same computer, for example `http://127.0.0.1:8091`. Only `127.x.x.x`, `[::1]` and `localhost` are accepted, with no path: its commands carry kubeconfigs and keys, so `nbo-server` refuses any other address before it reads them. | Both | Yes: it is read each time the command runs. |
+
+## Edge
+
+The edge is the program that receives visitors and sends them to the right cloud. In dev mode you start it yourself with the addresses below. In production NBO installs it in your cluster and sets its variables itself, so there is nothing to set by hand except what the table lists. Both editions of the edge (Node in `packages/edge`, Rust in `packages/edge-rs`) read the same names.
+
+| Variable | Default | What it does | Dev or production | Change it on a running server? |
+| --- | --- | --- | --- | --- |
+| `NBO_EDGE_ADDR` | port `9443` | Visitor-facing address in dev mode. Only the port is used. | Dev | Yes, with a restart. |
+| `NBO_EDGE_ADMIN_ADDR` | `127.0.0.1:9444` | Address of the edge's admin API in dev mode. The host defaults to loopback; keep it there, because this API changes where traffic goes. | Dev | Yes, with a restart. |
+| `NBO_EDGE_HTTP2` | on | Rust edge, in the cluster: browsers can use HTTP/2 on the HTTPS port. `off` turns it off, for a client that has trouble with it. | Production | Yes: `kubectl -n nbo-edge set env deployment/nbo-edge NBO_EDGE_HTTP2=off`. A reinstall of the edge undoes it. |
+
+In production, NBO gives the edge its own settings inside the cluster: where to read its route table, the namespace, the token that lets NBO collect Speed Insights numbers, and, for a relay on a private cluster, the shared token and its certificate files. They are written by the install, kept in Kubernetes Secrets, and never meant to be edited by hand. If you change one with `kubectl`, the next reinstall puts it back.
+
+## The nbo command
+
+The `nbo` command-line tool reads three variables when you run `nbo deploy <dir> --app <name> --target cloudrun` yourself. The control-plane does not use them; it passes what it knows from your Google connection.
+
+| Variable | Default | What it does |
+| --- | --- | --- |
+| `NBO_GCP_PROJECT` | none, required for Cloud Run | The Google Cloud project to deploy into. |
+| `NBO_GCP_REGION` | none, required for Cloud Run | The Cloud Run region, for example `europe-west1`. |
+| `NBO_AR_REPO` | none, required for Cloud Run | The Artifact Registry repository for the image. |
+
+Without one of them, the command prints `usage: nbo deploy <dir> --app <name> --target cloudrun requires <NAME>` and exits.
+
+## Compose env file
+
+With Docker Compose, you do not set the variables above one by one. `compose.yaml` fixes the ones every server needs (production mode, the database and key paths, the Terraform provider folder). What you can change is a small `.env` file next to `compose.yaml`; Compose reads it every time you run `docker compose up -d`.
+
+| Name in `.env` | Default | What it does |
+| --- | --- | --- |
+| `NBO_PORT` | `8081` | The port on the host computer where NBO appears, always on `127.0.0.1`. Change it if 8081 is taken. Inside the container NBO stays on 8081. |
+| `NBO_LB_ANNOTATIONS` | empty | Passed to the control-plane as the variable of the same name (see the control-plane table). |
+| `NBO_EDGE_IMPL` | empty | Passed to the control-plane as the variable of the same name. |
+| `NBO_PUBLIC_HOST` | none | Only for `compose.public.yaml`, the file that puts NBO on its own address. The bare name of the address, for example `nbo.example.com`, without `https://`. It becomes `NBO_PUBLIC_URL=https://<name>` for NBO and the name Caddy asks Let's Encrypt a certificate for. Required when that file is used; Compose stops with `set NBO_PUBLIC_HOST in .env` when it is missing. |
+
+Any other setting in the control-plane table can be added to the `environment:` block of a `compose.override.yaml`, which Compose merges with `compose.yaml` automatically. After editing `.env` or an override, run `docker compose up -d` again; Compose recreates the container with the new values, and your data stays on the volumes.
+
+## Ports
+
+| Port | Who | Where it listens |
+| --- | --- | --- |
+| 8081 | Control-plane | `127.0.0.1` by default. With Compose, `127.0.0.1:${NBO_PORT}` on the host, forwarded to 8081 in the container. Reach it from another computer through an SSH tunnel. |
+| 9443 | Edge, visitor side | Dev mode, set by `NBO_EDGE_ADDR`. |
+| 9444 | Edge, admin API | Dev mode, `127.0.0.1`, set by `NBO_EDGE_ADMIN_ADDR`. The same number is the admin port inside the cluster edge's pods. |
+| 80 and 443 | The edge's load balancer in your cluster | Production. They forward to 8080 (HTTP) and 8443 (HTTPS) in the edge's pods. |
+| 80 and 443 | Caddy | Only with `compose.public.yaml`. Open them in your firewall so Let's Encrypt can reach Caddy. |
+| 8443 | A relay | Production, a private cluster's relay (see [Domains](./domains.md)). |
+
+## Files and volumes
+
+With Compose, NBO's data lives on two named volumes and one mounted socket. `compose.yaml` calls the volumes `nbo-data` and `nbo-keys`; Docker adds the project name, so commands such as `docker volume ls` and the backup command show them as `nbo_nbo-data` and `nbo_nbo-keys`. Back up the two volumes together; the steps are in [Backups and restore](../production.md#backups-and-restore).
+
+| Where | Volume | What is in it |
+| --- | --- | --- |
+| `/data/nbo.db` | `nbo-data` | The database: projects, builds, logs, variables, domains, API tokens. |
+| `/data/known_hosts` | `nbo-data` | The SSH host keys of the git servers projects with a deploy key use. A host is added the first time NBO reaches it; a host whose key changes is refused until you remove its line. To check your own git server from the first connection, add its line before the first build. |
+| `/data/known_hosts.published` | `nbo-data` | The host keys github.com, gitlab.com and bitbucket.org publish, written by NBO before each deploy-key git step. Don't edit it: NBO rewrites it. |
+| `/data/artifacts/` | `nbo-data` | The kept copy of each build's output (`NBO_ARTIFACTS_DIR` moves it). |
+| `/data/tmp/` | `nbo-data` | Clones and build work (`TEMP`, `TMP`, `TMPDIR`). Safe to empty while no build is running. |
+| `/keys/nbo-secret.key` | `nbo-keys` | The key that seals stored credentials (`NBO_SECRET_KEY_FILE`). The backup archive holds it with the database, and together they are everything an attacker needs, so store the archive somewhere safe. Without the key the database's secrets cannot be read. |
+| `/var/run/docker.sock` | the host's | Lets NBO build images with the host's Docker. Whoever controls the container controls that Docker, which is as good as root on the host. |
+
+Without Docker the same files sit where the settings point: the database at `NBO_CONTROL_PLANE_DB`, and the key and the artifacts next to it unless you moved them. See [Running without Docker](../production.md#running-without-docker).
+
+## When NBO refuses to start
+
+The control-plane checks its settings in a fixed order and stops at the first problem, printing one line that starts with `control-plane:` and exiting with status 1. With Compose, read it with `docker compose logs nbo`. Find the line below, fix the setting, and start it again.
+
+| What it prints | What it means and what to do |
+| --- | --- |
+| `control-plane: NBO_CONTROL_PLANE_DB must be set to a SQLite file path` | No database path. Compose sets it; without Docker, set `NBO_CONTROL_PLANE_DB` to a file path. |
+| `control-plane: NBO_MODE must be "dev" or "production"` | A typo in `NBO_MODE`. An empty value counts as `dev`. |
+| `control-plane: this database has settings in both platform_settings and server_settings: ...` | An NBO from before 2026-11-12 ran on this database after the upgrade and saved settings the current NBO would never read. Restore the volume backup taken before the upgrade ([Rolling back](../production.md#rolling-back)). |
+| `control-plane: secret key file <path> must be exactly 32 bytes (found <n>)` | The key file was edited, truncated or replaced by a text file. Restore it from your backup. |
+| `control-plane: secret key file <path> is missing but the database holds sealed secrets; restore the key file or set NBO_SECRET_KEY_FILE` | The database has stored credentials but the key file is not where NBO looks. NBO never makes a new key beside existing secrets. Restore the file, or point `NBO_SECRET_KEY_FILE` at it. With Compose, check that the `nbo-keys` volume is still attached. |
+| `control-plane: secret key file <path> does not decrypt the secrets stored in this database` followed by a hint to restore the original key | A key file exists but is not the one this database was sealed with, for example after restoring only one of the two volumes. Restore the matching pair. |
+| `control-plane: NBO_LB_ANNOTATIONS: "<pair>" is not a key=value annotation` | One of the comma-separated entries is not `key=value`, or its key is not a valid annotation name. The bad entry is named in quotes. |
+| `control-plane: NBO_PUBLIC_URL "<value>" is not a URL` | The value cannot be read as an address. |
+| `control-plane: NBO_PUBLIC_URL must be an https:// address, not <scheme>//` (for example `not http://`) | It must start with `https://`. |
+| `control-plane: NBO_PUBLIC_URL must not have a path (got "/x"); NBO is served at the root of its address` | Remove everything after the host name. |
+| `control-plane: NBO_PUBLIC_URL must not have a query or fragment` | Remove the `?...` or `#...` part. |
+| `control-plane: NBO_PUBLIC_URL must not hold a user name or password` | Remove the `user:password@` part. |
+
+Two more things can stop it that have no friendly line. If the data folder cannot be written, Node prints a stack trace with `EACCES` or `ENOENT`; fix the folder's owner or path. If the port is taken or `NBO_CONTROL_PLANE_ADDR` is not `host:port`, Node prints `EADDRINUSE` or a bad-port error; with Compose, change `NBO_PORT`.
+
+The edge has its own refusals, printed with the prefix `edge:` and exit status 1. In a cluster they show up in `kubectl -n nbo-edge logs deployment/nbo-edge`:
+
+- `edge: NBO_EDGE_DRAIN_TOKEN is required` or `edge: NBO_RELAY_TOKEN is required`: the install's Secret is missing or blank. Run `nbo-server edge reinstall`.
+- `edge: NBO_EDGE_CLUSTER_PORTS must be 3 comma-separated ports`, or a bad port in `NBO_EDGE_ADDR` or `NBO_EDGE_ADMIN_ADDR`: a hand-edited setting; undo the edit.
+
+When the edge install itself stops with `NBO_EDGE_IMPL must be "ts" (the default) or "rust", not "<value>"`, the control-plane started fine and only the install refused; fix the value and run `nbo-server edge reinstall`.

@@ -1,0 +1,1 @@
+{"method":"GET","path":"/visitor?_rsc=conformance","headers":{"rsc":"1","cookie":"ppr-visitor=alice"},"expectStatus":200,"expectBodyContains":"visitor:alice","expectHeaders":{"content-type":"text/x-component","cache-control":"private, no-store"}}

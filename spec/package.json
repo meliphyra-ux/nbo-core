@@ -1,0 +1,19 @@
+{
+  "name": "@nbo/spec",
+  "version": "0.0.0",
+  "license": "FSL-1.1-ALv2",
+  "private": true,
+  "main": "generated/ts/index.ts",
+  "types": "generated/ts/index.ts",
+  "exports": {
+    ".": "./generated/ts/index.ts",
+    "./package.json": "./package.json",
+    "./manifest.schema.json": "./manifest.schema.json",
+    "./static-index.schema.json": "./static-index.schema.json",
+    "./routes.schema.json": "./routes.schema.json",
+    "./function.schema.json": "./function.schema.json",
+    "./bundle-index.schema.json": "./bundle-index.schema.json",
+    "./prerender.schema.json": "./prerender.schema.json",
+    "./version.json": "./version.json"
+  }
+}

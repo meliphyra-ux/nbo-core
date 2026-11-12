@@ -1,0 +1,15 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "workspaces": {
+    "packages/next-adapter": {
+      "entry": ["src/adapter.js"]
+    }
+  },
+  "ignore": ["fixtures/**", "platform/**"],
+  "ignoreDependencies": ["@nbo/next-adapter", "canonicalize", "@nbo/spec"],
+  "ignoreBinaries": ["openssl"],
+  "rules": {
+    "types": "off"
+  },
+  "ignoreExportsUsedInFile": true
+}

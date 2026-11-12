@@ -1,0 +1,154 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:nbo:spec:v1:manifest",
+  "title": "Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["specVersion", "build", "requires", "functions", "digests"],
+  "patternProperties": { "^x-[a-z0-9]+(-[a-z0-9]+)+$": {} },
+  "properties": {
+    "$schema": { "type": "string" },
+    "specVersion": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+$" },
+    "build": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "createdAt", "framework"],
+      "properties": {
+        "id": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["repo", "revision"],
+          "properties": {
+            "repo": { "type": "string" },
+            "revision": { "type": "string" }
+          }
+        },
+        "framework": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name"],
+          "properties": {
+            "name": { "type": "string" },
+            "version": { "type": "string" },
+            "adapter": { "type": "string" }
+          }
+        }
+      }
+    },
+    "requires": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["capabilities", "extensions"],
+      "properties": {
+        "capabilities": { "type": "array", "items": { "type": "string", "enum": ["fn.streaming", "fn.edge", "fn.waitUntil", "fn.arm64", "prerender.isr", "prerender.onDemand", "images.optimize", "geo.headers"] } },
+        "extensions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "version", "critical"],
+            "properties": {
+              "id": { "type": "string" },
+              "version": { "type": "string" },
+              "critical": { "type": "boolean" }
+            }
+          }
+        }
+      }
+    },
+    "routing": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "trailingSlash": { "type": "string", "enum": ["never", "always", "preserve"] },
+        "cleanUrls": { "type": "boolean", "const": true },
+        "caseSensitive": { "type": "boolean", "const": true }
+      }
+    },
+    "functions": { "type": "array", "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]{0,62}$" } },
+    "images": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "widths": { "type": "array", "items": { "type": "integer" } },
+        "formats": { "type": "array", "items": { "type": "string" } },
+        "qualities": { "type": "array", "items": { "type": "integer" } },
+        "remotePatterns": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "protocol": { "type": "string" },
+              "hostname": { "type": "string" },
+              "pathname": { "type": "string" }
+            }
+          }
+        },
+        "localPatterns": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": { "pathname": { "type": "string" } }
+          }
+        },
+        "minimumCacheTTLSec": { "type": "integer" },
+        "allowSvg": { "type": "boolean" }
+      }
+    },
+    "crons": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "schedule", "target"],
+        "properties": {
+          "id": { "type": "string" },
+          "schedule": { "type": "string" },
+          "timezone": { "type": "string", "enum": ["UTC"] },
+          "target": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["function", "path", "method"],
+            "properties": {
+              "function": { "type": "string" },
+              "path": { "type": "string" },
+              "method": { "type": "string", "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"] }
+            }
+          },
+          "overlap": { "type": "string", "enum": ["skip", "allow"] },
+          "timeoutSec": { "type": "integer" }
+        }
+      }
+    },
+    "env": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "required": { "type": "array", "items": { "type": "string" } },
+        "optional": { "type": "array", "items": { "type": "string" } },
+        "inlinedAtBuild": { "type": "array", "items": { "type": "string" } },
+        "inlinedEnvDigest": { "type": "string" }
+      }
+    },
+    "bindings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "type"],
+        "properties": {
+          "name": { "type": "string" },
+          "type": { "type": "string", "enum": ["postgres", "s3", "redis", "cache"] }
+        }
+      }
+    },
+    "digests": {
+      "type": "object",
+      "additionalProperties": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+    }
+  }
+}

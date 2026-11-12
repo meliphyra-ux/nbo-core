@@ -1,0 +1,23 @@
+packages:
+  - "packages/*"
+  - "fixtures/*"
+  - "spec"
+allowBuilds:
+  esbuild: true
+  re2: true
+  sharp: true
+  unrs-resolver: false
+# Final-review finding (sub-project 8, Task 11): required for
+# `pnpm deploy` to run in its non-legacy mode at all (the legacy
+# implementation refuses outright without this) — @nbo/deploy's own
+# prepareCliDeployDir needs non-legacy deploy for --config.node-linker=hoisted
+# to take effect; see that function's own comment for why hoisted
+# linking specifically (not --legacy's own default isolated linking)
+# is required for a deployed artifact's transitive dependencies to
+# actually be reachable once moved into a Docker build context.
+injectWorkspacePackages: true
+
+# Injected workspace packages are copied at install time, before they have a
+# dist/. Re-sync them after each build, or a fresh checkout cannot build or run.
+syncInjectedDepsAfterScripts:
+  - build

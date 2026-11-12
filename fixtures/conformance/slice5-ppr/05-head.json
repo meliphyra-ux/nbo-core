@@ -1,0 +1,1 @@
+{ "method": "HEAD", "path": "/", "expectStatus": 200, "expectHeaders": { "cache-control": "private, no-store" } }

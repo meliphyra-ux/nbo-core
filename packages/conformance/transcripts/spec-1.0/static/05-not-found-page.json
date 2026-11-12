@@ -1,0 +1,9 @@
+{
+  "method": "GET",
+  "path": "/nope",
+  "expectStatus": 404,
+  "expectHeaders": {
+    "x-nbo-deployment-id": "{{contentId}}"
+  },
+  "expectBodyContains": "custom not found page"
+}

@@ -1,0 +1,5 @@
+{
+  "method": "POST",
+  "path": "/assets/old.js",
+  "expectStatus": 404
+}

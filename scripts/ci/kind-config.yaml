@@ -1,0 +1,34 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+# CI variant of scripts/local-k8s/kind-config.yaml for Docker-in-Docker: the
+# API server listens on a fixed port on all addresses so the job container can
+# reach it through the `docker` service (see dind-forward.sh). kind writes
+# https://0.0.0.0:6443 into the kubeconfig, so 0.0.0.0 is a certificate name
+# too: kubectl works through the forward before dind-forward.sh rewrites it.
+networking:
+  apiServerAddress: "0.0.0.0"
+  apiServerPort: 6443
+nodes:
+  - role: control-plane
+    image: kindest/node:v1.31.4
+    kubeadmConfigPatches:
+      - |
+        kind: InitConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "ingress-ready=true"
+      - |
+        kind: ClusterConfiguration
+        apiServer:
+          certSANs:
+            - "127.0.0.1"
+            - "0.0.0.0"
+            - "localhost"
+            - "docker"
+    extraPortMappings:
+      - containerPort: 80
+        hostPort: 80
+        protocol: TCP
+      - containerPort: 443
+        hostPort: 443
+        protocol: TCP

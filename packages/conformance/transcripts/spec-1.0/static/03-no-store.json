@@ -1,0 +1,9 @@
+{
+  "method": "GET",
+  "path": "/live.json",
+  "expectStatus": 200,
+  "expectHeaders": {
+    "cache-control": "no-store"
+  },
+  "expectBodyContains": "\"live\":true"
+}

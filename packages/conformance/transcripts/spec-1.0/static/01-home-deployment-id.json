@@ -1,0 +1,11 @@
+{
+  "method": "GET",
+  "path": "/",
+  "expectStatus": 200,
+  "expectHeaders": {
+    "x-nbo-deployment-id": "{{contentId}}",
+    "cache-control": "max-age=0, must-revalidate",
+    "content-type": "text/html; charset=utf-8"
+  },
+  "expectBodyContains": "static home"
+}

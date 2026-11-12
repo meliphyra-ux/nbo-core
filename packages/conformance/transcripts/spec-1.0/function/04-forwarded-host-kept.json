@@ -1,0 +1,11 @@
+{
+  "method": "GET",
+  "path": "/echo/edge",
+  "headers": {
+    "x-forwarded-host": "www.example.com"
+  },
+  "expectStatus": 200,
+  "expectHeaders": {
+    "x-echo-forwarded-host": "www.example.com"
+  }
+}

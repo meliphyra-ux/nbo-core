@@ -1,0 +1,30 @@
+{
+  "name": "@nbo/deploy",
+  "version": "0.0.0",
+  "license": "FSL-1.1-ALv2",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@nbo/adapter-cloudrun": "workspace:*",
+    "@nbo/adapter-k8s": "workspace:*",
+    "@nbo/digest": "workspace:*",
+    "@nbo/planner": "workspace:*",
+    "@nbo/spec": "workspace:*",
+    "@nbo/validate": "workspace:*",
+    "cross-spawn": "^7.0.6"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/cross-spawn": "^6.0.6",
+    "@types/node": "^24.0.0",
+    "typescript": "7.0.2",
+    "vitest": "^3.2.4"
+  }
+}

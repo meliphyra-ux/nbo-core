@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:nbo:spec:v1:static-index",
+  "title": "StaticIndex",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["files"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "files": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["file", "digest", "size", "contentType", "cache"],
+        "patternProperties": { "^x-[a-z0-9]+(-[a-z0-9]+)+$": {} },
+        "properties": {
+          "file": { "type": "string" },
+          "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+          "size": { "type": "integer", "minimum": 0 },
+          "contentType": { "type": "string" },
+          "cache": { "type": "string", "enum": ["immutable", "revalidate", "no-store"] }
+        }
+      }
+    }
+  }
+}

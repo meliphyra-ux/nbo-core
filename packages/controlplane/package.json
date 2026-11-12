@@ -1,0 +1,39 @@
+{
+  "name": "@nbo/controlplane",
+  "version": "0.0.0",
+  "license": "FSL-1.1-ALv2",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@nbo/deploy": "workspace:*",
+    "@nbo/digest": "workspace:*",
+    "@nbo/next-adapter": "workspace:*",
+    "@nbo/nodehost": "workspace:*",
+    "@nbo/producer-static": "workspace:*",
+    "@nbo/validate": "workspace:*",
+    "@peculiar/x509": "1.14.3",
+    "acme-client": "5.4.0",
+    "cross-spawn": "^7.0.6",
+    "undici": "^7.0.0"
+  },
+  "devDependencies": {
+    "@nbo/edge": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/cross-spawn": "^6.0.6",
+    "@types/node": "^24.0.0",
+    "typescript": "7.0.2",
+    "vitest": "^3.2.4",
+    "yaml": "2.9.1"
+  },
+  "bin": {
+    "control-plane": "dist/main.js",
+    "nbo-server": "dist/server-cli.js"
+  }
+}

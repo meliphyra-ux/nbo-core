@@ -1,0 +1,9 @@
+{
+  "method": "GET",
+  "path": "/about/",
+  "expectStatus": 200,
+  "expectHeaders": {
+    "cache-control": "max-age=0, must-revalidate"
+  },
+  "expectBodyContains": "about page"
+}

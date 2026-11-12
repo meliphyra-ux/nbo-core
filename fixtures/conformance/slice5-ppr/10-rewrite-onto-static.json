@@ -1,0 +1,1 @@
+{"method":"GET","path":"/alias-static","expectStatus":200,"expectBodyContains":"nothing dynamic here"}

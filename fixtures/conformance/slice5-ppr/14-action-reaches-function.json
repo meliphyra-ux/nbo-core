@@ -1,0 +1,1 @@
+{"method":"POST","path":"/action-ppr","headers":{"next-action":"00","content-type":"text/plain;charset=UTF-8"},"body":"[]","expectStatus":400,"expectHeaders":{"x-nextjs-action-not-found":"1"}}

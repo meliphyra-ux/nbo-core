@@ -1,0 +1,12 @@
+{
+  "method": "GET",
+  "path": "/assets/old.js",
+  "expectStatus": 200,
+  "expectHeaders": {
+    "x-nbo-carried-from": "{{carriedFrom}}",
+    "x-nbo-deployment-id": "{{contentId}}",
+    "cache-control": "max-age=31536000, immutable",
+    "content-type": "text/javascript; charset=utf-8"
+  },
+  "expectBodyContains": "old from A"
+}

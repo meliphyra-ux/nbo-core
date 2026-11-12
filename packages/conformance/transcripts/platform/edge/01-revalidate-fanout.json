@@ -1,0 +1,8 @@
+{
+  "method": "POST",
+  "path": "/_nbo/revalidate",
+  "headers": { "content-type": "application/json" },
+  "body": "{\"tags\":[\"posts\"]}",
+  "expectStatus": 401,
+  "expectHeaderPatterns": { "x-nbo-edge-fanout": "^[1-9][0-9]*$" }
+}

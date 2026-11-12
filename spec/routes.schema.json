@@ -1,0 +1,76 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:nbo:spec:v1:routes",
+  "title": "Routes",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version"],
+  "definitions": {
+    "match": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path"],
+      "properties": {
+        "path": { "type": "string" },
+        "pathNot": { "type": "string" },
+        "methods": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": { "type": "string", "enum": ["redirect", "respond", "rewrite", "headers", "middleware"] },
+        "location": { "type": "string" },
+        "status": { "type": "integer" },
+        "file": { "type": "string" },
+        "function": { "type": "string" },
+        "path": { "type": "string" },
+        "set": { "type": "object", "additionalProperties": { "type": "string" } },
+        "append": { "type": "object", "additionalProperties": { "type": "string" } },
+        "delete": { "type": "array", "items": { "type": "string" } }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "const": "redirect" } } },
+          "then": { "required": ["location", "status"], "properties": { "status": { "enum": [301, 302, 307, 308] } } }
+        }
+      ]
+    },
+    "rule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "match", "action"],
+      "patternProperties": { "^x-[a-z0-9]+(-[a-z0-9]+)+$": {} },
+      "properties": {
+        "id": { "type": "string" },
+        "match": { "$ref": "#/definitions/match" },
+        "action": { "$ref": "#/definitions/action" },
+        "continue": { "type": "boolean" }
+      }
+    }
+  },
+  "properties": {
+    "$schema": { "type": "string" },
+    "version": { "type": "integer", "const": 1 },
+    "beforeFiles": { "type": "array", "items": { "$ref": "#/definitions/rule" } },
+    "afterFiles": { "type": "array", "items": { "$ref": "#/definitions/rule" } },
+    "fallback": { "type": "array", "items": { "$ref": "#/definitions/rule" } },
+    "onMatch": { "type": "array", "items": { "$ref": "#/definitions/rule" } },
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "404": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["file"],
+          "properties": {
+            "file": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}

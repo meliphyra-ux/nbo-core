@@ -1,0 +1,30 @@
+# NBO on its own https address: only requests with an API token, the push
+# webhooks and /healthz are let in there. See docs/production.md,
+# "8. Reaching NBO on its own address".
+#
+#   docker compose -f compose.yaml -f compose.public.yaml up -d
+#
+# Set NBO_PUBLIC_HOST (for example nbo.example.com) in .env, and point that
+# name's DNS A record at this machine. Caddy gets the certificate itself, so
+# ports 80 and 443 must be open. NBO's own port stays on 127.0.0.1.
+services:
+  nbo:
+    environment:
+      NBO_PUBLIC_URL: https://${NBO_PUBLIC_HOST:?set NBO_PUBLIC_HOST in .env}
+  caddy:
+    image: caddy:2.8.4
+    restart: unless-stopped
+    depends_on:
+      - nbo
+    # Caddy passes the Host header on unchanged, which NBO relies on.
+    command: ["caddy", "reverse-proxy", "--from", "${NBO_PUBLIC_HOST:?set NBO_PUBLIC_HOST in .env}", "--to", "nbo:8081"]
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  caddy-data:
+  caddy-config:

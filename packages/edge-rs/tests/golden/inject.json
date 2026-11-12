@@ -1,0 +1,291 @@
+[
+ {
+  "name": "</head> split after 0 bytes",
+  "tag": "<script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script>",
+  "chunks": [
+   "<html><head><title>t</title>",
+   "</head><body>b</body></html>"
+  ],
+  "output": "<html><head><title>t</title><script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script></head><body>b</body></html>"
+ },
+ {
+  "name": "</head> split after 1 bytes",
+  "tag": "<script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script>",
+  "chunks": [
+   "<html><head><title>t</title><",
+   "/head><body>b</body></html>"
+  ],
+  "output": "<html><head><title>t</title><script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script></head><body>b</body></html>"
+ },
+ {
+  "name": "</head> split after 2 bytes",
+  "tag": "<script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script>",
+  "chunks": [
+   "<html><head><title>t</title></",
+   "head><body>b</body></html>"
+  ],
+  "output": "<html><head><title>t</title><script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script></head><body>b</body></html>"
+ },
+ {
+  "name": "</head> split after 3 bytes",
+  "tag": "<script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script>",
+  "chunks": [
+   "<html><head><title>t</title></h",
+   "ead><body>b</body></html>"
+  ],
+  "output": "<html><head><title>t</title><script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script></head><body>b</body></html>"
+ },
+ {
+  "name": "</head> split after 4 bytes",
+  "tag": "<script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script>",
+  "chunks": [
+   "<html><head><title>t</title></he",
+   "ad><body>b</body></html>"
+  ],
+  "output": "<html><head><title>t</title><script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script></head><body>b</body></html>"
+ },
+ {
+  "name": "</head> split after 5 bytes",
+  "tag": "<script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script>",
+  "chunks": [
+   "<html><head><title>t</title></hea",
+   "d><body>b</body></html>"
+  ],
+  "output": "<html><head><title>t</title><script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script></head><body>b</body></html>"
+ },
+ {
+  "name": "</head> split after 6 bytes",
+  "tag": "<script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script>",
+  "chunks": [
+   "<html><head><title>t</title></head",
+   "><body>b</body></html>"
+  ],
+  "output": "<html><head><title>t</title><script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script></head><body>b</body></html>"
+ },
+ {
+  "name": "</head> split after 7 bytes",
+  "tag": "<script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script>",
+  "chunks": [
+   "<html><head><title>t</title></head>",
+   "<body>b</body></html>"
+  ],
+  "output": "<html><head><title>t</title><script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script></head><body>b</body></html>"
+ },
+ {
+  "name": "one chunk",
+  "tag": "<script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script>",
+  "chunks": [
+   "<html><head><title>t</title></head><body>b</body></html>"
+  ],
+  "output": "<html><head><title>t</title><script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script></head><body>b</body></html>"
+ },
+ {
+  "name": "upper case",
+  "tag": "<script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script>",
+  "chunks": [
+   "<HTML><HEAD></HEAD><BODY></BODY>"
+  ],
+  "output": "<HTML><HEAD><script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script></HEAD><BODY></BODY>"
+ },
+ {
+  "name": "mixed case split",
+  "tag": "<script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script>",
+  "chunks": [
+   "<head></He",
+   "Ad>"
+  ],
+  "output": "<head><script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script></HeAd>"
+ },
+ {
+  "name": "no head: before </body>",
+  "tag": "<script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script>",
+  "chunks": [
+   "<p>hi</p></bo",
+   "dy></html>"
+  ],
+  "output": "<p>hi</p><script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script></body></html>"
+ },
+ {
+  "name": "</body> before </head>",
+  "tag": "<script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script>",
+  "chunks": [
+   "<body></body><head></head>"
+  ],
+  "output": "<body><script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script></body><head></head>"
+ },
+ {
+  "name": "neither",
+  "tag": "<script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script>",
+  "chunks": [
+   "<p>plain</p>",
+   "<p>more</p>"
+  ],
+  "output": "<p>plain</p><p>more</p>"
+ },
+ {
+  "name": "partial tag left at the end",
+  "tag": "<script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script>",
+  "chunks": [
+   "<p>x</p></he"
+  ],
+  "output": "<p>x</p></he"
+ },
+ {
+  "name": "near misses",
+  "tag": "<script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script>",
+  "chunks": [
+   "</headx></ head></hea d></bod></body"
+  ],
+  "output": "</headx></ head></hea d></bod></body"
+ },
+ {
+  "name": "only the first tag",
+  "tag": "<script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script>",
+  "chunks": [
+   "<head></head><head></head></body>"
+  ],
+  "output": "<head><script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script></head><head></head></body>"
+ },
+ {
+  "name": "tag at the very start",
+  "tag": "<script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script>",
+  "chunks": [
+   "</head>rest"
+  ],
+  "output": "<script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script></head>rest"
+ },
+ {
+  "name": "empty chunks around",
+  "tag": "<script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script>",
+  "chunks": [
+   "",
+   "<head>",
+   "",
+   "</head>",
+   ""
+  ],
+  "output": "<head><script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script></head>"
+ },
+ {
+  "name": "no chunks",
+  "tag": "<script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script>",
+  "chunks": [],
+  "output": ""
+ },
+ {
+  "name": "large chunk after held tail, tag in the joint",
+  "tag": "<script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script>",
+  "chunks": [
+   "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</h",
+   "ead>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  ],
+  "output": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx<script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script></head>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+ },
+ {
+  "name": "large chunk after held tail, tag later in the chunk",
+  "tag": "<script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script>",
+  "chunks": [
+   "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</h",
+   "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</head>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  ],
+  "output": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</hxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx<script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script></head>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+ },
+ {
+  "name": "small chunks then large",
+  "tag": "<script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script>",
+  "chunks": [
+   "<",
+   "/",
+   "h",
+   "ead>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  ],
+  "output": "<script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script></head>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+ },
+ {
+  "name": "held tail is not a tag",
+  "tag": "<script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script>",
+  "chunks": [
+   "<p></b",
+   "r>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</body>"
+  ],
+  "output": "<p></br>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx<script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script></body>"
+ },
+ {
+  "name": "chunks after insertion pass through",
+  "tag": "<script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script>",
+  "chunks": [
+   "<head></head>",
+   "</head>",
+   "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  ],
+  "output": "<head><script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script></head></head>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+ },
+ {
+  "name": "UTF-8 content",
+  "tag": "<script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script>",
+  "chunks": [
+   "<head><title>café 日本</title></he",
+   "ad><body>ü</body>"
+  ],
+  "output": "<head><title>café 日本</title><script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script></head><body>ü</body>"
+ },
+ {
+  "name": "escaped attributes",
+  "tag": "<script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"e&quot;&lt;&amp;&gt;\" data-d=\"\" data-s=\"10\"></script>",
+  "chunks": [
+   "<head></head>"
+  ],
+  "output": "<head><script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"e&quot;&lt;&amp;&gt;\" data-d=\"\" data-s=\"10\"></script></head>"
+ },
+ {
+  "name": "every byte its own chunk",
+  "tag": "<script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"e&quot;&lt;&amp;&gt;\" data-d=\"\" data-s=\"10\"></script>",
+  "chunks": [
+   "<",
+   "h",
+   "t",
+   "m",
+   "l",
+   ">",
+   "<",
+   "h",
+   "e",
+   "a",
+   "d",
+   ">",
+   "<",
+   "/",
+   "H",
+   "E",
+   "A",
+   "D",
+   ">",
+   "<",
+   "/",
+   "h",
+   "t",
+   "m",
+   "l",
+   ">"
+  ],
+  "output": "<html><head><script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"e&quot;&lt;&amp;&gt;\" data-d=\"\" data-s=\"10\"></script></HEAD></html>"
+ },
+ {
+  "name": "carry of </body prefix then </head>",
+  "tag": "<script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script>",
+  "chunks": [
+   "a</b",
+   "</head>"
+  ],
+  "output": "a</b<script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script></head>"
+ },
+ {
+  "name": "large chunk, tag straddles the joint at its first byte",
+  "tag": "<script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script>",
+  "chunks": [
+   "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx<",
+   "/body>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  ],
+  "output": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx<script defer src=\"/_nbo/insights/v1/script.js\" data-e=\"env_a\" data-d=\"c1\" data-s=\"100\"></script></body>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+ }
+]

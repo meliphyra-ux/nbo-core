@@ -1,0 +1,1 @@
+{ "method": "GET", "path": "/", "expectStatus": 200, "expectBodyContains": "ppr-static", "expectHeaders": { "cache-control": "private, no-store" } }
