@@ -110,7 +110,10 @@ describe("handleImage", () => {
   }
 
   it("matches a remote pattern with no pathname against any path, and still checks the hostname", async () => {
-    const cfg = { ...testImagesConfig(), remotePatterns: [{ protocol: "https", hostname: "^cdn\\.acme\\.com$" }] as ImagesConfig["remotePatterns"] };
+    const cfg = {
+      ...testImagesConfig(),
+      remotePatterns: [{ protocol: "https", hostname: "^cdn\\.acme\\.com$" }] as ImagesConfig["remotePatterns"],
+    };
     const state = newTestImageServer(cfg);
     const other = encodeURIComponent("https://other.example/anything.png");
     expect((await handleImage(state, new Request(`http://x/_nbo/image?url=${other}&w=100&q=75`))).status).toBe(400);
@@ -235,7 +238,10 @@ describe("handleImage", () => {
   // qualities unset, so a manifest without them must give a clean answer.
   it("an images block without widths or qualities refuses every w and q with 400", async () => {
     const nboDir = await mkdtemp(join(tmpdir(), "serve-image-"));
-    await writeFile(join(nboDir, "manifest.json"), JSON.stringify({ images: { localPatterns: [{ pathname: "^/[a-z]+\\.png$" }] } }));
+    await writeFile(
+      join(nboDir, "manifest.json"),
+      JSON.stringify({ images: { localPatterns: [{ pathname: "^/[a-z]+\\.png$" }] } }),
+    );
     const state = newTestImageServer((await loadImagesConfig(nboDir))!);
     const noWidths = await handleImage(state, new Request("http://x/_nbo/image?url=%2Fphoto.png&w=100&q=75"));
     expect(noWidths.status).toBe(400);
@@ -248,12 +254,16 @@ describe("handleImage", () => {
 
   it("an images block without minimumCacheTTLSec stores the image for 0 seconds", async () => {
     const nboDir = await mkdtemp(join(tmpdir(), "serve-image-"));
-    await writeFile(join(nboDir, "manifest.json"), JSON.stringify({ images: { widths: [100], qualities: [75], localPatterns: [{ pathname: "^/[a-z]+\\.png$" }] } }));
+    await writeFile(
+      join(nboDir, "manifest.json"),
+      JSON.stringify({ images: { widths: [100], qualities: [75], localPatterns: [{ pathname: "^/[a-z]+\\.png$" }] } }),
+    );
     const cfg = await loadImagesConfig(nboDir);
     const fake = createFakeCacheService(createStore());
     const puts: { revalidateSec?: number; expireSec?: number }[] = [];
     const resolveCache: Resolver = () => async (request: Request) => {
-      if (request.method === "PUT") puts.push((await request.clone().json()) as { revalidateSec?: number; expireSec?: number });
+      if (request.method === "PUT")
+        puts.push((await request.clone().json()) as { revalidateSec?: number; expireSec?: number });
       return fake(request);
     };
     const state = newTestImageServer(cfg!, resolveCache);
@@ -272,7 +282,10 @@ describe("handleImage", () => {
 
   it("a failing image write is ignored: the image still answers 200", async () => {
     const nboDir = await mkdtemp(join(tmpdir(), "serve-image-"));
-    await writeFile(join(nboDir, "manifest.json"), JSON.stringify({ images: { widths: [100], qualities: [75], localPatterns: [{ pathname: "^/[a-z]+\.png$" }] } }));
+    await writeFile(
+      join(nboDir, "manifest.json"),
+      JSON.stringify({ images: { widths: [100], qualities: [75], localPatterns: [{ pathname: "^/[a-z]+.png$" }] } }),
+    );
     const cfg = await loadImagesConfig(nboDir);
     let putTried = false;
     const resolveCache: Resolver = () => async (request: Request) => {
@@ -295,7 +308,10 @@ describe("handleImage", () => {
 
   it("an image's cache key starts with the build's content id", async () => {
     const nboDir = await mkdtemp(join(tmpdir(), "serve-image-"));
-    await writeFile(join(nboDir, "manifest.json"), JSON.stringify({ images: { widths: [100], qualities: [75], localPatterns: [{ pathname: "^/[a-z]+\.png$" }] } }));
+    await writeFile(
+      join(nboDir, "manifest.json"),
+      JSON.stringify({ images: { widths: [100], qualities: [75], localPatterns: [{ pathname: "^/[a-z]+.png$" }] } }),
+    );
     const cfg = await loadImagesConfig(nboDir);
     const fake = createFakeCacheService(createStore());
     const keys: string[] = [];
@@ -335,7 +351,8 @@ describe("handleImage", () => {
     const fake = createFakeCacheService(cacheStore);
     const puts: { revalidateSec?: number; expireSec?: number }[] = [];
     const resolveCache: Resolver = () => async (request: Request) => {
-      if (request.method === "PUT") puts.push((await request.clone().json()) as { revalidateSec?: number; expireSec?: number });
+      if (request.method === "PUT")
+        puts.push((await request.clone().json()) as { revalidateSec?: number; expireSec?: number });
       return fake(request);
     };
     const state = newTestImageServer(cfg!, resolveCache);

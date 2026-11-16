@@ -19,7 +19,11 @@ export function fileDigest(raw: Buffer): string {
 // files. Without an entry a file would sit outside the content id. Every
 // writer has written both since the first one (a79d445, 2026-10-22), so
 // stored builds keep validating. The caller already has the raw bytes.
-export function checkManifestDigests(manifestDoc: unknown, staticIndexRaw: Buffer | undefined, routesRaw: Buffer | undefined): Error[] {
+export function checkManifestDigests(
+  manifestDoc: unknown,
+  staticIndexRaw: Buffer | undefined,
+  routesRaw: Buffer | undefined,
+): Error[] {
   const errs: Error[] = [];
   const manifest = manifestDoc as { digests?: Record<string, unknown> } | null;
   const digests = manifest?.digests && typeof manifest.digests === "object" ? manifest.digests : {};
@@ -102,7 +106,9 @@ export function checkStaticFiles(dir: string, staticIndexDoc: unknown): { errors
     }
     const got = fileDigest(raw);
     if (got !== wantDigest) {
-      errors.push(new Error(`${urlPath} (${file}): digest mismatch: static.index.json says ${wantDigest}, actual is ${got}`));
+      errors.push(
+        new Error(`${urlPath} (${file}): digest mismatch: static.index.json says ${wantDigest}, actual is ${got}`),
+      );
     }
   }
   return { errors, referenced };

@@ -56,13 +56,16 @@ function decision(cfg: PrerenderConfig): Decision {
 function nextLike(seen: Request[], body = "page body"): Resolver {
   return () => async (req: Request) => {
     seen.push(req);
-    if (req.headers.get("if-none-match") === '"etag-1"') return new Response(null, { status: 304, headers: { etag: '"etag-1"' } });
+    if (req.headers.get("if-none-match") === '"etag-1"')
+      return new Response(null, { status: 304, headers: { etag: '"etag-1"' } });
     return new Response(body, { status: 200, headers: { etag: '"etag-1"', "content-type": "text/html" } });
   };
 }
 
 function conditional(url = "http://x/blog/hello"): Request {
-  return new Request(url, { headers: { "if-none-match": '"etag-1"', "if-modified-since": "Tue, 03 Nov 2026 10:00:00 GMT" } });
+  return new Request(url, {
+    headers: { "if-none-match": '"etag-1"', "if-modified-since": "Tue, 03 Nov 2026 10:00:00 GMT" },
+  });
 }
 
 function waitFor(cond: () => boolean, timeoutMs = 2000): Promise<void> {
@@ -153,7 +156,9 @@ describe("ISR render with a conditional request", () => {
     const cfg = cfgWith();
     const seen: Request[] = [];
     const state = stateWith(cfg, nextLike(seen));
-    const request = new Request("http://x/blog/hello", { headers: { "if-none-match": '"etag-1"', cookie: "__nbo_bypass=secret" } });
+    const request = new Request("http://x/blog/hello", {
+      headers: { "if-none-match": '"etag-1"', cookie: "__nbo_bypass=secret" },
+    });
 
     const res = await handlePrerender(state, request, decision(cfg));
 

@@ -16,9 +16,7 @@ import { startKubeSource } from "./kube-source.js";
 import { createRelayServer } from "./relay-server.js";
 
 export type EdgeMode =
-  | { mode: "dev" }
-  | { mode: "cluster"; namespace: string; drainToken: string }
-  | { mode: "relay"; token: string };
+  { mode: "dev" } | { mode: "cluster"; namespace: string; drainToken: string } | { mode: "relay"; token: string };
 
 function required(env: Record<string, string | undefined>, name: string): string {
   const v = env[name];
@@ -48,7 +46,11 @@ function splitHostPort(addr: string): { host?: string; port: number } {
 // cmd/control-plane's own final review landed on, applied here from the
 // start) — port of main's own addr/adminAddr resolution (main.go lines
 // 11-23).
-export function resolveEdgeAddrs(env: Record<string, string | undefined>): { dataPort: number; adminHost: string; adminPort: number } {
+export function resolveEdgeAddrs(env: Record<string, string | undefined>): {
+  dataPort: number;
+  adminHost: string;
+  adminPort: number;
+} {
   const dataAddr = env.NBO_EDGE_ADDR;
   const dataPort = dataAddr ? splitHostPort(dataAddr).port : 9443;
 
@@ -85,7 +87,9 @@ function portList(raw: string | undefined, name: string, count: number): number[
 }
 
 export function resolveClusterConfig(env: Record<string, string | undefined>): ClusterConfig {
-  const [httpPort, httpsPort, adminPort] = portList(env.NBO_EDGE_CLUSTER_PORTS, "NBO_EDGE_CLUSTER_PORTS", 3) ?? [8080, 8443, 9444];
+  const [httpPort, httpsPort, adminPort] = portList(env.NBO_EDGE_CLUSTER_PORTS, "NBO_EDGE_CLUSTER_PORTS", 3) ?? [
+    8080, 8443, 9444,
+  ];
   const poll = env.NBO_EDGE_KUBE_POLL_MS?.trim();
   return {
     apiBase: env.NBO_EDGE_KUBE_API?.trim() || "https://kubernetes.default.svc",
@@ -168,7 +172,9 @@ async function mainCluster(mode: { namespace: string; drainToken: string }): Pro
     adminPort: config.adminPort,
     intervalMs: config.intervalMs,
   });
-  console.log(`edge: cluster mode listening on :${ports.http} (http), :${ports.https} (https), :${ports.admin} (admin)`);
+  console.log(
+    `edge: cluster mode listening on :${ports.http} (http), :${ports.https} (https), :${ports.admin} (admin)`,
+  );
 }
 
 // resolveRelayUpstreamOverride reads NBO_EDGE_RELAY_UPSTREAM_OVERRIDE
@@ -186,7 +192,9 @@ function mainRelay(mode: { token: string }): void {
   const override = resolveRelayUpstreamOverride(process.env);
   const server = createRelayServer({
     token: mode.token,
-    ...(override ? { fetchUpstream: (_url: URL, req: Request) => proxyRequest(req, new URL(`http://${override}`)) } : {}),
+    ...(override
+      ? { fetchUpstream: (_url: URL, req: Request) => proxyRequest(req, new URL(`http://${override}`)) }
+      : {}),
     cert: readFileSync(required(process.env, "NBO_RELAY_TLS_CERT")),
     key: readFileSync(required(process.env, "NBO_RELAY_TLS_KEY")),
   });

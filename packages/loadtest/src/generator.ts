@@ -105,7 +105,14 @@ export function fireOne(signal: AbortSignal, url: string, host: string): Promise
 // Confirmed directly: queueing instead (this function's own original
 // shape) lets an unbounded backlog pile up behind one slow backend,
 // firing real requests for far longer than durationMs ever promised.
-export function generateLoad(signal: AbortSignal, url: string, host: string, requestsPerSec: number, concurrency: number, durationMs: number): Promise<LoadResponse[]> {
+export function generateLoad(
+  signal: AbortSignal,
+  url: string,
+  host: string,
+  requestsPerSec: number,
+  concurrency: number,
+  durationMs: number,
+): Promise<LoadResponse[]> {
   return new Promise((resolveAll) => {
     const deadline = Date.now() + durationMs;
     const responses: LoadResponse[] = [];
@@ -130,20 +137,25 @@ export function generateLoad(signal: AbortSignal, url: string, host: string, req
   });
 }
 
+// The ids the run gives its two backends. The edge names the backend that
+// answered by its id in x-nbo-edge-backend (never by its URL).
+export const K8S_BACKEND_ID = "loadtest-kubernetes";
+export const CLOUDRUN_BACKEND_ID = "loadtest-cloudrun";
+
 // aggregate counts responses into a PhaseResult. A response is a
 // failure if it errored or its status wasn't 200, regardless of any
 // backend marker it carries; k8sHits/cloudRunHits count only
-// non-failure responses attributed to the matching backend URL — port
+// non-failure responses attributed to the matching backend id — port
 // of aggregate (generator.go lines 100-119).
-export function aggregate(weights: Phase, responses: LoadResponse[], k8sBackendURL: string, cloudRunBackendURL: string): PhaseResult {
+export function aggregate(weights: Phase, responses: LoadResponse[]): PhaseResult {
   const result: PhaseResult = { weights, total: responses.length, failures: 0, k8sHits: 0, cloudRunHits: 0 };
   for (const r of responses) {
     if (r.err || r.statusCode !== 200) {
       result.failures++;
       continue;
     }
-    if (r.backend === k8sBackendURL) result.k8sHits++;
-    else if (r.backend === cloudRunBackendURL) result.cloudRunHits++;
+    if (r.backend === K8S_BACKEND_ID) result.k8sHits++;
+    else if (r.backend === CLOUDRUN_BACKEND_ID) result.cloudRunHits++;
   }
   return result;
 }

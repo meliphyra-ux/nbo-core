@@ -9,7 +9,12 @@ import { pathWith, repoRoot, runBash, withFakeTools } from "./helpers.mjs";
 
 const NGINX = "https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml";
 const CERT = "https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml";
-const clean = { NBO_KIND_CONFIG: "", NBO_INGRESS_NGINX_MANIFEST: "", NBO_CERT_MANAGER_MANIFEST: "", NBO_KIND_CLUSTER: "" };
+const clean = {
+  NBO_KIND_CONFIG: "",
+  NBO_INGRESS_NGINX_MANIFEST: "",
+  NBO_CERT_MANAGER_MANIFEST: "",
+  NBO_KIND_CLUSTER: "",
+};
 
 function run(env) {
   const t = withFakeTools(["kind", "kubectl"], {
@@ -77,7 +82,8 @@ test("the cluster is nbo-local by default and NBO_KIND_CLUSTER when set", () => 
 // ingress-nginx controller became ready only after 3 to 4 minutes, past the
 // old fixed 180s. The pod waits default to 600s and NBO_BOOTSTRAP_WAIT_TIMEOUT
 // overrides them.
-const podWaits = (log) => log.filter((a) => a[0] === "wait" && a.includes("pod")).map((a) => a.find((x) => x.startsWith("--timeout=")));
+const podWaits = (log) =>
+  log.filter((a) => a[0] === "wait" && a.includes("pod")).map((a) => a.find((x) => x.startsWith("--timeout=")));
 
 test("pod waits allow 600s by default", () => {
   const { r, log } = run({ NBO_BOOTSTRAP_WAIT_TIMEOUT: "" });

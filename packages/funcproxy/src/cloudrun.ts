@@ -108,7 +108,8 @@ export function createCloudRunURLs(urls: Record<string, string>, fetchToken: Ide
     }
     const token = cached;
 
-    return (request: Request): Promise<Response> => proxyWithAuthRetry(request, target, token, target.origin, fetchToken);
+    return (request: Request): Promise<Response> =>
+      proxyWithAuthRetry(request, target, token, target.origin, fetchToken);
   };
 }
 
@@ -123,7 +124,13 @@ export function createCloudRunURLs(urls: Record<string, string>, fetchToken: Ide
 // — port of isSafeRetryMethod/roundTripWithAuthRetry (cloudrun.go lines
 // 135-211). A thrown attempt means no response headers arrived, so no
 // bytes of it have gone anywhere.
-async function proxyWithAuthRetry(request: Request, target: URL, token: CachedToken, audience: string, fetchToken: IdentityTokenFetcher): Promise<Response> {
+async function proxyWithAuthRetry(
+  request: Request,
+  target: URL,
+  token: CachedToken,
+  audience: string,
+  fetchToken: IdentityTokenFetcher,
+): Promise<Response> {
   const hasBody = request.method !== "GET" && request.method !== "HEAD";
   const bodyBuffer = hasBody ? await request.arrayBuffer() : null;
   const backoffs = cloudRunConfig.authRetryBackoffMs;
@@ -138,7 +145,10 @@ async function proxyWithAuthRetry(request: Request, target: URL, token: CachedTo
     }
 
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), resume ? cloudRunConfig.resumeHeaderTimeoutMs : cloudRunConfig.responseHeaderTimeoutMs);
+    const timer = setTimeout(
+      () => controller.abort(),
+      resume ? cloudRunConfig.resumeHeaderTimeoutMs : cloudRunConfig.responseHeaderTimeoutMs,
+    );
     let response: Response | undefined;
     let threwError: unknown;
     // Overwriting Authorization below is Cloud Run's own requirement
@@ -164,7 +174,10 @@ async function proxyWithAuthRetry(request: Request, target: URL, token: CachedTo
 
     const rejected = response !== undefined && (response.status === 401 || response.status === 403);
     const retryableStatus = rejected && (request.method === "GET" || request.method === "HEAD" || resume);
-    const retryableError = threwError !== undefined && !request.signal.aborted && (isSafeRetryMethod(request.method) || (resume && attempt === 0));
+    const retryableError =
+      threwError !== undefined &&
+      !request.signal.aborted &&
+      (isSafeRetryMethod(request.method) || (resume && attempt === 0));
     const canRetry = (retryableStatus || retryableError) && attempt < backoffs.length;
 
     if (!canRetry) {

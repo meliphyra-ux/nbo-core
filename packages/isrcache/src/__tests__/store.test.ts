@@ -102,7 +102,8 @@ describe("Store byte limit", () => {
 describe("Store sizing and validation", () => {
   it("counts key, tags and path against the budget", () => {
     const store = createStore({ maxBytes: 1000 });
-    for (const k of ["a", "b", "c", "d", "e"]) store.set(k, { body: new Uint8Array(1), tags: ["x".repeat(100)], path: "p".repeat(100) }, 60, 600);
+    for (const k of ["a", "b", "c", "d", "e"])
+      store.set(k, { body: new Uint8Array(1), tags: ["x".repeat(100)], path: "p".repeat(100) }, 60, 600);
     expect(store.get("a")).toBeUndefined();
     expect(store.get("e")).toBeDefined();
   });

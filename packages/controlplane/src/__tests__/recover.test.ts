@@ -5,7 +5,7 @@ import { describe, it, expect } from "vitest";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { createStore } from "../store.js";
+import { createStore } from "../store/store.js";
 import { recoverInterruptedWork } from "../v2.js";
 
 describe("recoverInterruptedWork", () => {
@@ -22,8 +22,15 @@ describe("recoverInterruptedWork", () => {
 
     recoverInterruptedWork(store);
 
-    expect(store.getProject(p.id)).toMatchObject({ setupStatus: "needs-setup", setupError: "interrupted: the control-plane restarted during setup — retry it" });
-    expect(store.getTransfer(t.id)).toMatchObject({ status: "failed", weight: 10, error: "interrupted: the control-plane restarted during this transfer" });
+    expect(store.getProject(p.id)).toMatchObject({
+      setupStatus: "needs-setup",
+      setupError: "interrupted: the control-plane restarted during setup — retry it",
+    });
+    expect(store.getTransfer(t.id)).toMatchObject({
+      status: "failed",
+      weight: 10,
+      error: "interrupted: the control-plane restarted during this transfer",
+    });
     expect(store.getBuild(b.id).status).toBe("failed");
     store.close();
   });

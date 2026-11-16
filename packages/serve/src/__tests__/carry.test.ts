@@ -29,13 +29,22 @@ async function buildB(): Promise<string> {
     join(dir, "routes.json"),
     JSON.stringify({
       version: 1,
-      beforeFiles: [{ id: "go", match: { path: "^/assets/old\\.js$" }, action: { type: "redirect", location: "/assets/shared.js", status: 308 } }],
+      beforeFiles: [
+        {
+          id: "go",
+          match: { path: "^/assets/old\\.js$" },
+          action: { type: "redirect", location: "/assets/shared.js", status: 308 },
+        },
+      ],
     }),
   );
   return dir;
 }
 
-async function buildCarry(files: Record<string, { file: string; contentType: string }>, contents: Record<string, string> = {}): Promise<string> {
+async function buildCarry(
+  files: Record<string, { file: string; contentType: string }>,
+  contents: Record<string, string> = {},
+): Promise<string> {
   const dir = await mkdtemp(join(tmpdir(), "carry-a-"));
   await mkdir(join(dir, "static"), { recursive: true });
   for (const [name, body] of Object.entries(contents)) await writeFile(join(dir, "static", name), body);

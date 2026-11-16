@@ -49,9 +49,14 @@ describe("withCarry cleanup", () => {
     const prev = await nboDir();
     const next = await nboDir();
     await expect(
-      withCarry(prev, next, () => {}, async () => {
-        throw new Error("image build failed");
-      }),
+      withCarry(
+        prev,
+        next,
+        () => {},
+        async () => {
+          throw new Error("image build failed");
+        },
+      ),
     ).rejects.toThrow("image build failed");
     expect(state.rmCalls.some((p) => p.includes("nbo-carry-"))).toBe(true);
   });
@@ -60,7 +65,14 @@ describe("withCarry cleanup", () => {
     state.rmError = Object.assign(new Error("EROFS: read-only file system"), { code: "EROFS" });
     const prev = await nboDir();
     const next = await nboDir();
-    await expect(withCarry(prev, next, () => {}, async () => "built")).resolves.toBe("built");
+    await expect(
+      withCarry(
+        prev,
+        next,
+        () => {},
+        async () => "built",
+      ),
+    ).resolves.toBe("built");
     expect(warn).toHaveBeenCalledWith(expect.stringContaining("could not remove"));
   });
 });

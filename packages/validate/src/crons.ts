@@ -8,7 +8,7 @@ interface CronEntry {
 }
 
 // The five fields of a schedule with their ranges, in order, as
-// packages/controlplane/src/cron.ts reads them.
+// packages/controlplane/src/deploys/cron.ts reads them.
 const FIELDS = [
   { name: "minute", min: 0, max: 59 },
   { name: "hour", min: 0, max: 23 },
@@ -31,7 +31,8 @@ export function scheduleProblem(schedule: string): string | undefined {
     if (raw === "*") continue;
     if (raw.startsWith("*/")) {
       const step = raw.slice(2);
-      if (!/^\d+$/.test(step) || Number(step) < 1) return `${name} field "${raw}": the step must be a whole number of at least 1`;
+      if (!/^\d+$/.test(step) || Number(step) < 1)
+        return `${name} field "${raw}": the step must be a whole number of at least 1`;
       continue;
     }
     for (const part of raw.split(",")) {
@@ -74,7 +75,9 @@ export function checkCrons(manifestDoc: unknown): Error[] {
 
     const fn = cron.target?.function ?? "";
     if (!functionNames.has(fn)) {
-      errs.push(new Error(`manifest.json: crons: cron "${id}": targets function "${fn}", which is not declared in functions`));
+      errs.push(
+        new Error(`manifest.json: crons: cron "${id}": targets function "${fn}", which is not declared in functions`),
+      );
     }
   }
   return errs;

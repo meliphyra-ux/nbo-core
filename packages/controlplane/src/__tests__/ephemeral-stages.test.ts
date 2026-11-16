@@ -19,7 +19,8 @@ async function dev(): Promise<Harness> {
   return h;
 }
 
-const printVar = (name: string) => (process.platform === "win32" ? `echo VAL_${name}=%${name}%` : `echo VAL_${name}=$${name}`);
+const printVar = (name: string) =>
+  process.platform === "win32" ? `echo VAL_${name}=%${name}%` : `echo VAL_${name}=$${name}`;
 
 async function shop(h: Harness): Promise<string> {
   return deployedProject(h, {
@@ -28,7 +29,14 @@ async function shop(h: Harness): Promise<string> {
   });
 }
 
-const ephemeral = (body: Record<string, unknown> = {}) => ({ kind: "ephemeral", branch: "feature/x", hostLabel: "feat-x", clouds: [{ target: "kubernetes" }], ttlHours: 24, ...body });
+const ephemeral = (body: Record<string, unknown> = {}) => ({
+  kind: "ephemeral",
+  branch: "feature/x",
+  hostLabel: "feat-x",
+  clouds: [{ target: "kubernetes" }],
+  ttlHours: 24,
+  ...body,
+});
 
 describe("POST /projects/{id}/stages with kind ephemeral", () => {
   it("creates a pv- stage on <hostLabel>--<project> that expires ttlHours after now", async () => {
@@ -50,7 +58,11 @@ describe("POST /projects/{id}/stages with kind ephemeral", () => {
     expect(stage).toMatchObject({ kind: "ephemeral", host: "feat-x--shop.127.0.0.1.sslip.io", label: "pr #12" });
     // Listed with the project's environments, with its expiry.
     const list = await h.call("GET", `/projects/${id}/stages`);
-    expect(list.json.find((s: { id: string }) => s.id === stage.id)).toMatchObject({ kind: "ephemeral", expiresAt: stage.expiresAt, removal: "" });
+    expect(list.json.find((s: { id: string }) => s.id === stage.id)).toMatchObject({
+      kind: "ephemeral",
+      expiresAt: stage.expiresAt,
+      removal: "",
+    });
   });
 
   it("takes an exact expiresAt instead", async () => {
@@ -82,7 +94,8 @@ describe("POST /projects/{id}/stages with kind ephemeral", () => {
       ephemeral({ clouds: [] }),
       ephemeral({ clouds: [{ target: "kubernetes" }, { target: "cloudrun", mode: "auto" }] }),
     ];
-    for (const body of bad) expect((await h.call("POST", `/projects/${id}/stages`, body)).status, JSON.stringify(body)).toBe(400);
+    for (const body of bad)
+      expect((await h.call("POST", `/projects/${id}/stages`, body)).status, JSON.stringify(body)).toBe(400);
     expect(h.store.listStages(id, { includeEphemeral: true })).toHaveLength(3);
   });
 
@@ -94,8 +107,20 @@ describe("POST /projects/{id}/stages with kind ephemeral", () => {
     expect(again.status).toBe(409);
     expect(again.json.error).toBe("that address is taken");
     // A custom environment's address too.
-    expect((await h.call("POST", `/projects/${id}/stages`, { name: "staging", branch: "staging", clouds: [{ target: "kubernetes" }] })).status).toBe(201);
-    const custom = await h.call("POST", `/projects/${id}/stages`, ephemeral({ branch: "feature/z", hostLabel: "staging" }));
+    expect(
+      (
+        await h.call("POST", `/projects/${id}/stages`, {
+          name: "staging",
+          branch: "staging",
+          clouds: [{ target: "kubernetes" }],
+        })
+      ).status,
+    ).toBe(201);
+    const custom = await h.call(
+      "POST",
+      `/projects/${id}/stages`,
+      ephemeral({ branch: "feature/z", hostLabel: "staging" }),
+    );
     expect(custom.status).toBe(409);
     expect(custom.json.error).toBe("that address is taken");
   });
@@ -112,7 +137,13 @@ describe("POST /projects/{id}/stages with kind ephemeral", () => {
     const payload = JSON.stringify({ ref: "refs/heads/feature/x", before: "0".repeat(40), after: sha });
     const secret = h.store.ensureWebhookSecret(id);
     const signature = `sha256=${createHmac("sha256", secret).update(payload).digest("hex")}`;
-    const res = await h.mux(new Request(`http://cp/projects/${id}/webhooks/github`, { method: "POST", body: payload, headers: { "x-hub-signature-256": signature, "x-github-event": "push" } }));
+    const res = await h.mux(
+      new Request(`http://cp/projects/${id}/webhooks/github`, {
+        method: "POST",
+        body: payload,
+        headers: { "x-hub-signature-256": signature, "x-github-event": "push" },
+      }),
+    );
     expect(res.status).toBe(202);
     await h.v2.queue.idle(id);
     const build = h.store.listBuilds(id).find((b) => b.stageId === stageId)!;
@@ -135,7 +166,8 @@ describe("POST /projects/{id}/stages with kind ephemeral", () => {
 
     const del = await h.call("DELETE", `/projects/${id}/stages/${stageId}`);
     expect(del.status).toBe(202);
-    for (let i = 0; i < 50 && h.store.getStage(stageId).removal !== "removed"; i++) await new Promise((r) => setTimeout(r, 20));
+    for (let i = 0; i < 50 && h.store.getStage(stageId).removal !== "removed"; i++)
+      await new Promise((r) => setTimeout(r, 20));
     expect(h.store.getStage(stageId).removal).toBe("removed");
     expect(h.teardown.removed.map((t) => t.scope)).toEqual(["app"]);
     // Production keeps its cloud.
@@ -151,11 +183,15 @@ describe("POST /projects/{id}/stages with kind ephemeral", () => {
     const created = await h.call("POST", `/projects/${id}/stages`, ephemeral());
     const stageId = created.json.id as string;
     await h.call("DELETE", `/projects/${id}/stages/${stageId}`);
-    for (let i = 0; i < 50 && h.store.getStage(stageId).removal !== "removed"; i++) await new Promise((r) => setTimeout(r, 20));
+    for (let i = 0; i < 50 && h.store.getStage(stageId).removal !== "removed"; i++)
+      await new Promise((r) => setTimeout(r, 20));
     // Removed at the harness's clock.
     expect(h.store.getStage(stageId).removedAt).toBe(t0.toISOString());
-    expect((await h.call("GET", `/projects/${id}/stages`)).json.find((s: { id: string }) => s.id === stageId).removedAt).toBe(t0.toISOString());
-    const ids = async (query = "") => ((await h.call("GET", `/projects/${id}/stages${query}`)).json as { id: string }[]).map((s) => s.id);
+    expect(
+      (await h.call("GET", `/projects/${id}/stages`)).json.find((s: { id: string }) => s.id === stageId).removedAt,
+    ).toBe(t0.toISOString());
+    const ids = async (query = "") =>
+      ((await h.call("GET", `/projects/${id}/stages${query}`)).json as { id: string }[]).map((s) => s.id);
     expect(await ids()).toContain(stageId);
 
     h.store.updateStage(stageId, { removedAt: new Date(t0.getTime() - 7 * 24 * HOUR + HOUR).toISOString() });

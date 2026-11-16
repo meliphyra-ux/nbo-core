@@ -47,7 +47,9 @@ function readWebVitals(): string {
 // is not counted twice. Every step is guarded: it
 // must never throw into the page.
 export function loaderSource(sampleRate: number): string {
-  const patterns = ID_PATTERNS.map((p) => `new RegExp(${JSON.stringify(p.source)},${JSON.stringify(p.flags)})`).join(",");
+  const patterns = ID_PATTERNS.map((p) => `new RegExp(${JSON.stringify(p.source)},${JSON.stringify(p.flags)})`).join(
+    ",",
+  );
   return `(function(){try{
 var w=typeof window!=="undefined"?window:null;if(w){if(w.__nboInsights)return;w.__nboInsights=1}
 var s=document.currentScript,ds=(s&&s.dataset)||{};
@@ -94,12 +96,19 @@ export function scriptResponse(sampleRate: number): Response {
       body = buildScript(sampleRate);
     } catch (err) {
       console.error(`edge: speed insights script unavailable: ${err instanceof Error ? err.message : String(err)}`);
-      return new Response("", { status: 503, headers: { "content-type": "text/javascript; charset=utf-8", "cache-control": "no-store" } });
+      return new Response("", {
+        status: 503,
+        headers: { "content-type": "text/javascript; charset=utf-8", "cache-control": "no-store" },
+      });
     }
     cache.set(sampleRate, body);
   }
   return new Response(body, {
     status: 200,
-    headers: { "content-type": "text/javascript; charset=utf-8", "cache-control": "public, max-age=3600", "x-content-type-options": "nosniff" },
+    headers: {
+      "content-type": "text/javascript; charset=utf-8",
+      "cache-control": "public, max-age=3600",
+      "x-content-type-options": "nosniff",
+    },
   });
 }

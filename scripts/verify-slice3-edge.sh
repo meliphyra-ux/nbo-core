@@ -73,7 +73,7 @@ done
 
 set_weights() {
   code=$(curl -s -o /dev/null -w '%{http_code}' -X PUT "http://$ADMIN/targets/$TEST_HOST" -d \
-    "{\"backends\":[{\"url\":\"$K8S_URL\",\"weight\":$1,\"insecureSkipVerify\":true},{\"url\":\"$CLOUDRUN_URL\",\"weight\":$2}]}")
+    "{\"backends\":[{\"id\":\"verify-kubernetes\",\"url\":\"$K8S_URL\",\"weight\":$1,\"insecureSkipVerify\":true},{\"id\":\"verify-cloudrun\",\"url\":\"$CLOUDRUN_URL\",\"weight\":$2}]}")
   if [ "$code" != "204" ]; then
     echo "expected 204 setting weights k8s=$1 cloudrun=$2, got $code — a silently-rejected PUT would leave the previous split in place" >&2
     exit 1
@@ -81,8 +81,9 @@ set_weights() {
 }
 
 # send_requests N — fires N requests and prints "failures k8s_hits cloudrun_hits",
-# using the edge layer's own X-Nbo-Edge-Backend response header to prove
-# which backend actually served each one, not just that some backend did.
+# using the edge layer's own X-Nbo-Edge-Backend response header (the
+# backend's id, set in set_weights) to prove which backend actually served
+# each one, not just that some backend did.
 send_requests() {
   local n="$1" failures=0 k8s_hits=0 cr_hits=0
   for i in $(seq 1 "$n"); do
@@ -94,8 +95,8 @@ send_requests() {
       echo "  request $i: got $code" >&2
     fi
     case "$backend" in
-    "$K8S_URL") k8s_hits=$((k8s_hits + 1)) ;;
-    "$CLOUDRUN_URL") cr_hits=$((cr_hits + 1)) ;;
+    verify-kubernetes) k8s_hits=$((k8s_hits + 1)) ;;
+    verify-cloudrun) cr_hits=$((cr_hits + 1)) ;;
     esac
   done
   echo "$failures $k8s_hits $cr_hits"

@@ -10,7 +10,11 @@ describe("parseDeployArgs", () => {
   });
 
   it("parses --app and --target regardless of order", () => {
-    expect(parseDeployArgs(["dir", "--target", "cloudrun", "--app", "myapp"])).toEqual({ dir: "dir", appName: "myapp", target: "cloudrun" });
+    expect(parseDeployArgs(["dir", "--target", "cloudrun", "--app", "myapp"])).toEqual({
+      dir: "dir",
+      appName: "myapp",
+      target: "cloudrun",
+    });
   });
 });
 

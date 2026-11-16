@@ -58,7 +58,9 @@ describe("createCloudRunURLs", () => {
     });
 
     const resolve = createCloudRunURLs({ ssr: backendURL }, fixedToken("secret-token"));
-    await resolve("ssr")(new Request("http://example.com/x", { headers: { authorization: "Bearer cron-hmac-signature" } }));
+    await resolve("ssr")(
+      new Request("http://example.com/x", { headers: { authorization: "Bearer cron-hmac-signature" } }),
+    );
 
     expect(gotForwarded).toBe("Bearer cron-hmac-signature");
   });
@@ -243,7 +245,11 @@ describe("createCloudRunURLs", () => {
 
     const resolve = createCloudRunURLs({ ssr: backendURL }, fetchToken);
     const handler = resolve("ssr");
-    await Promise.all([handler(new Request(`${backendURL}/a`)), handler(new Request(`${backendURL}/b`)), handler(new Request(`${backendURL}/c`))]);
+    await Promise.all([
+      handler(new Request(`${backendURL}/a`)),
+      handler(new Request(`${backendURL}/b`)),
+      handler(new Request(`${backendURL}/c`)),
+    ]);
 
     expect(maxConcurrent).toBe(1);
   });
@@ -399,7 +405,10 @@ describe("createCloudRunURLs", () => {
           else res.end();
         });
         let fetched = 0;
-        const tokens: IdentityTokenFetcher = async () => ({ token: `tok-${++fetched}`, expiresAt: new Date(Date.now() + 3600_000) });
+        const tokens: IdentityTokenFetcher = async () => ({
+          token: `tok-${++fetched}`,
+          expiresAt: new Date(Date.now() + 3600_000),
+        });
         const resolve = createCloudRunURLs({ ssr: backendURL }, tokens);
         const post = () => resolve("ssr")(new Request("http://example.com/x", { method: "POST", body: "payload" }));
         expect((await post()).status).toBe(401);
@@ -446,7 +455,9 @@ describe("createCloudRunURLs", () => {
             });
           });
           const resolve = createCloudRunURLs({ ssr: backendURL }, fixedToken());
-          const response = await resolve("ssr")(new Request("http://example.com/x", { method: "POST", headers: { "next-resume": "1" }, body: "state" }));
+          const response = await resolve("ssr")(
+            new Request("http://example.com/x", { method: "POST", headers: { "next-resume": "1" }, body: "state" }),
+          );
           expect(bodies).toEqual(["state", "state", "state"]);
           expect(response.status).toBe(200);
         }));

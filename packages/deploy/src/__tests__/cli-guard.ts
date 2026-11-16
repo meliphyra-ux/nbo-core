@@ -64,6 +64,7 @@ export const CLOUDRUN_CLI_EXPORTS = [
 
 export const CLOUDRUN_PURE_EXPORTS = [
   "capabilities",
+  "childEnv",
   "buildDeployArgs",
   "contentIDLabel",
   "isServiceNotFound",
@@ -82,7 +83,11 @@ export class UnstubbedCLIError extends Error {}
 
 // guardCLI returns the module with every named CLI export replaced by a
 // function that throws; the caller's own stubs, spread after it, win.
-export function guardCLI<M extends Record<string, unknown>>(original: M, adapter: string, cliExports: readonly string[]): M {
+export function guardCLI<M extends Record<string, unknown>>(
+  original: M,
+  adapter: string,
+  cliExports: readonly string[],
+): M {
   const guarded: Record<string, unknown> = { ...original };
   for (const name of cliExports) {
     guarded[name] = () => {

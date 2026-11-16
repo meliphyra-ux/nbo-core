@@ -78,7 +78,10 @@ describe("metadataServerIdentityToken", () => {
       const resolve = createCloudRunURLs({ ssr: `http://127.0.0.1:${port}` }, metadataServerIdentityToken);
       const handler = resolve("ssr");
       const start = Date.now();
-      const [r1, r2] = await Promise.all([handler(new Request("http://example.com/a")), handler(new Request("http://example.com/b"))]);
+      const [r1, r2] = await Promise.all([
+        handler(new Request("http://example.com/a")),
+        handler(new Request("http://example.com/b")),
+      ]);
       expect(Date.now() - start).toBeLessThan(3000);
       expect(r1.status).toBeGreaterThanOrEqual(500);
       expect(r2.status).toBeGreaterThanOrEqual(500);

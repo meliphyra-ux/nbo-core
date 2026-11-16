@@ -85,21 +85,33 @@ export function validateReport(rawDir: string, options: ValidateOptions = {}): {
   // The remaining checks still run.
   errs = errs.concat(checkSpecVersion(manifest.doc));
   if (!compiledSchemas.manifest(manifest.doc)) {
-    errs.push(new Error(`manifest.json: schema validation failed: ${compiledSchemas.manifest.errors ? JSON.stringify(compiledSchemas.manifest.errors) : ""}`));
+    errs.push(
+      new Error(
+        `manifest.json: schema validation failed: ${compiledSchemas.manifest.errors ? JSON.stringify(compiledSchemas.manifest.errors) : ""}`,
+      ),
+    );
   }
 
   const staticIndex = readJSON(join(dir, "static.index.json"));
   if (isReadError(staticIndex)) {
     errs.push(staticIndex.error);
   } else if (!compiledSchemas.staticIndex(staticIndex.doc)) {
-    errs.push(new Error(`static.index.json: schema validation failed: ${compiledSchemas.staticIndex.errors ? JSON.stringify(compiledSchemas.staticIndex.errors) : ""}`));
+    errs.push(
+      new Error(
+        `static.index.json: schema validation failed: ${compiledSchemas.staticIndex.errors ? JSON.stringify(compiledSchemas.staticIndex.errors) : ""}`,
+      ),
+    );
   }
 
   const routes = readJSON(join(dir, "routes.json"));
   if (isReadError(routes)) {
     errs.push(routes.error);
   } else if (!compiledSchemas.routes(routes.doc)) {
-    errs.push(new Error(`routes.json: schema validation failed: ${compiledSchemas.routes.errors ? JSON.stringify(compiledSchemas.routes.errors) : ""}`));
+    errs.push(
+      new Error(
+        `routes.json: schema validation failed: ${compiledSchemas.routes.errors ? JSON.stringify(compiledSchemas.routes.errors) : ""}`,
+      ),
+    );
   }
 
   const staticIndexOk = !isReadError(staticIndex) ? staticIndex : undefined;
@@ -137,7 +149,12 @@ export function validateReport(rawDir: string, options: ValidateOptions = {}): {
   }
 
   errs = errs.concat(
-    checkReferences({ manifest: manifest.doc, routes: routesOk?.doc, staticIndex: staticIndexOk?.doc, prerender: prerender.doc }),
+    checkReferences({
+      manifest: manifest.doc,
+      routes: routesOk?.doc,
+      staticIndex: staticIndexOk?.doc,
+      prerender: prerender.doc,
+    }),
   );
 
   errs = errs.concat(checkCrons(manifest.doc));

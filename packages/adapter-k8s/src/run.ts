@@ -3,7 +3,11 @@
 
 import { spawn } from "node:child_process";
 
-export type CommandRunner = (cmd: string, args: string[], opts?: { env?: Record<string, string>; input?: string }) => Promise<string>;
+export type CommandRunner = (
+  cmd: string,
+  args: string[],
+  opts?: { env?: Record<string, string>; input?: string },
+) => Promise<string>;
 
 // ToolContext matches @nbo/deploy's ToolContext structurally (this
 // package sits below @nbo/deploy, so it cannot import it), plus an
@@ -34,18 +38,17 @@ export function runWith(ctx: ToolContext | undefined, cmd: string, args: string[
   return runner(cmd, args, Object.keys(opts).length ? opts : undefined);
 }
 
-// run shells out to cmd with args, rejecting with the combined
-// stdout+stderr on a non-zero exit — matching Go's own
-// `fmt.Errorf("... failed: %w\n%s", err, out)` shape wherever this
-// whole adapter's Go source calls exec.Command(...).CombinedOutput().
-// Uses spawn (not execFile) because apply's own `kubectl apply -f -`
-// needs to write the manifest YAML to the child's stdin.
+// This adapter keeps its own childEnv (the shared one lives in
+// @nbo/adapter-cloudrun) so it takes no dependency on that package.
 // childEnv builds a child's environment from the host's plus overrides.
 // A connected call (one that brings its own CLOUDSDK_CONFIG) must not
 // inherit the host's gcloud overrides (CLOUDSDK_* properties or
 // GOOGLE_APPLICATION_CREDENTIALS), which would beat the connection's own
 // credentials or project. Calls without overrides inherit as before.
-export function childEnv(base: NodeJS.ProcessEnv, overrides: Record<string, string> | undefined): NodeJS.ProcessEnv | undefined {
+export function childEnv(
+  base: NodeJS.ProcessEnv,
+  overrides: Record<string, string> | undefined,
+): NodeJS.ProcessEnv | undefined {
   if (!overrides) return undefined;
   const env: NodeJS.ProcessEnv = { ...base };
   if (overrides.CLOUDSDK_CONFIG !== undefined) {
@@ -57,7 +60,13 @@ export function childEnv(base: NodeJS.ProcessEnv, overrides: Record<string, stri
   return { ...env, ...overrides };
 }
 
-export function run(cmd: string, args: string[], options?: { input?: string; env?: Record<string, string> }): Promise<string> {
+// run shells out to cmd with args, rejecting with the combined stdout+stderr on a non-zero exit.
+// Uses spawn (not execFile) because apply's own `kubectl apply -f -` writes the manifest to stdin.
+export function run(
+  cmd: string,
+  args: string[],
+  options?: { input?: string; env?: Record<string, string> },
+): Promise<string> {
   return new Promise((resolve, reject) => {
     const env = childEnv(process.env, options?.env);
     const child = spawn(cmd, args, env ? { env } : undefined);

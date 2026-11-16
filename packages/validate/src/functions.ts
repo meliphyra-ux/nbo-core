@@ -46,7 +46,12 @@ export function functionNameError(name: string): Error | undefined {
 // index lists against its actual digest on disk — port of validate.go's
 // own validateFunction (lines 126-199). Problems a build stored before
 // spec 1.0 final may have (an unlisted root dispatch.json) go to warnings.
-export function validateFunction(dir: string, name: string, manifestDigests: Record<string, unknown>, warnings: Error[] = []): Error[] {
+export function validateFunction(
+  dir: string,
+  name: string,
+  manifestDigests: Record<string, unknown>,
+  warnings: Error[] = [],
+): Error[] {
   const nameErr = functionNameError(name);
   if (nameErr) return [nameErr];
   const errs: Error[] = [];
@@ -81,7 +86,9 @@ export function validateFunction(dir: string, name: string, manifestDigests: Rec
   } else if (typeof wantFnDigest === "string") {
     const got = fileDigest(fnRaw);
     if (got !== wantFnDigest) {
-      errs.push(new Error(`functions/${name}/function.json: digest mismatch: manifest says ${wantFnDigest}, actual is ${got}`));
+      errs.push(
+        new Error(`functions/${name}/function.json: digest mismatch: manifest says ${wantFnDigest}, actual is ${got}`),
+      );
     }
   }
 
@@ -113,7 +120,11 @@ export function validateFunction(dir: string, name: string, manifestDigests: Rec
   errs.push(...checkCanonical(`functions/${name}/bundle/bundle.index.json`, bundleIndexRaw));
   const gotArtifactDigest = fileDigest(bundleIndexRaw);
   if (gotArtifactDigest !== wantArtifactDigest) {
-    errs.push(new Error(`functions/${name}/bundle/bundle.index.json: digest mismatch: function.json says ${wantArtifactDigest}, actual is ${gotArtifactDigest}`));
+    errs.push(
+      new Error(
+        `functions/${name}/bundle/bundle.index.json: digest mismatch: function.json says ${wantArtifactDigest}, actual is ${gotArtifactDigest}`,
+      ),
+    );
   }
 
   const files = (bundleIndexDoc as { files?: Record<string, BundleIndexFileEntry | null> } | null)?.files;
@@ -135,7 +146,11 @@ export function validateFunction(dir: string, name: string, manifestDigests: Rec
       }
       const got = fileDigest(raw);
       if (got !== wantDigest) {
-        errs.push(new Error(`functions/${name}/bundle/${relPath}: digest mismatch: bundle.index.json says ${wantDigest}, actual is ${got}`));
+        errs.push(
+          new Error(
+            `functions/${name}/bundle/${relPath}: digest mismatch: bundle.index.json says ${wantDigest}, actual is ${got}`,
+          ),
+        );
       }
     }
   }
@@ -157,7 +172,11 @@ export function validateFunction(dir: string, name: string, manifestDigests: Rec
 // allowance is an unlisted dispatch.json at the bundle root, which
 // builds made before 1.0 final wrote after computing the index: it is a
 // warning, so stored builds keep validating and --strict refuses it.
-export function unlistedBundleFiles(dir: string, name: string, listed: Set<string>): { errors: Error[]; warnings: Error[] } {
+export function unlistedBundleFiles(
+  dir: string,
+  name: string,
+  listed: Set<string>,
+): { errors: Error[]; warnings: Error[] } {
   const errs: Error[] = [];
   const warnings: Error[] = [];
   const bundleDir = join(dir, "functions", name, "bundle");
@@ -181,7 +200,9 @@ export function unlistedBundleFiles(dir: string, name: string, listed: Set<strin
       if (rel === "bundle.index.json" || listed.has(rel)) continue;
       if (rel === "dispatch.json") {
         warnings.push(
-          new Error(`functions/${name}/bundle/dispatch.json: not listed in bundle.index.json (accepted only for builds made before spec 1.0 final)`),
+          new Error(
+            `functions/${name}/bundle/dispatch.json: not listed in bundle.index.json (accepted only for builds made before spec 1.0 final)`,
+          ),
         );
         continue;
       }

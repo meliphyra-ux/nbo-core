@@ -4,6 +4,7 @@
 package provider
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -149,4 +150,17 @@ func TestReservedVariableNamesFailAtPlanTime(t *testing.T) {
 	wantError(t, h.validate(envRes, map[string]any{"name": string(long), "value": "1"}), "256")
 	wantNoError(t, h.validate(envRes, map[string]any{"name": "NBOX", "value": "1"}))
 	wantNoError(t, h.validate(envRes, map[string]any{"name": unknown, "value": "1"}))
+}
+
+func TestSetupOutcomeWaitingForKey(t *testing.T) {
+	s := &client.ProjectSummary{}
+	s.Project.SetupStatus = client.SetupWaitingForKey
+	s.Project.SetupError = "Permission denied (publickey)"
+	done, err := setupOutcome(s)
+	if !done {
+		t.Fatal("waiting-for-key must end the wait")
+	}
+	if err == nil || !strings.Contains(err.Error(), "deploy key") || !strings.Contains(err.Error(), "Permission denied (publickey)") {
+		t.Fatalf("err = %v", err)
+	}
 }

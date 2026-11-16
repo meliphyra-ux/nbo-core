@@ -10,7 +10,14 @@
 // the parity proof (see docs/adr/0005-edge-in-rust.md).
 import { spawn, type ChildProcess } from "node:child_process";
 import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { createServer as createHttp, request as httpRequest, type IncomingHttpHeaders, type IncomingMessage, type Server, type ServerResponse } from "node:http";
+import {
+  createServer as createHttp,
+  request as httpRequest,
+  type IncomingHttpHeaders,
+  type IncomingMessage,
+  type Server,
+  type ServerResponse,
+} from "node:http";
 import { createServer as createHttps, request as httpsRequest } from "node:https";
 import { connect as netConnect, createServer as createNet, type AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
@@ -122,7 +129,10 @@ export async function startEdge(opts: EdgeOptions): Promise<RunningEdge> {
   const bin = edgeBin();
   // A missing binary fails the suite: the parity proof must never pass
   // green having run nothing.
-  if (!existsSync(bin)) throw new Error(`edge binary ${bin} does not exist (build with \`pnpm --filter @nbo/edge... build\` or set NBO_EDGE_BIN)`);
+  if (!existsSync(bin))
+    throw new Error(
+      `edge binary ${bin} does not exist (build with \`pnpm --filter @nbo/edge... build\` or set NBO_EDGE_BIN)`,
+    );
   const child: ChildProcess = /\.(m?js)$/.test(bin)
     ? spawn(process.execPath, [bin], { env, stdio: ["ignore", "pipe", "pipe"] })
     : spawn(bin, [], { env, stdio: ["ignore", "pipe", "pipe"] });
@@ -259,7 +269,10 @@ export interface FakeBackend {
 
 // startBackend answers every request with its name (text/plain, plus
 // x-backend: <name>) unless a handler is set, and records what it received.
-export async function startBackend(name: string, server?: (listener: (req: IncomingMessage, res: ServerResponse) => void) => Server): Promise<FakeBackend> {
+export async function startBackend(
+  name: string,
+  server?: (listener: (req: IncomingMessage, res: ServerResponse) => void) => Server,
+): Promise<FakeBackend> {
   const seen: Seen[] = [];
   let handler: BackendHandler = (_req, res) => {
     res.writeHead(200, { "content-type": "text/plain", "x-backend": name });
@@ -270,7 +283,13 @@ export async function startBackend(name: string, server?: (listener: (req: Incom
     req.on("data", (c: Buffer) => chunks.push(c));
     req.on("end", () => {
       const body = Buffer.concat(chunks);
-      seen.push({ method: req.method ?? "", url: req.url ?? "", headers: req.headers, rawHeaders: req.rawHeaders, body: body.toString("utf8") });
+      seen.push({
+        method: req.method ?? "",
+        url: req.url ?? "",
+        headers: req.headers,
+        rawHeaders: req.rawHeaders,
+        body: body.toString("utf8"),
+      });
       handler(req, res, body);
     });
   };
@@ -321,13 +340,19 @@ export async function createTestCa(): Promise<TestCa> {
     notAfter: new Date(Date.now() + 3_600_000),
     signingAlgorithm: alg,
     keys: caKeys,
-    extensions: [new x509.BasicConstraintsExtension(true, undefined, true), new x509.KeyUsagesExtension(x509.KeyUsageFlags.keyCertSign | x509.KeyUsageFlags.cRLSign, true)],
+    extensions: [
+      new x509.BasicConstraintsExtension(true, undefined, true),
+      new x509.KeyUsagesExtension(x509.KeyUsageFlags.keyCertSign | x509.KeyUsageFlags.cRLSign, true),
+    ],
   });
   return {
     cert: ca.toString("pem"),
     async leaf(names) {
       const keys = await webcrypto.subtle.generateKey(alg, true, ["sign", "verify"]);
-      const sans = [...(names.dns ?? []).map((value) => ({ type: "dns" as const, value })), ...(names.ip ?? []).map((value) => ({ type: "ip" as const, value }))];
+      const sans = [
+        ...(names.dns ?? []).map((value) => ({ type: "dns" as const, value })),
+        ...(names.ip ?? []).map((value) => ({ type: "ip" as const, value })),
+      ];
       const cert = await x509.X509CertificateGenerator.create({
         serialNumber: String(serial++).padStart(2, "0"),
         subject: `CN=${names.dns?.[0] ?? names.ip?.[0] ?? "leaf"}`,
@@ -404,13 +429,21 @@ export async function startFakeKube(ca: TestCa, dir: string, namespace = PRODUCT
     const other = /^\/api\/v1\/namespaces\/([^/]+)\/configmaps\/nbo-edge-routes$/.exec(url);
     if (other && other[1] !== namespace && state.otherConfigmaps[other[1]!] !== undefined) {
       res.writeHead(200, { "content-type": "application/json" });
-      return void res.end(JSON.stringify({ metadata: { name: "nbo-edge-routes" }, data: { "routes.json": state.otherConfigmaps[other[1]!] } }));
+      return void res.end(
+        JSON.stringify({
+          metadata: { name: "nbo-edge-routes" },
+          data: { "routes.json": state.otherConfigmaps[other[1]!] },
+        }),
+      );
     }
     if (url === `/api/v1/namespaces/${namespace}/configmaps/nbo-edge-routes`) {
       state.polls++;
-      if (state.configmap === undefined) return void res.writeHead(404, { "content-type": "application/json" }).end("{}");
+      if (state.configmap === undefined)
+        return void res.writeHead(404, { "content-type": "application/json" }).end("{}");
       res.writeHead(200, { "content-type": "application/json" });
-      return void res.end(JSON.stringify({ metadata: { name: "nbo-edge-routes" }, data: { "routes.json": state.configmap } }));
+      return void res.end(
+        JSON.stringify({ metadata: { name: "nbo-edge-routes" }, data: { "routes.json": state.configmap } }),
+      );
     }
     if (url === `/api/v1/namespaces/${namespace}/secrets?labelSelector=nbo.dev%2Fedge-cert%3Dtrue`) {
       secretPolls++;
@@ -419,7 +452,10 @@ export async function startFakeKube(ca: TestCa, dir: string, namespace = PRODUCT
         JSON.stringify({
           items: state.secrets.map((s) => ({
             metadata: { name: s.name },
-            data: { "tls.crt": Buffer.from(s.crt).toString("base64"), "tls.key": Buffer.from(s.key).toString("base64") },
+            data: {
+              "tls.crt": Buffer.from(s.crt).toString("base64"),
+              "tls.key": Buffer.from(s.key).toString("base64"),
+            },
           })),
         }),
       );
@@ -463,7 +499,11 @@ export async function startFakeKube(ca: TestCa, dir: string, namespace = PRODUCT
       // Two more full rounds: the first may have started before the change.
       const routes = state.polls + 2;
       const secrets = secretPolls + 2;
-      await until(() => state.polls >= routes && secretPolls >= secrets, 10_000, "the edge to poll the fake Kubernetes API");
+      await until(
+        () => state.polls >= routes && secretPolls >= secrets,
+        10_000,
+        "the edge to poll the fake Kubernetes API",
+      );
     },
     close: () => closeServer(server),
   };

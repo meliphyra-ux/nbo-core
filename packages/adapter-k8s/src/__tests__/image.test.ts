@@ -92,7 +92,11 @@ describe.skipIf(!dockerAvailable)("buildImage", () => {
 
     const dest = join(await mkdtemp(join(tmpdir(), "adapter-k8s-extract-")), "index.json");
     const { readFile } = await import("node:fs/promises");
-    expect(JSON.parse(await readFile(extractFile(tag, "/app/carry/index.json", dest), "utf8"))).toEqual({ version: 1, contentId: "", files: {} });
+    expect(JSON.parse(await readFile(extractFile(tag, "/app/carry/index.json", dest), "utf8"))).toEqual({
+      version: 1,
+      contentId: "",
+      files: {},
+    });
   }, 60000);
 
   it("copies the given carry directory to /app/carry", async () => {
@@ -158,7 +162,16 @@ describe.skipIf(!dockerAvailable)("buildImage", () => {
 
     const inspect = JSON.parse(execFileSync("docker", ["image", "inspect", tag]).toString());
     expect(inspect[0].Config.WorkingDir).toBe("/app/cli");
-    expect(inspect[0].Config.Entrypoint).toEqual(["node", "dist/main.js", "serve", "/app/app", "--port", "8080", "--carry", "/app/carry"]);
+    expect(inspect[0].Config.Entrypoint).toEqual([
+      "node",
+      "dist/main.js",
+      "serve",
+      "/app/app",
+      "--port",
+      "8080",
+      "--carry",
+      "/app/carry",
+    ]);
   }, 60000);
 });
 

@@ -83,8 +83,10 @@ export async function handleBeacon(request: Request, target: Target, aggregator:
   const normalized = normalizeRoute(route);
   if (normalized === undefined) return bad("route is not a path");
   if (device !== "mobile" && device !== "desktop") return bad("device");
-  if (environmentId !== undefined && (typeof environmentId !== "string" || !ENVIRONMENT_ID_PATTERN.test(environmentId))) return bad("environmentId");
-  if (contentId !== undefined && (typeof contentId !== "string" || !CONTENT_ID_PATTERN.test(contentId))) return bad("contentId");
+  if (environmentId !== undefined && (typeof environmentId !== "string" || !ENVIRONMENT_ID_PATTERN.test(environmentId)))
+    return bad("environmentId");
+  if (contentId !== undefined && (typeof contentId !== "string" || !CONTENT_ID_PATTERN.test(contentId)))
+    return bad("contentId");
 
   if (BOT_UA.test(request.headers.get("user-agent") ?? "")) return noContent();
 

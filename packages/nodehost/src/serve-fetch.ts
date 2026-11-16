@@ -15,7 +15,11 @@ export type { FetchHandler };
 // zero-dependency file baked into a function image with no node_modules
 // install step, and depending on this workspace package there would
 // break that.
-export function serveFetch(handler: FetchHandler, listen: { port: number; host?: string }, onListening?: (port: number) => void): Server {
+export function serveFetch(
+  handler: FetchHandler,
+  listen: { port: number; host?: string },
+  onListening?: (port: number) => void,
+): Server {
   const server = createServer(nodeToFetch(handler));
 
   server.listen(listen.port, listen.host, () => {

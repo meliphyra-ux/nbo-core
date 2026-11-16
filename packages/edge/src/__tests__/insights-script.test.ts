@@ -88,12 +88,22 @@ describe("loader", () => {
   });
 
   it("sends one beacon per metric with route, device and data-e/data-d", () => {
-    const sent = runLoader({ dataset: { e: "env_a", d: "sha256:x" }, pathname: "/users/42/edit" }, fakeVitals({ LCP: 1200, CLS: 0.02, INP: 80, FCP: 600, TTFB: 90 }));
+    const sent = runLoader(
+      { dataset: { e: "env_a", d: "sha256:x" }, pathname: "/users/42/edit" },
+      fakeVitals({ LCP: 1200, CLS: 0.02, INP: 80, FCP: 600, TTFB: 90 }),
+    );
     expect(sent.map((s) => (s.body as { metric: string }).metric).sort()).toEqual(["CLS", "FCP", "INP", "LCP", "TTFB"]);
     expect(sent[0]).toEqual({
       url: "/_nbo/insights/v1/vitals",
       via: "beacon",
-      body: { metric: "LCP", value: 1200, route: "/users/[id]/edit", device: "desktop", environmentId: "env_a", contentId: "sha256:x" },
+      body: {
+        metric: "LCP",
+        value: 1200,
+        route: "/users/[id]/edit",
+        device: "desktop",
+        environmentId: "env_a",
+        contentId: "sha256:x",
+      },
     });
   });
 
@@ -104,8 +114,16 @@ describe("loader", () => {
 
   it("uses userAgentData.mobile, else the UA / width", () => {
     expect((runLoader({ mobile: true }, fakeVitals({ LCP: 1 }))[0]!.body as { device: string }).device).toBe("mobile");
-    expect((runLoader({ userAgent: "Mozilla/5.0 (iPhone) Mobile Safari" }, fakeVitals({ LCP: 1 }))[0]!.body as { device: string }).device).toBe("mobile");
-    expect((runLoader({ innerWidth: 400 }, fakeVitals({ LCP: 1 }))[0]!.body as { device: string }).device).toBe("mobile");
+    expect(
+      (
+        runLoader({ userAgent: "Mozilla/5.0 (iPhone) Mobile Safari" }, fakeVitals({ LCP: 1 }))[0]!.body as {
+          device: string;
+        }
+      ).device,
+    ).toBe("mobile");
+    expect((runLoader({ innerWidth: 400 }, fakeVitals({ LCP: 1 }))[0]!.body as { device: string }).device).toBe(
+      "mobile",
+    );
   });
 
   it("falls back to fetch with keepalive without sendBeacon", () => {
@@ -141,7 +159,9 @@ describe("buildScript", () => {
   });
 
   it("runs in a page-less sandbox without throwing", () => {
-    expect(() => runInNewContext(buildScript(100), { document: {}, navigator: {}, location: { pathname: "/" } })).not.toThrow();
+    expect(() =>
+      runInNewContext(buildScript(100), { document: {}, navigator: {}, location: { pathname: "/" } }),
+    ).not.toThrow();
   });
 
   it("is served as JavaScript cached for an hour", async () => {

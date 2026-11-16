@@ -6,7 +6,13 @@ import { join } from "node:path";
 import { validate } from "@nbo/validate";
 import { contentId } from "@nbo/digest";
 import { createHandler, ISR_CACHE_KEY } from "@nbo/serve";
-import { createStaticURLs, createLocalSpawner, createCloudRunURLs, metadataServerIdentityToken, type Resolver } from "@nbo/funcproxy";
+import {
+  createStaticURLs,
+  createLocalSpawner,
+  createCloudRunURLs,
+  metadataServerIdentityToken,
+  type Resolver,
+} from "@nbo/funcproxy";
 import { serveFetch } from "@nbo/nodehost";
 
 // manifestFunctionNames reads manifest.json's functions array,
@@ -16,7 +22,9 @@ function manifestFunctionNames(nboDir: string): Promise<string[]> {
   return readFile(join(nboDir, "manifest.json"), "utf8")
     .then((raw) => {
       const manifest = JSON.parse(raw) as { functions?: unknown };
-      return Array.isArray(manifest.functions) ? manifest.functions.filter((v): v is string => typeof v === "string") : [];
+      return Array.isArray(manifest.functions)
+        ? manifest.functions.filter((v): v is string => typeof v === "string")
+        : [];
     })
     .catch(() => []);
 }
@@ -52,7 +60,12 @@ async function functionsFileURLs(): Promise<Record<string, string> | null> {
 }
 
 // parseServeArgs — port of parseServeArgs (serve.go lines 50-74).
-export function parseServeArgs(args: string[]): { dir: string; port: string; functionURLs: Record<string, string>; carryDir?: string } {
+export function parseServeArgs(args: string[]): {
+  dir: string;
+  port: string;
+  functionURLs: Record<string, string>;
+  carryDir?: string;
+} {
   let port = "4000";
   const functionURLs: Record<string, string> = {};
   let carryDir: string | undefined;
@@ -98,15 +111,22 @@ function withoutCache(urls: Record<string, string>): Record<string, string> {
 // The ISR cache's entry (ISR_CACHE_KEY) is dropped first: a route naming that
 // function fails as an unknown function, and a map holding only the cache
 // counts as no map.
-export async function resolveFunctions(nboDir: string, functionURLs: Record<string, string>): Promise<{ resolve?: Resolver; stop?: () => Promise<void> }> {
+export async function resolveFunctions(
+  nboDir: string,
+  functionURLs: Record<string, string>,
+): Promise<{ resolve?: Resolver; stop?: () => Promise<void> }> {
   const urls = withoutCache(await serviceURLs(functionURLs));
   if (Object.keys(urls).length > 0) {
     const k = process.env.K_SERVICE;
     if (k) {
-      console.error(`nbo: K_SERVICE=${JSON.stringify(k)} — using the Cloud Run (authenticated) function resolver for ${JSON.stringify(urls)}`);
+      console.error(
+        `nbo: K_SERVICE=${JSON.stringify(k)} — using the Cloud Run (authenticated) function resolver for ${JSON.stringify(urls)}`,
+      );
       return { resolve: createCloudRunURLs(urls, metadataServerIdentityToken) };
     }
-    console.error(`nbo: K_SERVICE not set — using the plain (unauthenticated) function resolver for ${JSON.stringify(urls)}`);
+    console.error(
+      `nbo: K_SERVICE not set — using the plain (unauthenticated) function resolver for ${JSON.stringify(urls)}`,
+    );
     return { resolve: createStaticURLs(urls) };
   }
   const names = await manifestFunctionNames(nboDir);
@@ -204,7 +224,10 @@ export async function runServe(args: string[]): Promise<number> {
 
   let handler;
   try {
-    handler = await createHandler(dir, resolve, resolveISRCache(urls), { deploymentId: await manifestContentId(dir), carryDir });
+    handler = await createHandler(dir, resolve, resolveISRCache(urls), {
+      deploymentId: await manifestContentId(dir),
+      carryDir,
+    });
   } catch (err) {
     console.error(err instanceof Error ? err.message : String(err));
     return 1;

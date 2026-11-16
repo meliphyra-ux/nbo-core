@@ -128,7 +128,11 @@ function inlinedEnvDigest(values: Record<string, string>): string {
 // "passed" by default), the right behavior for a standalone `nbo
 // plan` inspection with no real deploy target's own environment to
 // compare against.
-export function evaluate(manifest: Manifest, functions: Record<string, NboFunction>, adapter: AdapterCapabilities): Plan {
+export function evaluate(
+  manifest: Manifest,
+  functions: Record<string, NboFunction>,
+  adapter: AdapterCapabilities,
+): Plan {
   return evaluateWithTargetEnv(manifest, functions, adapter, undefined);
 }
 
@@ -143,7 +147,15 @@ export function evaluateWithTargetEnv(
   adapter: AdapterCapabilities,
   targetEnv: Record<string, string> | undefined,
 ): Plan {
-  const p: Plan = { adapter: adapter.name, resolutions: [], limitChecks: [], extensions: [], envDigestCheck: "", notes: [], ok: true };
+  const p: Plan = {
+    adapter: adapter.name,
+    resolutions: [],
+    limitChecks: [],
+    extensions: [],
+    envDigestCheck: "",
+    notes: [],
+    ok: true,
+  };
 
   if (targetEnv !== undefined && manifest.env?.inlinedEnvDigest !== undefined) {
     const observed: Record<string, string> = {};

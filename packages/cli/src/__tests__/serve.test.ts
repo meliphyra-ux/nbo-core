@@ -87,11 +87,20 @@ describe("resolveFunctions", () => {
 
 describe("parseServeArgs", () => {
   it("parses dir, port, and function overrides", () => {
-    expect(parseServeArgs(["dir", "--port", "5000", "--function", "ssr=http://x"])).toEqual({ dir: "dir", port: "5000", functionURLs: { ssr: "http://x" } });
+    expect(parseServeArgs(["dir", "--port", "5000", "--function", "ssr=http://x"])).toEqual({
+      dir: "dir",
+      port: "5000",
+      functionURLs: { ssr: "http://x" },
+    });
   });
 
   it("parses --carry", () => {
-    expect(parseServeArgs(["dir", "--carry", "/x"])).toEqual({ dir: "dir", port: "4000", functionURLs: {}, carryDir: "/x" });
+    expect(parseServeArgs(["dir", "--carry", "/x"])).toEqual({
+      dir: "dir",
+      port: "4000",
+      functionURLs: {},
+      carryDir: "/x",
+    });
   });
 
   it("defaults port to 4000 with none given", () => {

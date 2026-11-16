@@ -60,7 +60,7 @@ On Windows the binary is `nbo-edge.exe`. Use one or the other, never both. Which
 NBO_CONTROL_PLANE_DB=./nbo.db node packages/controlplane/dist/main.js
 ```
 
-Listens on `127.0.0.1:8081`. Creates the database file if it doesn't exist and upgrades older ones automatically (`src/migrate.ts`).
+Listens on `127.0.0.1:8081`. Creates the database file if it doesn't exist and upgrades older ones automatically (`src/store/migrate.ts`).
 
 **3. Check that it answers**
 
@@ -75,9 +75,15 @@ It answers `{"ok":true}`. The API is at plain paths on that address, for example
 `nbo-server` is the operator's command (`node packages/controlplane/dist/server-cli.js`; inside the Docker image it is simply `nbo-server`). Describe the project as the body of `POST /projects/setup` in a file:
 
 ```json
-{ "name": "hello", "repo": "https://github.com/you/hello.git", "productionBranch": "main",
-  "framework": "static", "buildCommand": "npm ci && npm run build", "outputDir": "dist",
-  "clouds": [{ "target": "kubernetes" }] }
+{
+  "name": "hello",
+  "repo": "https://github.com/you/hello.git",
+  "productionBranch": "main",
+  "framework": "static",
+  "buildCommand": "npm ci && npm run build",
+  "outputDir": "dist",
+  "clouds": [{ "target": "kubernetes" }]
+}
 ```
 
 ```bash

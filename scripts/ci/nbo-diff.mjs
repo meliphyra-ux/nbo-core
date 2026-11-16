@@ -117,7 +117,11 @@ export function classify(a, b) {
   const pra = readJson(a, "prerender.json");
   const prb = readJson(b, "prerender.json");
   const blankEntry = (p) =>
-    p && typeof p === "object" && p["x-nbo-ppr"] && typeof p["x-nbo-ppr"] === "object" && typeof p["x-nbo-ppr"].postponedState === "string"
+    p &&
+    typeof p === "object" &&
+    p["x-nbo-ppr"] &&
+    typeof p["x-nbo-ppr"] === "object" &&
+    typeof p["x-nbo-ppr"].postponedState === "string"
       ? { ...p, "x-nbo-ppr": { ...p["x-nbo-ppr"], postponedState: "" } }
       : p;
   const listOf = (doc) => (Array.isArray(doc?.prerenders) ? doc.prerenders : []);
@@ -133,7 +137,10 @@ export function classify(a, b) {
     prerenderNamed = true;
     otherPaths.push("prerender.json: prerenders");
   }
-  for (const [n, doc] of [[1, pra], [2, prb]]) {
+  for (const [n, doc] of [
+    [1, pra],
+    [2, prb],
+  ]) {
     const seen = new Set();
     for (const p of listOf(doc)) {
       if (seen.has(p?.id)) {
@@ -178,7 +185,8 @@ export function classify(a, b) {
       continue;
     }
     const fields = keys(sa[k], sb[k]).filter((f) => !same(sa[k][f], sb[k][f]));
-    if (seeds.has(k) && fields.every((f) => f === "digest" || f === "size")) renderPaths.push(`static.index.json: ${k}`);
+    if (seeds.has(k) && fields.every((f) => f === "digest" || f === "size"))
+      renderPaths.push(`static.index.json: ${k}`);
     else otherPaths.push(`static.index.json: ${k} (${fields.join(", ")})`);
   }
   for (const k of keys(sia, sib)) {

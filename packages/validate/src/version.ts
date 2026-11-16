@@ -28,7 +28,9 @@ export function readSpecVersion(text: string): string {
     throw new Error(`@nbo/spec/version.json: invalid JSON: ${(err as Error).message}`, { cause: err });
   }
   if (typeof value !== "string" || !parseVersion(value)) {
-    throw new Error(`@nbo/spec/version.json: specVersion must be "<major>.<minor>", got ${JSON.stringify(value) ?? "nothing"}`);
+    throw new Error(
+      `@nbo/spec/version.json: specVersion must be "<major>.<minor>", got ${JSON.stringify(value) ?? "nothing"}`,
+    );
   }
   return value;
 }

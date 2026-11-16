@@ -7,9 +7,9 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { randomBytes } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
-import { createStore } from "../store.js";
-import { legacyTablesInUse, movedTables } from "../migrate.js";
-import { ErrSecretKey } from "../secrets.js";
+import { createStore } from "../store/store.js";
+import { legacyTablesInUse, movedTables } from "../store/migrate.js";
+import { ErrSecretKey } from "../store/secrets.js";
 
 // A database the code before the core split wrote (fixtures/legacy-schema.sql,
 // dumped from 498eada): sign-in on, members, sessions, audit rows, the GitHub
@@ -52,9 +52,15 @@ function snapshot(path: string): Snapshot {
   const db = new DatabaseSync(path);
   try {
     const out: Snapshot = {};
-    const tables = db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name").all() as { name: string }[];
+    const tables = db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name").all() as {
+      name: string;
+    }[];
     for (const { name } of tables) {
-      const sql = (db.prepare("SELECT sql FROM sqlite_master WHERE tbl_name = ? AND sql IS NOT NULL ORDER BY name").all(name) as { sql: string }[]).map((r) => r.sql);
+      const sql = (
+        db.prepare("SELECT sql FROM sqlite_master WHERE tbl_name = ? AND sql IS NOT NULL ORDER BY name").all(name) as {
+          sql: string;
+        }[]
+      ).map((r) => r.sql);
       const rows = db.prepare(`SELECT * FROM "${name}" ORDER BY rowid`).all() as Record<string, unknown>[];
       out[name] = { sql, rows };
     }
@@ -78,7 +84,8 @@ describe("a database from before the core split", () => {
     const before = snapshot(path);
     for (const t of MOVED) expect(before[t]?.rows.length, t).toBeGreaterThan(0);
     // Core tables whose rows an upgrade must keep too.
-    for (const t of ["crons", "environment_cron_secrets", "relays", "transfers"]) expect(before[t]?.rows.length, t).toBeGreaterThan(0);
+    for (const t of ["crons", "environment_cron_secrets", "relays", "transfers"])
+      expect(before[t]?.rows.length, t).toBeGreaterThan(0);
 
     openCore(path).close();
     const after = snapshot(path);
@@ -90,14 +97,19 @@ describe("a database from before the core split", () => {
     expect(after.platform_settings).toBeUndefined();
     expect(after.server_settings!.rows).toEqual(before.platform_settings!.rows);
 
-    // Every other table: every old row keeps its old columns' values. The one
-    // intended change is the preview stage, now an ephemeral stage core expires.
+    // Every other table: every old row keeps its old columns' values. The
+    // intended changes: the preview stage is now an ephemeral stage core
+    // expires, and a head stored without a time (last_seen_at 0) gets one.
     for (const [table, { rows }] of Object.entries(before)) {
       if (MOVED.includes(table) || table === "platform_settings") continue;
       expect(after[table]?.rows.length, table).toBe(rows.length);
       rows.forEach((row, i) => {
         const now = after[table]!.rows[i]!;
         const picked = Object.fromEntries(Object.keys(row).map((c) => [c, now[c]]));
+        if (row.last_seen_at === 0 && typeof row.last_seen_sha === "string" && row.last_seen_sha !== "") {
+          expect(now.last_seen_at, `${table} row ${i}`).toBeGreaterThan(0);
+          picked.last_seen_at = 0;
+        }
         if (table === "stages" && row.kind === "preview-deployment") {
           expect(picked).toEqual({ ...row, kind: "ephemeral" });
           expect(now).toMatchObject({ label: "pr #12", removal_status: "" });
@@ -139,7 +151,9 @@ describe("a database from before the core split", () => {
     // Only the settings rows hold sealed data: no connections, no secret variables.
     const { path } = legacyDb();
     const db = new DatabaseSync(path);
-    db.exec("DELETE FROM connections; DELETE FROM kube_connections; DELETE FROM env_vars WHERE secret = 1; DELETE FROM platform_settings WHERE key <> 'github_private_key'");
+    db.exec(
+      "DELETE FROM connections; DELETE FROM kube_connections; DELETE FROM env_vars WHERE secret = 1; DELETE FROM platform_settings WHERE key <> 'github_private_key'",
+    );
     db.close();
     const store = openCore(path);
     try {
@@ -187,7 +201,9 @@ describe("a database from before the core split", () => {
     // A rollback to an older build: it finds no platform_settings, creates an
     // empty one and writes there; those writes would be lost silently.
     const db = new DatabaseSync(path);
-    db.exec("CREATE TABLE platform_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL); INSERT INTO platform_settings VALUES ('base_domain', 'other.example.com')");
+    db.exec(
+      "CREATE TABLE platform_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL); INSERT INTO platform_settings VALUES ('base_domain', 'other.example.com')",
+    );
     db.close();
     const before = snapshot(path);
     expect(() => openCore(path)).toThrow(/platform_settings.*server_settings|server_settings.*platform_settings/);
@@ -209,7 +225,12 @@ describe("a database from before the core split", () => {
     const { dir, path } = legacyDb();
     const keyFile = join(dir, "nbo-secret.key");
     writeFileSync(keyFile, KEY);
-    const env = { NBO_CONTROL_PLANE_DB: path, NBO_SECRET_KEY_FILE: keyFile, NBO_CONTROL_PLANE_ADDR: "127.0.0.1:0", NBO_EDGE_ADMIN_URL: "http://127.0.0.1:9" };
+    const env = {
+      NBO_CONTROL_PLANE_DB: path,
+      NBO_SECRET_KEY_FILE: keyFile,
+      NBO_CONTROL_PLANE_ADDR: "127.0.0.1:0",
+      NBO_EDGE_ADMIN_URL: "http://127.0.0.1:9",
+    };
     const log = vi.spyOn(console, "log").mockImplementation(() => {});
     const err = vi.spyOn(console, "error").mockImplementation(() => {});
     const before = process.exitCode;
@@ -218,7 +239,9 @@ describe("a database from before the core split", () => {
       try {
         expect(started).toBeDefined();
         await started!.listening;
-        const notices = log.mock.calls.map((c) => String(c[0])).filter((m) => m.includes("moved to the hosted dashboard"));
+        const notices = log.mock.calls
+          .map((c) => String(c[0]))
+          .filter((m) => m.includes("moved to the hosted dashboard"));
         expect(notices).toEqual([
           `control-plane: this database holds data from features that moved to the hosted dashboard (${MOVED.join(", ")}); it is kept, unused, until you migrate`,
         ]);
@@ -227,7 +250,9 @@ describe("a database from before the core split", () => {
       }
 
       const db = new DatabaseSync(path);
-      db.exec("CREATE TABLE platform_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL); INSERT INTO platform_settings VALUES ('base_domain', 'other.example.com')");
+      db.exec(
+        "CREATE TABLE platform_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL); INSERT INTO platform_settings VALUES ('base_domain', 'other.example.com')",
+      );
       db.close();
       expect(main(env)).toBeUndefined();
       expect(process.exitCode).toBe(1);

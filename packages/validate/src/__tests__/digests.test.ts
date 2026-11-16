@@ -5,7 +5,13 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { mkdtempSync, rmSync, mkdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { fileDigest, checkManifestDigests, checkStaticFiles, reservedStaticKeys, unreferencedStaticFiles } from "../digests.js";
+import {
+  fileDigest,
+  checkManifestDigests,
+  checkStaticFiles,
+  reservedStaticKeys,
+  unreferencedStaticFiles,
+} from "../digests.js";
 
 let dir: string;
 
@@ -37,7 +43,9 @@ describe("checkManifestDigests", () => {
 
   it("returns an error naming static.index.json when the digest doesn't match", () => {
     const raw = Buffer.from('{"files":{}}');
-    const manifestDoc = { digests: { "static.index.json": "sha256:" + "0".repeat(64), "routes.json": fileDigest(routesRaw) } };
+    const manifestDoc = {
+      digests: { "static.index.json": "sha256:" + "0".repeat(64), "routes.json": fileDigest(routesRaw) },
+    };
     const errs = checkManifestDigests(manifestDoc, raw, routesRaw);
     expect(errs).toHaveLength(1);
     expect(errs[0]!.message).toContain("static.index.json");

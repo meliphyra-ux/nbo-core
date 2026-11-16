@@ -124,10 +124,21 @@ Rules:
   "functions": ["ssr", "middleware", "og-image"],
   "images": { "widths": [640, 1080, 1920], "formats": ["image/avif", "image/webp"], "qualities": [75] },
   "crons": [
-    { "id": "nightly-sync", "schedule": "0 3 * * *", "timezone": "UTC",
-      "target": { "function": "ssr", "path": "/api/cron/sync", "method": "POST" }, "overlap": "skip", "timeoutSec": 300 }
+    {
+      "id": "nightly-sync",
+      "schedule": "0 3 * * *",
+      "timezone": "UTC",
+      "target": { "function": "ssr", "path": "/api/cron/sync", "method": "POST" },
+      "overlap": "skip",
+      "timeoutSec": 300
+    }
   ],
-  "env": { "required": ["DATABASE_URL"], "optional": ["SENTRY_DSN"], "inlinedAtBuild": ["NEXT_PUBLIC_API_URL"], "inlinedEnvDigest": "sha256:0be1…" },
+  "env": {
+    "required": ["DATABASE_URL"],
+    "optional": ["SENTRY_DSN"],
+    "inlinedAtBuild": ["NEXT_PUBLIC_API_URL"],
+    "inlinedEnvDigest": "sha256:0be1…"
+  },
   "bindings": [{ "name": "DB", "type": "postgres" }],
   "digests": {
     "routes.json": "sha256:41aa…",
@@ -140,18 +151,18 @@ Rules:
 }
 ```
 
-| Field | Required | Meaning |
-| --- | --- | --- |
-| `$schema` | No | Any string; ignored. The schemas' own ids are `urn:nbo:spec:v1:<file>` (`manifest`, `function`, `routes`, `static-index`, `prerender`, `bundle-index`). |
-| `specVersion` | Yes | `"MAJOR.MINOR"` of the spec this build follows. See Versioning and compatibility. |
-| `build` | Yes | `id`, `createdAt` (RFC 3339 date-time), `framework` (`name`, optional `version` and `adapter`), optional `source` (`repo`, `revision`). Provenance only; never changes how the app behaves. |
-| `requires` | Yes | `capabilities` (ids from the vocabulary in Capabilities and extensions) and `extensions` (`id`, `version`, `critical`) the planner must satisfy. |
-| `routing` | No | Global path handling, applied before any rule runs: `trailingSlash` (`never`, `always` or `preserve`), `cleanUrls` and `caseSensitive`. In 1.0 `cleanUrls` and `caseSensitive` can only be `true`; `false` is reserved. |
-| `functions` | Yes | Names of folders under `functions/`, each matching `^[a-z][a-z0-9-]{0,62}$`. Empty for a static site. |
-| `images`, `crons` | No | See Images and crons. A cron's `timezone` can only be `UTC`, and `target.method` is one of `GET`, `POST`, `PUT`, `PATCH`, `DELETE`. |
-| `env`, `bindings` | No | See Environment, secrets and bindings. |
-| `digests` | Yes | sha256 of every other JSON file: it must name `static.index.json`, `routes.json` and every function's `function.json` (validate refuses a manifest that leaves one out, since that file would sit outside the content id), and `prerender.json` exactly when the file exists. Function bundles and static files are pinned one level down, in their own files. |
-| `x-…` keys | No | Extension data (see Capabilities and extensions). |
+| Field             | Required | Meaning                                                                                                                                                                                                                                                                                                                                                        |
+| ----------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `$schema`         | No       | Any string; ignored. The schemas' own ids are `urn:nbo:spec:v1:<file>` (`manifest`, `function`, `routes`, `static-index`, `prerender`, `bundle-index`).                                                                                                                                                                                                        |
+| `specVersion`     | Yes      | `"MAJOR.MINOR"` of the spec this build follows. See Versioning and compatibility.                                                                                                                                                                                                                                                                              |
+| `build`           | Yes      | `id`, `createdAt` (RFC 3339 date-time), `framework` (`name`, optional `version` and `adapter`), optional `source` (`repo`, `revision`). Provenance only; never changes how the app behaves.                                                                                                                                                                    |
+| `requires`        | Yes      | `capabilities` (ids from the vocabulary in Capabilities and extensions) and `extensions` (`id`, `version`, `critical`) the planner must satisfy.                                                                                                                                                                                                               |
+| `routing`         | No       | Global path handling, applied before any rule runs: `trailingSlash` (`never`, `always` or `preserve`), `cleanUrls` and `caseSensitive`. In 1.0 `cleanUrls` and `caseSensitive` can only be `true`; `false` is reserved.                                                                                                                                        |
+| `functions`       | Yes      | Names of folders under `functions/`, each matching `^[a-z][a-z0-9-]{0,62}$`. Empty for a static site.                                                                                                                                                                                                                                                          |
+| `images`, `crons` | No       | See Images and crons. A cron's `timezone` can only be `UTC`, and `target.method` is one of `GET`, `POST`, `PUT`, `PATCH`, `DELETE`.                                                                                                                                                                                                                            |
+| `env`, `bindings` | No       | See Environment, secrets and bindings.                                                                                                                                                                                                                                                                                                                         |
+| `digests`         | Yes      | sha256 of every other JSON file: it must name `static.index.json`, `routes.json` and every function's `function.json` (validate refuses a manifest that leaves one out, since that file would sit outside the content id), and `prerender.json` exactly when the file exists. Function bundles and static files are pinned one level down, in their own files. |
+| `x-…` keys        | No       | Extension data (see Capabilities and extensions).                                                                                                                                                                                                                                                                                                              |
 
 The content id is `sha256:` plus the sha256 of the canonical manifest (RFC 8785 JSON) with its top-level `build` key removed. Two builds with identical output share a content id, so redeploying is a no-op; `build.id` still tells them apart in logs. Every JSON file is canonical, so file digests and canonical digests coincide: a digest in `digests` is both the sha256 of the bytes on disk and the sha256 of the parsed file re-serialized canonically. Through `digests`, each `function.json`'s `artifact.digest` and `bundle.index.json`, the content id covers every file of the build, `dispatch.json` included.
 
@@ -178,11 +189,26 @@ The content id still covers seeds and `postponedState`, so two builds that rende
 ```json
 {
   "files": {
-    "/": { "file": "index.html", "digest": "sha256:ab12…", "size": 5120, "contentType": "text/html; charset=utf-8", "cache": "revalidate" },
-    "/blog/hello": { "file": "blog/hello.html", "digest": "sha256:3e9d…", "size": 9311, "contentType": "text/html; charset=utf-8", "cache": "revalidate" },
+    "/": {
+      "file": "index.html",
+      "digest": "sha256:ab12…",
+      "size": 5120,
+      "contentType": "text/html; charset=utf-8",
+      "cache": "revalidate"
+    },
+    "/blog/hello": {
+      "file": "blog/hello.html",
+      "digest": "sha256:3e9d…",
+      "size": 9311,
+      "contentType": "text/html; charset=utf-8",
+      "cache": "revalidate"
+    },
     "/_assets/app.3f9a1c.js": {
-      "file": "_assets/app.3f9a1c.js", "digest": "sha256:c4f0…", "size": 88211,
-      "contentType": "text/javascript; charset=utf-8", "cache": "immutable"
+      "file": "_assets/app.3f9a1c.js",
+      "digest": "sha256:c4f0…",
+      "size": 88211,
+      "contentType": "text/javascript; charset=utf-8",
+      "cache": "immutable"
     }
   }
 }
@@ -190,11 +216,11 @@ The content id still covers seeds and `postponedState`, so two builds that rende
 
 The key is the URL path and `file` is the path under `static/`. That one indirection covers clean URLs, `index.html` resolution and Vercel's `overrides` without extra config.
 
-| Cache class | `Cache-Control` sent | Use for |
-| --- | --- | --- |
-| `immutable` | `max-age=31536000, immutable` | Hashed assets |
-| `revalidate` | `max-age=0, must-revalidate` | HTML and unhashed files |
-| `no-store` | `no-store` | Files that must always come from origin |
+| Cache class  | `Cache-Control` sent          | Use for                                 |
+| ------------ | ----------------------------- | --------------------------------------- |
+| `immutable`  | `max-age=31536000, immutable` | Hashed assets                           |
+| `revalidate` | `max-age=0, must-revalidate`  | HTML and unhashed files                 |
+| `no-store`   | `no-store`                    | Files that must always come from origin |
 
 - The app server sends exactly these `Cache-Control` values on a `200` for the file. It sends no `CDN-Cache-Control` and no other cache header. Header rules in `routes.json` run after it and can override the value.
 - A page served as the `404` error page, or as the file of a `respond` action, gets no `Cache-Control` from its cache class.
@@ -217,9 +243,9 @@ Each `functions/<name>/function.json` says what the code needs (runtime, handler
 }
 ```
 
-| Runtime `kind` | Contract | Typical targets |
-| --- | --- | --- |
-| `node` | Fetch handler on Node.js within a version range | Cloud Run, a Kubernetes pod |
+| Runtime `kind` | Contract                                        | Typical targets             |
+| -------------- | ----------------------------------------------- | --------------------------- |
+| `node`         | Fetch handler on Node.js within a version range | Cloud Run, a Kubernetes pod |
 
 Field notes:
 
@@ -237,7 +263,9 @@ A function's bundle holds an ES module at `handler.entry` (`index.mjs`). Its exp
 
 ```ts
 export default {
-  async fetch(request: Request): Promise<Response> { /* … */ }
+  async fetch(request: Request): Promise<Response> {
+    /* … */
+  },
 };
 ```
 
@@ -249,12 +277,12 @@ export default {
 
 Request headers a function can rely on:
 
-| Header | Set by | Value |
-| --- | --- | --- |
-| `x-nbo-deployment-id` | The app server, on every request to a function or middleware, replacing a client's copy | The manifest content id of the build being served |
-| `x-forwarded-host` | The edge, from the visitor's `Host`; when absent, the app server fills it from the request's `Host` | The public host |
-| `x-forwarded-proto` | The edge | `https` or `http`: the edge's listener scheme in a cluster; in dev mode the visitor's own scheme (the edge reads its `x-forwarded-proto` or `forwarded`) |
-| `x-forwarded-for` | The edge in a cluster: the visitor's address (for a domain behind Cloudflare, `CF-Connecting-IP` when the request comes from Cloudflare's ranges). In dev mode the visitor's own header passes through unchanged | Client address |
+| Header                | Set by                                                                                                                                                                                                           | Value                                                                                                                                                    |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `x-nbo-deployment-id` | The app server, on every request to a function or middleware, replacing a client's copy                                                                                                                          | The manifest content id of the build being served                                                                                                        |
+| `x-forwarded-host`    | The edge, from the visitor's `Host`; when absent, the app server fills it from the request's `Host`                                                                                                              | The public host                                                                                                                                          |
+| `x-forwarded-proto`   | The edge                                                                                                                                                                                                         | `https` or `http`: the edge's listener scheme in a cluster; in dev mode the visitor's own scheme (the edge reads its `x-forwarded-proto` or `forwarded`) |
+| `x-forwarded-for`     | The edge in a cluster: the visitor's address (for a domain behind Cloudflare, `CF-Connecting-IP` when the request comes from Cloudflare's ranges). In dev mode the visitor's own header passes through unchanged | Client address                                                                                                                                           |
 
 Headers removed before a function sees them:
 
@@ -264,7 +292,7 @@ Headers removed before a function sees them:
 
 A function trusts no other `x-nbo-*` request header: anything else under that prefix may come from the visitor. Cron calls are authenticated by their signature, not by a header's presence (see Crons). `x-nbo-request-id`, `forwarded` (as a header NBO sets) and the geo headers `x-nbo-geo-country`, `x-nbo-geo-region` and `x-nbo-geo-city` are reserved: no 1.0 component sets them.
 
-Response headers: the app server sets `x-nbo-deployment-id` on every response, replacing a function's copy, and `x-nbo-carried-from` on carried files (see Platform behaviour); the edge adds `x-nbo-edge-backend` (the URL of the cloud backend that served the request). All three reach the visitor. Middleware's protocol headers never do (see Middleware). Any other header a function sets is passed to the visitor unchanged. Other `x-nbo-*` names a function sets reach the visitor in 1.0 too, but they are reserved for the platform: a 1.x release may remove them.
+Response headers: the app server sets `x-nbo-deployment-id` on every response, replacing a function's copy, and `x-nbo-carried-from` on carried files (see Platform behaviour); the edge adds `x-nbo-edge-backend` (the stable id of the backend that served the request, the environment id the control-plane gives it; never its URL, and absent when the backend has no id). All three reach the visitor. Middleware's protocol headers never do (see Middleware). Any other header a function sets is passed to the visitor unchanged. Other `x-nbo-*` names a function sets reach the visitor in 1.0 too, but they are reserved for the platform: a 1.x release may remove them.
 
 ## Routing
 
@@ -289,35 +317,52 @@ A path-target rewrite re-checks the filesystem on its new path immediately. If t
 {
   "version": 1,
   "beforeFiles": [
-    { "id": "old-docs", "match": { "path": "^/docs/v1/(?P<rest>.*)$" },
-      "action": { "type": "redirect", "location": "/docs/$rest", "status": 308 } },
-    { "id": "security-headers", "match": { "path": "^/" },
-      "action": { "type": "headers", "set": { "x-frame-options": "DENY" } }, "continue": true },
-    { "id": "mw", "match": { "path": "^/", "pathNot": "^/(_assets|_nbo)/" },
-      "action": { "type": "middleware", "function": "middleware" } }
+    {
+      "id": "old-docs",
+      "match": { "path": "^/docs/v1/(?P<rest>.*)$" },
+      "action": { "type": "redirect", "location": "/docs/$rest", "status": 308 }
+    },
+    {
+      "id": "security-headers",
+      "match": { "path": "^/" },
+      "action": { "type": "headers", "set": { "x-frame-options": "DENY" } },
+      "continue": true
+    },
+    {
+      "id": "mw",
+      "match": { "path": "^/", "pathNot": "^/(_assets|_nbo)/" },
+      "action": { "type": "middleware", "function": "middleware" }
+    }
   ],
   "afterFiles": [
-    { "id": "blog-detail", "match": { "path": "^/blog/(?P<slug>[^/]+)$", "methods": ["GET", "HEAD"] },
-      "action": { "type": "rewrite", "function": "ssr" } }
+    {
+      "id": "blog-detail",
+      "match": { "path": "^/blog/(?P<slug>[^/]+)$", "methods": ["GET", "HEAD"] },
+      "action": { "type": "rewrite", "function": "ssr" }
+    }
   ],
   "fallback": [
     { "id": "ssr-catch-all", "match": { "path": "^/" }, "action": { "type": "rewrite", "function": "ssr" } }
   ],
   "onMatch": [
-    { "id": "blog-section", "match": { "path": "^/blog/" },
-      "action": { "type": "headers", "set": { "x-section": "blog" } }, "continue": true }
+    {
+      "id": "blog-section",
+      "match": { "path": "^/blog/" },
+      "action": { "type": "headers", "set": { "x-section": "blog" } },
+      "continue": true
+    }
   ],
   "error": { "404": { "file": "/404" } }
 }
 ```
 
-| Action `type` | Fields | Effect |
-| --- | --- | --- |
-| `redirect` | `location` and `status`, both required; `status` is 301, 302, 307 or 308 | Ends routing |
-| `respond` | `status`, optional `file` | Ends routing with a fixed response |
-| `rewrite` | `function` or `path`, or both | `function` serves (with `path` given, the function sees that path); `path` alone re-enters `filesystem` |
-| `headers` | `set`, `append`, `delete` on the response | Usually paired with `continue: true` |
-| `middleware` | `function` | Outcome decided by the middleware's response |
+| Action `type` | Fields                                                                   | Effect                                                                                                  |
+| ------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| `redirect`    | `location` and `status`, both required; `status` is 301, 302, 307 or 308 | Ends routing                                                                                            |
+| `respond`     | `status`, optional `file`                                                | Ends routing with a fixed response                                                                      |
+| `rewrite`     | `function` or `path`, or both                                            | `function` serves (with `path` given, the function sees that path); `path` alone re-enters `filesystem` |
+| `headers`     | `set`, `append`, `delete` on the response                                | Usually paired with `continue: true`                                                                    |
+| `middleware`  | `function`                                                               | Outcome decided by the middleware's response                                                            |
 
 `error` has one possible key in 1.0, `"404"`, whose value is `{ "file": "<static.index.json key>" }`: the page served when routing ends in a 404. Other statuses and function error pages are reserved. A rule (not its `match` or `action`) accepts `x-` extension keys.
 
@@ -333,12 +378,12 @@ Matching rules:
 
 Middleware is an ordinary function invoked from a `beforeFiles` rule (`"action": { "type": "middleware", "function": "<name>" }`). It steers routing through reserved response headers, so any runtime that returns a `Response` can implement it.
 
-| Middleware returns | Router does |
-| --- | --- |
-| `x-nbo-next: 1` | Continues routing with the original path |
-| `x-nbo-rewrite: /path` (optionally `?query`, which replaces the request's query string) | Continues routing with the new path |
-| `x-nbo-request-headers: a,b` plus `x-nbo-request-header-a: …` | Replaces the request headers for everything downstream with exactly the named set |
-| Any other response, including a redirect | Sends it to the client as is; routing ends |
+| Middleware returns                                                                      | Router does                                                                       |
+| --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `x-nbo-next: 1`                                                                         | Continues routing with the original path                                          |
+| `x-nbo-rewrite: /path` (optionally `?query`, which replaces the request's query string) | Continues routing with the new path                                               |
+| `x-nbo-request-headers: a,b` plus `x-nbo-request-header-a: …`                           | Replaces the request headers for everything downstream with exactly the named set |
+| Any other response, including a redirect                                                | Sends it to the client as is; routing ends                                        |
 
 - `x-nbo-rewrite` takes a path only. A full URL (`http://…` or `https://…`) is not followed: the request fails closed with `502`.
 - On a continue or rewrite, every other response header (such as `Set-Cookie`) is merged into the final response. The status and body are discarded. The protocol headers `x-nbo-next`, `x-nbo-rewrite`, `x-nbo-request-headers` and every `x-nbo-request-header-*` never reach the client, whatever the outcome (with a response sent as is too). Other headers pass; the app server then replaces `x-nbo-deployment-id` with the real one, as on every response. Other `x-nbo-*` names pass in 1.0 too, but they are reserved for the platform: a 1.x release may remove them.
@@ -392,7 +437,7 @@ Semantics:
 - **Draft mode**: a request with cookie `__nbo_bypass` set to the token skips the cache entirely.
 - **Framework data requests (Next.js)**: a request with `rsc: 1` is flight data, not the page. It neither reads nor writes a cache entry, on any `onMiss` policy, and goes to the function, streamed. A render stored for every visitor (blocking, stale regeneration, shell) carries no `rsc`, `next-router-*`, `next-url`, `next-action` or `next-hmr-refresh`. Every response on a prerender route has `vary: rsc, next-router-state-tree, next-router-prefetch`. These names are Next's; the reference server applies them to every prerender route, and they are harmless for other producers.
 - **Rewrites**: a rewrite whose target matches a prerender route is that route, in every phase and before the filesystem check. The seed, the cache key and the function go by the target, not the path the visitor asked for.
-- **What a deploy gives**: Kubernetes and Cloud Run deploys of a build with prerender routes run one cache service per app (one per environment and cloud, named `<app>-isr`), hand the app its address under the reserved function name `__isrcache` (function names can't be that, and the URL is not a secret), and give each environment one generated revalidation token, delivered at runtime as `NBO_PRERENDER_BYPASS`. Neither the token nor the cache's address is ever written into `.nbo/`. Every cache key starts with the build's content id, so a new build never reads a page an older build cached, even while both run during a rollout; revalidation by tag or path drops matching entries of every build in that cache. A cache read that fails, answers anything but `200` or `404`, or takes over 2 seconds counts as a miss, and a cache write never delays the visitor's answer. The cache is in memory and bounded (96 MiB by default, least recently used pages go first): a restarted cache starts empty, and the build's seed pages still answer `shell` routes at once. A cloud has its own cache, so a revalidation has to reach every cloud that serves the address: the edge answers `POST /_nbo/revalidate` for a host it serves by sending the same request (method, path, `Authorization`, `Content-Type`, body of at most 64 KiB, else `413`) to every backend of that host, including those at 0%, in parallel with a 10 second limit each. It answers `204` when every backend answered `2xx`; the shared status, with an empty body, when every backend answered the same other status (a wrong token stays `401`); else `502` with `{"backends": [{"id": "<environment id>", "status": 204}, ...]}`, status `0` meaning unreachable or timed out; `400` when it can't read the request body; a host with no backends gets the unknown-host `404`. Every answer carries `x-nbo-edge-fanout: <number of backends>` and `cache-control: no-store`. The edge doesn't check the token; each app does. An edge older than this behaviour sends the request to one cloud only. Without an edge, a client calls each cloud's own address. A producer's contract above is unchanged.
+- **What a deploy gives**: Kubernetes and Cloud Run deploys of a build with prerender routes run one cache service per app (one per environment and cloud, named `<app>-isr`), hand the app its address under the reserved function name `__isrcache` (function names can't be that, and the URL is not a secret), and give each environment one generated revalidation token, delivered at runtime as `NBO_PRERENDER_BYPASS`. Neither the token nor the cache's address is ever written into `.nbo/`. Every cache key starts with the build's content id, so a new build never reads a page an older build cached, even while both run during a rollout; revalidation by tag or path drops matching entries of every build in that cache. A cache read that fails, answers anything but `200` or `404`, or takes over 2 seconds counts as a miss, and a cache write never delays the visitor's answer. The cache is in memory and bounded (96 MiB by default, least recently used pages go first): a restarted cache starts empty, and the build's seed pages still answer `shell` routes at once. A cloud has its own cache, so a revalidation has to reach every cloud that serves the address: the edge answers `POST /_nbo/revalidate` for a host it serves by sending the same request (method, path, `Authorization`, `Content-Type`, body of at most 64 KiB, else `413`) to every backend of that host, including those at 0%, in parallel with a 10 second limit each. It answers `204` when every backend answered `2xx`; the shared status, with an empty body, when every backend answered the same other status (a wrong token stays `401`); else `502` with `{"backends": [{"id": "<environment id>", "status": 204}, ...]}`, status `0` meaning unreachable or timed out and `id` `null` for a backend without an id (never its URL); `400` when it can't read the request body; a host with no backends gets the unknown-host `404`. Every answer carries `x-nbo-edge-fanout: <number of backends>` and `cache-control: no-store`. The edge doesn't check the token; each app does. An edge older than this behaviour sends the request to one cloud only. Without an edge, a client calls each cloud's own address. A producer's contract above is unchanged.
 
 Requires `prerender.isr`; on-demand needs `prerender.onDemand`. The Next.js data cache (fetch results, `unstable_cache`) is not part of the build output.
 
@@ -418,7 +463,7 @@ Image optimization and crons are platform services declared in the manifest. The
 
 - The endpoint is `GET /_nbo/image?url=…&w=…&q=…`, answered by the app server. Producers point the framework's image loader at it, the way Vercel uses `/_vercel/image`. `url` is a local path (a `static.index.json` key) or an absolute URL; `w` is the width in pixels; `q` is the quality.
 - `w` must be one of `widths` and `q` one of `qualities`; a local `url` must match a `localPatterns` `pathname`, a remote one a `remotePatterns` entry (`protocol` when given, `hostname` and `pathname`, each RE2). A `localPatterns` that is absent or empty allows every local path, as Next does when its list is unset (the Next producer wrote `[]` for an unset list before 1.0 final); a pattern without `pathname` matches any path. To allow no local image, write a pattern no path matches, such as `^$`. An absent or empty `remotePatterns` allows no remote image. Anything else is `400`. A block without `widths` or `qualities` allows no value for that parameter, so every request is `400`. Without those allowlists anyone can make the platform resize arbitrary images at arbitrary sizes, at the customer's expense.
-- A local `url` with no `static.index.json` entry is `404`. A remote source that can't be fetched (5 seconds, at most 10 MiB read), or a source that can't be decoded or encoded, is `502`. A build without an `images` block answers `500`.
+- A local `url` with no `static.index.json` entry is `404`. A remote source that can't be fetched (5 seconds, at most 10 MiB read), or a source that can't be decoded or encoded, is `502`. A remote source is refused with `502` when it redirects more than 3 times, when a redirect's target matches no `remotePatterns` entry, when its hostname resolves to any loopback, private, link-local, CGNAT, unspecified, multicast, reserved, benchmarking or unique-local address (IPv4, IPv6, local-use NAT64, and IPv4 inside IPv6, 6to4 included), or when its answer isn't `image/*`. The app server connects to the address it checked. The answer carries no detail; the detail goes to the app server's log. A build without an `images` block answers `500`.
 - Output is JPEG at quality `q`, or PNG when the resized image has real transparency. `formats` is advisory: it records what the framework asked for, and 1.0 does not negotiate on `Accept`. `allowSvg` is not read.
 - A resized image is stored in the cache service under the key `url`, `w`, `q`, with `minimumCacheTTLSec` as its lifetime (`0`, not stored, when the field is missing); the next identical request is served from it.
 
@@ -453,12 +498,12 @@ The build output names what it needs and never carries values. Values are resolv
 
 Bindings declare a service by protocol, never by product. A binding is `{ "name": "<name>", "type": "<type>" }` in the manifest's `bindings`; no 1.0 producer writes one.
 
-| Binding `type` | Contract | Value the app gets | Examples it can point to |
-| --- | --- | --- | --- |
-| `postgres` | Postgres wire protocol | `<NAME>_URL`, a connection string | RDS, Cloud SQL, Neon, CloudNativePG |
-| `s3` | S3 API | `<NAME>_URL` | S3, GCS (interoperability mode), R2, self-hosted S3-compatible stores |
-| `redis` | RESP (Redis and Valkey) | `<NAME>_URL` | ElastiCache, Memorystore, self-hosted Valkey |
-| `cache` | Platform data-cache API | `<NAME>_URL` | Nothing in 1.0: NBO resolves no binding itself |
+| Binding `type` | Contract                | Value the app gets                | Examples it can point to                                              |
+| -------------- | ----------------------- | --------------------------------- | --------------------------------------------------------------------- |
+| `postgres`     | Postgres wire protocol  | `<NAME>_URL`, a connection string | RDS, Cloud SQL, Neon, CloudNativePG                                   |
+| `s3`           | S3 API                  | `<NAME>_URL`                      | S3, GCS (interoperability mode), R2, self-hosted S3-compatible stores |
+| `redis`        | RESP (Redis and Valkey) | `<NAME>_URL`                      | ElastiCache, Memorystore, self-hosted Valkey                          |
+| `cache`        | Platform data-cache API | `<NAME>_URL`                      | Nothing in 1.0: NBO resolves no binding itself                        |
 
 - `<NAME>` is the binding's `name` in upper case. Every binding type gets exactly one variable, and every binding is required: the deploy check above refuses a deploy without it.
 - The value comes from the project's variables, like any other variable (in dev mode also from NBO's own environment). NBO provisions nothing and supplies no credentials for a binding in 1.0.
@@ -472,16 +517,16 @@ No secret value may appear in `.nbo/`. `nbo validate` scans the metadata JSON fi
 
 Capabilities are a fixed vocabulary of feature ids. Builds declare what they need, adapters declare what they offer, and the planner resolves each need to native, emulated or unsupported before anything is provisioned.
 
-| Capability id | Meaning |
-| --- | --- |
-| `fn.streaming` | Streamed response bodies |
-| `fn.edge` | Edge-tier isolate functions |
-| `fn.waitUntil` | Background work after the response is sent |
-| `fn.arm64` | arm64 execution |
-| `prerender.isr` | Time-based revalidation |
-| `prerender.onDemand` | Tag and path revalidation |
-| `images.optimize` | The `/_nbo/image` endpoint |
-| `geo.headers` | Geo request headers |
+| Capability id        | Meaning                                    |
+| -------------------- | ------------------------------------------ |
+| `fn.streaming`       | Streamed response bodies                   |
+| `fn.edge`            | Edge-tier isolate functions                |
+| `fn.waitUntil`       | Background work after the response is sent |
+| `fn.arm64`           | arm64 execution                            |
+| `prerender.isr`      | Time-based revalidation                    |
+| `prerender.onDemand` | Tag and path revalidation                  |
+| `images.optimize`    | The `/_nbo/image` endpoint                 |
+| `geo.headers`        | Geo request headers                        |
 
 These eight ids are the whole 1.0 vocabulary: the schema rejects any other id in `requires.capabilities` and in a function's `requires`. Middleware and crons are not capabilities: they are platform services on every 1.0 target, so a build that uses them declares nothing (`route.middleware` and `cron` are reserved). A build may declare `fn.edge`, `fn.waitUntil`, `fn.arm64` or `geo.headers`; no 1.0 target offers them, so the plan fails as unsupported.
 
@@ -495,6 +540,7 @@ Each requirement resolves to one of three outcomes:
 - **Emulated**: a platform service fills the gap, for example ISR through the platform's cache tier on a provider with no ISR. The plan shows which service.
 
 In 1.0, `prerender.isr` and `prerender.onDemand` resolve as emulated (`platform-cache`) on Kubernetes and Cloud Run: the deploy runs the cache service and sets the revalidation token (see "What a deploy gives" in Prerendering and ISR). An adapter may attach a note to any capability it plans (`notes` in its published capabilities); the plan shows it as a `[note]` line, and notes never fail a plan. The two reference adapters have none to give today.
+
 - **Unsupported**: the plan fails and names the requirement, the function and the limit.
 
 Extensions add fields without a spec release:
@@ -646,13 +692,13 @@ Every other check above is an error because every build NBO can hold already pas
 
 Conformance is checked with recorded HTTP transcripts. A transcript is one JSON file: `method`, `path`, optional request `headers` and `body`, `expectStatus`, and optionally `expectHeaders` (exact values), `expectHeaderPatterns` (a regular expression the whole value must match) and one body check, `expectBodySha256` or `expectBodyContains`. `nbo conformance <dir> <baseURL> [--insecure]` runs every `*.json` in a directory against a running app and prints one line per mismatch. These suites exist in 1.0:
 
-| Suite | What it covers | Where it runs |
-| --- | --- | --- |
+| Suite                                                                               | What it covers                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Where it runs                                                                                                                                                                                                                                                 |
+| ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `packages/conformance/transcripts/spec-1.0/` (`static`, `spa`, `function`, `carry`) | Platform behaviour: deployment id on pages, `404`s, functions and carried files; a client's deployment id replaced; platform-only headers stripped; `x-forwarded-host` filled and kept; `Cache-Control` per class; trailing slash `never` without a redirect; the `404` error page; SPA deep links and missing-asset `404`s; carried files and the new build winning; `/_nbo/revalidate` without a token `401`; `/_nbo/image` with an unlisted width or quality `400` | `pnpm --filter @nbo/cli test` (so in every CI pipeline): apps built with `@nbo/writer`, served in-process by the app server with a real HTTP listener. Placeholders `{{contentId}}`, `{{host}}` and `{{carriedFrom}}` are filled with that run's exact values |
-| `packages/conformance/transcripts/platform/` | Deployment id on a Next.js page | `scripts/verify-slice2.sh`, against local `nbo serve` and the local Kubernetes cluster |
-| `fixtures/conformance/slice2`, `slice4-middleware` | The `next-app` fixture: static files, an SSR page, a route handler, and middleware (continue, rewrite, header override, redirect) | The Next.js harness (`scripts/ci/next-harness.sh`) in CI: local `nbo serve`, a `kind` Kubernetes cluster, and Cloud Run in its own job |
-| `fixtures/conformance/slice5-ppr` | The `ppr-app` fixture: partial prerendering | The Next.js harness, as above |
-| `fixtures/conformance/slice4-image`, `slice4-isr` | `next/image` and ISR | `scripts/verify-slice4-image.sh`, `scripts/verify-slice4-isr-local.sh` and `-cloud.sh`, run by hand against `nbo serve`, Kubernetes and Cloud Run |
+| `packages/conformance/transcripts/platform/`                                        | Deployment id on a Next.js page                                                                                                                                                                                                                                                                                                                                                                                                                                       | `scripts/verify-slice2.sh`, against local `nbo serve` and the local Kubernetes cluster                                                                                                                                                                        |
+| `fixtures/conformance/slice2`, `slice4-middleware`                                  | The `next-app` fixture: static files, an SSR page, a route handler, and middleware (continue, rewrite, header override, redirect)                                                                                                                                                                                                                                                                                                                                     | The Next.js harness (`scripts/ci/next-harness.sh`) in CI: local `nbo serve`, a `kind` Kubernetes cluster, and Cloud Run in its own job                                                                                                                        |
+| `fixtures/conformance/slice5-ppr`                                                   | The `ppr-app` fixture: partial prerendering                                                                                                                                                                                                                                                                                                                                                                                                                           | The Next.js harness, as above                                                                                                                                                                                                                                 |
+| `fixtures/conformance/slice4-image`, `slice4-isr`                                   | `next/image` and ISR                                                                                                                                                                                                                                                                                                                                                                                                                                                  | `scripts/verify-slice4-image.sh`, `scripts/verify-slice4-isr-local.sh` and `-cloud.sh`, run by hand against `nbo serve`, Kubernetes and Cloud Run                                                                                                             |
 
 Every new behaviour gets transcripts in one of these suites. A failing target is treated as a spec bug until proven otherwise.
 
@@ -662,21 +708,21 @@ There is one router, `@nbo/router`, used by the app server everywhere, so a loca
 
 The draft's open decisions are settled for 1.0. Every row is Claude's call, made under the maintainer's advance approval and recorded in ADR 0007; the reasons are in the "Why" column. Revisiting one follows Versioning and compatibility: a minor may add what a row leaves out (an edge runtime, for example); changing an answer that existing builds rely on is a 2.0 change.
 
-| Decision | 1.0 answer | Why | Settled by |
-| --- | --- | --- | --- |
-| Regex flavor | RE2 plus `pathNot`. JS-only escapes (`\C`, `\cX`, `\uXXXX`, `\u{...}`) are rejected. Producers lower lookaheads into `pathNot` or fail naming the pattern | Implemented and tested in the router and in validate; every router family can run RE2 | Claude's call, ADR 0007 |
-| Function identity | By name; URL paths map to functions only in `routes.json` | Implemented; one SSR function serves many routes, so adapters deploy few objects | Claude's call, ADR 0007 |
-| Relation to Vercel's format | Not a superset. An importer for Vercel's Build Output API may come after 1.0 | Vercel's changes never force an NBO release | Claude's call, ADR 0007 |
-| Edge runtime surface | No edge runtime in 1.0; `runtime.kind: "edge"` is reserved. When a minor adds it: WinterTC APIs plus `node:buffer` and `node:async_hooks` | No 1.0 target runs one, and Next marks its own Edge Runtime deprecated | Claude's call, ADR 0007 |
-| ISR storage | The platform's own cache service (`@nbo/isrcache`), the same on every cloud | Implemented; behaves the same on every cloud and survives a move between clouds | Claude's call, ADR 0007 |
-| Multi-service apps and daemons | Not in 1.x core; a later extension or 2.0 | Not needed for Next.js, React SPAs or static sites | Claude's call, ADR 0007 |
-| Manifest shape | Split files linked by digest | Implemented; a route change doesn't touch function metadata | Claude's call, ADR 0007 |
-| Name and directory | `.nbo/`, `nbo`, `x-nbo-*`, `/_nbo/` and `NBO_` are fixed for all of 1.x; renaming them is a 2.0 change. Schema ids are `urn:nbo:spec:v1:<file>` | A product name can change on the surface; wire names that change break every stored build | Claude's call, ADR 0007 |
-| Extension schema mechanism | Both: a generic `^x-[a-z0-9]+(-[a-z0-9]+)+$` key rule on the five extendable objects, every key declared in `requires.extensions`, and a typed schema for NBO's own extensions (see Capabilities and extensions) | Third parties get a path without a release; a misspelled key still fails because undeclared keys fail | Claude's call, ADR 0007 |
-| Partial Prefetching | Not covered; Next's client falls back to its ordinary prefetch | A separate client cache with no fixture yet | Claude's call, ADR 0007 |
-| Packaging | Not part of 1.0: the unit is the `.nbo/` directory (see Distribution). An archive format, signing and provenance are a sketch for after 1.0 | Nothing implements them | Claude's call, ADR 0007 |
-| Unimplemented draft features | Reserved (see Reserved for later): the 1.0 schemas reject them, and a minor can make one core | No frozen promise without code; no writer ever produced them, so no stored build breaks | Claude's call, ADR 0007 |
-| Framework data requests on prerender routes | `rsc` and `next-router-*` handling (the `vary` and the cache bypass) is core and named as Next's | The reference server does it on every prerender route; it is harmless for other producers | Claude's call, ADR 0007 |
+| Decision                                    | 1.0 answer                                                                                                                                                                                                       | Why                                                                                                   | Settled by              |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ----------------------- |
+| Regex flavor                                | RE2 plus `pathNot`. JS-only escapes (`\C`, `\cX`, `\uXXXX`, `\u{...}`) are rejected. Producers lower lookaheads into `pathNot` or fail naming the pattern                                                        | Implemented and tested in the router and in validate; every router family can run RE2                 | Claude's call, ADR 0007 |
+| Function identity                           | By name; URL paths map to functions only in `routes.json`                                                                                                                                                        | Implemented; one SSR function serves many routes, so adapters deploy few objects                      | Claude's call, ADR 0007 |
+| Relation to Vercel's format                 | Not a superset. An importer for Vercel's Build Output API may come after 1.0                                                                                                                                     | Vercel's changes never force an NBO release                                                           | Claude's call, ADR 0007 |
+| Edge runtime surface                        | No edge runtime in 1.0; `runtime.kind: "edge"` is reserved. When a minor adds it: WinterTC APIs plus `node:buffer` and `node:async_hooks`                                                                        | No 1.0 target runs one, and Next marks its own Edge Runtime deprecated                                | Claude's call, ADR 0007 |
+| ISR storage                                 | The platform's own cache service (`@nbo/isrcache`), the same on every cloud                                                                                                                                      | Implemented; behaves the same on every cloud and survives a move between clouds                       | Claude's call, ADR 0007 |
+| Multi-service apps and daemons              | Not in 1.x core; a later extension or 2.0                                                                                                                                                                        | Not needed for Next.js, React SPAs or static sites                                                    | Claude's call, ADR 0007 |
+| Manifest shape                              | Split files linked by digest                                                                                                                                                                                     | Implemented; a route change doesn't touch function metadata                                           | Claude's call, ADR 0007 |
+| Name and directory                          | `.nbo/`, `nbo`, `x-nbo-*`, `/_nbo/` and `NBO_` are fixed for all of 1.x; renaming them is a 2.0 change. Schema ids are `urn:nbo:spec:v1:<file>`                                                                  | A product name can change on the surface; wire names that change break every stored build             | Claude's call, ADR 0007 |
+| Extension schema mechanism                  | Both: a generic `^x-[a-z0-9]+(-[a-z0-9]+)+$` key rule on the five extendable objects, every key declared in `requires.extensions`, and a typed schema for NBO's own extensions (see Capabilities and extensions) | Third parties get a path without a release; a misspelled key still fails because undeclared keys fail | Claude's call, ADR 0007 |
+| Partial Prefetching                         | Not covered; Next's client falls back to its ordinary prefetch                                                                                                                                                   | A separate client cache with no fixture yet                                                           | Claude's call, ADR 0007 |
+| Packaging                                   | Not part of 1.0: the unit is the `.nbo/` directory (see Distribution). An archive format, signing and provenance are a sketch for after 1.0                                                                      | Nothing implements them                                                                               | Claude's call, ADR 0007 |
+| Unimplemented draft features                | Reserved (see Reserved for later): the 1.0 schemas reject them, and a minor can make one core                                                                                                                    | No frozen promise without code; no writer ever produced them, so no stored build breaks               | Claude's call, ADR 0007 |
+| Framework data requests on prerender routes | `rsc` and `next-router-*` handling (the `vary` and the cache bypass) is core and named as Next's                                                                                                                 | The reference server does it on every prerender route; it is harmless for other producers             | Claude's call, ADR 0007 |
 
 ## Reserved for later
 

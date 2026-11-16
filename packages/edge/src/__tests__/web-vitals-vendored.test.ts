@@ -15,7 +15,9 @@ describe("vendored web-vitals", () => {
     const require = createRequire(import.meta.url);
     const distDir = dirname(require.resolve("web-vitals"));
     const fromPackage = readFileSync(join(distDir, "web-vitals.iife.js"));
-    const vendored = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "edge-rs", "assets", "web-vitals.iife.js"));
+    const vendored = readFileSync(
+      join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "edge-rs", "assets", "web-vitals.iife.js"),
+    );
     expect(vendored.equals(fromPackage)).toBe(true);
     // The package.json is not in web-vitals' exports map; it sits above dist/.
     const { version } = JSON.parse(readFileSync(join(distDir, "..", "package.json"), "utf8")) as { version: string };

@@ -24,7 +24,6 @@ const cloudEnv = {
   NBO_GCP_REGION: "r",
   NBO_AR_REPO: "r-docker.pkg.dev/p/nbo-ci",
 };
-const noCloudEnv = { NBO_GCP_PROJECT: "", NBO_GCP_REGION: "", NBO_AR_REPO: "" };
 
 test("an unknown target exits 2 with usage", () => {
   const r = runBash(harness, ["bogus"]);
@@ -128,7 +127,9 @@ test("kubernetes deploys each fixture twice and fails when the second is not a n
     });
     assert.equal(r.code, 1);
     assert.match(r.stderr, /expected the second deploy of next-app to print "already live"/);
-    const deploys = readFileSync(join(dir, "nbo.log"), "utf8").split("\n").filter((l) => l.startsWith("deploy"));
+    const deploys = readFileSync(join(dir, "nbo.log"), "utf8")
+      .split("\n")
+      .filter((l) => l.startsWith("deploy"));
     assert.equal(deploys.length, 2);
   } finally {
     fake.cleanup();
@@ -150,7 +151,9 @@ test("kubernetes passes the no-op check when the second deploy says already live
     });
     // It goes on to the HTTP checks, which have no server here; the no-op check itself passed.
     assert.doesNotMatch(r.stderr, /already live/);
-    const deploys = readFileSync(join(dir, "nbo.log"), "utf8").split("\n").filter((l) => l.startsWith("deploy"));
+    const deploys = readFileSync(join(dir, "nbo.log"), "utf8")
+      .split("\n")
+      .filter((l) => l.startsWith("deploy"));
     assert.ok(deploys.length >= 2);
   } finally {
     fake.cleanup();
@@ -238,12 +241,19 @@ test("kubernetes waits for every rollout of the app and then for an HTTP 200 thr
 test("kubernetes stops with a clear error when the app never answers 200, before any suite", () => {
   const { r, deployed } = k8sRun("kind-nbo-ci", {}, { noop: true, tools: { curl: "echo 503" } });
   assert.equal(r.code, 1);
-  assert.match(r.stderr, /https:\/\/next-app\.127\.0\.0\.1\.sslip\.io\/api\/hello never became ready after 2 probes \(last status 503\)/);
+  assert.match(
+    r.stderr,
+    /https:\/\/next-app\.127\.0\.0\.1\.sslip\.io\/api\/hello never became ready after 2 probes \(last status 503\)/,
+  );
   assert.doesNotMatch(deployed, /conformance/);
 });
 
 test("kubernetes stops when a rollout does not finish, naming the deployment", () => {
-  const { r, deployed } = k8sRun("kind-nbo-ci", {}, { noop: true, tools: { rollout: 'case "$5" in *fn-ssr) exit 1;; esac' } });
+  const { r, deployed } = k8sRun(
+    "kind-nbo-ci",
+    {},
+    { noop: true, tools: { rollout: 'case "$5" in *fn-ssr) exit 1;; esac' } },
+  );
   assert.equal(r.code, 1);
   assert.match(r.stderr, /deployment\/next-app-fn-ssr did not finish rolling out/);
   assert.doesNotMatch(deployed, /conformance/);
@@ -269,7 +279,11 @@ test("kubernetes refuses a context that is not a kind cluster, even when named",
 });
 
 test("in the CI job, kind-nbo-local with NBO_KIND_CLUSTER=nbo-local is used as is", () => {
-  const { r, envLog } = k8sRun("kind-nbo-local", { NBO_CI_DIND: "1", GITLAB_CI: "true", NBO_KIND_CLUSTER: "nbo-local" });
+  const { r, envLog } = k8sRun("kind-nbo-local", {
+    NBO_CI_DIND: "1",
+    GITLAB_CI: "true",
+    NBO_KIND_CLUSTER: "nbo-local",
+  });
   assert.doesNotMatch(r.stderr, /refusing/);
   assert.match(envLog, /^deploy NBO_KIND_CLUSTER=nbo-local$/m);
 });
@@ -278,8 +292,14 @@ test("kubernetes refuses the developer's kind-nbo-local and deletes nothing", ()
   const { r, calls, deployed } = k8sRun("kind-nbo-local");
   assert.equal(r.code, 1);
   assert.match(r.stderr, /refusing to run against kube context kind-nbo-local/);
-  assert.deepEqual(calls.filter((c) => c[0] === "delete"), []);
-  assert.deepEqual(calls.filter((c) => c.includes("delete")), []);
+  assert.deepEqual(
+    calls.filter((c) => c[0] === "delete"),
+    [],
+  );
+  assert.deepEqual(
+    calls.filter((c) => c.includes("delete")),
+    [],
+  );
   assert.equal(deployed, "", "no deploy ran");
 });
 
@@ -296,7 +316,8 @@ test("kubernetes runs on the CI cluster context and passes --context to every ku
   assert.match(deployed, /deploy/);
   const deletes = calls.filter((c) => c.includes("delete"));
   assert.ok(deletes.length >= 3, "cleanup ran");
-  for (const c of kubectlCalls(calls).filter((x) => x[0] !== "config")) assert.deepEqual(c.slice(0, 2), ["--context", "kind-nbo-ci"], JSON.stringify(c));
+  for (const c of kubectlCalls(calls).filter((x) => x[0] !== "config"))
+    assert.deepEqual(c.slice(0, 2), ["--context", "kind-nbo-ci"], JSON.stringify(c));
 });
 
 test("kubernetes accepts kind-nbo-local only inside the CI job (NBO_CI_DIND=1)", () => {

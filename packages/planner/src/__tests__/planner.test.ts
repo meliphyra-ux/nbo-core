@@ -113,21 +113,27 @@ describe("evaluate", () => {
   });
 
   it("fails the plan for an unknown critical extension", () => {
-    const m = manifest({ requires: { capabilities: [], extensions: [{ id: "x-nbo-not-a-real-extension", version: "1", critical: true }] } });
+    const m = manifest({
+      requires: { capabilities: [], extensions: [{ id: "x-nbo-not-a-real-extension", version: "1", critical: true }] },
+    });
     const p = evaluate(m, {}, { name: "kubernetes" });
     expect(p.ok).toBe(false);
     expect(p.extensions[0]!.ok).toBe(false);
   });
 
   it("resolves x-nbo-ppr as a known critical extension", () => {
-    const m = manifest({ requires: { capabilities: [], extensions: [{ id: "x-nbo-ppr", version: "1", critical: true }] } });
+    const m = manifest({
+      requires: { capabilities: [], extensions: [{ id: "x-nbo-ppr", version: "1", critical: true }] },
+    });
     const p = evaluate(m, {}, { name: "kubernetes" });
     expect(p.ok).toBe(true);
     expect(p.extensions[0]).toEqual({ id: "x-nbo-ppr", critical: true, known: true, ok: true });
   });
 
   it("only warns, not fails, for an unknown non-critical extension", () => {
-    const m = manifest({ requires: { capabilities: [], extensions: [{ id: "x-acme-analytics", version: "2", critical: false }] } });
+    const m = manifest({
+      requires: { capabilities: [], extensions: [{ id: "x-acme-analytics", version: "2", critical: false }] },
+    });
     const p = evaluate(m, {}, { name: "kubernetes" });
     expect(p.ok).toBe(true);
     expect(p.extensions[0]!.known).toBe(false);
@@ -175,7 +181,12 @@ describe("evaluateWithTargetEnv", () => {
   it("refuses promotion and names the mismatch when the target environment hashes differently", () => {
     const buildDigest = `sha256:${sha256Hex("NEXT_PUBLIC_API_BASE=https://staging.example.com")}`;
     const m = manifest({ env: { inlinedAtBuild: ["NEXT_PUBLIC_API_BASE"], inlinedEnvDigest: buildDigest } });
-    const p = evaluateWithTargetEnv(m, {}, { name: "kubernetes" }, { NEXT_PUBLIC_API_BASE: "https://production.example.com" });
+    const p = evaluateWithTargetEnv(
+      m,
+      {},
+      { name: "kubernetes" },
+      { NEXT_PUBLIC_API_BASE: "https://production.example.com" },
+    );
     expect(p.ok).toBe(false);
   });
 

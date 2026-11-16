@@ -10,7 +10,9 @@ import type { Manifest, Function as NboFunction } from "@nbo/spec";
 // values evaluate consumes — port of LoadFromDir (load.go lines 11-38).
 // Trusts its input the same way Go's version does (decodes but doesn't
 // re-validate against the schema — that's @nbo/validate's own job).
-export async function loadFromDir(nboDir: string): Promise<{ manifest: Manifest; functions: Record<string, NboFunction> }> {
+export async function loadFromDir(
+  nboDir: string,
+): Promise<{ manifest: Manifest; functions: Record<string, NboFunction> }> {
   const raw = await readFile(join(nboDir, "manifest.json"), "utf8");
   const manifest = JSON.parse(raw) as Manifest;
 

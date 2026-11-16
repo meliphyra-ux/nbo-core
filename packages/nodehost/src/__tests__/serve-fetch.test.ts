@@ -16,7 +16,9 @@ afterEach(async () => {
 
 function listen(handler: FetchHandler, host?: string): Promise<{ port: number; url: string }> {
   return new Promise((resolve) => {
-    server = serveFetch(handler, host ? { port: 0, host } : { port: 0 }, (port) => resolve({ port, url: `http://127.0.0.1:${port}` }));
+    server = serveFetch(handler, host ? { port: 0, host } : { port: 0 }, (port) =>
+      resolve({ port, url: `http://127.0.0.1:${port}` }),
+    );
   });
 }
 
@@ -44,7 +46,9 @@ describe("serveFetch", () => {
   });
 
   it("round-trips the handler's status, headers, and body to a real client", async () => {
-    const { url } = await listen(async () => new Response("body-content", { status: 201, headers: { "x-custom": "value" } }));
+    const { url } = await listen(
+      async () => new Response("body-content", { status: 201, headers: { "x-custom": "value" } }),
+    );
 
     const res = await fetch(url);
 

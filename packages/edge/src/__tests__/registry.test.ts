@@ -79,6 +79,8 @@ describe("Registry", () => {
 
   it("set rejects a backend URL with no scheme", () => {
     const r = createRegistry();
-    expect(() => r.set("app.test", [{ url: "edge-next-app.127.0.0.1.sslip.io", weight: 1, insecureSkipVerify: false }])).toThrow();
+    expect(() =>
+      r.set("app.test", [{ url: "edge-next-app.127.0.0.1.sslip.io", weight: 1, insecureSkipVerify: false }]),
+    ).toThrow();
   });
 });

@@ -60,14 +60,24 @@ describe("renderManifests", () => {
   });
 
   it("produces 3 YAML documents (Deployment, Service, Ingress)", () => {
-    const yaml = renderManifests({ appName: "x", imageTag: "y:z", host: "x.127.0.0.1.sslip.io", contentID: "sha256:aa" });
+    const yaml = renderManifests({
+      appName: "x",
+      imageTag: "y:z",
+      host: "x.127.0.0.1.sslip.io",
+      contentID: "sha256:aa",
+    });
 
     const docs = yaml.split("\n---\n");
     expect(docs).toHaveLength(3);
   });
 
   it("dev (default) keeps the Ingress, the selfsigned issuer and port 80, with no namespace or pull secret", () => {
-    const yaml = renderManifests({ appName: "x", imageTag: "y:z", host: "x.127.0.0.1.sslip.io", contentID: "sha256:aa" });
+    const yaml = renderManifests({
+      appName: "x",
+      imageTag: "y:z",
+      host: "x.127.0.0.1.sslip.io",
+      contentID: "sha256:aa",
+    });
     expect(yaml).toContain("kind: Ingress");
     expect(yaml).toContain("selfsigned-issuer");
     expect(yaml).toContain("  - port: 80\n");
@@ -101,10 +111,21 @@ describe("renderManifests", () => {
   it("gives the app container a readiness probe and a preStop sleep, in dev and production", () => {
     const variants = [
       renderManifests({ appName: "x", imageTag: "y:z", host: "x.127.0.0.1.sslip.io", contentID: "sha256:aa" }),
-      renderManifests({ appName: "x", imageTag: "y:z", host: "", contentID: "sha256:aa", namespace: "nbo-p-x", ingress: false, pullSecret: "nbo-pull", envSecret: "x-env" }),
+      renderManifests({
+        appName: "x",
+        imageTag: "y:z",
+        host: "",
+        contentID: "sha256:aa",
+        namespace: "nbo-p-x",
+        ingress: false,
+        pullSecret: "nbo-pull",
+        envSecret: "x-env",
+      }),
     ];
     for (const yaml of variants) {
-      const dep = parseAllDocuments(yaml).map((d) => d.toJS()).find((d) => d.kind === "Deployment");
+      const dep = parseAllDocuments(yaml)
+        .map((d) => d.toJS())
+        .find((d) => d.kind === "Deployment");
       const c = dep.spec.template.spec.containers[0];
       expect(c.readinessProbe.tcpSocket.port).toBe(8080);
       expect(c.readinessProbe.periodSeconds).toBe(2);
@@ -114,7 +135,9 @@ describe("renderManifests", () => {
 
   it("leaves function manifests without probes or lifecycle", () => {
     const yaml = renderFunctionManifests({ appName: "a", functionName: "ssr", imageTag: "x" });
-    const dep = parseAllDocuments(yaml).map((d) => d.toJS()).find((d) => d.kind === "Deployment");
+    const dep = parseAllDocuments(yaml)
+      .map((d) => d.toJS())
+      .find((d) => d.kind === "Deployment");
     const c = dep.spec.template.spec.containers[0];
     expect(c.readinessProbe).toBeUndefined();
     expect(c.lifecycle).toBeUndefined();
@@ -122,15 +145,34 @@ describe("renderManifests", () => {
 
   it("never renders privileged or host-level pod settings", () => {
     const yaml =
-      renderManifests({ appName: "a", imageTag: "i", host: "", contentID: "sha256:aa", namespace: "nbo-p-x", ingress: false, pullSecret: "nbo-pull" }) +
-      renderFunctionManifests({ appName: "a", functionName: "ssr", imageTag: "i", namespace: "nbo-p-x", pullSecret: "nbo-pull" });
-    for (const bad of ["privileged", "hostPath", "hostNetwork", "hostPID", "hostIPC", "hostPort", "capabilities"]) expect(yaml).not.toContain(bad);
+      renderManifests({
+        appName: "a",
+        imageTag: "i",
+        host: "",
+        contentID: "sha256:aa",
+        namespace: "nbo-p-x",
+        ingress: false,
+        pullSecret: "nbo-pull",
+      }) +
+      renderFunctionManifests({
+        appName: "a",
+        functionName: "ssr",
+        imageTag: "i",
+        namespace: "nbo-p-x",
+        pullSecret: "nbo-pull",
+      });
+    for (const bad of ["privileged", "hostPath", "hostNetwork", "hostPID", "hostIPC", "hostPort", "capabilities"])
+      expect(yaml).not.toContain(bad);
   });
 });
 
 describe("renderFunctionManifests", () => {
   it("has no Ingress and combines the app/function name", () => {
-    const yaml = renderFunctionManifests({ appName: "next-app", functionName: "ssr", imageTag: "nbo-fn-next-app-ssr:abc" });
+    const yaml = renderFunctionManifests({
+      appName: "next-app",
+      functionName: "ssr",
+      imageTag: "nbo-fn-next-app-ssr:abc",
+    });
 
     expect(yaml).not.toContain("kind: Ingress");
     expect(yaml).toContain("next-app-fn-ssr");
@@ -144,14 +186,22 @@ describe("renderFunctionManifests", () => {
   });
 
   it("production: namespaced with a pull secret", () => {
-    const yaml = renderFunctionManifests({ appName: "a", functionName: "ssr", imageTag: "x", namespace: "nbo-p-x", pullSecret: "nbo-pull" });
+    const yaml = renderFunctionManifests({
+      appName: "a",
+      functionName: "ssr",
+      imageTag: "x",
+      namespace: "nbo-p-x",
+      pullSecret: "nbo-pull",
+    });
     expect(yaml.match(/namespace: nbo-p-x/g)).toHaveLength(2);
     expect(yaml).toContain("imagePullSecrets:\n      - name: nbo-pull");
   });
 
   it("annotates the Deployment with nbo.dev/fn-config when a config hash is given, and only then", () => {
     const yaml = renderFunctionManifests({ appName: "a", functionName: "ssr", imageTag: "x", configHash: "abc123" });
-    expect(yaml).toContain('kind: Deployment\nmetadata:\n  name: a-fn-ssr\n  annotations:\n    nbo.dev/fn-config: "abc123"\n');
+    expect(yaml).toContain(
+      'kind: Deployment\nmetadata:\n  name: a-fn-ssr\n  annotations:\n    nbo.dev/fn-config: "abc123"\n',
+    );
     expect(renderFunctionManifests({ appName: "a", functionName: "ssr", imageTag: "x" })).not.toContain("fn-config");
   });
 });
@@ -200,7 +250,9 @@ describe("renderPullSecret", () => {
     expect(yaml).toContain("name: nbo-pull");
     expect(yaml).not.toContain("private_key");
     const b64 = /\.dockerconfigjson: (\S+)/.exec(yaml)![1]!;
-    const cfg = JSON.parse(Buffer.from(b64, "base64").toString()) as { auths: Record<string, { username: string; password: string; auth: string }> };
+    const cfg = JSON.parse(Buffer.from(b64, "base64").toString()) as {
+      auths: Record<string, { username: string; password: string; auth: string }>;
+    };
     const entry = cfg.auths["us-east1-docker.pkg.dev"]!;
     expect(entry.username).toBe("_json_key");
     expect(entry.password).toBe('{"private_key":"k"}');
@@ -262,7 +314,11 @@ describe("liveFunctionState", () => {
 
   it("ignores kubectl warning lines merged into the output", async () => {
     const run = recorder(() => `Warning: client version skew\n${line("img:1", "c", "1", "1", "1", "1", "1")}\n`);
-    await expect(liveFunctionState("a-fn-ssr", { run })).resolves.toEqual({ image: "img:1", config: "c", healthy: true });
+    await expect(liveFunctionState("a-fn-ssr", { run })).resolves.toEqual({
+      image: "img:1",
+      config: "c",
+      healthy: true,
+    });
   });
 
   it("is unhealthy while the controller has not observed the latest generation", async () => {
@@ -279,7 +335,9 @@ describe("liveFunctionState", () => {
       ["0", "0", "0"],
     ]) {
       const run = recorder(() => line("img:1", "c", "2", "2", replicas!, updated!, available!));
-      await expect(liveFunctionState("x", { run }), `${replicas}/${updated}/${available}`).resolves.toMatchObject({ healthy: false });
+      await expect(liveFunctionState("x", { run }), `${replicas}/${updated}/${available}`).resolves.toMatchObject({
+        healthy: false,
+      });
     }
   });
 
@@ -289,9 +347,17 @@ describe("liveFunctionState", () => {
   });
 
   it("is undefined when the Deployment does not exist, kubectl fails, or the output has no state line", async () => {
-    await expect(liveFunctionState("a-fn-ssr", { run: recorder(() => new Error('Error from server (NotFound): deployments.apps "a-fn-ssr" not found')) })).resolves.toBeUndefined();
-    await expect(liveFunctionState("a-fn-ssr", { run: recorder(() => new Error("Unable to connect to the server")) })).resolves.toBeUndefined();
-    await expect(liveFunctionState("a-fn-ssr", { run: recorder(() => "Warning: only a warning\n") })).resolves.toBeUndefined();
+    await expect(
+      liveFunctionState("a-fn-ssr", {
+        run: recorder(() => new Error('Error from server (NotFound): deployments.apps "a-fn-ssr" not found')),
+      }),
+    ).resolves.toBeUndefined();
+    await expect(
+      liveFunctionState("a-fn-ssr", { run: recorder(() => new Error("Unable to connect to the server")) }),
+    ).resolves.toBeUndefined();
+    await expect(
+      liveFunctionState("a-fn-ssr", { run: recorder(() => "Warning: only a warning\n") }),
+    ).resolves.toBeUndefined();
   });
 });
 
@@ -299,7 +365,10 @@ describe("pushImage", () => {
   it("tags and pushes with the context's env", async () => {
     const run = recorder();
     await pushImage("local:1", "reg/x/nbo-app-a:1", { env: { DOCKER_CONFIG: "/tmp/d" }, run });
-    expect(run.calls.map((c) => [c.cmd, ...c.args].join(" "))).toEqual(["docker tag local:1 reg/x/nbo-app-a:1", "docker push reg/x/nbo-app-a:1"]);
+    expect(run.calls.map((c) => [c.cmd, ...c.args].join(" "))).toEqual([
+      "docker tag local:1 reg/x/nbo-app-a:1",
+      "docker push reg/x/nbo-app-a:1",
+    ]);
     expect(run.calls.every((c) => c.env?.DOCKER_CONFIG === "/tmp/d")).toBe(true);
   });
 });
@@ -318,7 +387,9 @@ describe("environment fingerprint", () => {
     const h = functionConfigHash(fn);
     expect(functionConfigHash({ ...fn, envFingerprint: undefined })).toBe(h);
     expect(functionConfigHash({ ...fn, envFingerprint: "f00d" })).not.toBe(h);
-    expect(functionConfigHash({ ...fn, envFingerprint: "beef" })).not.toBe(functionConfigHash({ ...fn, envFingerprint: "f00d" }));
+    expect(functionConfigHash({ ...fn, envFingerprint: "beef" })).not.toBe(
+      functionConfigHash({ ...fn, envFingerprint: "f00d" }),
+    );
     expect(renderFunctionManifests({ ...fn, envFingerprint: "f00d" })).toContain('nbo.dev/env-fingerprint: "f00d"');
   });
 
@@ -342,7 +413,8 @@ describe("environment Secret", () => {
   const vars = { PLAIN: "a=b,c", MULTI: "line1\nline2 \"q\" 'r'", UTF: "héllo ✓ 日本" };
   const decode = (yaml: string) => {
     const data: Record<string, string> = {};
-    for (const m of yaml.matchAll(/^ {2}"([A-Z_]+)": (\S+)$/gm)) data[m[1]!] = Buffer.from(m[2]!, "base64").toString("utf8");
+    for (const m of yaml.matchAll(/^ {2}"([A-Z_]+)": (\S+)$/gm))
+      data[m[1]!] = Buffer.from(m[2]!, "base64").toString("utf8");
     return data;
   };
 
@@ -376,10 +448,14 @@ describe("environment Secret", () => {
   // replaced the Secret must not stick in CreateContainerConfigError.
   it("envSecret adds an optional envFrom to the app and function Deployments only when given", () => {
     const app = { appName: "a", imageTag: "i", host: "h", contentID: "sha256:1" };
-    expect(renderManifests({ ...app, envSecret: "a-env" })).toContain("envFrom:\n        - secretRef:\n            name: a-env\n            optional: true");
+    expect(renderManifests({ ...app, envSecret: "a-env" })).toContain(
+      "envFrom:\n        - secretRef:\n            name: a-env\n            optional: true",
+    );
     expect(renderManifests(app)).not.toContain("envFrom");
     const fn = { appName: "a", functionName: "f", imageTag: "i" };
-    expect(renderFunctionManifests({ ...fn, envSecret: "a-env" })).toContain("envFrom:\n        - secretRef:\n            name: a-env\n            optional: true");
+    expect(renderFunctionManifests({ ...fn, envSecret: "a-env" })).toContain(
+      "envFrom:\n        - secretRef:\n            name: a-env\n            optional: true",
+    );
     expect(renderFunctionManifests(fn)).not.toContain("envFrom");
     expect(functionConfigHash({ ...fn, envSecret: "a-env" })).not.toBe(functionConfigHash(fn));
   });
@@ -387,7 +463,16 @@ describe("environment Secret", () => {
   it("deleteEnvSecret ignores not-found and carries the kubectl scope", async () => {
     const run = recorder();
     await deleteEnvSecret("a-env", { kubeconfig: "/kc", namespace: "nbo-p-x", run });
-    expect(run.calls[0]!.args).toEqual(["--kubeconfig", "/kc", "-n", "nbo-p-x", "delete", "secret", "a-env", "--ignore-not-found"]);
+    expect(run.calls[0]!.args).toEqual([
+      "--kubeconfig",
+      "/kc",
+      "-n",
+      "nbo-p-x",
+      "delete",
+      "secret",
+      "a-env",
+      "--ignore-not-found",
+    ]);
   });
 });
 
@@ -455,14 +540,27 @@ describe("ISR cache objects", () => {
   });
 
   it("renders the cache Deployment and Service as the spec pins them", () => {
-    const yaml = renderIsrcacheManifests({ appName: "pabc-production", imageTag: "reg/nbo-isrcache:0123456789ab", namespace: "nbo-p-abc", pullSecret: "nbo-pull" });
+    const yaml = renderIsrcacheManifests({
+      appName: "pabc-production",
+      imageTag: "reg/nbo-isrcache:0123456789ab",
+      namespace: "nbo-p-abc",
+      pullSecret: "nbo-pull",
+    });
     const docs = parseAllDocuments(yaml).map((d) => d.toJS());
     expect(docs.map((d) => d.kind)).toEqual(["Deployment", "Service"]);
     const [dep, svc] = docs;
-    expect(dep.metadata).toEqual({ name: "pabc-production-isr", namespace: "nbo-p-abc", labels: { app: "pabc-production-isr", "nbo.dev/role": "isrcache", "nbo.dev/app": "pabc-production" } });
+    expect(dep.metadata).toEqual({
+      name: "pabc-production-isr",
+      namespace: "nbo-p-abc",
+      labels: { app: "pabc-production-isr", "nbo.dev/role": "isrcache", "nbo.dev/app": "pabc-production" },
+    });
     expect(dep.spec.replicas).toBe(1);
     expect(dep.spec.selector).toEqual({ matchLabels: { app: "pabc-production-isr" } });
-    expect(dep.spec.template.metadata.labels).toEqual({ app: "pabc-production-isr", "nbo.dev/role": "isrcache", "nbo.dev/app": "pabc-production" });
+    expect(dep.spec.template.metadata.labels).toEqual({
+      app: "pabc-production-isr",
+      "nbo.dev/role": "isrcache",
+      "nbo.dev/app": "pabc-production",
+    });
     const pod = dep.spec.template.spec;
     expect(pod.automountServiceAccountToken).toBe(false);
     expect(pod.imagePullSecrets).toEqual([{ name: "nbo-pull" }]);
@@ -484,7 +582,11 @@ describe("ISR cache objects", () => {
       seccompProfile: { type: "RuntimeDefault" },
     });
     expect(c.envFrom).toBeUndefined();
-    expect(svc.metadata).toEqual({ name: "pabc-production-isr", namespace: "nbo-p-abc", labels: { app: "pabc-production-isr", "nbo.dev/role": "isrcache", "nbo.dev/app": "pabc-production" } });
+    expect(svc.metadata).toEqual({
+      name: "pabc-production-isr",
+      namespace: "nbo-p-abc",
+      labels: { app: "pabc-production-isr", "nbo.dev/role": "isrcache", "nbo.dev/app": "pabc-production" },
+    });
     expect(svc.spec).toEqual({ selector: { app: "pabc-production-isr" }, ports: [{ port: 8080, targetPort: 8080 }] });
     expect(yaml).not.toMatch(/privileged|hostNetwork|hostPath|hostPID/);
   });
@@ -518,7 +620,15 @@ describe("ISR cache objects", () => {
     expect(run.calls.map((c) => [c.cmd, ...c.args].join(" "))).toEqual([
       "kubectl --kubeconfig /kc -n nbo-p-abc delete deployment,service -l nbo.dev/role=isrcache,nbo.dev/app=pabc-production --field-selector metadata.name=pabc-production-isr --ignore-not-found",
     ]);
-    expect(isrcacheDeleteArgs("pabc-production")).toEqual(["delete", "deployment,service", "-l", "nbo.dev/role=isrcache,nbo.dev/app=pabc-production", "--field-selector", "metadata.name=pabc-production-isr", "--ignore-not-found"]);
+    expect(isrcacheDeleteArgs("pabc-production")).toEqual([
+      "delete",
+      "deployment,service",
+      "-l",
+      "nbo.dev/role=isrcache,nbo.dev/app=pabc-production",
+      "--field-selector",
+      "metadata.name=pabc-production-isr",
+      "--ignore-not-found",
+    ]);
   });
 
   describe("isrcacheNameTaken", () => {
@@ -527,9 +637,20 @@ describe("ISR cache objects", () => {
     const name = `${app}-isr`;
     it("names a live object with the cache's name that isn't this app's cache", async () => {
       const run = recorder(() => `Warning: skew\nDeployment\t${name}\t\t\nService\t${name}\t\t\n`);
-      expect(await isrcacheNameTaken(app, { kubeconfig: "/kc", namespace: "nbo-p-abc", run })).toBe(`Deployment ${name}`);
+      expect(await isrcacheNameTaken(app, { kubeconfig: "/kc", namespace: "nbo-p-abc", run })).toBe(
+        `Deployment ${name}`,
+      );
       const args = run.calls[0]!.args;
-      expect(args.slice(0, 8)).toEqual(["--kubeconfig", "/kc", "-n", "nbo-p-abc", "get", "deployment,service", name, "--ignore-not-found"]);
+      expect(args.slice(0, 8)).toEqual([
+        "--kubeconfig",
+        "/kc",
+        "-n",
+        "nbo-p-abc",
+        "get",
+        "deployment,service",
+        name,
+        "--ignore-not-found",
+      ]);
     });
     it("names one labelled as another app's cache", async () => {
       const run = recorder(() => `Deployment\t${name}\tisrcache\tpother\n`);
@@ -537,10 +658,16 @@ describe("ISR cache objects", () => {
     });
     it("is undefined when nothing has the name, or only this app's cache does", async () => {
       expect(await isrcacheNameTaken(app, { run: recorder(() => "") })).toBeUndefined();
-      expect(await isrcacheNameTaken(app, { run: recorder(() => `Deployment\t${name}\tisrcache\t${app}\nService\t${name}\tisrcache\t${app}\n`) })).toBeUndefined();
+      expect(
+        await isrcacheNameTaken(app, {
+          run: recorder(() => `Deployment\t${name}\tisrcache\t${app}\nService\t${name}\tisrcache\t${app}\n`),
+        }),
+      ).toBeUndefined();
     });
     it("throws when the cluster can't be read", async () => {
-      await expect(isrcacheNameTaken(app, { run: recorder(() => new Error("Unable to connect")) })).rejects.toThrow(/Unable to connect/);
+      await expect(isrcacheNameTaken(app, { run: recorder(() => new Error("Unable to connect")) })).rejects.toThrow(
+        /Unable to connect/,
+      );
     });
   });
 

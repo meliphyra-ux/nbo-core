@@ -19,10 +19,7 @@ try {
 async function writeEchoFunction(nboDir: string, name: string): Promise<void> {
   const fnDir = join(nboDir, "functions", name);
   await mkdir(join(fnDir, "bundle"), { recursive: true });
-  await writeFile(
-    join(fnDir, "function.json"),
-    JSON.stringify({ handler: { entry: "index.mjs", export: "handler" } }),
-  );
+  await writeFile(join(fnDir, "function.json"), JSON.stringify({ handler: { entry: "index.mjs", export: "handler" } }));
   await writeFile(
     join(fnDir, "bundle", "index.mjs"),
     `export const handler = {
@@ -88,7 +85,10 @@ async function writeBundle(nboDir: string, name: string, handlerSource: string):
   const fnDir = join(nboDir, "functions", name);
   await mkdir(join(fnDir, "bundle"), { recursive: true });
   await writeFile(join(fnDir, "function.json"), JSON.stringify({ handler: { entry: "index.mjs", export: "handler" } }));
-  await writeFile(join(fnDir, "bundle", "index.mjs"), `import { writeFileSync } from "node:fs";\nexport const handler = {\n  ${handlerSource},\n};\n`);
+  await writeFile(
+    join(fnDir, "bundle", "index.mjs"),
+    `import { writeFileSync } from "node:fs";\nexport const handler = {\n  ${handlerSource},\n};\n`,
+  );
 }
 
 async function writeHeaderEchoFunction(nboDir: string, name: string): Promise<void> {
@@ -147,7 +147,7 @@ async function writeNoisyStderrFunction(nboDir: string, name: string): Promise<v
   );
 }
 
-let cleanupFns: Array<() => Promise<void>> = [];
+const cleanupFns: Array<() => Promise<void>> = [];
 
 afterEach(async () => {
   for (const fn of cleanupFns.splice(0).reverse()) {
@@ -375,7 +375,9 @@ describe.skipIf(!nodeAvailable)("createLocalSpawner", () => {
     cleanupFns.push(stop);
 
     const handler = resolve("headerecho");
-    const response = await handler(new Request("http://example.com/", { method: "POST", body: "a real streamed body" }));
+    const response = await handler(
+      new Request("http://example.com/", { method: "POST", body: "a real streamed body" }),
+    );
     const gotHeaders: string[] = JSON.parse(await response.text());
 
     expect(gotHeaders).not.toContain("transfer-encoding");
@@ -509,7 +511,9 @@ describe.skipIf(!nodeAvailable)("createLocalSpawner", () => {
     cleanupFns.push(stop);
 
     const handler = resolve("dying");
-    await handler(new Request("http://example.com/die")).then((r) => r.text()).catch(() => {});
+    await handler(new Request("http://example.com/die"))
+      .then((r) => r.text())
+      .catch(() => {});
     const response = await handler(new Request("http://example.com/ok"));
     expect(await response.text()).toBe("still up");
   });

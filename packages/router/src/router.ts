@@ -8,7 +8,8 @@ import { compileMatch, substitute, hasJsOnlyEscape, type CompiledMatch } from ".
 
 const maxRewrites = 8;
 
-export type DecisionKind = "notFound" | "serve" | "redirect" | "respond" | "loopDetected" | "function" | "middlewareHandled" | "prerender";
+export type DecisionKind =
+  "notFound" | "serve" | "redirect" | "respond" | "loopDetected" | "function" | "middlewareHandled" | "prerender";
 
 export interface HeaderOp {
   set?: Record<string, string>;
@@ -63,7 +64,11 @@ export interface MiddlewareOutcome {
 // signature to express. A plain synchronous stub (as every one of
 // this package's own tests already uses) still satisfies this type
 // unchanged; route() below awaits whatever comes back either way.
-export type MiddlewareInvoker = (functionName: string, path: string, method: string) => MiddlewareOutcome | Promise<MiddlewareOutcome>;
+export type MiddlewareInvoker = (
+  functionName: string,
+  path: string,
+  method: string,
+) => MiddlewareOutcome | Promise<MiddlewareOutcome>;
 
 export interface CompiledRule {
   id: string;
@@ -96,7 +101,12 @@ export interface Router {
 // declaration above (same interface name, same module) — see that
 // declaration's own comment for why this is split across tasks.
 export interface Router {
-  route(reqPath: string, reqMethod: string, staticExists: StaticExists, invokeMiddleware: MiddlewareInvoker): Promise<Decision>;
+  route(
+    reqPath: string,
+    reqMethod: string,
+    staticExists: StaticExists,
+    invokeMiddleware: MiddlewareInvoker,
+  ): Promise<Decision>;
 }
 
 // compileRules validates and compiles one phase's own rule list — port
@@ -125,7 +135,9 @@ function compileRules(rules: Rule[] | undefined): CompiledRule[] {
       } else if (r.action.path) {
         // supported since Slice 1
       } else if (r.action.url) {
-        throw new Error(`rule "${r.id}": rewrite to an external url is not supported by this router version (Slice 4 scope cut)`);
+        throw new Error(
+          `rule "${r.id}": rewrite to an external url is not supported by this router version (Slice 4 scope cut)`,
+        );
       } else {
         throw new Error(`rule "${r.id}": rewrite needs path, function, or url`);
       }
@@ -148,13 +160,18 @@ export function createRouter(doc: RoutesDoc, trailingSlash: TrailingSlashPolicy)
   const prerenders: CompiledPrerender[] = [];
   for (const p of doc.prerenders ?? []) {
     if (hasJsOnlyEscape(p.matchPath)) {
-      throw new Error(`prerender "${p.id}": match "${p.matchPath}" does not compile as RE2: uses a JS-only escape (\\C, \\c, or \\u) Go's regexp.Compile does not accept`);
+      throw new Error(
+        `prerender "${p.id}": match "${p.matchPath}" does not compile as RE2: uses a JS-only escape (\\C, \\c, or \\u) Go's regexp.Compile does not accept`,
+      );
     }
     let compiled: InstanceType<typeof RE2>;
     try {
       compiled = new RE2(p.matchPath);
     } catch (err) {
-      throw new Error(`prerender "${p.id}": match "${p.matchPath}" does not compile as RE2: ${(err as Error).message}`, { cause: err });
+      throw new Error(
+        `prerender "${p.id}": match "${p.matchPath}" does not compile as RE2: ${(err as Error).message}`,
+        { cause: err },
+      );
     }
     prerenders.push({ route: p, compiled });
   }
@@ -167,7 +184,12 @@ export function createRouter(doc: RoutesDoc, trailingSlash: TrailingSlashPolicy)
     errorDoc: doc.error ?? {},
     trailingSlash,
     prerenders,
-    async route(reqPath: string, reqMethod: string, staticExists: StaticExists, invokeMiddleware: MiddlewareInvoker): Promise<Decision> {
+    async route(
+      reqPath: string,
+      reqMethod: string,
+      staticExists: StaticExists,
+      invokeMiddleware: MiddlewareInvoker,
+    ): Promise<Decision> {
       return routeRequest(rt, reqPath, reqMethod, staticExists, invokeMiddleware);
     },
   };
@@ -332,7 +354,14 @@ export async function drivePhase(
   prerenders: CompiledPrerender[] = [],
 ): Promise<DrivePhaseResult> {
   for (;;) {
-    const { outcome, decision, target } = await runPhase(rules, path, method, headerOps, seenHeaderRule, invokeMiddleware);
+    const { outcome, decision, target } = await runPhase(
+      rules,
+      path,
+      method,
+      headerOps,
+      seenHeaderRule,
+      invokeMiddleware,
+    );
     if (outcome === "final") {
       return { done: true, decision, path };
     }
@@ -365,7 +394,13 @@ export async function drivePhase(
 
 // routeRequest is the body behind every Router's own route() method —
 // port of router.go's own Route (lines 316-400).
-async function routeRequest(rt: Router, reqPath: string, reqMethod: string, staticExists: StaticExists, invokeMiddleware: MiddlewareInvoker): Promise<Decision> {
+async function routeRequest(
+  rt: Router,
+  reqPath: string,
+  reqMethod: string,
+  staticExists: StaticExists,
+  invokeMiddleware: MiddlewareInvoker,
+): Promise<Decision> {
   // Single normalization point: every match test, every staticExists
   // call, and every rewrite target below operates on this one
   // normalized string (rewrite targets get re-normalized after
@@ -395,7 +430,19 @@ async function routeRequest(rt: Router, reqPath: string, reqMethod: string, stat
   // beforeFiles: redirects/respond end routing outright; a rewrite's
   // miss advances to the implicit filesystem check below using the
   // rewritten path.
-  let driven = await drivePhase(rt.beforeFiles, path, reqMethod, headerOps, seenHeaderRule, rewrites, staticExists, false, invokeMiddleware, rt.trailingSlash, rt.prerenders);
+  let driven = await drivePhase(
+    rt.beforeFiles,
+    path,
+    reqMethod,
+    headerOps,
+    seenHeaderRule,
+    rewrites,
+    staticExists,
+    false,
+    invokeMiddleware,
+    rt.trailingSlash,
+    rt.prerenders,
+  );
   path = driven.path;
   if (driven.done) {
     if (driven.decision!.kind === "loopDetected") return driven.decision!;
@@ -418,7 +465,19 @@ async function routeRequest(rt: Router, reqPath: string, reqMethod: string, stat
   }
 
   // afterFiles: same single-attempt-then-advance rule as beforeFiles.
-  driven = await drivePhase(rt.afterFiles, path, reqMethod, headerOps, seenHeaderRule, rewrites, staticExists, false, invokeMiddleware, rt.trailingSlash, rt.prerenders);
+  driven = await drivePhase(
+    rt.afterFiles,
+    path,
+    reqMethod,
+    headerOps,
+    seenHeaderRule,
+    rewrites,
+    staticExists,
+    false,
+    invokeMiddleware,
+    rt.trailingSlash,
+    rt.prerenders,
+  );
   path = driven.path;
   if (driven.done) {
     if (driven.decision!.kind === "loopDetected") return driven.decision!;
@@ -428,7 +487,19 @@ async function routeRequest(rt: Router, reqPath: string, reqMethod: string, stat
   // fallback: the last phase, so a rewrite miss here retries fallback
   // itself (see drivePhase) rather than advancing to a phase that
   // doesn't exist.
-  driven = await drivePhase(rt.fallback, path, reqMethod, headerOps, seenHeaderRule, rewrites, staticExists, true, invokeMiddleware, rt.trailingSlash, rt.prerenders);
+  driven = await drivePhase(
+    rt.fallback,
+    path,
+    reqMethod,
+    headerOps,
+    seenHeaderRule,
+    rewrites,
+    staticExists,
+    true,
+    invokeMiddleware,
+    rt.trailingSlash,
+    rt.prerenders,
+  );
   path = driven.path;
   if (driven.done) {
     if (driven.decision!.kind === "loopDetected") return driven.decision!;

@@ -115,42 +115,50 @@ describe("dispatch", () => {
 // fixture's public/images.jpg isn't there
 // (a real Next.js build takes 90+ seconds — too slow for a routine
 // unit-test run; the real verify scripts always build it fresh).
-describe.skipIf(!existsSync(nextAppNboDir) || !existsSync(nextAppImage))("the real compiled CLI's own process exit", () => {
-  it("exits 0, not a native crash, after a real conformance run against the real /_nbo/image endpoint", async () => {
-    const serveProc = execFileAsync("node", [cliDist, "serve", nextAppNboDir, "--port", "0"]);
-    // This test kills the server deliberately once done — the
-    // promise then rejects (SIGTERM), which is expected, not a real
-    // failure; swallow it so vitest doesn't report an unhandled
-    // rejection for a kill this test itself asked for.
-    serveProc.catch(() => {});
-    // serveFetch's own onListening callback logs the real chosen
-    // port to stdout — port 0 above asks the OS for a free one, so
-    // this test can run concurrently with anything else using 4108
-    // (the verify script's own hardcoded port).
-    let port: number | undefined;
-    const serveChild = (serveProc as unknown as { child: import("node:child_process").ChildProcess }).child;
-    await new Promise<void>((resolve, reject) => {
-      const timer = setTimeout(() => reject(new Error("nbo serve never logged its own listening port")), 10000);
-      serveChild.stdout?.on("data", (chunk: Buffer) => {
-        const m = chunk.toString().match(/on :(\d+)/);
-        if (m) {
-          port = Number(m[1]);
-          clearTimeout(timer);
-          resolve();
-        }
+describe.skipIf(!existsSync(nextAppNboDir) || !existsSync(nextAppImage))(
+  "the real compiled CLI's own process exit",
+  () => {
+    it("exits 0, not a native crash, after a real conformance run against the real /_nbo/image endpoint", async () => {
+      const serveProc = execFileAsync("node", [cliDist, "serve", nextAppNboDir, "--port", "0"]);
+      // This test kills the server deliberately once done — the
+      // promise then rejects (SIGTERM), which is expected, not a real
+      // failure; swallow it so vitest doesn't report an unhandled
+      // rejection for a kill this test itself asked for.
+      serveProc.catch(() => {});
+      // serveFetch's own onListening callback logs the real chosen
+      // port to stdout — port 0 above asks the OS for a free one, so
+      // this test can run concurrently with anything else using 4108
+      // (the verify script's own hardcoded port).
+      let port: number | undefined;
+      const serveChild = (serveProc as unknown as { child: import("node:child_process").ChildProcess }).child;
+      await new Promise<void>((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error("nbo serve never logged its own listening port")), 10000);
+        serveChild.stdout?.on("data", (chunk: Buffer) => {
+          const m = chunk.toString().match(/on :(\d+)/);
+          if (m) {
+            port = Number(m[1]);
+            clearTimeout(timer);
+            resolve();
+          }
+        });
       });
-    });
 
-    try {
-      let stdout: string;
       try {
-        ({ stdout } = await execFileAsync("node", [cliDist, "conformance", imageConformanceDir, `http://127.0.0.1:${port}`]));
-      } catch (err) {
-        throw new Error(`expected exit 0, got: ${err instanceof Error ? err.message : String(err)}`, { cause: err });
+        let stdout: string;
+        try {
+          ({ stdout } = await execFileAsync("node", [
+            cliDist,
+            "conformance",
+            imageConformanceDir,
+            `http://127.0.0.1:${port}`,
+          ]));
+        } catch (err) {
+          throw new Error(`expected exit 0, got: ${err instanceof Error ? err.message : String(err)}`, { cause: err });
+        }
+        expect(stdout).toContain("ok");
+      } finally {
+        serveChild.kill();
       }
-      expect(stdout).toContain("ok");
-    } finally {
-      serveChild.kill();
-    }
-  }, 20000);
-});
+    }, 20000);
+  },
+);

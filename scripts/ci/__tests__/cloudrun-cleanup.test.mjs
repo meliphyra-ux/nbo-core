@@ -27,7 +27,11 @@ function fakeGcloud({ services = [], packages = [], accounts = [], deleteBody = 
 }
 
 const deletes = (fake) => fake.readLog().filter((c) => c.includes("delete"));
-const flat = (fake) => deletes(fake).map((c) => { const i = c.findIndex((a) => a.startsWith("--")); return (i < 0 ? c : c.slice(0, i)).join(" "); });
+const flat = (fake) =>
+  deletes(fake).map((c) => {
+    const i = c.findIndex((a) => a.startsWith("--"));
+    return (i < 0 ? c : c.slice(0, i)).join(" ");
+  });
 
 function run(fake, args) {
   return runBash(script, args, { ...env, PATH: pathWith(fake.binDir) });
@@ -97,7 +101,13 @@ test("it needs --prefix or --janitor and the three variables", () => {
   const fake = fakeGcloud({});
   try {
     assert.equal(run(fake, []).code, 2);
-    const r = runBash(script, ["--prefix", "ci-1-"], { PATH: pathWith(fake.binDir), NBO_GCP_PROJECT: "", NBO_CI_GCP_PROJECT: "", NBO_GCP_REGION: "", NBO_AR_REPO: "" });
+    const r = runBash(script, ["--prefix", "ci-1-"], {
+      PATH: pathWith(fake.binDir),
+      NBO_GCP_PROJECT: "",
+      NBO_CI_GCP_PROJECT: "",
+      NBO_GCP_REGION: "",
+      NBO_AR_REPO: "",
+    });
     assert.equal(r.code, 1);
     assert.match(r.stderr, /NBO_GCP_PROJECT/);
     assert.deepEqual(fake.readLog(), []);
@@ -129,7 +139,12 @@ test("janitor deletes a 4 hour old ci- service and keeps a 1 hour old one and no
 });
 
 test("janitor honours --older-than-hours", () => {
-  const fake = fakeGcloud({ services: [["ci-9-next", ago(4)], ["ci-10-next", ago(1)]] });
+  const fake = fakeGcloud({
+    services: [
+      ["ci-9-next", ago(4)],
+      ["ci-10-next", ago(1)],
+    ],
+  });
   try {
     const r = run(fake, ["--janitor", "--older-than-hours", "0"]);
     assert.equal(r.code, 0, r.stderr);
@@ -141,7 +156,11 @@ test("janitor honours --older-than-hours", () => {
 
 test("a failing delete is printed, the rest still run, and the exit code is 1", () => {
   const fake = fakeGcloud({
-    services: [["ci-1-a", ago(1)], ["ci-1-b", ago(1)], ["ci-1-c", ago(1)]],
+    services: [
+      ["ci-1-a", ago(1)],
+      ["ci-1-b", ago(1)],
+      ["ci-1-c", ago(1)],
+    ],
     deleteBody: 'case "$*" in *ci-1-b*) echo "ERROR: PERMISSION_DENIED on ci-1-b" >&2; exit 1;; esac',
   });
   try {
@@ -226,7 +245,11 @@ test("neither mode lists or deletes service accounts (the CLI never creates per-
 test("NBO_AR_REPO in the CLI's full form (host/project/repo) is passed to gcloud as the repository name", () => {
   const fake = fakeGcloud({ packages: [["nbo-app-ci-1-next", ago(1)]] });
   try {
-    const r = runBash(script, ["--prefix", "ci-1-"], { ...env, NBO_AR_REPO: "r-docker.pkg.dev/p/nbo-ci", PATH: pathWith(fake.binDir) });
+    const r = runBash(script, ["--prefix", "ci-1-"], {
+      ...env,
+      NBO_AR_REPO: "r-docker.pkg.dev/p/nbo-ci",
+      PATH: pathWith(fake.binDir),
+    });
     assert.equal(r.code, 0, r.stderr);
     const calls = fake.readLog().filter((c) => c[0] === "artifacts");
     assert.equal(calls.length, 2);

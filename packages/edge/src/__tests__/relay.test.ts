@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: FSL-1.1-ALv2
 // Copyright 2026 Nikita Dovhich
 
-import { describe, it, expect, afterEach } from "vitest";
+import { describe, it, expect, afterEach, vi } from "vitest";
 import { createServer as createHttp, type Server, type IncomingHttpHeaders } from "node:http";
 import { createServer as createHttps } from "node:https";
 import type { AddressInfo } from "node:net";
@@ -118,7 +118,7 @@ describe("relay forwarding", () => {
     const res = await handler(new Request("http://app.test/a/b?x=1", { headers: { host: "app.test" } }));
     expect(res.status).toBe(200);
     expect(await res.text()).toBe("upstream-ok");
-    expect(res.headers.get("x-nbo-edge-backend")).toBe(`http://${UPSTREAM}`);
+    expect(res.headers.get("x-nbo-edge-backend")).toBe("env_k");
     expect(paths[0]).toBe("/a/b?x=1");
     expect(seen[0]["x-nbo-relay-token"]).toBeUndefined();
     expect(seen[0]["x-nbo-upstream"]).toBeUndefined();
@@ -128,7 +128,11 @@ describe("relay forwarding", () => {
   it("hands the app the edge's x-forwarded-for as the relay received it", async () => {
     const { registry, seen } = await setup();
     const clusterEdge = createProxyHandler(registry, { scheme: "https" });
-    await clusterEdge(new Request("http://app.test/", { headers: { host: "app.test", "x-forwarded-for": "6.6.6.6", "x-nbo-client-ip": "203.0.113.7" } }));
+    await clusterEdge(
+      new Request("http://app.test/", {
+        headers: { host: "app.test", "x-forwarded-for": "6.6.6.6", "x-nbo-client-ip": "203.0.113.7" },
+      }),
+    );
     expect(seen[0]["x-forwarded-for"]).toBe("203.0.113.7");
     expect(seen[0]["x-nbo-client-ip"]).toBeUndefined();
   });
@@ -136,7 +140,9 @@ describe("relay forwarding", () => {
   it("ignores visitor-supplied relay headers (the edge's own values are used)", async () => {
     const { handler, seen } = await setup();
     const res = await handler(
-      new Request("http://app.test/", { headers: { host: "app.test", "x-nbo-relay-token": "x", "x-nbo-upstream": "evil" } }),
+      new Request("http://app.test/", {
+        headers: { host: "app.test", "x-nbo-relay-token": "x", "x-nbo-upstream": "evil" },
+      }),
     );
     // A forged token or upstream would have produced 403 or 400.
     expect(res.status).toBe(200);
@@ -154,10 +160,17 @@ describe("relay forwarding", () => {
     await new Promise<void>((r) => up.listen(0, "127.0.0.1", () => r()));
     const registry = createRegistry();
     registry.set("app.test", [
-      { id: "e", url: `http://127.0.0.1:${(up.address() as AddressInfo).port}`, weight: 100, insecureSkipVerify: false },
+      {
+        id: "e",
+        url: `http://127.0.0.1:${(up.address() as AddressInfo).port}`,
+        weight: 100,
+        insecureSkipVerify: false,
+      },
     ]);
     await createProxyHandler(registry)(
-      new Request("http://app.test/", { headers: { host: "app.test", "x-nbo-relay-token": "x", "x-nbo-upstream": "evil" } }),
+      new Request("http://app.test/", {
+        headers: { host: "app.test", "x-nbo-relay-token": "x", "x-nbo-upstream": "evil" },
+      }),
     );
     expect(seen[0]["x-nbo-relay-token"]).toBeUndefined();
     expect(seen[0]["x-nbo-upstream"]).toBeUndefined();
@@ -185,5 +198,28 @@ describe("relay forwarding", () => {
     const { handler } = await setup({ trustedCa: "other" });
     const res = await handler(new Request("http://app.test/", { headers: { host: "app.test" } }));
     expect(res.status).toBe(502);
+    expect(await res.text()).toBe("edge: backend unreachable");
+  });
+
+  it("answers 502 relay: upstream unreachable, naming nothing internal, when the upstream refuses", async () => {
+    const relay = createRelayHandler({
+      token: "secret-token",
+      fetchUpstream: async () => {
+        throw new Error("connect ECONNREFUSED 10.0.0.7:8080");
+      },
+    });
+    const errors = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      const res = await relay(
+        new Request("https://relay/x", {
+          headers: { "x-nbo-relay-token": "secret-token", "x-nbo-upstream": UPSTREAM },
+        }),
+      );
+      expect(res.status).toBe(502);
+      expect(await res.text()).toBe("relay: upstream unreachable");
+      expect(errors.mock.calls.flat().join(" ")).toMatch(/ECONNREFUSED/);
+    } finally {
+      errors.mockRestore();
+    }
   });
 });

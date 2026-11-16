@@ -165,7 +165,16 @@ export function createProxyHandler(registry: Registry, options: ProxyOptions = {
       forwardHeaders.delete(RELAY_TOKEN_HEADER);
       forwardHeaders.delete(RELAY_UPSTREAM_HEADER);
       if (options.scheme) {
-        for (const h of ["x-forwarded-proto", "x-forwarded-for", "x-real-ip", "forwarded", "cf-connecting-ip", "true-client-ip", CLIENT_IP_HEADER]) forwardHeaders.delete(h);
+        for (const h of [
+          "x-forwarded-proto",
+          "x-forwarded-for",
+          "x-real-ip",
+          "forwarded",
+          "cf-connecting-ip",
+          "true-client-ip",
+          CLIENT_IP_HEADER,
+        ])
+          forwardHeaders.delete(h);
       }
       const forwarded =
         "body" in buffered
@@ -210,20 +219,27 @@ export function createProxyHandler(registry: Registry, options: ProxyOptions = {
     try {
       response = await forward(backend, request);
     } catch (err) {
-      return new Response(`edge: ${String(err)}`, { status: 502 });
+      // The detail (it can name the backend's URL) goes to the log only.
+      console.error(`edge: backend ${backend.id ?? "(no id)"} for ${host} unreachable: ${String(err)}`);
+      return new Response("edge: backend unreachable", { status: 502 });
     }
 
-    // Lets a real end-to-end run (and operators generally) see which
-    // backend actually served a request — without this, there was no
-    // way to prove a weighted split was honored rather than just "some
-    // backend answered".
+    // Lets operators (and end-to-end runs) see which backend served a
+    // request: its stable id (the environment id), never its URL. A backend
+    // without an id (an older route table) gets no header.
     const headers = new Headers(response.headers);
-    headers.set("x-nbo-edge-backend", backend.url);
-    if (!knownId && isDocumentNavigation(request.headers)) headers.append("set-cookie", visitorCookie(visitorId, schemeOf(request) === "https"));
+    if (backend.id) headers.set("x-nbo-edge-backend", backend.id);
+    else headers.delete("x-nbo-edge-backend");
+    if (!knownId && isDocumentNavigation(request.headers))
+      headers.append("set-cookie", visitorCookie(visitorId, schemeOf(request) === "https"));
 
     let body = response.body;
     if (insights?.inject && shouldInsert(request, response)) {
-      const tag = insightsTag({ environmentId: backend.id ?? "", contentId: response.headers.get("x-nbo-deployment-id") ?? "", sampleRate: insights.sampleRate });
+      const tag = insightsTag({
+        environmentId: backend.id ?? "",
+        contentId: response.headers.get("x-nbo-deployment-id") ?? "",
+        sampleRate: insights.sampleRate,
+      });
       body = response.body!.pipeThrough(createInsertionStream(tag));
       headers.delete("content-length");
       // The bytes changed, so a strong validator no longer holds; a weak
@@ -294,7 +310,8 @@ export async function fanOutRevalidate(
   const headers = { "x-nbo-edge-fanout": String(backends.length), "cache-control": "no-store" };
   // The registry refuses a target with no backends; should one ever get
   // through, it is answered as an unknown host, never as a 204 for "all of none".
-  if (backends.length === 0) return new Response(`edge: no target registered for host ${host}`, { status: 404, headers });
+  if (backends.length === 0)
+    return new Response(`edge: no target registered for host ${host}`, { status: 404, headers });
   let body: Uint8Array<ArrayBuffer> | undefined;
   try {
     body = await readCapped(request, FANOUT_MAX_BODY_BYTES);
@@ -318,7 +335,10 @@ export async function fanOutRevalidate(
         }, fanOutTimeoutMs);
       });
       const call = (async () => {
-        const res = await forward(backend, new Request(request.url, { method: request.method, headers: outHeaders, body, signal: controller.signal }));
+        const res = await forward(
+          backend,
+          new Request(request.url, { method: request.method, headers: outHeaders, body, signal: controller.signal }),
+        );
         await res.body?.cancel().catch(() => {});
         return res.status;
       })().catch(() => 0);
@@ -331,6 +351,11 @@ export async function fanOutRevalidate(
   );
   const ok = (s: number) => s >= 200 && s <= 299;
   if (statuses.every(ok)) return new Response(null, { status: 204, headers });
-  if (statuses[0] !== 0 && statuses.every((s) => s === statuses[0])) return new Response(null, { status: statuses[0], headers });
-  return Response.json({ backends: backends.map((b, i) => ({ id: b.id ?? b.url, status: statuses[i] })) }, { status: 502, headers });
+  if (statuses[0] !== 0 && statuses.every((s) => s === statuses[0]))
+    return new Response(null, { status: statuses[0], headers });
+  return Response.json(
+    // A backend without an id (an older route table) is listed as null, never by its URL.
+    { backends: backends.map((b, i) => ({ id: b.id ?? null, status: statuses[i] })) },
+    { status: 502, headers },
+  );
 }

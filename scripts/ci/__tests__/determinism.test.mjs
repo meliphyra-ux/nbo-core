@@ -197,11 +197,20 @@ test("nbo-diff names the prerender entries that differ", () => {
     writeFileSync(join(d, "manifest.json"), JSON.stringify({ digests: { "prerender.json": `sha256:${name}` } }));
     writeFileSync(
       join(d, "prerender.json"),
-      JSON.stringify({ version: 1, prerenders: [{ id: "/", x: state }, { id: "/same", x: 1 }] }),
+      JSON.stringify({
+        version: 1,
+        prerenders: [
+          { id: "/", x: state },
+          { id: "/same", x: 1 },
+        ],
+      }),
     );
     return d;
   };
-  const r = spawnSync("node", ["scripts/ci/nbo-diff.mjs", mk("pa", 1), mk("pb", 2)], { cwd: repoRoot, encoding: "utf8" });
+  const r = spawnSync("node", ["scripts/ci/nbo-diff.mjs", mk("pa", 1), mk("pb", 2)], {
+    cwd: repoRoot,
+    encoding: "utf8",
+  });
   assert.equal(r.status, 0, r.stderr);
   assert.match(r.stdout, /manifest\.json digests: prerender\.json/);
   assert.match(r.stdout, /prerender\.json: \/ \(x\)/);
@@ -210,10 +219,18 @@ test("nbo-diff names the prerender entries that differ", () => {
 
 test("importing nbo-diff.mjs does not run its CLI, and exports diffNbo", () => {
   const url = pathToFileURL(join(repoRoot, "scripts", "ci", "nbo-diff.mjs")).href;
-  const r = spawnSync(process.execPath, ["--input-type=module", "-e", `const m = await import(${JSON.stringify(url)}); console.log(typeof m.diffNbo, typeof m.readJson);`], {
-    cwd: repoRoot,
-    encoding: "utf8",
-  });
+  const r = spawnSync(
+    process.execPath,
+    [
+      "--input-type=module",
+      "-e",
+      `const m = await import(${JSON.stringify(url)}); console.log(typeof m.diffNbo, typeof m.readJson);`,
+    ],
+    {
+      cwd: repoRoot,
+      encoding: "utf8",
+    },
+  );
   assert.equal(r.status, 0, r.stderr);
   assert.equal(r.stdout.trim(), "function function");
 });
@@ -248,7 +265,10 @@ test("classify: postponedState only is render-only", async () => {
   const { classify } = await import(nboDiffUrl());
   const c = classify(templates["next-base"], templates["next-postponed"]);
   assert.equal(c.verdict, "render-only", JSON.stringify(c));
-  assert.ok(c.renderPaths.some((p) => p.startsWith("prerender.json: /p")), JSON.stringify(c));
+  assert.ok(
+    c.renderPaths.some((p) => p.startsWith("prerender.json: /p")),
+    JSON.stringify(c),
+  );
   assert.deepEqual(c.otherPaths, []);
 });
 
@@ -266,17 +286,27 @@ for (const [name, path] of [
   ["a prerender revalidateSec", "prerender.json: /p"],
   ["a seed's contentType", "static.index.json: /p"],
 ]) {
-  const key = { "a non-seed static file": "nonSeed", "a function": "fn", "routes.json": "routes", "a prerender revalidateSec": "revalidate", "a seed's contentType": "seedContentType" }[name];
+  const key = {
+    "a non-seed static file": "nonSeed",
+    "a function": "fn",
+    "routes.json": "routes",
+    "a prerender revalidateSec": "revalidate",
+    "a seed's contentType": "seedContentType",
+  }[name];
   test(`classify: ${name} differing is different and named`, async () => {
     const { classify } = await import(nboDiffUrl());
     const c = classify(templates["next-base"], templates[`next-${key}`]);
     assert.equal(c.verdict, "different", JSON.stringify(c));
-    assert.ok(c.otherPaths.some((p) => p.startsWith(path)), JSON.stringify(c));
+    assert.ok(
+      c.otherPaths.some((p) => p.startsWith(path)),
+      JSON.stringify(c),
+    );
   });
 }
 
 test("nbo-diff --classify exits 0 for render-only and 1 for different", () => {
-  const cli = (a, b) => spawnSync("node", ["scripts/ci/nbo-diff.mjs", "--classify", a, b], { cwd: repoRoot, encoding: "utf8" });
+  const cli = (a, b) =>
+    spawnSync("node", ["scripts/ci/nbo-diff.mjs", "--classify", a, b], { cwd: repoRoot, encoding: "utf8" });
   const ok = cli(templates["next-base"], templates["next-seed"]);
   assert.equal(ok.status, 0, ok.stdout + ok.stderr);
   assert.match(ok.stdout, /deterministic apart from build-time renders:/);
@@ -342,11 +372,17 @@ test("classify: a duplicate prerender id is different, even when the last duplic
   });
   const b = await craft("dup-b", (d) => {
     const p = d.prerenders[0];
-    d.prerenders = [{ ...p, revalidateSec: 60 }, { ...p, "x-nbo-ppr": { postponedState: "state-2" } }];
+    d.prerenders = [
+      { ...p, revalidateSec: 60 },
+      { ...p, "x-nbo-ppr": { postponedState: "state-2" } },
+    ];
   });
   const c = classify(a, b);
   assert.equal(c.verdict, "different", JSON.stringify(c));
-  assert.ok(c.otherPaths.some((p) => p.includes('duplicate prerender id "/p"')), JSON.stringify(c));
+  assert.ok(
+    c.otherPaths.some((p) => p.includes('duplicate prerender id "/p"')),
+    JSON.stringify(c),
+  );
 });
 
 test("classify: a reorder plus a postponedState change is compared by id; a metadata change in the moved entry is different", async () => {
@@ -363,11 +399,17 @@ test("classify: a reorder plus a postponedState change is compared by id; a meta
   assert.deepEqual(c1.renderPaths, ["prerender.json: /p (x-nbo-ppr.postponedState)"]);
   const moved = await craft("reorder-c", (d) => {
     const p = d.prerenders[0];
-    d.prerenders = [{ ...second(p, "/q"), function: "other" }, { ...p, "x-nbo-ppr": { postponedState: "state-2" } }];
+    d.prerenders = [
+      { ...second(p, "/q"), function: "other" },
+      { ...p, "x-nbo-ppr": { postponedState: "state-2" } },
+    ];
   });
   const c2 = classify(a, moved);
   assert.equal(c2.verdict, "different", JSON.stringify(c2));
-  assert.ok(c2.otherPaths.some((p) => p.startsWith("prerender.json: /q (function")), JSON.stringify(c2));
+  assert.ok(
+    c2.otherPaths.some((p) => p.startsWith("prerender.json: /q (function")),
+    JSON.stringify(c2),
+  );
 });
 
 test("classify: a dropped postponedState is different on its own, without validate", async () => {

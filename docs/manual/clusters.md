@@ -4,12 +4,12 @@ NBO can deploy your apps to a Kubernetes cluster you own. **Kubernetes** is soft
 
 ## What NBO needs from a cluster
 
-| Need                         | Why                                                                                                            |
-| ---------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| Kubernetes **1.30 or newer** | NBO checks the server version when you connect and refuses older ones.                                         |
+| Need                         | Why                                                                                                                                                     |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Kubernetes **1.30 or newer** | NBO checks the server version when you connect and refuses older ones.                                                                                  |
 | A working **LoadBalancer**   | A LoadBalancer is how the cluster gets a public IP address. NBO's public edge (see [Domains and the public edge](./domains.md)) is reached through one. |
-| **Outbound internet**        | Nodes must download images and reach your container registry.                                                  |
-| **Admin credentials, once**  | Installing NBO's account needs cluster-admin rights. NBO uses them one time and does not store them.           |
+| **Outbound internet**        | Nodes must download images and reach your container registry.                                                                                           |
+| **Admin credentials, once**  | Installing NBO's account needs cluster-admin rights. NBO uses them one time and does not store them.                                                    |
 
 NBO keeps projects apart with NetworkPolicies, which only work when the cluster's network plugin (its **CNI**) enforces them. Most managed clusters do; some minimal setups don't, and there the policies are silently ignored.
 

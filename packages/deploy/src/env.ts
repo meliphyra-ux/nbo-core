@@ -55,7 +55,9 @@ function requiredNames(doc: ManifestEnvDoc): string[] {
 export async function checkRequired(nboDir: string, available: Set<string>): Promise<void> {
   const missing = requiredNames(await readManifestEnvDoc(nboDir)).filter((n) => !available.has(n));
   if (missing.length > 0) {
-    throw new Error(`deploy: missing required environment variable(s): ${missing.join(", ")} - set them with PUT /projects/{id}/env/{name} or Terraform's nbo_env_var`);
+    throw new Error(
+      `deploy: missing required environment variable(s): ${missing.join(", ")} - set them with PUT /projects/{id}/env/{name} or Terraform's nbo_env_var`,
+    );
   }
 }
 
@@ -79,7 +81,10 @@ export async function checkRequired(nboDir: string, available: Set<string>): Pro
 // opts.delivered names the user's variables: they reach the app at
 // runtime instead, so they are never read from source (not baked into
 // the image) and never count as missing.
-export async function deployTimeEnvVars(nboDir: string, opts?: { source?: Record<string, string | undefined>; delivered?: Iterable<string> }): Promise<Record<string, string>> {
+export async function deployTimeEnvVars(
+  nboDir: string,
+  opts?: { source?: Record<string, string | undefined>; delivered?: Iterable<string> },
+): Promise<Record<string, string>> {
   const delivered = new Set(opts?.delivered ?? []);
   const given = opts?.source ?? process.env;
   const source = (name: string): string | undefined => (delivered.has(name) ? undefined : given[name]);
@@ -116,7 +121,9 @@ export async function deployTimeEnvVars(nboDir: string, opts?: { source?: Record
   }
 
   if (missing.length > 0) {
-    const hint = opts?.source ? " - NBO does not pass its own environment to apps; set them with PUT /projects/{id}/env/{name} or Terraform's nbo_env_var" : "";
+    const hint = opts?.source
+      ? " - NBO does not pass its own environment to apps; set them with PUT /projects/{id}/env/{name} or Terraform's nbo_env_var"
+      : "";
     throw new Error(`deploy: missing required env/binding value(s): ${missing.join(", ")}${hint}`);
   }
   return out;
@@ -127,7 +134,12 @@ export async function deployTimeEnvVars(nboDir: string, opts?: { source?: Record
 // from NBO's environment; the user's variables (userEnv) are delivered
 // at runtime and never baked in. Without userEnv this is exactly the
 // pre-variables behaviour.
-export async function imageEnvVars(nboDir: string, connected: boolean, extraEnv: Record<string, string>, userEnv?: UserEnv): Promise<Record<string, string>> {
+export async function imageEnvVars(
+  nboDir: string,
+  connected: boolean,
+  extraEnv: Record<string, string>,
+  userEnv?: UserEnv,
+): Promise<Record<string, string>> {
   const delivered = userEnv ? Object.keys(userEnv.vars) : [];
   const vars = await deployTimeEnvVars(nboDir, connected ? { source: {}, delivered } : { delivered });
   return mergeEnvVars(vars, extraEnv);

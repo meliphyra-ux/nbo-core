@@ -10,7 +10,12 @@ import { createMux } from "../mux.js";
 describe("isrcache entry status", () => {
   it("PUT with a status, GET returns it", async () => {
     const mux = createMux(createStore());
-    const body = JSON.stringify({ body: Buffer.from("gone").toString("base64"), status: 404, revalidateSec: 60, expireSec: 600 });
+    const body = JSON.stringify({
+      body: Buffer.from("gone").toString("base64"),
+      status: 404,
+      revalidateSec: 60,
+      expireSec: 600,
+    });
     expect((await mux(new Request("http://c/entries/k", { method: "PUT", body }))).status).toBe(204);
     const got = await (await mux(new Request("http://c/entries/k"))).json();
     expect(got.status).toBe(404);

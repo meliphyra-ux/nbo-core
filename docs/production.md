@@ -6,17 +6,17 @@ How to run NBO for real sites, on one server you control, with one command. This
 
 NBO has two modes, set by `NBO_MODE` when the control-plane starts. Dev is the default. They differ in where your sites run and who can reach them:
 
-| | Dev mode | Production mode |
-| --- | --- | --- |
-| Made for | Working on NBO on your computer | Real sites |
-| Kubernetes | The local kind cluster | Clusters you connect, each with its own limited access |
-| Cloud access | Your own logged-in tools | Credentials saved in NBO, encrypted |
-| First launch | Ready for the local kind cluster | Nothing deploys until you connect a cloud with `nbo-server` |
-| Where the edge runs | On your computer, as its own process | Inside the cluster you choose |
-| Project address | `http://<name>.127.0.0.1.sslip.io:9443` | `https://<name>.<your base domain>`, plus your own domains |
-| HTTPS | None for visitors | Let's Encrypt certificates, renewed automatically |
-| Project isolation | One shared namespace | One namespace per project, with network rules |
-| Values from NBO's own environment | Passed to deployed apps | Never passed; apps get only the variables you set |
+|                                   | Dev mode                                | Production mode                                             |
+| --------------------------------- | --------------------------------------- | ----------------------------------------------------------- |
+| Made for                          | Working on NBO on your computer         | Real sites                                                  |
+| Kubernetes                        | The local kind cluster                  | Clusters you connect, each with its own limited access      |
+| Cloud access                      | Your own logged-in tools                | Credentials saved in NBO, encrypted                         |
+| First launch                      | Ready for the local kind cluster        | Nothing deploys until you connect a cloud with `nbo-server` |
+| Where the edge runs               | On your computer, as its own process    | Inside the cluster you choose                               |
+| Project address                   | `http://<name>.127.0.0.1.sslip.io:9443` | `https://<name>.<your base domain>`, plus your own domains  |
+| HTTPS                             | None for visitors                       | Let's Encrypt certificates, renewed automatically           |
+| Project isolation                 | One shared namespace                    | One namespace per project, with network rules               |
+| Values from NBO's own environment | Passed to deployed apps                 | Never passed; apps get only the variables you set           |
 
 Compose (step 2) sets production mode for you.
 
@@ -25,7 +25,7 @@ Compose (step 2) sets production mode for you.
 A typical setup is one Linux machine that runs NBO with Docker Compose, plus a place for your sites: a Kubernetes cluster (for example k3s on Hetzner), Cloud Run in a Google project you already have, or both.
 
 1. Prepare a server: SSH key, Docker and a firewall.
-2. Start NBO with `docker compose up -d --build`.
+2. Start NBO with `docker compose up -d`, which pulls the ready-made image.
 3. Connect your clouds with the `nbo-server` command on the server.
 4. Give NBO access to private repositories (a deploy key or a token per project). Public repositories need nothing.
 5. Install the public edge, with Let's Encrypt staging first, and point your domain at it. Skip this if you only use Cloud Run.
@@ -122,12 +122,12 @@ If `TcpTestSucceeded` is `False` and `PingSucceeded` is `True`, recheck the fire
 
 The server should accept connections from the internet on port 22 only, unless you give NBO its own address (see [step 8](#8-reaching-nbo-on-its-own-address)), which also opens 80 and 443. NBO has no login, so its own port must never be public.
 
-| Port | State | Why |
-| --- | --- | --- |
-| 22 (SSH) | Open | How you get in |
+| Port             | State      | Why                                 |
+| ---------------- | ---------- | ----------------------------------- |
+| 22 (SSH)         | Open       | How you get in                      |
 | 8081 (NBO's API) | Not public | Reached through the SSH tunnel only |
-| 80, 443 | Closed | Your sites don't run on this server |
-| Everything else | Closed | Nothing else should be reachable |
+| 80, 443          | Closed     | Your sites don't run on this server |
+| Everything else  | Closed     | Nothing else should be reachable    |
 
 Outgoing traffic stays allowed, so NBO can reach your Git host, Google and your clusters.
 
@@ -156,23 +156,23 @@ Add `-r` to copy a folder.
 ## 2. Start NBO
 
 ```bash
-git clone <your NBO repository> /opt/nbo
+git clone --depth 1 https://github.com/meliphyra-ux/nbo-core /opt/nbo
 cd /opt/nbo
-docker compose up -d --build
+docker compose up -d
 ```
 
-If the repository is private, make a read-only token and use it as the password when `git clone` asks. On GitLab, that's a deploy token with `read_repository`, under **Settings → Repository → Deploy tokens**.
+This pulls the ready-made image (`ghcr.io/meliphyra-ux/nbo-core`, built from the repository on every change to `main`; about a minute on a normal connection) and starts one container, which comes back by itself after a reboot.
 
-This builds the image and starts one container, which comes back by itself after a reboot. `docker compose build` on its own only makes the image: NBO isn't running until you run `docker compose up -d`.
+**To build the image yourself instead,** for example from your own fork or a private copy, run `docker compose -f compose.yaml -f compose.build.yaml up -d --build`, and use the same two `-f` options in every later `docker compose` command that starts NBO. The first build takes 10 to 15 minutes on a small server (it compiles the Terraform provider for five platforms) and needs a few GB of free disk. If your copy of the repository is private, make a read-only token and use it as the password when `git clone` asks. On GitLab, that's a deploy token with `read_repository`, under **Settings → Repository → Deploy tokens**.
 
 `docker compose ps` shows `health: starting`, then `healthy` when it's ready, usually within a minute. `docker compose logs -f nbo` shows its log, which is the place to look if it's `unhealthy` or keeps restarting. A line starting with `control-plane:` just before it stops names the problem; [When NBO refuses to start](./manual/server-settings.md#when-nbo-refuses-to-start) lists each one.
 
 NBO stores everything in two Docker volumes. They stay when you remove or rebuild the container:
 
-| Volume | What it holds |
-| --- | --- |
+| Volume         | What it holds                                                                                                          |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | `nbo_nbo-data` | `nbo.db` (projects, deployments, encrypted credentials), `artifacts/` (stored build output), and temporary build files |
-| `nbo_nbo-keys` | `nbo-secret.key`, the key for those credentials, created on first start |
+| `nbo_nbo-keys` | `nbo-secret.key`, the key for those credentials, created on first start                                                |
 
 It listens on `127.0.0.1:8081`. If that port is taken, put `NBO_PORT=8091` (or any free port) in a `.env` file next to `compose.yaml`. Every setting the `.env` file takes is in [Server settings](./manual/server-settings.md).
 
@@ -281,13 +281,16 @@ NBO runs in a container, so it can't see a kubeconfig on the server by itself: y
 **Otherwise, use another registry:**
 
 ```json
-{ "registry": { "kind": "custom", "server": "ghcr.io/your-github-name", "username": "your-github-name" }, "registryPassword": "..." }
+{
+  "registry": { "kind": "custom", "server": "ghcr.io/your-github-name", "username": "your-github-name" },
+  "registryPassword": "..."
+}
 ```
 
-| Field | GitLab | GitHub |
-| --- | --- | --- |
-| `server` | `registry.gitlab.com/<group>/<project>` | `ghcr.io/<your-github-name>` |
-| `username` | The deploy token's username | Your GitHub name |
+| Field              | GitLab                                                   | GitHub                                                                    |
+| ------------------ | -------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `server`           | `registry.gitlab.com/<group>/<project>`                  | `ghcr.io/<your-github-name>`                                              |
+| `username`         | The deploy token's username                              | Your GitHub name                                                          |
 | `registryPassword` | A deploy token with `read_registry` and `write_registry` | A classic personal access token with `write:packages` and `read:packages` |
 
 Then connect, with a name for the cluster (1 to 30 lowercase letters, digits or hyphens; it can't change later). The kubeconfig comes through stdin and the registry file is copied in for the one command:
@@ -318,9 +321,15 @@ NBO reaches each repository with a credential of the project's own, so pushes ke
 With `nbo-server`, put the project in a JSON file (the body of `POST /projects/setup`) and send it:
 
 ```json
-{ "name": "site", "repo": "git@github.com:you/site.git", "productionBranch": "main", "framework": "static",
-  "buildCommand": "npm ci && npm run build", "clouds": [{ "target": "kubernetes", "clusterId": "kc_..." }],
-  "credential": { "kind": "deploy-key" } }
+{
+  "name": "site",
+  "repo": "git@github.com:you/site.git",
+  "productionBranch": "main",
+  "framework": "static",
+  "buildCommand": "npm ci && npm run build",
+  "clouds": [{ "target": "kubernetes", "clusterId": "kc_..." }],
+  "credential": { "kind": "deploy-key" }
+}
 ```
 
 ```bash
@@ -353,6 +362,7 @@ On the server, with `nbo-server`:
    ```
 
    Send `{"acmeDirectory":"production"}` the same way to switch to real certificates later.
+
 2. Install the edge on the cluster of your choice, with admin credentials (used once, not stored). `--confirm-billing` says you know this creates a load balancer that **your provider bills**:
 
    ```bash
@@ -418,9 +428,9 @@ If `kubectl` can't connect, point it at the kubeconfig first, for example `expor
 
 NBO doesn't create DNS records. You add one wildcard record, once, wherever your domain's DNS is managed, such as Netlify, Cloudflare or your registrar. On Netlify, that's **Domains → your domain → DNS settings → Add new record**.
 
-| Type | Name | Value |
-| --- | --- | --- |
-| A | `*.apps` | The edge's address |
+| Type | Name     | Value              |
+| ---- | -------- | ------------------ |
+| A    | `*.apps` | The edge's address |
 
 This points everything under `apps.example.com` at NBO and leaves whatever you host on `example.com` alone. It also covers each project's custom environments: an environment named `staging` of the project `shop` is served at `staging--shop.apps.example.com`. Every environment address takes its own Let's Encrypt certificate, so many environments across many projects can reach the weekly limit. The same wildcard covers ephemeral environments (`feature-login--shop.apps.example.com`); NBO orders at most 20 new certificates for them in any 7 days per registered domain, so Production and its renewals keep room under Let's Encrypt's limit of 50. One over the cap is served over HTTP until the window has room; use the Let's Encrypt staging option while testing. If your provider refuses a wildcard, add one record per site, such as `next-app.apps`. On Cloudflare, set the record to **DNS only** (grey cloud).
 
@@ -449,8 +459,14 @@ When the staging trial works, turn staging off. Existing staging certificates st
 Describe the project as the body of `POST /projects/setup`, as in [step 4](#4-private-repositories), and send it on the server:
 
 ```json
-{ "name": "site", "repo": "https://github.com/you/site.git", "productionBranch": "main", "framework": "nextjs",
-  "buildCommand": "npm ci && npm run build", "clouds": [{ "target": "kubernetes", "clusterId": "kc_..." }] }
+{
+  "name": "site",
+  "repo": "https://github.com/you/site.git",
+  "productionBranch": "main",
+  "framework": "nextjs",
+  "buildCommand": "npm ci && npm run build",
+  "clouds": [{ "target": "kubernetes", "clusterId": "kc_..." }]
+}
 ```
 
 ```bash
@@ -505,6 +521,7 @@ Steps:
    ```
 
    `compose.public.yaml` adds Caddy (pinned to `caddy:2.8.4`) on ports 80 and 443. Caddy gets the certificate by itself and passes the `Host` header on unchanged. NBO gets `NBO_PUBLIC_URL=https://nbo.example.com`, and its own port stays on `127.0.0.1`. From now on, use the same two `-f` options in every `docker compose` command that starts NBO, including upgrades; a plain `docker compose up -d` restarts NBO without `NBO_PUBLIC_URL`.
+
 3. Check it: `curl https://nbo.example.com/healthz` answers `{"ok":true}`, and `curl -H "Authorization: Bearer <token>" https://nbo.example.com/projects` lists your projects.
 
 `NBO_PUBLIC_URL` must be `https://` with no path, or NBO won't start. If you use your own proxy instead of Caddy, it must pass `Host` unchanged. Check the log with `docker compose logs nbo`.
@@ -515,6 +532,10 @@ Steps:
 
 To set up projects, variables, domains and traffic from `.tf` files, make an API token with `nbo-server token create` (see [Team access](#7-team-access)) and see the [Terraform](./manual/terraform.md) chapter. A token can run builds, so treat it like a root password for this server.
 
+## Linking to a hosted dashboard (optional)
+
+NBO works fully without a dashboard. If you want a hosted dashboard to drive this server, link it with the one-time code the dashboard gives you, using `nbo-server link -` (it reads the code from standard input, so it stays out of your shell history). Your sites, deploys, certificates and crons never wait on the link, and the server checks every request itself; read [Linking to a hosted dashboard](./manual/link.md) first. To remove the link at any time, run `nbo-server unlink` on the server: it takes effect at once and your sites keep running exactly as before.
+
 ## Backups and restore
 
 NBO has no automatic backups, and none are scheduled: you copy its two volumes by hand. Do it before every upgrade, and on a schedule of your own. If you script it, for example with `cron`, put the date in the file name (`nbo-backup-$(date +%F).tgz`) so a run doesn't overwrite the last good backup, and remember that NBO is stopped while it runs.
@@ -524,7 +545,7 @@ Copy both volumes while NBO is stopped. Run this in the folder with `compose.yam
 ```bash
 git rev-parse HEAD     # write this commit down: a restore needs the same version
 docker compose stop
-docker run --rm -v nbo_nbo-data:/data:ro -v nbo_nbo-keys:/keys:ro -v "$PWD":/backup nbo:local \
+docker run --rm -v nbo_nbo-data:/data:ro -v nbo_nbo-keys:/keys:ro -v "$PWD":/backup debian:bookworm-slim \
   tar czf /backup/nbo-backup.tgz --exclude=data/tmp --exclude=data/.pnpm-store -C / data keys
 docker compose start
 ```
@@ -535,7 +556,7 @@ To restore onto the same server:
 
 ```bash
 docker compose down
-docker run --rm -v nbo_nbo-data:/data -v nbo_nbo-keys:/keys -v "$PWD":/backup nbo:local \
+docker run --rm -v nbo_nbo-data:/data -v nbo_nbo-keys:/keys -v "$PWD":/backup debian:bookworm-slim \
   tar xzf /backup/nbo-backup.tgz -C /
 docker compose up -d
 ```
@@ -568,7 +589,7 @@ For when the old server is gone, or you are moving NBO.
 
    ```bash
    docker compose up --no-start
-   docker run --rm -v nbo_nbo-data:/data -v nbo_nbo-keys:/keys -v "$PWD":/backup nbo:local \
+   docker run --rm -v nbo_nbo-data:/data -v nbo_nbo-keys:/keys -v "$PWD":/backup debian:bookworm-slim \
      tar xzf /backup/nbo-backup.tgz -C /
    docker compose up -d
    ```
@@ -607,20 +628,23 @@ This is for a server that already runs NBO (this is also how you update it). You
    git rev-parse HEAD     # write this commit down, it is your way back
    git log -1 --format=%cs   # and its date: the version notes below go by it
    docker compose stop
-   docker run --rm -v nbo_nbo-data:/data:ro -v nbo_nbo-keys:/keys:ro -v "$PWD":/backup nbo:local \
+   docker run --rm -v nbo_nbo-data:/data:ro -v nbo_nbo-keys:/keys:ro -v "$PWD":/backup debian:bookworm-slim \
      tar czf /backup/nbo-backup-before-upgrade.tgz --exclude=data/tmp --exclude=data/.pnpm-store -C / data keys
    docker compose start
    ```
 
    The archive holds the secret key and the credentials it opens, so keep it somewhere safe. See [Backups and restore](#backups-and-restore) for restoring it.
-2. **Fetch the new version and rebuild:**
+
+2. **Fetch the new version and start it:**
 
    ```bash
    git pull
-   docker compose up -d --build
+   docker compose pull
+   docker compose up -d
    ```
 
-   The old container keeps running until the new one starts. The database upgrades itself when NBO starts, and the volumes `nbo-data` and `nbo-keys` keep everything: projects, connections, variables and the secret key. The build is slow and needs a few GB of free disk.
+   The old container keeps running until the new one starts. The database upgrades itself when NBO starts, and the volumes `nbo-data` and `nbo-keys` keep everything: projects, connections, variables and the secret key. If you build the image yourself (`compose.build.yaml`, see [step 2](#2-start-nbo)), run `docker compose -f compose.yaml -f compose.build.yaml up -d --build` instead of the last two lines; that build is slow and needs a few GB of free disk.
+
 3. **Check that it came up:**
 
    ```bash
@@ -629,8 +653,9 @@ This is for a server that already runs NBO (this is also how you update it). You
    ```
 
    `docker compose ps` should show the container as `healthy` (give it a minute after `health: starting`), and the log should end with NBO listening, not an error.
+
 4. **Reinstall the edge.** Run `docker compose exec nbo nbo-server edge reinstall`, then `docker compose exec nbo nbo-server edge status --wait`, every time you upgrade. Nothing tells you when the edge is out of date, and an older edge lacks fixes (for example it passes a visitor's `CF-Connecting-IP` through) and can't take the Behind Cloudflare switch. Reinstalling reuses the saved load balancer location and keeps the same address.
-5. **Clean up.** Each upgrade leaves the old image and a build cache behind. `docker image prune` and `docker builder prune` remove them.
+5. **Clean up.** Each upgrade leaves the old image behind (and a build cache, if you build yourself). `docker image prune` and `docker builder prune` remove them.
 6. **Read the notes below** for every version newer than the one you came from, and do what they say once.
 
 ### Notes for specific versions
@@ -661,17 +686,18 @@ Rolling back from 2026-11-12 or newer to an NBO from before that date also means
 
 1. If you are going back to a version older than 2026-11-08 and removed the `NBO_LB_ANNOTATIONS` line from `.env`, put it back, because the older NBO doesn't detect the location itself.
 2. Find the previous commit. Use the one you wrote down in step 1 of Every upgrade, or `git log --oneline -5` or `git reflog`.
-3. Restore the backup you took in step 1 of Every upgrade, then check out that commit and rebuild:
+3. Restore the backup you took in step 1 of Every upgrade, then check out that commit and run its image. Each commit on `main` has its own image, tagged `sha-` plus the first 12 characters of the commit:
 
    ```bash
    docker compose down
-   docker run --rm -v nbo_nbo-data:/data -v nbo_nbo-keys:/keys -v "$PWD":/backup nbo:local \
+   docker run --rm -v nbo_nbo-data:/data -v nbo_nbo-keys:/keys -v "$PWD":/backup debian:bookworm-slim \
      tar xzf /backup/nbo-backup-before-upgrade.tgz -C /
    git checkout <previous commit>
-   docker compose up -d --build
+   echo "NBO_IMAGE=ghcr.io/meliphyra-ux/nbo-core:sha-$(git rev-parse --short=12 HEAD)" >> .env
+   docker compose up -d
    ```
 
-   Restoring puts the database back as it was before the upgrade, which is what lets the older code start. Anything you changed in NBO since then is lost. To come back to the newest version later, run `git checkout main && git pull` and rebuild.
+   Restoring puts the database back as it was before the upgrade, which is what lets the older code start. Anything you changed in NBO since then is lost. To come back to the newest version later, remove the `NBO_IMAGE` line from `.env`, then run `git checkout main && git pull && docker compose pull && docker compose up -d`. If you build the image yourself, run `docker compose -f compose.yaml -f compose.build.yaml up -d --build` after the checkout instead of setting `NBO_IMAGE`. Images exist only for commits made after 2026-11-16; an older commit has to be built this way.
 
 ## Running without Docker
 

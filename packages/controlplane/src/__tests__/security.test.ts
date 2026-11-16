@@ -3,7 +3,7 @@
 
 import { describe, it, expect, afterEach } from "vitest";
 import { startHarness, staticSetup, type Harness } from "./v2-harness.js";
-import { isAllowedRequest } from "../handlers.js";
+import { isAllowedRequest } from "../http/handlers.js";
 
 let h: Harness | undefined;
 afterEach(async () => {
@@ -26,16 +26,26 @@ describe("cross-site and DNS-rebinding guard", () => {
 
   it("refuses a request whose Host isn't loopback (DNS rebinding), even a GET", async () => {
     h = await startHarness();
-    expect((await h.call("GET", "/projects/summary", undefined, { host: "rebind.evil.example:8081" })).status).toBe(403);
+    expect((await h.call("GET", "/projects/summary", undefined, { host: "rebind.evil.example:8081" })).status).toBe(
+      403,
+    );
   });
 
   it("allows the dashboard's own loopback origins and plain server-to-server calls", () => {
     const req = (headers: Record<string, string>) => new Request("http://cp/projects", { method: "POST", headers });
-    expect(isAllowedRequest(req({}))).toBe(true);
+    expect(isAllowedRequest(req({ host: "127.0.0.1:8081" }))).toBe(true);
     expect(isAllowedRequest(req({ origin: "http://localhost:5174", host: "localhost:5174" }))).toBe(true);
     expect(isAllowedRequest(req({ origin: "http://127.0.0.1:5173", host: "127.0.0.1:8081" }))).toBe(true);
     expect(isAllowedRequest(req({ origin: "http://[::1]:5174", host: "[::1]:8081" }))).toBe(true);
     expect(isAllowedRequest(req({ origin: "http://localhost.evil.example" }))).toBe(false);
     expect(isAllowedRequest(req({ host: "127.0.0.1.evil.example" }))).toBe(false);
+  });
+
+  it("a request with no Host header is not loopback", () => {
+    // Every HTTP/1.1 client sends Host; one without it proves nothing about
+    // where it came from, so it gets no loopback trust.
+    const req = (headers: Record<string, string>) => new Request("http://cp/projects", { method: "POST", headers });
+    expect(isAllowedRequest(req({}))).toBe(false);
+    expect(isAllowedRequest(req({ origin: "http://localhost:5174" }))).toBe(false);
   });
 });

@@ -104,7 +104,10 @@ export function createInsertionStream(tag: string): TransformStream<Uint8Array<A
   let carry: Uint8Array<ArrayBuffer> = new Uint8Array(0);
   let done = false;
 
-  function scan(buf: Uint8Array<ArrayBuffer>, controller: TransformStreamDefaultController<Uint8Array<ArrayBuffer>>): void {
+  function scan(
+    buf: Uint8Array<ArrayBuffer>,
+    controller: TransformStreamDefaultController<Uint8Array<ArrayBuffer>>,
+  ): void {
     const at = firstTag(buf);
     if (at >= 0) {
       done = true;

@@ -114,8 +114,14 @@ describe("black-box: dev admin API", () => {
     ["tls on the body", { backends: [backend], tls: "s" }],
     ["redirectHttps on the body", { backends: [backend], redirectHttps: true }],
     ["cloudflare on the body", { backends: [backend], cloudflare: true }],
-    ["insights with a bad sample rate", { backends: [backend], insights: { enabled: true, inject: true, sampleRate: 33 } }],
-    ["insights with an unknown field", { backends: [backend], insights: { enabled: true, inject: true, sampleRate: 10, x: 1 } }],
+    [
+      "insights with a bad sample rate",
+      { backends: [backend], insights: { enabled: true, inject: true, sampleRate: 33 } },
+    ],
+    [
+      "insights with an unknown field",
+      { backends: [backend], insights: { enabled: true, inject: true, sampleRate: 10, x: 1 } },
+    ],
     ["insights not an object", { backends: [backend], insights: true }],
   ];
 
@@ -128,10 +134,20 @@ describe("black-box: dev admin API", () => {
   });
 
   it("names the exact rule in the 400 text for registry validation failures", async () => {
-    expect((await adminPut(edge.adminUrl, "v.test", { backends: [{ url: "https://a", weight: -1 }] })).body).toBe('edge: backend "https://a" has a negative weight -1');
-    expect((await adminPut(edge.adminUrl, "v.test", { backends: [{ url: "ftp://a", weight: 1 }] })).body).toBe('edge: backend "ftp://a" is not a valid http(s) url');
-    expect((await adminPut(edge.adminUrl, "v.test", { backends: [{ url: "https://a", weight: 0 }] })).body).toBe('edge: target "v.test" has no backend with a positive weight');
-    expect((await adminPut(edge.adminUrl, "v.test", { backends: [backend], extra: 1 })).body).toBe("edge: invalid request body");
-    expect((await adminPut(edge.adminUrl, "v.test", { backends: [backend], insights: { enabled: true } })).body).toBe("edge: invalid insights settings");
+    expect((await adminPut(edge.adminUrl, "v.test", { backends: [{ url: "https://a", weight: -1 }] })).body).toBe(
+      'edge: backend "https://a" has a negative weight -1',
+    );
+    expect((await adminPut(edge.adminUrl, "v.test", { backends: [{ url: "ftp://a", weight: 1 }] })).body).toBe(
+      'edge: backend "ftp://a" is not a valid http(s) url',
+    );
+    expect((await adminPut(edge.adminUrl, "v.test", { backends: [{ url: "https://a", weight: 0 }] })).body).toBe(
+      'edge: target "v.test" has no backend with a positive weight',
+    );
+    expect((await adminPut(edge.adminUrl, "v.test", { backends: [backend], extra: 1 })).body).toBe(
+      "edge: invalid request body",
+    );
+    expect((await adminPut(edge.adminUrl, "v.test", { backends: [backend], insights: { enabled: true } })).body).toBe(
+      "edge: invalid insights settings",
+    );
   });
 });

@@ -6,7 +6,6 @@ import { normalizeHost } from "./registry.js";
 import { isIP } from "node:net";
 
 export type { RelayVia } from "./registry.js";
-export { normalizeHost } from "./registry.js";
 
 // RouteTable is the whole public-edge configuration, replaced atomically.
 export interface RouteTable {
@@ -101,6 +100,7 @@ export function parseRouteTable(json: string): RouteTable {
   try {
     doc = JSON.parse(json);
   } catch (err) {
+    // eslint-disable-next-line preserve-caught-error -- message-only error, adding cause would change the error object
     throw new Error(`route table: invalid JSON: ${err instanceof Error ? err.message : String(err)}`);
   }
   if (!isRecord(doc)) throw new Error("route table: must be an object");
@@ -152,7 +152,8 @@ export function parseRouteTable(json: string): RouteTable {
     if (!isRecord(doc.challenges)) throw new Error("route table: challenges must be an object");
     for (const [token, value] of Object.entries(doc.challenges)) {
       if (!tokenRe.test(token)) throw new Error(`route table: challenges token ${JSON.stringify(token)} is invalid`);
-      if (typeof value !== "string") throw new Error(`route table: challenges[${JSON.stringify(token)}] must be a string`);
+      if (typeof value !== "string")
+        throw new Error(`route table: challenges[${JSON.stringify(token)}] must be a string`);
       challenges[token] = value;
     }
   }

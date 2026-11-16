@@ -26,7 +26,11 @@ vi.mock("@nbo/adapter-k8s", () => ({
   functionImageHash: vi.fn().mockResolvedValue("0123456789abcdef01234567"),
   // A stand-in for the real hash: it changes with functions.json and env.json.
   appBakedHash: vi.fn(async (_dir: string, f?: Record<string, string>, e?: Record<string, string>) =>
-    (await import("node:crypto")).createHash("sha256").update(JSON.stringify([f ?? {}, e ?? {}])).digest("hex").slice(0, 8),
+    (await import("node:crypto"))
+      .createHash("sha256")
+      .update(JSON.stringify([f ?? {}, e ?? {}]))
+      .digest("hex")
+      .slice(0, 8),
   ),
 }));
 vi.mock("@nbo/adapter-cloudrun", () => ({
@@ -73,7 +77,10 @@ describe("appImageTag", () => {
 
 describe.each([
   ["kubernetes", (cb: (m: string) => void) => createKubernetesTarget("myapp", undefined, { onProgress: cb })],
-  ["cloudrun", (cb: (m: string) => void) => createCloudRunTarget("proj", "region", "repo", undefined, { onProgress: cb })],
+  [
+    "cloudrun",
+    (cb: (m: string) => void) => createCloudRunTarget("proj", "region", "repo", undefined, { onProgress: cb }),
+  ],
 ] as const)("%s target carryFrom", (_name, make) => {
   it("tags with the carry hash, passes the carry dir, reports it, and removes the dir", async () => {
     const prev = await build("prev", prevFiles, { "a.js": "aa" });

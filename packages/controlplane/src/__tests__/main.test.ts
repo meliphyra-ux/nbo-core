@@ -7,8 +7,8 @@ import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { resolveControlPlaneAddr, initSecretKey } from "../main.js";
-import { createStore } from "../store.js";
-import { ErrSecretKey } from "../secrets.js";
+import { createStore } from "../store/store.js";
+import { ErrSecretKey } from "../store/secrets.js";
 
 describe("initSecretKey", () => {
   it("refuses to start with a key that does not open the sealed secrets, and starts with the right one", () => {
@@ -16,7 +16,10 @@ describe("initSecretKey", () => {
     const dbPath = join(dir, "nbo.db");
     const keyA = randomBytes(32);
     const sealer = createStore(dbPath, { secretKey: keyA });
-    sealer.saveGoogleConnection({ project: "p", region: "r", arRepo: "nbo", deployer: "d", puller: "q" }, { deployerKey: "a", pullerKey: "b" });
+    sealer.saveGoogleConnection(
+      { project: "p", region: "r", arRepo: "nbo", deployer: "d", puller: "q" },
+      { deployerKey: "a", pullerKey: "b" },
+    );
     sealer.close();
 
     const pathA = join(dir, "a.key");
@@ -42,7 +45,10 @@ describe("resolveControlPlaneAddr", () => {
   });
 
   it("uses the exact host/port NBO_CONTROL_PLANE_ADDR gives", () => {
-    expect(resolveControlPlaneAddr({ NBO_CONTROL_PLANE_ADDR: "0.0.0.0:9000" })).toEqual({ host: "0.0.0.0", port: 9000 });
+    expect(resolveControlPlaneAddr({ NBO_CONTROL_PLANE_ADDR: "0.0.0.0:9000" })).toEqual({
+      host: "0.0.0.0",
+      port: 9000,
+    });
   });
 });
 
@@ -50,7 +56,10 @@ describe("resolveEdgeConfig", () => {
   it("reads NBO_EDGE_ADMIN_URL and NBO_EDGE_PUBLIC_PORT with defaults", async () => {
     const { resolveEdgeConfig } = await import("../main.js");
     expect(resolveEdgeConfig({})).toEqual({ adminUrl: "http://127.0.0.1:9444", publicPort: 9443 });
-    expect(resolveEdgeConfig({ NBO_EDGE_ADMIN_URL: "http://127.0.0.1:7000", NBO_EDGE_PUBLIC_PORT: "8080" })).toEqual({ adminUrl: "http://127.0.0.1:7000", publicPort: 8080 });
+    expect(resolveEdgeConfig({ NBO_EDGE_ADMIN_URL: "http://127.0.0.1:7000", NBO_EDGE_PUBLIC_PORT: "8080" })).toEqual({
+      adminUrl: "http://127.0.0.1:7000",
+      publicPort: 8080,
+    });
   });
 });
 
@@ -97,7 +106,9 @@ describe("main", () => {
         res.end(JSON.stringify({ batches: [] }));
       });
     });
-    const edgePort = await new Promise<number>((r) => edge.listen(0, "127.0.0.1", () => r((edge.address() as { port: number }).port)));
+    const edgePort = await new Promise<number>((r) =>
+      edge.listen(0, "127.0.0.1", () => r((edge.address() as { port: number }).port)),
+    );
     const dir = mkdtempSync(join(tmpdir(), "controlplane-main-"));
     const errors: string[] = [];
     const origError = console.error;

@@ -27,7 +27,10 @@ describe("hasPrerenderRoutes", () => {
 
   it("is true for one prerender route", async () => {
     const dir = await mkdtemp(join(tmpdir(), "isr-"));
-    await writeFile(join(dir, "prerender.json"), JSON.stringify({ prerenders: [{ id: "/blog/[slug]", function: "ssr", expiration: 60 }] }));
+    await writeFile(
+      join(dir, "prerender.json"),
+      JSON.stringify({ prerenders: [{ id: "/blog/[slug]", function: "ssr", expiration: 60 }] }),
+    );
     expect(await hasPrerenderRoutes(dir)).toBe(true);
   });
 });

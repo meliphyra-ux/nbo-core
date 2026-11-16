@@ -11,10 +11,11 @@ import type { Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { serveFetch } from "@nbo/nodehost";
 import { createAdminMux, createRegistry, type Registry } from "@nbo/edge";
-import { createStore, type Store } from "../store.js";
-import { createMux, type Mux } from "../handlers.js";
+import { createStore, type Store } from "../store/store.js";
+import { createMux, type Mux } from "../http/handlers.js";
+import { withHost } from "./test-mux.js";
 import { wireV2, type V2, type V2Options } from "../v2.js";
-import { createArtifactStore, type ArtifactStore } from "../artifacts.js";
+import { createArtifactStore, type ArtifactStore } from "../builds/artifacts.js";
 import {
   fakeCloudSetup,
   fakeCloudTeardown,
@@ -45,7 +46,12 @@ export interface Harness {
   teardown: FakeCloudTeardown;
   head: string;
   commit(message: string): Promise<string>;
-  call(method: string, path: string, body?: unknown, headers?: Record<string, string>): Promise<{ status: number; json: any; text: string }>;
+  call(
+    method: string,
+    path: string,
+    body?: unknown,
+    headers?: Record<string, string>,
+  ): Promise<{ status: number; json: any; text: string }>;
   stopEdge(): Promise<void>;
   close(): Promise<void>;
 }
@@ -54,11 +60,16 @@ export interface Harness {
 // saved) and wires production setup; deploys stay faked. v2 overrides
 // wireV2 options (a fake kubectl runner, resolver, edge installer, ...).
 // secretKey: give a dev-mode store a secret key too (production always has one).
-export async function startHarness(opts: { mode?: Mode; v2?: Partial<V2Options>; secretKey?: boolean } = {}): Promise<Harness> {
+export async function startHarness(
+  opts: { mode?: Mode; v2?: Partial<V2Options>; secretKey?: boolean; repoAliases?: string[] } = {},
+): Promise<Harness> {
   const cleanups: (() => Promise<void> | void)[] = [];
   const dir = await mkdtemp(join(tmpdir(), "controlplane-v2-"));
   const dbPath = join(dir, "test.db");
-  const store = createStore(dbPath, opts.mode === "production" || opts.secretKey ? { secretKey: randomBytes(32) } : undefined);
+  const store = createStore(
+    dbPath,
+    opts.mode === "production" || opts.secretKey ? { secretKey: randomBytes(32) } : undefined,
+  );
   cleanups.push(async () => {
     store.close();
     await rm(dir, { recursive: true, force: true });
@@ -70,7 +81,10 @@ export async function startHarness(opts: { mode?: Mode; v2?: Partial<V2Options>;
     const res = await admin(request.clone());
     if (request.method === "PUT" && res.status === 204) {
       const body = (await request.json()) as { backends: { weight: number }[] };
-      edgePuts.push({ host: decodeURIComponent(new URL(request.url).pathname.replace(/^\/targets\//, "")), weights: body.backends.map((b) => b.weight) });
+      edgePuts.push({
+        host: decodeURIComponent(new URL(request.url).pathname.replace(/^\/targets\//, "")),
+        weights: body.backends.map((b) => b.weight),
+      });
     }
     return res;
   };
@@ -81,6 +95,8 @@ export async function startHarness(opts: { mode?: Mode; v2?: Partial<V2Options>;
   const repo = await makeLocalRepo();
   cleanups.push(() => rm(repo.repoPath, { recursive: true, force: true }));
   cleanups.push(rewriteGitUrl(repoUrl, repo.repoPath));
+  // repoAliases: other addresses (an ssh one) that also clone from the local repo, so nothing reaches the real host.
+  for (const alias of opts.repoAliases ?? []) cleanups.push(rewriteGitUrl(alias, repo.repoPath));
 
   const artifactsDir = join(dir, "artifacts");
   await mkdir(artifactsDir, { recursive: true });
@@ -98,10 +114,14 @@ export async function startHarness(opts: { mode?: Mode; v2?: Partial<V2Options>;
     mode: opts.mode,
     ...opts.v2,
   });
-  const mux = createMux(store, deploys, v2.queue, v2);
+  const mux = withHost(createMux(store, deploys, v2.queue, v2));
   const call = async (method: string, path: string, body?: unknown, headers: Record<string, string> = {}) => {
     const res = await mux(
-      new Request(`http://cp${path}`, { method, body: body === undefined ? undefined : JSON.stringify(body), headers: { "content-type": "application/json", ...headers } }),
+      new Request(`http://cp${path}`, {
+        method,
+        body: body === undefined ? undefined : JSON.stringify(body),
+        headers: { "content-type": "application/json", ...headers },
+      }),
     );
     const text = await res.text();
     let json: any = null;
@@ -147,7 +167,13 @@ export const staticSetup = (overrides: Record<string, unknown> = {}) => ({
 
 export const bothClouds = [
   { target: "kubernetes" },
-  { target: "cloudrun", mode: "manual", project: "my-proj-1", region: "us-east1", arRepo: "us-east1-docker.pkg.dev/my-proj-1/nbo" },
+  {
+    target: "cloudrun",
+    mode: "manual",
+    project: "my-proj-1",
+    region: "us-east1",
+    arRepo: "us-east1-docker.pkg.dev/my-proj-1/nbo",
+  },
 ];
 
 // deployedProject runs a full setup and waits for its first build.

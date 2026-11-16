@@ -61,18 +61,42 @@ describe("writer trees", () => {
     writer.addStatic("/isr", join(srcDir, "isr.html"));
     writer.addStatic("/ppr", join(srcDir, "ppr.html"));
     writer.addStatic("/404", join(srcDir, "404.html"));
-    const ssr = writer.addFunction("ssr", { runtime: { kind: "node", version: ">=22" }, entryFilePath: join(srcDir, "fn", "index.mjs"), capabilities: ["fn.streaming"] });
+    const ssr = writer.addFunction("ssr", {
+      runtime: { kind: "node", version: ">=22" },
+      entryFilePath: join(srcDir, "fn", "index.mjs"),
+      capabilities: ["fn.streaming"],
+    });
     ssr.addRoute("/api/hello", "/api/hello", "app/api/hello/route.js");
     ssr.addFile("server/page.js", "module.exports = {};");
-    writer.addFunction("middleware", { runtime: { kind: "node", version: ">=22" }, entryFilePath: join(srcDir, "fn", "mw.mjs"), capabilities: [] });
+    writer.addFunction("middleware", {
+      runtime: { kind: "node", version: ">=22" },
+      entryFilePath: join(srcDir, "fn", "mw.mjs"),
+      capabilities: [],
+    });
     writer.setRoutes({
       version: 1,
-      beforeFiles: [{ id: "middleware-0", match: { path: "^/dashboard" }, action: { type: "middleware", function: "middleware" } }],
+      beforeFiles: [
+        { id: "middleware-0", match: { path: "^/dashboard" }, action: { type: "middleware", function: "middleware" } },
+      ],
       afterFiles: [{ id: "/api/hello", match: { path: "^/api/hello$" }, action: { type: "rewrite", function: "ssr" } }],
       error: { "404": { file: "/404" } },
     });
-    const common = { function: "ssr", tags: ["group:1"], allowQuery: [], varyHeaders: [], bypassToken: { env: "NBO_PRERENDER_BYPASS" } };
-    writer.addPrerender({ id: "/isr", match: "^/isr$", revalidateSec: 60, expireSec: 31536000, seeds: { "/isr": { file: "/isr" } }, onMiss: "blocking", ...common });
+    const common = {
+      function: "ssr",
+      tags: ["group:1"],
+      allowQuery: [],
+      varyHeaders: [],
+      bypassToken: { env: "NBO_PRERENDER_BYPASS" },
+    };
+    writer.addPrerender({
+      id: "/isr",
+      match: "^/isr$",
+      revalidateSec: 60,
+      expireSec: 31536000,
+      seeds: { "/isr": { file: "/isr" } },
+      onMiss: "blocking",
+      ...common,
+    });
     writer.addPrerender({
       id: "/ppr",
       match: "^/ppr$",
@@ -83,9 +107,24 @@ describe("writer trees", () => {
       ...common,
       "x-nbo-ppr": { postponedState: "state" },
     });
-    writer.setImages({ widths: [640], formats: ["image/webp"], qualities: [75], remotePatterns: [], localPatterns: [{ pathname: "^/assets/" }], minimumCacheTTLSec: 60, allowSvg: false });
+    writer.setImages({
+      widths: [640],
+      formats: ["image/webp"],
+      qualities: [75],
+      remotePatterns: [],
+      localPatterns: [{ pathname: "^/assets/" }],
+      minimumCacheTTLSec: 60,
+      allowSvg: false,
+    });
     writer.setEnv({ required: [], optional: [], inlinedAtBuild: [] });
-    writer.addCron({ id: "nightly", schedule: "0 3 * * *", timezone: "UTC", target: { function: "ssr", path: "/api/hello", method: "POST" }, overlap: "skip", timeoutSec: 60 });
+    writer.addCron({
+      id: "nightly",
+      schedule: "0 3 * * *",
+      timezone: "UTC",
+      target: { function: "ssr", path: "/api/hello", method: "POST" },
+      overlap: "skip",
+      timeoutSec: 60,
+    });
     await writer.write();
 
     const manifest = JSON.parse(readFileSync(join(outDir, "manifest.json"), "utf8"));

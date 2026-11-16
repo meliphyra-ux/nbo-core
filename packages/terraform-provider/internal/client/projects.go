@@ -133,9 +133,10 @@ const (
 
 // Project setup statuses (store.ts).
 const (
-	SetupProvisioning = "provisioning"
-	SetupReady        = "ready"
-	SetupNeedsSetup   = "needs-setup"
+	SetupProvisioning  = "provisioning"
+	SetupReady         = "ready"
+	SetupNeedsSetup    = "needs-setup"
+	SetupWaitingForKey = "waiting-for-key"
 )
 
 // ProjectSummary is the answer of the summary routes (v2-routes.ts summarize).

@@ -36,9 +36,9 @@ const JOBS = {
   cloudrun: "targets",
   "cloudrun-janitor": "targets",
 };
-// Jobs that may fail without failing the pipeline, each with a reason on file
-// in docs/points-to-improve-or-fix.md.
-const ALLOW_FAILURE = ["lint"];
+// Jobs allowed to set allow_failure. Empty: every job must block the pipeline.
+// A job added here may also set allow_failure: true.
+const ALLOW_FAILURE = [];
 const FORBIDDEN_GIT = ["add", "commit", "push", "stash", "reset", "checkout", "clean"];
 const RESERVED = new Set(["stages", "workflow", "default", "variables", "include", "image", "services", "cache"]);
 const SECRET_NAME = /(KEY|SECRET|TOKEN|PASSWORD|CREDENTIAL)/i;
@@ -70,7 +70,9 @@ function resolveJob(doc, name, seen = new Set()) {
 }
 
 function jobNames(doc) {
-  return Object.keys(doc).filter((k) => !k.startsWith(".") && !RESERVED.has(k) && isObj(doc[k]) && doc[k].script !== undefined);
+  return Object.keys(doc).filter(
+    (k) => !k.startsWith(".") && !RESERVED.has(k) && isObj(doc[k]) && doc[k].script !== undefined,
+  );
 }
 
 function scriptLines(job) {
@@ -154,12 +156,36 @@ function ruleKind(rule) {
   return null;
 }
 
-export function checkPipeline(doc, repoRoot = repoRootDefault) {
+export function checkPipeline(inputDoc, repoRoot = repoRootDefault) {
   const errors = [];
   const fail = (job, reason) => errors.push(job ? `${job}: ${reason}` : reason);
 
+  // At most one include, of the shape { local: X, rules: [{ exists: [X] }] }
+  // with X a relative path; when X exists its jobs are checked like the rest.
+  let doc = inputDoc;
+  if (doc.include !== undefined) {
+    const inc = asList(doc.include);
+    const x = inc[0]?.local;
+    const ok =
+      inc.length === 1 &&
+      isObj(inc[0]) &&
+      Object.keys(inc[0]).length === 2 &&
+      typeof x === "string" &&
+      x !== "" &&
+      !x.startsWith("/") &&
+      !x.split("/").includes("..") &&
+      JSON.stringify(inc[0].rules) === JSON.stringify([{ exists: [x] }]);
+    if (!ok) {
+      fail("include", "only one optional local include (local: X, rules: exists: [X], X relative) is allowed");
+    } else if (existsSync(join(repoRoot, x))) {
+      const extra = loadYaml(repoRootDefault).parse(readFileSync(join(repoRoot, x), "utf8"));
+      doc = { ...extra, ...doc };
+    }
+  }
+
   for (const stage of STAGES) if (!asList(doc.stages).includes(stage)) fail("stages", `missing ${stage}`);
-  if (!asList(doc.workflow?.rules).length) fail("workflow", "no rules (a push with an open merge request would start two pipelines)");
+  if (!asList(doc.workflow?.rules).length)
+    fail("workflow", "no rules (a push with an open merge request would start two pipelines)");
 
   const names = jobNames(doc);
   const resolved = Object.fromEntries(names.map((n) => [n, resolveJob(doc, n)]));
@@ -194,22 +220,23 @@ export function checkPipeline(doc, repoRoot = repoRootDefault) {
       for (const m of line.matchAll(re)) {
         const rel = m[1].replace(/^\.\//, "");
         if (!existsSync(join(repoRoot, rel))) fail(name, `${rel} does not exist`);
-        else if (rel.endsWith(".sh") && trackedMode(repoRoot, rel) !== "100755") fail(name, `${rel} is not committed as executable`);
+        else if (rel.endsWith(".sh") && trackedMode(repoRoot, rel) !== "100755")
+          fail(name, `${rel} is not committed as executable`);
       }
     }
     const vars = job.variables ?? {};
     if (String(vars.GIT_STRATEGY) === "none") fail(name, "sets GIT_STRATEGY: none");
     if (String(vars.GIT_CLEAN_FLAGS) === "none") fail(name, "sets GIT_CLEAN_FLAGS: none");
 
-    if (ALLOW_FAILURE.includes(name) && job.allow_failure !== true) {
-      fail(name, "allow_failure must be true (points-to-improve-or-fix.md)");
-    }
-
     if (!ALLOW_FAILURE.includes(name) && job.allow_failure !== undefined && job.allow_failure !== false) {
-      fail(name, "allow_failure is only allowed on lint");
+      fail(name, "allow_failure is not allowed on a job");
     }
     for (const r of asList(job.rules)) {
-      if (isObj(r) && r.allow_failure !== undefined && !(["kubernetes", "cloudrun"].includes(name) && r.when === "manual")) {
+      if (
+        isObj(r) &&
+        r.allow_failure !== undefined &&
+        !(["kubernetes", "cloudrun"].includes(name) && r.when === "manual")
+      ) {
         fail(name, "a rule sets allow_failure; only the manual rule of kubernetes and cloudrun may");
       }
     }
@@ -240,7 +267,8 @@ export function checkPipeline(doc, repoRoot = repoRootDefault) {
       const running = rules.filter((r) => r?.when !== "never");
       const wantRunning = JSON.stringify(RUNNING[name] ?? []);
       if (JSON.stringify(running) !== wantRunning) fail(name, `running rules must be exactly ${wantRunning}`);
-      if (asList(job.cache).length) fail(name, "holds the Google key but uses a cache (another job could have written it)");
+      if (asList(job.cache).length)
+        fail(name, "holds the Google key but uses a cache (another job could have written it)");
       for (const [v, want] of [
         ["NBO_GCP_PROJECT", "$NBO_CI_GCP_PROJECT"],
         ["NBO_GCP_REGION", "$NBO_CI_GCP_REGION"],
@@ -258,7 +286,8 @@ export function checkPipeline(doc, repoRoot = repoRootDefault) {
       const script = asList(job.script).map(String);
       if (script.at(-1)?.trim() !== HARNESS_LAST) fail(name, `last script line must be ${HARNESS_LAST}`);
       if (!lines.some((l) => l.includes("pipefail"))) fail(name, "script lacks set -o pipefail");
-      if (!lines.some((l) => /tee\s+harness\.log/.test(l))) fail(name, "script does not tee the harness output to harness.log");
+      if (!lines.some((l) => /tee\s+harness\.log/.test(l)))
+        fail(name, "script does not tee the harness output to harness.log");
     }
 
     if (name.startsWith("determinism-") && vars.NBO_BUILD_ID !== "$CI_COMMIT_SHA") {
@@ -297,7 +326,8 @@ export function checkPipeline(doc, repoRoot = repoRootDefault) {
       if (!services.some((s) => /docker:[^/\s]*-dind/.test(s))) fail(name, "missing docker dind service");
       if (!vars.DOCKER_HOST) fail(name, "missing DOCKER_HOST");
       if (String(vars.NBO_CI_DIND) !== "1") fail(name, 'NBO_CI_DIND must be "1"');
-      if (vars.NBO_KIND_CONFIG !== "scripts/ci/kind-config.yaml") fail(name, "NBO_KIND_CONFIG must be scripts/ci/kind-config.yaml");
+      if (vars.NBO_KIND_CONFIG !== "scripts/ci/kind-config.yaml")
+        fail(name, "NBO_KIND_CONFIG must be scripts/ci/kind-config.yaml");
       if (vars.NBO_KIND_CLUSTER !== "nbo-local") {
         fail(name, "NBO_KIND_CLUSTER must be nbo-local (the cluster bootstrap-local-k8s.sh makes in dind)");
       }
@@ -306,19 +336,22 @@ export function checkPipeline(doc, repoRoot = repoRootDefault) {
         fail(name, "scripts/ci/kind-config.yaml does not pin kindest/node:v1.31.4");
       }
       const last = asList(job.rules).at(-1);
-      if (last?.when === "manual" && last.allow_failure !== true) fail(name, "the manual rule must set allow_failure: true");
+      if (last?.when === "manual" && last.allow_failure !== true)
+        fail(name, "the manual rule must set allow_failure: true");
     }
   }
 
   // determinism-next builds twice against its own .next/cache; sharing the key
   // with another job would let that job's builds feed it.
-  const nextKey = (job) => asList(job?.cache).find((c) => isObj(c) && asList(c.paths).some((p) => String(p).includes(".next/cache")))?.key;
+  const nextKey = (job) =>
+    asList(job?.cache).find((c) => isObj(c) && asList(c.paths).some((p) => String(p).includes(".next/cache")))?.key;
   const ownKey = nextKey(resolved["determinism-next"]);
   if (ownKey !== undefined) {
     for (const other of names) {
       if (other === "determinism-next") continue;
       const k = nextKey(resolved[other]);
-      if (k !== undefined && JSON.stringify(k) === JSON.stringify(ownKey)) fail("determinism-next", `shares its .next/cache key with ${other}`);
+      if (k !== undefined && JSON.stringify(k) === JSON.stringify(ownKey))
+        fail("determinism-next", `shares its .next/cache key with ${other}`);
     }
   }
 
@@ -351,7 +384,8 @@ export function checkPipeline(doc, repoRoot = repoRootDefault) {
     for (const [k, v] of Object.entries(vars)) {
       if (!SECRET_NAME.test(k)) continue;
       const value = String(isObj(v) ? (v.value ?? "") : v);
-      if (value !== "" && !value.startsWith("$")) fail(name === "variables" ? "" : name, `variable ${k} holds a literal secret`);
+      if (value !== "" && !value.startsWith("$"))
+        fail(name === "variables" ? "" : name, `variable ${k} holds a literal secret`);
     }
   }
 

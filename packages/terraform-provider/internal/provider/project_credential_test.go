@@ -206,7 +206,7 @@ func TestDeployKeyPublicHalfComesFromNBO(t *testing.T) {
 func TestDeployKeyKeepsWorkingWhenSetupWaitsForTheKey(t *testing.T) {
 	fake := newFakeNBO(t)
 	fake.steps = []func(*client.ProjectSummary){func(s *client.ProjectSummary) {
-		s.Project.SetupStatus = client.SetupNeedsSetup
+		s.Project.SetupStatus = client.SetupWaitingForKey
 		s.Project.SetupError = "git ls-remote failed: Permission denied (publickey)"
 	}}
 	h := connected(t, fake.server.URL)
@@ -218,7 +218,7 @@ func TestDeployKeyKeepsWorkingWhenSetupWaitsForTheKey(t *testing.T) {
 	}
 	found := false
 	for _, d := range diags {
-		found = found || (strings.Contains(d.Detail, "deploy key") && strings.Contains(d.Detail, "nbo-server project retry p1") && strings.Contains(d.Detail, "nbo_deployment"))
+		found = found || (strings.Contains(d.Detail, "deploy key") && strings.Contains(d.Detail, "nbo-server project retry p1") && strings.Contains(d.Detail, "finds the key by itself"))
 	}
 	if !found {
 		t.Fatalf("want a warning about adding the key, got: %s", diagText(diags))

@@ -39,7 +39,13 @@ export function createFakeCacheService(store: ReturnType<typeof createStore>): F
       const decoded = new Uint8Array(Buffer.from(body.body, "base64"));
       store.set(
         key,
-        { body: decoded, header: body.header, tags: body.tags, path: body.path, ...(body.status !== undefined ? { status: body.status } : {}) },
+        {
+          body: decoded,
+          header: body.header,
+          tags: body.tags,
+          path: body.path,
+          ...(body.status !== undefined ? { status: body.status } : {}),
+        },
         body.revalidateSec,
         body.expireSec,
       );

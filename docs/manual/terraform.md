@@ -8,15 +8,15 @@ The best reason to use it with NBO: a domain tells you the DNS record it needs, 
 
 ## What it manages
 
-| Terraform name | What it is |
-| --- | --- |
-| `nbo_project` | A project: repository, build settings and clouds. Creating one doesn't build it |
-| `nbo_stage` | A custom environment such as staging: its branch, clouds and address |
-| `nbo_env_var` | A project or workspace environment variable, for one environment or all |
-| `nbo_deployment` | Runs a build of an environment and deploys it |
-| `nbo_domain` | A custom domain, with the DNS records it needs |
-| `nbo_traffic` | How an environment's traffic splits across its clouds |
-| `data.nbo_project` | Reads an existing project by name |
+| Terraform name     | What it is                                                                      |
+| ------------------ | ------------------------------------------------------------------------------- |
+| `nbo_project`      | A project: repository, build settings and clouds. Creating one doesn't build it |
+| `nbo_stage`        | A custom environment such as staging: its branch, clouds and address            |
+| `nbo_env_var`      | A project or workspace environment variable, for one environment or all         |
+| `nbo_deployment`   | Runs a build of an environment and deploys it                                   |
+| `nbo_domain`       | A custom domain, with the DNS records it needs                                  |
+| `nbo_traffic`      | How an environment's traffic splits across its clouds                           |
+| `data.nbo_project` | Reads an existing project by name                                               |
 
 Cloud connections, the edge, clusters and domain settings are `nbo-server` commands on the server, because they need admin credentials and confirmation of what you'll be billed for.
 
@@ -270,7 +270,7 @@ resource "github_repository_deploy_key" "nbo" {
 - **`git_credential`** is `public` (the default), `token` or `deploy-key`. A token works with an `https://` address, a deploy key with an `ssh://git@host/path` or `git@host:path` address.
 - **`git_token_wo`** is write-only: Terraform sends it and never writes it to state or the plan, and NBO never shows it again. Terraform can't see it change, so change `git_token_wo_version` to send a new one. `git_username` is the user name some hosts want with the token.
 - **`deploy_key_public`** is the public half of the key NBO made. Give it to your git host as a read-only deploy key. NBO can't read the repository until you do. Changing `git_credential` to `deploy-key` on an existing project makes the key then.
-- **A new project with a deploy key waits for the key.** NBO's first look at the repository fails until the key is added, so the project stays in `needs-setup`. After you add it, run `nbo-server project retry <project id>` on the NBO server, or apply an `nbo_deployment` for the project.
+- **A new project with a deploy key waits for the key.** NBO's first look at the repository fails until the key is added, so the project waits in `waiting-for-key` (`terraform apply` ends with a warning, not an error). After you add the key, NBO finds it by itself: it checks on every poll for an hour, then every 10 minutes for 7 days, and then builds the first commit (unless the project skips its first build). To finish at once, run `nbo-server project retry <project id>` on the NBO server. After 7 days the project moves to `needs-setup`.
 - Editing other settings of a project never sends the credential again.
 - **Moving `repo_url` to another host needs the credential sent again.** With a token, change `git_token_wo_version` in the same change, or the plan stops with an error. With a deploy key, NBO makes a new key: add the new `deploy_key_public` to the repository at its new host.
 

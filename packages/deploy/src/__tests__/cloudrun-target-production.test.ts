@@ -27,7 +27,8 @@ function recorder() {
   const calls: Call[] = [];
   const run = async (cmd: string, args: string[], opts?: { input?: string; env?: Record<string, string> }) => {
     calls.push({ cmd, args, env: opts?.env });
-    if (args.includes("describe") && args[0] === "run") return `Warning: x\n${JSON.stringify({ status: { url: `https://${args[3]}.run.app` }, metadata: {} })}`;
+    if (args.includes("describe") && args[0] === "run")
+      return `Warning: x\n${JSON.stringify({ status: { url: `https://${args[3]}.run.app` }, metadata: {} })}`;
     if (args[0] === "projects" && args[1] === "describe") return JSON.stringify({ projectNumber: "123" });
     return "";
   };
@@ -40,7 +41,10 @@ const id = "sha256:4b66654e468e0ed5a8fb3146fff2ca53131bafe78366b02e753b059ea5fca
 async function fixture(): Promise<string> {
   const dir = await mkdtemp(join(tmpdir(), "cloudrun-target-prod-"));
   await mkdir(join(dir, "functions", "ssr", "bundle"), { recursive: true });
-  await writeFile(join(dir, "functions", "ssr", "function.json"), JSON.stringify({ handler: { entry: "index.mjs", export: "default" } }));
+  await writeFile(
+    join(dir, "functions", "ssr", "function.json"),
+    JSON.stringify({ handler: { entry: "index.mjs", export: "default" } }),
+  );
   await writeFile(join(dir, "manifest.json"), JSON.stringify({ specVersion: "1.0" }));
   return dir;
 }
@@ -88,7 +92,10 @@ describe("createCloudRunTarget with per-service identities", () => {
     const dir = await fixture();
     try {
       const { calls, run } = recorder();
-      const target = createCloudRunTarget("acme", "us-central1", "repo", { ctx: { env, run }, perServiceIdentity: true });
+      const target = createCloudRunTarget("acme", "us-central1", "repo", {
+        ctx: { env, run },
+        perServiceIdentity: true,
+      });
       await target.deployer.buildAndDeploy(dir, "pabc-cloudrun", id);
       const deploy = calls.find((c) => c.args[1] === "deploy")!;
       expect(deploy.args).toContain("--service-account");
@@ -143,7 +150,10 @@ describe("createCloudRunTarget with per-service identities", () => {
 
   describe("skipping an unchanged function", () => {
     const repo = "us-central1-docker.pkg.dev/acme/nbo";
-    const opts = (run: (cmd: string, args: string[], o?: { input?: string; env?: Record<string, string> }) => Promise<string>, perServiceIdentity = true) => ({
+    const opts = (
+      run: (cmd: string, args: string[], o?: { input?: string; env?: Record<string, string> }) => Promise<string>,
+      perServiceIdentity = true,
+    ) => ({
       ctx: { env, run, sleep: async () => {} },
       perServiceIdentity,
     });
@@ -151,8 +161,11 @@ describe("createCloudRunTarget with per-service identities", () => {
     // The first deploy tells us the image and the nbo-fn-config label it wrote.
     async function firstDeploy(dir: string, perServiceIdentity = true): Promise<{ image: string; config: string }> {
       const first = recorder();
-      await createCloudRunTarget("acme", "us-central1", repo, opts(first.run, perServiceIdentity)).deployer.deployFunctions!(dir, "pabc-cloudrun", ["ssr"]);
-      const deploy = first.calls.find((c) => c.args[0] === "run" && c.args[1] === "deploy" && c.args[2] === "pabc-cloudrun-fn-ssr")!;
+      await createCloudRunTarget("acme", "us-central1", repo, opts(first.run, perServiceIdentity)).deployer
+        .deployFunctions!(dir, "pabc-cloudrun", ["ssr"]);
+      const deploy = first.calls.find(
+        (c) => c.args[0] === "run" && c.args[1] === "deploy" && c.args[2] === "pabc-cloudrun-fn-ssr",
+      )!;
       const image = deploy.args[deploy.args.indexOf("--image") + 1]!;
       const config = /nbo-fn-config=([0-9a-f]{32})/.exec(deploy.args[deploy.args.indexOf("--labels") + 1]!)![1]!;
       expect(image).toMatch(/^us-central1-docker\.pkg\.dev\/acme\/nbo\/nbo-fn-pabc-cloudrun-ssr:[0-9a-f]{24}$/);
@@ -188,13 +201,17 @@ describe("createCloudRunTarget with per-service identities", () => {
       try {
         const live = liveAs(await firstDeploy(dir));
         const messages: string[] = [];
-        const target = createCloudRunTarget("acme", "us-central1", repo, opts(live.run), { onProgress: (m) => messages.push(m) });
+        const target = createCloudRunTarget("acme", "us-central1", repo, opts(live.run), {
+          onProgress: (m) => messages.push(m),
+        });
         const urls = await target.deployer.deployFunctions!(dir, "pabc-cloudrun", ["ssr"]);
         expect(urls).toEqual({ ssr: "https://pabc-cloudrun-fn-ssr-live.run.app" });
         expect(live.calls.some((c) => c.cmd === "docker")).toBe(false);
         expect(deployed(live.calls)).toBe(false);
         const binding = live.calls.find((c) => c.args.includes("add-iam-policy-binding"))!;
-        expect(binding.args).toContain(`serviceAccount:${serviceIdentityId("pabc-cloudrun")}@acme.iam.gserviceaccount.com`);
+        expect(binding.args).toContain(
+          `serviceAccount:${serviceIdentityId("pabc-cloudrun")}@acme.iam.gserviceaccount.com`,
+        );
         for (const c of live.calls) expect(c.env).toEqual(env);
         expect(messages[0]).toBe("function ssr: unchanged, skipped");
         expect(messages[1]).toMatch(/^function ssr: invoker granted in /);
@@ -209,7 +226,11 @@ describe("createCloudRunTarget with per-service identities", () => {
         const state = await firstDeploy(dir);
         for (const bad of [{ ready: "False" }, { latestReady: "r1" }]) {
           const live = liveAs({ ...state, ...bad });
-          await createCloudRunTarget("acme", "us-central1", repo, opts(live.run)).deployer.deployFunctions!(dir, "pabc-cloudrun", ["ssr"]);
+          await createCloudRunTarget("acme", "us-central1", repo, opts(live.run)).deployer.deployFunctions!(
+            dir,
+            "pabc-cloudrun",
+            ["ssr"],
+          );
           expect(deployed(live.calls), JSON.stringify(bad)).toBe(true);
         }
       } finally {
@@ -225,7 +246,11 @@ describe("createCloudRunTarget with per-service identities", () => {
         // and its invoker member both change while the image does not.
         const state = await firstDeploy(dir, false);
         const live = liveAs(state);
-        await createCloudRunTarget("acme", "us-central1", repo, opts(live.run, true)).deployer.deployFunctions!(dir, "pabc-cloudrun", ["ssr"]);
+        await createCloudRunTarget("acme", "us-central1", repo, opts(live.run, true)).deployer.deployFunctions!(
+          dir,
+          "pabc-cloudrun",
+          ["ssr"],
+        );
         expect(deployed(live.calls)).toBe(true);
         const fnDeploy = live.calls.find((c) => c.args[1] === "deploy")!;
         expect(fnDeploy.args[fnDeploy.args.indexOf("--image") + 1]).toBe(state.image);
@@ -238,12 +263,18 @@ describe("createCloudRunTarget with per-service identities", () => {
 
   it("takes no values from NBO's own environment, only its own extraEnv", async () => {
     const dir = await fixture();
-    await writeFile(join(dir, "manifest.json"), JSON.stringify({ specVersion: "1.0", env: { optional: ["SECRET_X"] } }));
+    await writeFile(
+      join(dir, "manifest.json"),
+      JSON.stringify({ specVersion: "1.0", env: { optional: ["SECRET_X"] } }),
+    );
     process.env.SECRET_X = "leak";
     try {
       const { buildImage, buildFunctionImage } = await import("@nbo/adapter-k8s");
       const { run } = recorder();
-      const target = createCloudRunTarget("acme", "r", "repo", { ctx: { env, run, sleep: async () => {} }, perServiceIdentity: true });
+      const target = createCloudRunTarget("acme", "r", "repo", {
+        ctx: { env, run, sleep: async () => {} },
+        perServiceIdentity: true,
+      });
       target.extraEnv.NBO_CRON_SIGNING_SECRET = "cron-secret";
       await target.deployer.deployFunctions!(dir, "pabc-cloudrun", ["ssr"]);
       await target.deployer.buildAndDeploy(dir, "pabc-cloudrun", id);
@@ -263,8 +294,12 @@ describe("createCloudRunTarget ISR cache <app>-isr", () => {
   const appSa = `${serviceIdentityId(app)}@acme.iam.gserviceaccount.com`;
   const cacheSa = `${serviceIdentityId(`${app}-isr`)}@acme.iam.gserviceaccount.com`;
   type Run = (cmd: string, args: string[], o?: { input?: string; env?: Record<string, string> }) => Promise<string>;
-  const opts = (run: Run, perServiceIdentity = true) => ({ ctx: { env, run, sleep: async () => {} }, perServiceIdentity });
-  const isDeployOf = (c: Call, name: string) => c.cmd === "gcloud" && c.args[0] === "run" && c.args[1] === "deploy" && c.args[2] === name;
+  const opts = (run: Run, perServiceIdentity = true) => ({
+    ctx: { env, run, sleep: async () => {} },
+    perServiceIdentity,
+  });
+  const isDeployOf = (c: Call, name: string) =>
+    c.cmd === "gcloud" && c.args[0] === "run" && c.args[1] === "deploy" && c.args[2] === name;
   const flag = (args: string[], f: string) => args[args.indexOf(f) + 1];
 
   // A runner whose `<app>-isr` describe answers with the given live state.
@@ -278,7 +313,13 @@ describe("createCloudRunTarget ISR cache <app>-isr", () => {
         base.calls.push({ cmd, args, env: o?.env });
         if (!state) throw new Error(`ERROR: (gcloud.run.services.describe) Cannot find service [${app}-isr]`);
         return JSON.stringify({
-          metadata: { labels: { "nbo-content-id": "0123456789ab", "nbo-fn-config": state.config, ...(state.labels ?? { "nbo-role": "isrcache", "nbo-app": app }) } },
+          metadata: {
+            labels: {
+              "nbo-content-id": "0123456789ab",
+              "nbo-fn-config": state.config,
+              ...(state.labels ?? { "nbo-role": "isrcache", "nbo-app": app }),
+            },
+          },
           spec: { template: { spec: { containers: [{ image: state.image }] } } },
           status: {
             url: `https://${app}-isr-live.run.app`,
@@ -299,7 +340,11 @@ describe("createCloudRunTarget ISR cache <app>-isr", () => {
       const { buildImage } = await import("@nbo/adapter-k8s");
       const { calls, run } = liveCache();
       const target = createCloudRunTarget("acme", "us-central1", repo, opts(run));
-      target.userEnv = { vars: { PLAIN: "p", API_KEY: "hunter2-secret" }, secretNames: ["API_KEY"], fingerprint: "f".repeat(32) };
+      target.userEnv = {
+        vars: { PLAIN: "p", API_KEY: "hunter2-secret" },
+        secretNames: ["API_KEY"],
+        fingerprint: "f".repeat(32),
+      };
       target.isr = { enabled: true, removeCache: false };
 
       const url = await target.deployer.deployIsrCache!(dir, app);
@@ -317,9 +362,21 @@ describe("createCloudRunTarget ISR cache <app>-isr", () => {
       // gen1: its memory floor allows 256Mi with 1 CPU (gen2 needs 512Mi).
       expect(flag(deploy.args, "--execution-environment")).toBe("gen1");
       expect(flag(deploy.args, "--service-account")).toBe(cacheSa);
-      expect(flag(deploy.args, "--labels")).toMatch(new RegExp(`^nbo-content-id=0123456789ab,nbo-fn-config=[0-9a-f]{32},nbo-role=isrcache,nbo-app=${app}$`));
+      expect(flag(deploy.args, "--labels")).toMatch(
+        new RegExp(`^nbo-content-id=0123456789ab,nbo-fn-config=[0-9a-f]{32},nbo-role=isrcache,nbo-app=${app}$`),
+      );
       // Request-based billing only: never always-on CPU or a startup boost.
-      for (const f of ["--set-env-vars", "--env-vars-file", "--set-secrets", "--clear-env-vars", "--clear-secrets", "--ingress", "--no-cpu-throttling", "--cpu-throttling", "--cpu-boost"]) {
+      for (const f of [
+        "--set-env-vars",
+        "--env-vars-file",
+        "--set-secrets",
+        "--clear-env-vars",
+        "--clear-secrets",
+        "--ingress",
+        "--no-cpu-throttling",
+        "--cpu-throttling",
+        "--cpu-boost",
+      ]) {
         expect(deploy.args).not.toContain(f);
       }
       // No Secret Manager call for the cache, and the secret appears nowhere.
@@ -336,7 +393,10 @@ describe("createCloudRunTarget ISR cache <app>-isr", () => {
 
       await target.deployer.deployFunctions!(dir, app, ["ssr"]);
       await target.deployer.buildAndDeploy(dir, app, id);
-      expect(vi.mocked(buildImage).mock.calls.at(-1)?.[3]).toEqual({ ssr: `https://${app}-fn-ssr.run.app`, __isrcache: `https://${app}-isr.run.app` });
+      expect(vi.mocked(buildImage).mock.calls.at(-1)?.[3]).toEqual({
+        ssr: `https://${app}-fn-ssr.run.app`,
+        __isrcache: `https://${app}-isr.run.app`,
+      });
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
@@ -356,7 +416,9 @@ describe("createCloudRunTarget ISR cache <app>-isr", () => {
       vi.mocked(buildIsrcacheImage).mockClear();
       const live = liveCache({ image: cacheImage, config });
       const messages: string[] = [];
-      const target = createCloudRunTarget("acme", "us-central1", repo, opts(live.run), { onProgress: (m) => messages.push(m) });
+      const target = createCloudRunTarget("acme", "us-central1", repo, opts(live.run), {
+        onProgress: (m) => messages.push(m),
+      });
       target.isr = { enabled: true, removeCache: false };
       const url = await target.deployer.deployIsrCache!(dir, app);
       expect(url).toBe(`https://${app}-isr-live.run.app`);
@@ -386,7 +448,10 @@ describe("createCloudRunTarget ISR cache <app>-isr", () => {
         const target = createCloudRunTarget("acme", "us-central1", repo, opts(live.run));
         target.isr = { enabled: true, removeCache: false };
         await target.deployer.deployIsrCache!(dir, app);
-        expect(live.calls.some((c) => isDeployOf(c, `${app}-isr`)), JSON.stringify(state)).toBe(true);
+        expect(
+          live.calls.some((c) => isDeployOf(c, `${app}-isr`)),
+          JSON.stringify(state),
+        ).toBe(true);
       }
     } finally {
       await rm(dir, { recursive: true, force: true });
@@ -414,8 +479,10 @@ describe("createCloudRunTarget ISR cache <app>-isr", () => {
     const calls: Call[] = [];
     const run: Run = async (cmd, args, o) => {
       calls.push({ cmd, args, env: o?.env });
-      if (args[0] === "run" && args[2] === "describe") return JSON.stringify({ metadata: { labels: { "nbo-role": "isrcache", "nbo-app": app } } });
-      if (args[0] === "run" && args[2] === "delete") throw new Error(`ERROR: (gcloud.run.services.delete) Cannot find service [${app}-isr]`);
+      if (args[0] === "run" && args[2] === "describe")
+        return JSON.stringify({ metadata: { labels: { "nbo-role": "isrcache", "nbo-app": app } } });
+      if (args[0] === "run" && args[2] === "delete")
+        throw new Error(`ERROR: (gcloud.run.services.delete) Cannot find service [${app}-isr]`);
       if (args[0] === "iam") throw new Error("ERROR: NOT_FOUND: Unknown service account");
       return "";
     };
@@ -465,17 +532,33 @@ describe("createCloudRunTarget ISR cache name collisions", () => {
         return JSON.stringify({
           metadata: { labels },
           spec: { template: { spec: { containers: [{ image: "other-image" }] } } },
-          status: { url: "https://other.run.app", latestReadyRevisionName: "r1", latestCreatedRevisionName: "r1", conditions: [{ type: "Ready", status: "True" }] },
+          status: {
+            url: "https://other.run.app",
+            latestReadyRevisionName: "r1",
+            latestCreatedRevisionName: "r1",
+            conditions: [{ type: "Ready", status: "True" }],
+          },
         });
       }
       if (args[0] === "projects") return JSON.stringify({ projectNumber: "123" });
-      if (args[0] === "run" && args[2] === "describe") return JSON.stringify({ status: { url: `https://${args[3]}.run.app` }, metadata: {} });
+      if (args[0] === "run" && args[2] === "describe")
+        return JSON.stringify({ status: { url: `https://${args[3]}.run.app` }, metadata: {} });
       return "";
     };
     return { calls, run };
   }
-  const touched = (calls: Call[]) => calls.some((c) => (c.args[1] === "deploy" || c.args[2] === "delete" || c.args.includes("add-iam-policy-binding")) && c.args.includes(`${app}-isr`));
-  const others = [{}, { "nbo-role": "function" }, { "nbo-role": "isrcache", "nbo-app": "pother-cloudrun" }, { "nbo-app": app }];
+  const touched = (calls: Call[]) =>
+    calls.some(
+      (c) =>
+        (c.args[1] === "deploy" || c.args[2] === "delete" || c.args.includes("add-iam-policy-binding")) &&
+        c.args.includes(`${app}-isr`),
+    );
+  const others = [
+    {},
+    { "nbo-role": "function" },
+    { "nbo-role": "isrcache", "nbo-app": "pother-cloudrun" },
+    { "nbo-app": app },
+  ];
 
   it("deploy refuses, redacted, when a service of that name is not this app's cache, and touches nothing", async () => {
     const dir = await fixture();
@@ -489,7 +572,9 @@ describe("createCloudRunTarget ISR cache name collisions", () => {
           () => null,
           (e: Error) => e,
         );
-        expect(err?.message, JSON.stringify(labels)).toMatch(new RegExp(`${app}-isr exists and is not this app's ISR cache`));
+        expect(err?.message, JSON.stringify(labels)).toMatch(
+          new RegExp(`${app}-isr exists and is not this app's ISR cache`),
+        );
         expect(touched(calls)).toBe(false);
         expect(calls.some((c) => c.cmd === "docker")).toBe(false);
       }
@@ -527,7 +612,10 @@ describe("createCloudRunTarget ISR cache name collisions", () => {
         const target = createCloudRunTarget("acme", "us-central1", repo, opts(run));
         target.isr = { enabled: true, removeCache: false };
         await target.deployer.deployIsrCache!(dir, app);
-        expect(calls.some((c) => c.args[1] === "deploy" && c.args[2] === `${app}-isr`), JSON.stringify(labels)).toBe(true);
+        expect(
+          calls.some((c) => c.args[1] === "deploy" && c.args[2] === `${app}-isr`),
+          JSON.stringify(labels),
+        ).toBe(true);
       }
     } finally {
       await rm(dir, { recursive: true, force: true });
@@ -540,7 +628,10 @@ describe("createCloudRunTarget ISR cache name collisions", () => {
       const target = createCloudRunTarget("acme", "us-central1", repo, opts(run));
       target.isr = { enabled: false, removeCache: true };
       await target.deployer.removeIsrCache!(app);
-      expect(calls.some((c) => c.args[2] === "delete" || c.args[0] === "iam"), JSON.stringify(labels)).toBe(false);
+      expect(
+        calls.some((c) => c.args[2] === "delete" || c.args[0] === "iam"),
+        JSON.stringify(labels),
+      ).toBe(false);
     }
   });
 });

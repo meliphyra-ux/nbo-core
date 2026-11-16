@@ -11,7 +11,10 @@ import { fileDigest } from "./digests.js";
 // manifest digest come together or not at all, and a present file must
 // match its schema, be canonical and match the digest. doc is returned
 // when the file parses, for the reference, extension and RE2 checks.
-export function checkPrerender(dir: string, manifestDoc: unknown): { errors: Error[]; doc?: unknown; warnings?: Error[] } {
+export function checkPrerender(
+  dir: string,
+  manifestDoc: unknown,
+): { errors: Error[]; doc?: unknown; warnings?: Error[] } {
   const errors: Error[] = [];
   const digests = (manifestDoc as { digests?: Record<string, unknown> } | null)?.digests;
   const want = digests && typeof digests === "object" ? digests["prerender.json"] : undefined;
@@ -49,7 +52,11 @@ export function checkPrerender(dir: string, manifestDoc: unknown): { errors: Err
     return { errors };
   }
   if (!compiledSchemas.prerender(doc)) {
-    errors.push(new Error(`prerender.json: schema validation failed: ${compiledSchemas.prerender.errors ? JSON.stringify(compiledSchemas.prerender.errors) : ""}`));
+    errors.push(
+      new Error(
+        `prerender.json: schema validation failed: ${compiledSchemas.prerender.errors ? JSON.stringify(compiledSchemas.prerender.errors) : ""}`,
+      ),
+    );
   }
   errors.push(...checkCanonical("prerender.json", raw));
   return { errors, doc, warnings: duplicatePrerenderIds(doc) };

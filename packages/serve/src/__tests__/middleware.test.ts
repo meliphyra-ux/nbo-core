@@ -98,7 +98,9 @@ describe("createMiddlewareInvoker", () => {
   });
 
   it("rejects an absolute-url rewrite", async () => {
-    const resolve = stubResolver(async () => new Response(null, { headers: { "X-Nbo-Rewrite": "https://example.com/elsewhere" } }));
+    const resolve = stubResolver(
+      async () => new Response(null, { headers: { "X-Nbo-Rewrite": "https://example.com/elsewhere" } }),
+    );
     const request = new Request("http://x/old");
     const outcome = await createMiddlewareInvoker(resolve, request)("middleware", "/old", "GET");
     expect(outcome.continue).toBe(false);
@@ -132,7 +134,9 @@ describe("createMiddlewareInvoker", () => {
           },
         }),
     );
-    const request = new Request("http://x/page", { headers: { "X-Mw-Echo": "from-client", Authorization: "secret-token" } });
+    const request = new Request("http://x/page", {
+      headers: { "X-Mw-Echo": "from-client", Authorization: "secret-token" },
+    });
     await createMiddlewareInvoker(resolve, request)("middleware", "/page", "GET");
     expect(request.headers.get("x-mw-echo")).toBe("from-middleware");
     expect(request.headers.get("authorization")).toBeNull();
@@ -190,7 +194,9 @@ describe("createMiddlewareInvoker", () => {
   // a stale Content-Length copied from the middleware's own response
   // would describe bytes that no longer match what's actually sent.
   it("any other response does not carry a stale Content-Length forward", async () => {
-    const resolve = stubResolver(async () => new Response("short", { status: 403, headers: { "content-length": "99999" } }));
+    const resolve = stubResolver(
+      async () => new Response("short", { status: 403, headers: { "content-length": "99999" } }),
+    );
     const request = new Request("http://x/blocked");
     const outcome = await createMiddlewareInvoker(resolve, request)("middleware", "/blocked", "GET");
     expect(outcome.response?.middlewareHeaders?.["content-length"]).toBeUndefined();

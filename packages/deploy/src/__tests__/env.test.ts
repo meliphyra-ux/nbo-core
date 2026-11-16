@@ -134,7 +134,9 @@ describe("deployTimeEnvVars", () => {
 describe("deployTimeEnvVars with delivered user variables", () => {
   it("neither reads nor requires names the user's variables deliver", async () => {
     const dir = await writeManifestEnv({ required: ["A"], optional: ["B"] }, [{ name: "db", type: "postgres" }]);
-    expect(await deployTimeEnvVars(dir, { source: { A: "nbo", B: "nbo", DB_URL: "nbo" }, delivered: ["A", "B", "DB_URL"] })).toEqual({});
+    expect(
+      await deployTimeEnvVars(dir, { source: { A: "nbo", B: "nbo", DB_URL: "nbo" }, delivered: ["A", "B", "DB_URL"] }),
+    ).toEqual({});
     await expect(deployTimeEnvVars(dir, { source: {}, delivered: ["A", "B"] })).rejects.toThrow(/DB_URL/);
   });
 });
@@ -143,7 +145,9 @@ describe("checkRequired", () => {
   it("names every missing required name and binding, pointing at the API and Terraform", async () => {
     const dir = await writeManifestEnv({ required: ["A", "B"] }, [{ name: "db", type: "postgres" }]);
     await expect(checkRequired(dir, new Set(["B"]))).rejects.toThrow(
-      new Error("deploy: missing required environment variable(s): A, DB_URL - set them with PUT /projects/{id}/env/{name} or Terraform's nbo_env_var"),
+      new Error(
+        "deploy: missing required environment variable(s): A, DB_URL - set them with PUT /projects/{id}/env/{name} or Terraform's nbo_env_var",
+      ),
     );
     await expect(checkRequired(dir, new Set(["A", "B", "DB_URL"]))).resolves.toBeUndefined();
   });

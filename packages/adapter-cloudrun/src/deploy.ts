@@ -76,17 +76,34 @@ export function isIsrcacheServiceOf(labels: Record<string, string> | undefined, 
 export function parseServiceLabels(out: string): Record<string, string> {
   const a = out.indexOf("{");
   const b = out.lastIndexOf("}");
-  const result = JSON.parse(a >= 0 && b > a ? out.slice(a, b + 1) : out) as { metadata?: { labels?: Record<string, string> } };
+  const result = JSON.parse(a >= 0 && b > a ? out.slice(a, b + 1) : out) as {
+    metadata?: { labels?: Record<string, string> };
+  };
   return result.metadata?.labels ?? {};
 }
 
 // serviceLabels returns the named service's labels, or undefined when it
 // doesn't exist. Any other failure is thrown (callers must not act on a
 // service they couldn't read).
-export async function serviceLabels(serviceName: string, project: string, region: string, ctx?: ToolContext): Promise<Record<string, string> | undefined> {
+export async function serviceLabels(
+  serviceName: string,
+  project: string,
+  region: string,
+  ctx?: ToolContext,
+): Promise<Record<string, string> | undefined> {
   let out: string;
   try {
-    out = await runWith(ctx, "gcloud", ["run", "services", "describe", serviceName, "--project", project, "--region", region, "--format=json"]);
+    out = await runWith(ctx, "gcloud", [
+      "run",
+      "services",
+      "describe",
+      serviceName,
+      "--project",
+      project,
+      "--region",
+      region,
+      "--format=json",
+    ]);
   } catch (err) {
     if (isServiceNotFound(err instanceof Error ? err.message : String(err))) return undefined;
     throw err;
@@ -147,7 +164,9 @@ export function buildDeployArgs(spec: DeploySpec, envVarsFile?: string): string[
     "--region",
     spec.region,
     "--labels",
-    `nbo-content-id=${contentIDLabel(spec.contentID)}${spec.fnConfig ? `,nbo-fn-config=${spec.fnConfig}` : ""}${spec.envFingerprint ? `,nbo-env=${spec.envFingerprint}` : ""}${Object.entries(spec.labels ?? {})
+    `nbo-content-id=${contentIDLabel(spec.contentID)}${spec.fnConfig ? `,nbo-fn-config=${spec.fnConfig}` : ""}${spec.envFingerprint ? `,nbo-env=${spec.envFingerprint}` : ""}${Object.entries(
+      spec.labels ?? {},
+    )
       .map(([k, v]) => `,${k}=${v}`)
       .join("")}`,
     "--quiet",
@@ -205,8 +224,23 @@ export function extractContentIDLabel(result: DescribeResult): { id: string; ok:
   return fingerprint ? { id: id ?? "", ok: id !== undefined, fingerprint } : { id: id ?? "", ok: id !== undefined };
 }
 
-async function describeService(serviceName: string, project: string, region: string, ctx?: ToolContext): Promise<DescribeResult> {
-  const out = await runWith(ctx, "gcloud", ["run", "services", "describe", serviceName, "--project", project, "--region", region, "--format=json"]);
+async function describeService(
+  serviceName: string,
+  project: string,
+  region: string,
+  ctx?: ToolContext,
+): Promise<DescribeResult> {
+  const out = await runWith(ctx, "gcloud", [
+    "run",
+    "services",
+    "describe",
+    serviceName,
+    "--project",
+    project,
+    "--region",
+    region,
+    "--format=json",
+  ]);
   // Real runners merge stderr into the output: keep only the JSON object.
   const a = out.indexOf("{");
   const b = out.lastIndexOf("}");
@@ -236,7 +270,8 @@ export async function deploy(spec: DeploySpec, ctx?: ToolContext): Promise<strin
     // accessor role, may not be visible to Cloud Run yet; only those
     // cases retry.
     const secrets = Object.keys(spec.secretEnv ?? {}).length > 0;
-    if (spec.serviceAccount !== undefined || secrets) await retryPropagation(ctx, () => runWith(ctx, "gcloud", args), secrets ? secretNotYetGranted : undefined);
+    if (spec.serviceAccount !== undefined || secrets)
+      await retryPropagation(ctx, () => runWith(ctx, "gcloud", args), secrets ? secretNotYetGranted : undefined);
     else await runWith(ctx, "gcloud", args);
   } finally {
     // Best effort: a failed removal never replaces the deploy's error or result.
@@ -244,7 +279,9 @@ export async function deploy(spec: DeploySpec, ctx?: ToolContext): Promise<strin
       try {
         await rm(dir, { recursive: true, force: true });
       } catch (err) {
-        console.warn(`nbo: could not remove the env file directory ${dir}: ${err instanceof Error ? err.message : String(err)}`);
+        console.warn(
+          `nbo: could not remove the env file directory ${dir}: ${err instanceof Error ? err.message : String(err)}`,
+        );
       }
     }
   }
@@ -293,8 +330,17 @@ export interface LiveServiceState {
 
 interface FullDescribeResult {
   metadata?: { labels?: Record<string, string> };
-  spec?: { template?: { spec?: { containers?: { image?: string; env?: { name?: string; valueFrom?: { secretKeyRef?: unknown } }[] }[] } } };
-  status?: { url?: string; latestReadyRevisionName?: string; latestCreatedRevisionName?: string; conditions?: { type?: string; status?: string }[] };
+  spec?: {
+    template?: {
+      spec?: { containers?: { image?: string; env?: { name?: string; valueFrom?: { secretKeyRef?: unknown } }[] }[] };
+    };
+  };
+  status?: {
+    url?: string;
+    latestReadyRevisionName?: string;
+    latestCreatedRevisionName?: string;
+    conditions?: { type?: string; status?: string }[];
+  };
 }
 
 // liveServiceState reads a service's image, URL, nbo-fn-config label
@@ -303,10 +349,25 @@ interface FullDescribeResult {
 // failure, or output without an image and URL. Callers use it only to
 // skip work, so "unknown" just means "deploy as usual". Runners merge
 // stderr into the output: only the JSON object is parsed.
-export async function liveServiceState(serviceName: string, project: string, region: string, ctx?: ToolContext): Promise<LiveServiceState | undefined> {
+export async function liveServiceState(
+  serviceName: string,
+  project: string,
+  region: string,
+  ctx?: ToolContext,
+): Promise<LiveServiceState | undefined> {
   let result: FullDescribeResult;
   try {
-    const out = await runWith(ctx, "gcloud", ["run", "services", "describe", serviceName, "--project", project, "--region", region, "--format=json"]);
+    const out = await runWith(ctx, "gcloud", [
+      "run",
+      "services",
+      "describe",
+      serviceName,
+      "--project",
+      project,
+      "--region",
+      region,
+      "--format=json",
+    ]);
     const a = out.indexOf("{");
     const b = out.lastIndexOf("}");
     if (a < 0 || b <= a) return undefined;
@@ -321,8 +382,18 @@ export async function liveServiceState(serviceName: string, project: string, reg
   if (!image || !url) return undefined;
   const status = result.status!;
   const readyCondition = status.conditions?.find((c) => c.type === "Ready")?.status === "True";
-  const ready = readyCondition && !!status.latestCreatedRevisionName && status.latestReadyRevisionName === status.latestCreatedRevisionName;
-  return { image, url, config: result.metadata?.labels?.["nbo-fn-config"] ?? "", fingerprint: result.metadata?.labels?.["nbo-env"] ?? "", secretEnvNames, ready };
+  const ready =
+    readyCondition &&
+    !!status.latestCreatedRevisionName &&
+    status.latestReadyRevisionName === status.latestCreatedRevisionName;
+  return {
+    image,
+    url,
+    config: result.metadata?.labels?.["nbo-fn-config"] ?? "",
+    fingerprint: result.metadata?.labels?.["nbo-env"] ?? "",
+    secretEnvNames,
+    ready,
+  };
 }
 
 // liveContentID reads the nbo-content-id label off the named service.
@@ -331,7 +402,12 @@ export async function liveServiceState(serviceName: string, project: string, reg
 // treat as "not live", not as an error — mirroring adapter-k8s's own
 // liveContentID contract — port of LiveContentID (deploy.go lines
 // 124-134). No existing Go unit test; ships build-verified only.
-export async function liveContentID(serviceName: string, project: string, region: string, ctx?: ToolContext): Promise<{ id: string; ok: boolean; fingerprint?: string }> {
+export async function liveContentID(
+  serviceName: string,
+  project: string,
+  region: string,
+  ctx?: ToolContext,
+): Promise<{ id: string; ok: boolean; fingerprint?: string }> {
   try {
     const result = await describeService(serviceName, project, region, ctx);
     return extractContentIDLabel(result);
@@ -346,9 +422,24 @@ export async function liveContentID(serviceName: string, project: string, region
 
 // deleteService deletes the named service; one that is already gone
 // counts as deleted.
-export async function deleteService(serviceName: string, project: string, region: string, ctx?: ToolContext): Promise<void> {
+export async function deleteService(
+  serviceName: string,
+  project: string,
+  region: string,
+  ctx?: ToolContext,
+): Promise<void> {
   try {
-    await runWith(ctx, "gcloud", ["run", "services", "delete", serviceName, "--project", project, "--region", region, "--quiet"]);
+    await runWith(ctx, "gcloud", [
+      "run",
+      "services",
+      "delete",
+      serviceName,
+      "--project",
+      project,
+      "--region",
+      region,
+      "--quiet",
+    ]);
   } catch (err) {
     if (!isServiceNotFound(err instanceof Error ? err.message : String(err))) throw err;
   }
@@ -357,6 +448,24 @@ export async function deleteService(serviceName: string, project: string, region
 // removeSecretEnv drops env vars mounted from Secret Manager from the
 // live service, in one update — needed before a name that was a secret
 // is deployed as a plain value (gcloud refuses the same name as both).
-export async function removeSecretEnv(serviceName: string, project: string, region: string, names: string[], ctx?: ToolContext): Promise<void> {
-  await runWith(ctx, "gcloud", ["run", "services", "update", serviceName, "--region", region, "--project", project, "--remove-secrets", names.join(","), "--quiet"]);
+export async function removeSecretEnv(
+  serviceName: string,
+  project: string,
+  region: string,
+  names: string[],
+  ctx?: ToolContext,
+): Promise<void> {
+  await runWith(ctx, "gcloud", [
+    "run",
+    "services",
+    "update",
+    serviceName,
+    "--region",
+    region,
+    "--project",
+    project,
+    "--remove-secrets",
+    names.join(","),
+    "--quiet",
+  ]);
 }

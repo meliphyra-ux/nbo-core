@@ -21,7 +21,13 @@ function writeNboDir(dir: string): void {
 
   const staticIndex = {
     files: {
-      "/": { file: "index.html", digest: fileDigest(Buffer.from(indexHtml)), size: indexHtml.length, contentType: "text/html; charset=utf-8", cache: "revalidate" },
+      "/": {
+        file: "index.html",
+        digest: fileDigest(Buffer.from(indexHtml)),
+        size: indexHtml.length,
+        contentType: "text/html; charset=utf-8",
+        cache: "revalidate",
+      },
     },
   };
   const staticIndexBytes = Buffer.from(canonicalize(staticIndex));

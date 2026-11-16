@@ -28,26 +28,45 @@ function backend(handler: (req: IncomingMessage, res: ServerResponse) => void): 
 
 const ON: InsightsSettings = { enabled: true, inject: true, sampleRate: 100 };
 
-async function setup(insights: InsightsSettings | undefined, respond?: (req: IncomingMessage, res: ServerResponse) => void) {
+async function setup(
+  insights: InsightsSettings | undefined,
+  respond?: (req: IncomingMessage, res: ServerResponse) => void,
+) {
   const hits: string[] = [];
   const url = await backend((req, res) => {
     hits.push(`${req.method} ${req.url}`);
     if (respond) return respond(req, res);
-    res.writeHead(200, { "content-type": "text/html; charset=utf-8", "content-length": Buffer.byteLength(PAGE), "x-nbo-deployment-id": "sha256:feed" });
+    res.writeHead(200, {
+      "content-type": "text/html; charset=utf-8",
+      "content-length": Buffer.byteLength(PAGE),
+      "x-nbo-deployment-id": "sha256:feed",
+    });
     res.end(PAGE);
   });
   const registry = createRegistry();
   registry.set("app.test", [{ id: "env_k8s", url, weight: 1, insecureSkipVerify: false }], insights);
   const aggregator = createAggregator();
-  return { hits, aggregator, handler: createProxyHandler(registry, { insights: aggregator }), admin: createAdminMux(registry, { insights: aggregator }) };
+  return {
+    hits,
+    aggregator,
+    handler: createProxyHandler(registry, { insights: aggregator }),
+    admin: createAdminMux(registry, { insights: aggregator }),
+  };
 }
 
-const TAG = '<script defer src="/_nbo/insights/v1/script.js" data-e="env_k8s" data-d="sha256:feed" data-s="100"></script>';
+const TAG =
+  '<script defer src="/_nbo/insights/v1/script.js" data-e="env_k8s" data-d="sha256:feed" data-s="100"></script>';
 
 function get(path = "/", init: RequestInit & { headers?: Record<string, string> } = {}) {
   return new Request(`http://edge${path}`, {
     ...init,
-    headers: { host: "app.test", "user-agent": CHROME, "sec-fetch-dest": "document", accept: "text/html", ...(init.headers ?? {}) },
+    headers: {
+      host: "app.test",
+      "user-agent": CHROME,
+      "sec-fetch-dest": "document",
+      accept: "text/html",
+      ...(init.headers ?? {}),
+    },
   });
 }
 
@@ -63,7 +82,12 @@ describe("proxy with Speed Insights", () => {
   it("inserts into a gzip-compressed page (the edge sees the decompressed body)", async () => {
     const { handler } = await setup(ON, (_req, res) => {
       const gz = gzipSync(PAGE);
-      res.writeHead(200, { "content-type": "text/html", "content-encoding": "gzip", "content-length": gz.length, "x-nbo-deployment-id": "sha256:feed" });
+      res.writeHead(200, {
+        "content-type": "text/html",
+        "content-encoding": "gzip",
+        "content-length": gz.length,
+        "x-nbo-deployment-id": "sha256:feed",
+      });
       res.end(gz);
     });
     const res = await handler(get("/", { headers: { "accept-encoding": "gzip" } }));
@@ -121,14 +145,27 @@ describe("proxy with Speed Insights", () => {
 
   it("takes beacons on an enabled host and drains them from the admin API", async () => {
     const { handler, hits, admin } = await setup(ON);
-    const body = JSON.stringify({ metric: "INP", value: 120, route: "/p/9", device: "desktop", environmentId: "env_k8s", contentId: "sha256:feed" });
+    const body = JSON.stringify({
+      metric: "INP",
+      value: 120,
+      route: "/p/9",
+      device: "desktop",
+      environmentId: "env_k8s",
+      contentId: "sha256:feed",
+    });
     const res = await handler(get("/_nbo/insights/v1/vitals", { method: "POST", body }));
     expect(res.status).toBe(204);
     expect(hits).toEqual([]);
 
     const drained = await (await admin(new Request("http://admin/insights/drain"))).json();
     expect(drained.batches).toHaveLength(1);
-    expect(drained.batches[0]).toMatchObject({ host: "app.test", environmentId: "env_k8s", route: "/p/[id]", metric: "INP", count: 1 });
+    expect(drained.batches[0]).toMatchObject({
+      host: "app.test",
+      environmentId: "env_k8s",
+      route: "/p/[id]",
+      metric: "INP",
+      count: 1,
+    });
     expect((await (await admin(new Request("http://admin/insights/drain"))).json()).batches).toEqual([]);
   });
 

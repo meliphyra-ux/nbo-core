@@ -8,7 +8,16 @@ import { bucketIndex } from "../insights/histogram.js";
 const T0 = Date.parse("2026-11-03T10:15:42.123Z");
 
 function sample(over: Partial<Sample> = {}): Sample {
-  return { host: "app.test", environmentId: "env_a", contentId: "sha256:abc", route: "/", metric: "LCP", device: "mobile", value: 1000, ...over };
+  return {
+    host: "app.test",
+    environmentId: "env_a",
+    contentId: "sha256:abc",
+    route: "/",
+    metric: "LCP",
+    device: "mobile",
+    value: 1000,
+    ...over,
+  };
 }
 
 describe("createAggregator", () => {

@@ -57,7 +57,11 @@ describe("createKubernetesTarget", () => {
       const target = createKubernetesTarget("myapp");
       target.extraEnv = { NBO_CRON_SIGNING_SECRET: "s3cr3t" };
 
-      await target.deployer.buildAndDeploy(dir, "myapp", "sha256:4b66654e468e0ed5a8fb3146fff2ca53131bafe78366b02e753b059ea5fca7d1");
+      await target.deployer.buildAndDeploy(
+        dir,
+        "myapp",
+        "sha256:4b66654e468e0ed5a8fb3146fff2ca53131bafe78366b02e753b059ea5fca7d1",
+      );
 
       const envVarsArg = vi.mocked(buildImage).mock.calls.at(-1)?.[4];
       expect(envVarsArg).toMatchObject({ NBO_CRON_SIGNING_SECRET: "s3cr3t" });
@@ -76,7 +80,10 @@ describe("createKubernetesTarget", () => {
     const dir = await mkdtemp(join(tmpdir(), "k8s-target-fn-extraenv-"));
     try {
       await mkdir(join(dir, "functions", "ssr", "bundle"), { recursive: true });
-      await writeFile(join(dir, "functions", "ssr", "function.json"), JSON.stringify({ handler: { entry: "index.mjs", export: "default" } }));
+      await writeFile(
+        join(dir, "functions", "ssr", "function.json"),
+        JSON.stringify({ handler: { entry: "index.mjs", export: "default" } }),
+      );
       await writeFile(join(dir, "manifest.json"), JSON.stringify({ specVersion: "1.0" }));
 
       const target = createKubernetesTarget("myapp");
@@ -97,7 +104,10 @@ describe("createKubernetesTarget ISR cache", () => {
   async function fixture(): Promise<string> {
     const dir = await mkdtemp(join(tmpdir(), "k8s-target-isr-"));
     await mkdir(join(dir, "functions", "ssr", "bundle"), { recursive: true });
-    await writeFile(join(dir, "functions", "ssr", "function.json"), JSON.stringify({ handler: { entry: "index.mjs", export: "default" } }));
+    await writeFile(
+      join(dir, "functions", "ssr", "function.json"),
+      JSON.stringify({ handler: { entry: "index.mjs", export: "default" } }),
+    );
     await writeFile(join(dir, "manifest.json"), JSON.stringify({ specVersion: "1.0" }));
     return dir;
   }
@@ -131,8 +141,13 @@ describe("createKubernetesTarget ISR cache", () => {
 
       expect(vi.mocked(k8s.buildIsrcacheImage)).toHaveBeenCalledTimes(1);
       expect(vi.mocked(k8s.buildIsrcacheImage).mock.calls[0]![1]).toBe("nbo-isrcache:0123456789ab");
-      expect(vi.mocked(k8s.loadImageIntoKind).mock.calls.filter((c) => c[0] === "nbo-isrcache:0123456789ab")).toHaveLength(1);
-      expect(vi.mocked(k8s.renderIsrcacheManifests)).toHaveBeenLastCalledWith({ appName: "myapp", imageTag: "nbo-isrcache:0123456789ab" });
+      expect(
+        vi.mocked(k8s.loadImageIntoKind).mock.calls.filter((c) => c[0] === "nbo-isrcache:0123456789ab"),
+      ).toHaveLength(1);
+      expect(vi.mocked(k8s.renderIsrcacheManifests)).toHaveBeenLastCalledWith({
+        appName: "myapp",
+        imageTag: "nbo-isrcache:0123456789ab",
+      });
 
       const applied = vi.mocked(k8s.apply).mock.calls.map((c) => c[0]);
       expect(applied.indexOf("isr-yaml")).toBe(0);
@@ -142,7 +157,10 @@ describe("createKubernetesTarget ISR cache", () => {
       // The cache's rollout is awaited before the first function manifest is applied.
       expect(vi.mocked(k8s.waitForRollout).mock.invocationCallOrder[0]!).toBeLessThan(order[1]!);
 
-      expect(vi.mocked(buildImage).mock.calls.at(-1)?.[3]).toEqual({ ssr: "http://myapp-fn-ssr:8080", __isrcache: "http://myapp-isr:8080" });
+      expect(vi.mocked(buildImage).mock.calls.at(-1)?.[3]).toEqual({
+        ssr: "http://myapp-fn-ssr:8080",
+        __isrcache: "http://myapp-isr:8080",
+      });
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
@@ -167,7 +185,9 @@ describe("createKubernetesTarget ISR cache", () => {
     try {
       const target = createKubernetesTarget("myapp");
       await target.deployer.buildAndDeploy(dir, "myapp", id);
-      expect(vi.mocked(buildImage).mock.calls.at(-1)?.[4]).toMatchObject({ NBO_ISRCACHE_URL: "http://operator-cache:8080" });
+      expect(vi.mocked(buildImage).mock.calls.at(-1)?.[4]).toMatchObject({
+        NBO_ISRCACHE_URL: "http://operator-cache:8080",
+      });
       target.isr = { enabled: true, removeCache: false };
       await target.deployer.buildAndDeploy(dir, "myapp", id);
       expect(vi.mocked(buildImage).mock.calls.at(-1)?.[4]).not.toHaveProperty("NBO_ISRCACHE_URL");
@@ -188,7 +208,9 @@ describe("createKubernetesTarget ISR cache", () => {
     try {
       const target = createKubernetesTarget("pabc-s-a-k8s-fn-x-k8s");
       target.isr = { enabled: true, removeCache: false };
-      await expect(target.deployer.deployIsrCache!(dir, "pabc-s-a-k8s-fn-x-k8s")).rejects.toThrow(/Deployment pabc-s-a-k8s-fn-x-k8s-isr.*not this app's ISR cache/);
+      await expect(target.deployer.deployIsrCache!(dir, "pabc-s-a-k8s-fn-x-k8s")).rejects.toThrow(
+        /Deployment pabc-s-a-k8s-fn-x-k8s-isr.*not this app's ISR cache/,
+      );
       expect(vi.mocked(k8s.buildIsrcacheImage)).not.toHaveBeenCalled();
       expect(vi.mocked(k8s.apply)).not.toHaveBeenCalled();
     } finally {
@@ -225,7 +247,9 @@ describe("createKubernetesTarget ISR cache", () => {
       const target = createKubernetesTarget("pabc-k8s");
       target.isr = { enabled: true, removeCache: false };
       target.otherAppNames = ["pabc-k8s-isr"];
-      await expect(target.deployer.deployIsrCache!(dir, "pabc-k8s")).rejects.toThrow(/pabc-k8s-isr.*another environment/);
+      await expect(target.deployer.deployIsrCache!(dir, "pabc-k8s")).rejects.toThrow(
+        /pabc-k8s-isr.*another environment/,
+      );
       expect(vi.mocked(k8s.buildIsrcacheImage)).not.toHaveBeenCalled();
       expect(vi.mocked(k8s.apply)).not.toHaveBeenCalled();
     } finally {

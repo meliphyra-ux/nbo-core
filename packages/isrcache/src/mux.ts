@@ -103,7 +103,8 @@ export function createMux(store: Store, opts: { maxBodyBytes?: number } = {}): F
           typeof raw.body !== "string" ||
           // status: the render's HTTP status, so 404s and redirects come
           // back as rendered. Absent on entries from older NBO (all 200s).
-          (raw.status !== undefined && (typeof raw.status !== "number" || !Number.isInteger(raw.status) || raw.status < 200 || raw.status > 599))
+          (raw.status !== undefined &&
+            (typeof raw.status !== "number" || !Number.isInteger(raw.status) || raw.status < 200 || raw.status > 599))
         ) {
           return new Response("isrcache: invalid request body", { status: 400 });
         }
@@ -111,7 +112,9 @@ export function createMux(store: Store, opts: { maxBodyBytes?: number } = {}): F
         try {
           decodedBody = Buffer.from(raw.body, "base64");
         } catch (err) {
-          return new Response(`isrcache: invalid base64 body: ${err instanceof Error ? err.message : String(err)}`, { status: 400 });
+          return new Response(`isrcache: invalid base64 body: ${err instanceof Error ? err.message : String(err)}`, {
+            status: 400,
+          });
         }
         store.set(
           key,

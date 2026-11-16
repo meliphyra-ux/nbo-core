@@ -25,7 +25,7 @@ function setup() {
   const t = withFakeTools(["docker", "git", "powershell.exe"], {
     docker: [
       'case "$1" in',
-      '  inspect) echo fakeid ;;',
+      "  inspect) echo fakeid ;;",
       '  run) for a in "$@"; do [ "$a" = "tar" ] && { cat >/dev/null; exit 0; }; done',
       `       cp "${tmp}/nbo-ci-rehearse-job.sh" "${capture}"; exit 0 ;;`,
       "esac",

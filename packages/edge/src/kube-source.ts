@@ -35,13 +35,17 @@ export function startKubeSource(deps: KubeSourceDeps): { stop(): void; ready: Pr
   const intervalMs = deps.intervalMs ?? 5000;
   const dispatcher = deps.ca ? new Agent({ connect: { ca: deps.ca } }) : undefined;
   const doFetch: typeof fetch =
-    deps.fetch ?? (((url: string, init: RequestInit) => undiciFetch(url, { ...(init as object), dispatcher } as never)) as unknown as typeof fetch);
+    deps.fetch ??
+    (((url: string, init: RequestInit) =>
+      undiciFetch(url, { ...(init as object), dispatcher } as never)) as unknown as typeof fetch);
   const known = new Set<string>();
   let stopped = false;
   let timer: NodeJS.Timeout | undefined;
 
   async function get(path: string): Promise<Response> {
-    return doFetch(`${deps.apiBase}${path}`, { headers: { authorization: `Bearer ${deps.token()}`, accept: "application/json" } });
+    return doFetch(`${deps.apiBase}${path}`, {
+      headers: { authorization: `Bearer ${deps.token()}`, accept: "application/json" },
+    });
   }
 
   async function pollRoutes(): Promise<void> {

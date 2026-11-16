@@ -59,7 +59,15 @@ async function startIsrcache(): Promise<number> {
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1]!).href) {
-  dispatch(process.argv.slice(2), { validate: runValidate, serve: runServe, deploy: runDeploy, plan: runPlan, conformance: runConformance, contentId: runContentId, isrcache: startIsrcache }).then((code) => {
+  dispatch(process.argv.slice(2), {
+    validate: runValidate,
+    serve: runServe,
+    deploy: runDeploy,
+    plan: runPlan,
+    conformance: runConformance,
+    contentId: runContentId,
+    isrcache: startIsrcache,
+  }).then((code) => {
     process.exitCode = code;
   });
 }

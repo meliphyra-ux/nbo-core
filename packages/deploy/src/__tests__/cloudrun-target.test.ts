@@ -28,7 +28,8 @@ vi.mock("@nbo/adapter-cloudrun", () => ({
   ensureServiceIdentity: vi.fn().mockResolvedValue("sa@p.iam.gserviceaccount.com"),
   deleteService: vi.fn().mockResolvedValue(undefined),
   serviceLabels: vi.fn().mockResolvedValue({ "nbo-role": "isrcache", "nbo-app": "myapp" }),
-  isIsrcacheServiceOf: (labels: Record<string, string> | undefined, app: string) => labels?.["nbo-role"] === "isrcache" && labels["nbo-app"] === app,
+  isIsrcacheServiceOf: (labels: Record<string, string> | undefined, app: string) =>
+    labels?.["nbo-role"] === "isrcache" && labels["nbo-app"] === app,
   isrcacheServiceLabels: (app: string) => ({ "nbo-role": "isrcache", "nbo-app": app }),
   deleteServiceIdentity: vi.fn().mockResolvedValue(undefined),
 }));
@@ -68,7 +69,11 @@ describe("createCloudRunTarget", () => {
       const target = createCloudRunTarget("proj", "region", "repo");
       target.extraEnv = { NBO_CRON_SIGNING_SECRET: "s3cr3t" };
 
-      await target.deployer.buildAndDeploy(dir, "myapp", "sha256:4b66654e468e0ed5a8fb3146fff2ca53131bafe78366b02e753b059ea5fca7d1");
+      await target.deployer.buildAndDeploy(
+        dir,
+        "myapp",
+        "sha256:4b66654e468e0ed5a8fb3146fff2ca53131bafe78366b02e753b059ea5fca7d1",
+      );
 
       const envVarsArg = vi.mocked(buildImage).mock.calls.at(-1)?.[4];
       expect(envVarsArg).toMatchObject({ NBO_CRON_SIGNING_SECRET: "s3cr3t" });
@@ -85,7 +90,11 @@ describe("createCloudRunTarget", () => {
       const target = createCloudRunTarget("proj", "region", "repo");
       expect(target.appURL).toBe("");
 
-      await target.deployer.buildAndDeploy(dir, "myapp", "sha256:4b66654e468e0ed5a8fb3146fff2ca53131bafe78366b02e753b059ea5fca7d1");
+      await target.deployer.buildAndDeploy(
+        dir,
+        "myapp",
+        "sha256:4b66654e468e0ed5a8fb3146fff2ca53131bafe78366b02e753b059ea5fca7d1",
+      );
 
       expect(target.appURL).toBe("https://myapp-abc123-uc.a.run.app");
     } finally {
@@ -103,7 +112,10 @@ describe("createCloudRunTarget", () => {
     const dir = await mkdtemp(join(tmpdir(), "cloudrun-target-fn-extraenv-"));
     try {
       await mkdir(join(dir, "functions", "ssr", "bundle"), { recursive: true });
-      await writeFile(join(dir, "functions", "ssr", "function.json"), JSON.stringify({ handler: { entry: "index.mjs", export: "default" } }));
+      await writeFile(
+        join(dir, "functions", "ssr", "function.json"),
+        JSON.stringify({ handler: { entry: "index.mjs", export: "default" } }),
+      );
       await writeFile(join(dir, "manifest.json"), JSON.stringify({ specVersion: "1.0" }));
 
       const target = createCloudRunTarget("proj", "region", "repo");
@@ -153,10 +165,20 @@ describe("createCloudRunTarget ISR cache (dev)", () => {
     try {
       await writeFile(join(dir, "manifest.json"), JSON.stringify({ specVersion: "1.0" }));
       const target = createCloudRunTarget("proj", "region", "repo");
-      await target.deployer.buildAndDeploy(dir, "myapp", "sha256:4b66654e468e0ed5a8fb3146fff2ca53131bafe78366b02e753b059ea5fca7d1");
-      expect(vi.mocked(buildImage).mock.calls.at(-1)?.[4]).toMatchObject({ NBO_ISRCACHE_URL: "http://operator-cache:8080" });
+      await target.deployer.buildAndDeploy(
+        dir,
+        "myapp",
+        "sha256:4b66654e468e0ed5a8fb3146fff2ca53131bafe78366b02e753b059ea5fca7d1",
+      );
+      expect(vi.mocked(buildImage).mock.calls.at(-1)?.[4]).toMatchObject({
+        NBO_ISRCACHE_URL: "http://operator-cache:8080",
+      });
       target.isr = { enabled: true, removeCache: false };
-      await target.deployer.buildAndDeploy(dir, "myapp", "sha256:4b66654e468e0ed5a8fb3146fff2ca53131bafe78366b02e753b059ea5fca7d1");
+      await target.deployer.buildAndDeploy(
+        dir,
+        "myapp",
+        "sha256:4b66654e468e0ed5a8fb3146fff2ca53131bafe78366b02e753b059ea5fca7d1",
+      );
       expect(vi.mocked(buildImage).mock.calls.at(-1)?.[4]).not.toHaveProperty("NBO_ISRCACHE_URL");
     } finally {
       if (before === undefined) delete process.env.NBO_ISRCACHE_URL;

@@ -10,7 +10,11 @@ import { join } from "node:path";
 // afterwards. A failing removal (seen for real: EROFS once the disk had
 // gone read-only) must never replace the build's own error, and must not
 // fail a build that worked. Docker and the removal are both faked.
-const state = vi.hoisted(() => ({ buildError: undefined as Error | undefined, rmError: undefined as Error | undefined, rmCalls: [] as string[] }));
+const state = vi.hoisted(() => ({
+  buildError: undefined as Error | undefined,
+  rmError: undefined as Error | undefined,
+  rmCalls: [] as string[],
+}));
 
 vi.mock("node:fs/promises", async (importOriginal) => {
   const real = await importOriginal<typeof import("node:fs/promises")>();
@@ -74,7 +78,9 @@ describe.each(builders)("%s build context cleanup", (_name, build) => {
   it("rethrows the build's own error when removing the context also fails", async () => {
     const f = await fixture();
     state.buildError = new Error("docker build failed: no space left on device");
-    state.rmError = Object.assign(new Error("EROFS: read-only file system, rmdir '/tmp/nbo-image-x'"), { code: "EROFS" });
+    state.rmError = Object.assign(new Error("EROFS: read-only file system, rmdir '/tmp/nbo-image-x'"), {
+      code: "EROFS",
+    });
     await expect(build(f)).rejects.toThrow("docker build failed: no space left on device");
     expect(state.rmCalls.length).toBeGreaterThan(0);
   });

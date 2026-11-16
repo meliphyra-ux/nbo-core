@@ -1,35 +1,47 @@
 // SPDX-License-Identifier: FSL-1.1-ALv2
 // Copyright 2026 Nikita Dovhich
 
-import type { Project, Store } from "./store.js";
-import { hasOwnHost, type Stage } from "./stages.js";
-import type { DeploymentTrigger } from "./handlers.js";
-import type { CloudSetup } from "./cloud-setup.js";
-import { createRunner } from "./runner.js";
-import { createBuildQueue, recoverInterruptedBuilds, type BuildQueue } from "./build-queue.js";
-import { createClusterEdgeSync, createEdgeSync, type EdgeSync } from "./edge-sync.js";
-import { clusterEdgeActive, createClusterEdgeWriter, latestSuccessfulURL, storeKubeconfig } from "./edge-table.js";
-import { createSetup, type Setup } from "./setup.js";
-import { lsRemoteHead, lsRemoteHeads, type GitRemoteOptions } from "./gitremote.js";
-import { createGitCredentials, type GitAuthFn } from "./git-credentials.js";
-import { createLegacyGitHub } from "./github-legacy.js";
-import { createTransfers, type Transfers } from "./transfer.js";
-import { createSuppliedValues, type SuppliedValues } from "./supplied-values.js";
-import { createCloudTeardown, type CloudTeardown } from "./cloud-teardown.js";
+import type { Project, Store } from "./store/store.js";
+import { hasOwnHost, type Stage } from "./stages/stages.js";
+import type { DeploymentTrigger } from "./http/handlers.js";
+import type { CloudSetup } from "./clouds/cloud-setup.js";
+import { createRunner } from "./builds/runner.js";
+import { createBuildQueue, recoverInterruptedBuilds, type BuildQueue } from "./builds/build-queue.js";
+import { createClusterEdgeSync, createEdgeSync, type EdgeSync } from "./edge/edge-sync.js";
+import { clusterEdgeActive, createClusterEdgeWriter, latestSuccessfulURL, storeKubeconfig } from "./edge/edge-table.js";
+import { createSetup, type Setup } from "./deploys/setup.js";
+import { lsRemoteHead, lsRemoteHeads, type GitRemoteOptions } from "./git/gitremote.js";
+import { createGitCredentials, type GitAuthFn } from "./git/git-credentials.js";
+import { createLegacyGitHub, type LegacyGitHub } from "./git/github-legacy.js";
+import { createTransfers, type Transfers } from "./deploys/transfer.js";
+import { createSuppliedValues, type SuppliedValues } from "./variables/supplied-values.js";
+import { createCloudTeardown, type CloudTeardown } from "./clouds/cloud-teardown.js";
 import type { CommandRunner } from "@nbo/deploy";
-import { defaultRunner } from "./cloud-setup.js";
-import { createGoogleConnect, type GoogleConnect } from "./google-connect.js";
-import { createKubeConnect, type KubeConnect } from "./kube-connect.js";
+import { defaultRunner } from "./clouds/cloud-setup.js";
+import { createGoogleConnect, type GoogleConnect } from "./clouds/google-connect.js";
+import { createKubeConnect, type KubeConnect } from "./clouds/kube-connect.js";
 import type { Mode } from "./mode.js";
-import type { ArtifactStore } from "./artifacts.js";
-import type { Domain } from "./domains.js";
-import { createCloudRunDomains, type CloudRunDomains } from "./cloudrun-domains.js";
-import { createAcmeClient, createCertWriter, createChallengeStore, createDomainLoop, type AcmeClient, type CertWriter, type ChallengeStore, type DomainLoop, type DomainLoopDeps } from "./certs.js";
-import { createResolver, type Resolver } from "./dns-check.js";
-import { createEdgeInstaller, defaultBuildEdgeImage, type EdgeInstaller } from "./edge-install.js";
-import { createCloudflareRanges, type CloudflareRanges } from "./cloudflare-ranges.js";
-import { createEdgeJobs, type EdgeJobs } from "./edge-jobs.js";
-import type { ExpiryDeps } from "./stage-expiry.js";
+import type { ArtifactStore } from "./builds/artifacts.js";
+import type { Domain } from "./domains/domains.js";
+import { createCloudRunDomains, type CloudRunDomains } from "./domains/cloudrun-domains.js";
+import {
+  createAcmeClient,
+  createCertWriter,
+  createChallengeStore,
+  createDomainLoop,
+  type AcmeClient,
+  type CertWriter,
+  type ChallengeStore,
+  type DomainLoop,
+  type DomainLoopDeps,
+} from "./domains/certs.js";
+import { createResolver, type Resolver } from "./domains/dns-check.js";
+import { createEdgeInstaller, defaultBuildEdgeImage, type EdgeInstaller } from "./edge/edge-install.js";
+import { createCloudflareRanges, type CloudflareRanges } from "./domains/cloudflare-ranges.js";
+import { createEdgeJobs, type EdgeJobs } from "./edge/edge-jobs.js";
+import type { ExpiryDeps } from "./stages/stage-expiry.js";
+import { createProjectPoller, type ProjectPoller } from "./git/poller.js";
+import { createLinkControl, type LinkControl } from "./link/routes.js";
 
 // V2 is everything the v2 routes and the poll loop need, wired once —
 // by main.ts for the real process and by tests with fakes only at the
@@ -50,6 +62,9 @@ export interface V2 {
   // public repository); every clone, checkout and ls-remote goes through it
   // and cleans up after (git-credentials.ts).
   gitAuth: GitAuthFn;
+  // poller: checks a project's branch heads; the poll loop and
+  // POST /projects/{id}/git/poll share it, so a push builds once.
+  poller: ProjectPoller;
   mode: Mode;
   googleConnect: GoogleConnect;
   kubeConnect: KubeConnect;
@@ -73,6 +88,9 @@ export interface V2 {
   // supplied: variable values deploy requests brought (names only), in
   // memory per job; shared by the queue, the runner and transfers.
   supplied: SuppliedValues;
+  // legacyGitHub: the old per-server GitHub App's token reader (its cached
+  // tokens are redacted from link replies).
+  legacyGitHub: LegacyGitHub;
   // stageExpiry: what the expiry pass (stage-expiry.ts) runs with; main.ts
   // runs it every 10 minutes, DELETE on an ephemeral stage removes one now.
   stageExpiry: ExpiryDeps;
@@ -84,6 +102,8 @@ export interface V2 {
   keygen: CommandRunner;
   // revalidateFetch: how revalidate.ts calls a site (global fetch by default).
   revalidateFetch?: typeof fetch;
+  // link: the link client as the link routes see it (link/routes.ts).
+  link: LinkControl;
 }
 
 export interface V2Options {
@@ -142,6 +162,9 @@ export interface V2Options {
   now?: () => Date;
   // revalidateFetch: how the revalidate route calls a site (tests pass a fake).
   revalidateFetch?: typeof fetch;
+  // link: the link control main.ts attaches its client to (a detached one,
+  // which reports "off", by default).
+  link?: LinkControl;
 }
 
 // pickEdgeSync re-evaluates on every call which edge carries traffic: the
@@ -162,7 +185,8 @@ function pickEdgeSync(store: Store, mode: Mode | undefined, dev: EdgeSync, clust
 
 export function wireV2(store: Store, options: V2Options): V2 {
   const cmd = options.run ?? defaultRunner;
-  const lsRemote = options.lsRemote ?? ((repo: string, branch: string, opts?: GitRemoteOptions) => lsRemoteHead(repo, branch, opts));
+  const lsRemote =
+    options.lsRemote ?? ((repo: string, branch: string, opts?: GitRemoteOptions) => lsRemoteHead(repo, branch, opts));
   const kubeconfigFor = options.kubeconfigFor ?? storeKubeconfig(store);
   const clusterWriter = createClusterEdgeWriter({ store, run: cmd, kubeconfigFor });
   const challenges = createChallengeStore();
@@ -171,11 +195,15 @@ export function wireV2(store: Store, options: V2Options): V2 {
     store,
     options.mode,
     createEdgeSync(store, { adminUrl: options.edgeAdminUrl }),
-    createClusterEdgeSync(store, clusterWriter, { challenges: options.edgeChallenges ?? (() => challenges.snapshot()), cloudflareRanges: () => cloudflareRanges.current() }),
+    createClusterEdgeSync(store, clusterWriter, {
+      challenges: options.edgeChallenges ?? (() => challenges.snapshot()),
+      cloudflareRanges: () => cloudflareRanges.current(),
+    }),
   );
   const supplied = options.supplied ?? createSuppliedValues();
+  const legacyGitHub = createLegacyGitHub(store, { api: options.githubApiUrl ?? "https://api.github.com" });
   const gitAuth = createGitCredentials(store, {
-    legacy: createLegacyGitHub(store, { api: options.githubApiUrl ?? "https://api.github.com" }),
+    legacy: legacyGitHub,
     knownHostsFile: options.knownHostsFile,
   });
   const runner = createRunner(store, options.deploymentTrigger, {
@@ -186,7 +214,15 @@ export function wireV2(store: Store, options: V2Options): V2 {
     artifacts: options.artifacts,
   });
   const queue = createBuildQueue(store, runner, supplied);
-  const setup = createSetup({ store, cloudSetup: options.cloudSetup, queue, lsRemote, gitAuth, mode: options.mode });
+  const setup = createSetup({
+    store,
+    cloudSetup: options.cloudSetup,
+    queue,
+    lsRemote,
+    gitAuth,
+    mode: options.mode,
+    now: () => now().getTime(),
+  });
   const transfers = createTransfers({ store, setup, queue, edgeSync, mode: options.mode, supplied });
   const certs = createCertWriter({ store, run: cmd, kubeconfigFor });
   const cloudRunDomains = options.cloudRunDomains ?? createCloudRunDomains({ store, run: cmd });
@@ -221,6 +257,7 @@ export function wireV2(store: Store, options: V2Options): V2 {
     });
   const cloudTeardown = options.cloudTeardown ?? createCloudTeardown(undefined, { mode: options.mode ?? "dev", store });
   const now = options.now ?? (() => new Date());
+  const pollHeads = options.lsRemoteHeads ?? ((repo: string, opts?: GitRemoteOptions) => lsRemoteHeads(repo, opts));
   const stageExpiry: ExpiryDeps = { store, edgeSync, cloudTeardown, certs, mode: options.mode ?? "dev", supplied, now };
   return {
     queue,
@@ -231,8 +268,9 @@ export function wireV2(store: Store, options: V2Options): V2 {
     cloudTeardown,
     edgePublicPort: options.edgePublicPort,
     lsRemote,
-    lsRemoteHeads: options.lsRemoteHeads ?? ((repo: string, opts?: GitRemoteOptions) => lsRemoteHeads(repo, opts)),
+    lsRemoteHeads: pollHeads,
     gitAuth,
+    poller: createProjectPoller({ store, queue, edgeSync, lsRemoteHeads: pollHeads, gitAuth, setup }),
     mode: options.mode ?? "dev",
     googleConnect: options.googleConnect ?? createGoogleConnect({ store, run: cmd }),
     kubeConnect,
@@ -246,11 +284,13 @@ export function wireV2(store: Store, options: V2Options): V2 {
     edgeJobs: createEdgeJobs(store),
     cloudRunDomains,
     supplied,
+    legacyGitHub,
     stageExpiry,
     now,
     publicUrl: options.publicUrl,
     keygen: options.keygen ?? defaultRunner,
     revalidateFetch: options.revalidateFetch,
+    link: options.link ?? createLinkControl(),
   };
 }
 
@@ -264,7 +304,9 @@ export interface DomainUrlContext {
 // before an edge exists: Cloud Run's public URL, or "" for an app that is
 // only reachable inside its cluster.
 function publicCloudUrl(store: Store, projectId: string, stageId?: string): string {
-  const envs = [...store.listEnvironments(projectId, stageId ? { stageId } : undefined)].sort((a, b) => b.trafficWeight - a.trafficWeight);
+  const envs = [...store.listEnvironments(projectId, stageId ? { stageId } : undefined)].sort(
+    (a, b) => b.trafficWeight - a.trafficWeight,
+  );
   for (const env of envs) {
     const url = latestSuccessfulURL(store, env.id);
     if (url?.startsWith("https://")) return url;
@@ -275,9 +317,16 @@ function publicCloudUrl(store: Store, projectId: string, stageId?: string): stri
 // siteUrl applies the address rules to one stage's site: its default host,
 // its own domain rows (ownDomain) and its own clouds (stageId, Production's
 // when undefined).
-function siteUrl(projectId: string, host: string, ownDomain: (d: Domain) => boolean, ctx: DomainUrlContext, stageId?: string): string {
+function siteUrl(
+  projectId: string,
+  host: string,
+  ownDomain: (d: Domain) => boolean,
+  ctx: DomainUrlContext,
+  stageId?: string,
+): string {
   if (!host) return "";
-  if (ctx.mode === "production" && !clusterEdgeActive(ctx.store, ctx.mode)) return publicCloudUrl(ctx.store, projectId, stageId);
+  if (ctx.mode === "production" && !clusterEdgeActive(ctx.store, ctx.mode))
+    return publicCloudUrl(ctx.store, projectId, stageId);
   if (!clusterEdgeActive(ctx.store, ctx.mode)) return `http://${host}:${ctx.edgePublicPort}`;
   const domains = ctx.store.listDomains(projectId).filter(ownDomain);
   const custom = domains.find((d) => d.kind === "custom" && d.status === "active");
@@ -320,10 +369,17 @@ export function recoverInterruptedWork(store: Store): string[] {
   const interrupted = recoverInterruptedBuilds(store);
   for (const project of store.listProjects()) {
     if (project.setupStatus === "provisioning") {
-      store.updateProject(project.id, { setupStatus: "needs-setup", setupError: "interrupted: the control-plane restarted during setup — retry it" });
+      store.updateProject(project.id, {
+        setupStatus: "needs-setup",
+        setupError: "interrupted: the control-plane restarted during setup — retry it",
+      });
     }
     const active = store.getActiveTransfer(project.id);
-    if (active) store.updateTransfer(active.id, { status: "failed", error: "interrupted: the control-plane restarted during this transfer" });
+    if (active)
+      store.updateTransfer(active.id, {
+        status: "failed",
+        error: "interrupted: the control-plane restarted during this transfer",
+      });
   }
   return interrupted;
 }

@@ -32,13 +32,13 @@ export function translateMiddleware(matchers) {
   return matchers.map((matcher, index) => {
     if (matcher.has && matcher.has.length) {
       throw new Error(
-        `middleware matcher ${JSON.stringify(matcher.source)} has a has-condition (${matcher.has[0].key}) that is not supported by this router version (pre-existing scope cut)`
+        `middleware matcher ${JSON.stringify(matcher.source)} has a has-condition (${matcher.has[0].key}) that is not supported by this router version (pre-existing scope cut)`,
       );
     }
     const missing = (matcher.missing ?? []).filter((m) => m.key !== "x-prerender-revalidate");
     if (missing.length) {
       throw new Error(
-        `middleware matcher ${JSON.stringify(matcher.source)} has a missing-condition (${missing[0].key}) that is not supported by this router version (pre-existing scope cut)`
+        `middleware matcher ${JSON.stringify(matcher.source)} has a missing-condition (${missing[0].key}) that is not supported by this router version (pre-existing scope cut)`,
       );
     }
     return {
@@ -146,67 +146,73 @@ export function translatePrerenders(prerenders) {
     .filter((p) => !isInternalNextRoute(p.pathname))
     .filter((p) => p.config?.renderingMode !== "PARTIALLY_STATIC" || p.fallback?.filePath !== undefined)
     .map((p) => {
-    const isPPR = p.config?.renderingMode === "PARTIALLY_STATIC" && typeof p.fallback?.postponedState === "string" && p.fallback.postponedState.length > 0;
-    const isStaticUnderCacheComponents = p.config?.renderingMode === "PARTIALLY_STATIC" && !isPPR && p.fallback?.initialRevalidate === false;
-    let revalidateSec, expireSec, onMiss;
-    if (isPPR) {
-      revalidateSec = 0;
-      expireSec = 0;
-      onMiss = "blocking";
-    } else if (isStaticUnderCacheComponents) {
-      revalidateSec = oneYearSeconds;
-      expireSec = oneYearSeconds;
-      onMiss = "shell";
-    } else {
-      revalidateSec = p.fallback?.initialRevalidate;
-      if (typeof revalidateSec !== "number") {
-        throw new Error(
-          `prerender route ${p.pathname}: initialRevalidate must be a number for this adapter version (got ${JSON.stringify(revalidateSec)} — "revalidate: false" is not yet supported)`
-        );
+      const isPPR =
+        p.config?.renderingMode === "PARTIALLY_STATIC" &&
+        typeof p.fallback?.postponedState === "string" &&
+        p.fallback.postponedState.length > 0;
+      const isStaticUnderCacheComponents =
+        p.config?.renderingMode === "PARTIALLY_STATIC" && !isPPR && p.fallback?.initialRevalidate === false;
+      let revalidateSec, expireSec, onMiss;
+      if (isPPR) {
+        revalidateSec = 0;
+        expireSec = 0;
+        onMiss = "blocking";
+      } else if (isStaticUnderCacheComponents) {
+        revalidateSec = oneYearSeconds;
+        expireSec = oneYearSeconds;
+        onMiss = "shell";
+      } else {
+        revalidateSec = p.fallback?.initialRevalidate;
+        if (typeof revalidateSec !== "number") {
+          throw new Error(
+            `prerender route ${p.pathname}: initialRevalidate must be a number for this adapter version (got ${JSON.stringify(revalidateSec)} — "revalidate: false" is not yet supported)`,
+          );
+        }
+        expireSec = p.fallback?.initialExpiration;
+        if (typeof expireSec !== "number") {
+          throw new Error(
+            `prerender route ${p.pathname}: initialExpiration must be a number for this adapter version (got ${JSON.stringify(expireSec)})`,
+          );
+        }
+        onMiss = "blocking";
       }
-      expireSec = p.fallback?.initialExpiration;
-      if (typeof expireSec !== "number") {
-        throw new Error(`prerender route ${p.pathname}: initialExpiration must be a number for this adapter version (got ${JSON.stringify(expireSec)})`);
+      // seeds[pathname].file is deliberately NOT p.fallback.filePath — that
+      // value is a real, absolute path on the build machine (confirmed
+      // against a real build), and writing it into prerender.json would
+      // both leak build-machine filesystem structure and break build
+      // determinism (the same commit built on two different checkouts
+      // would get two different prerender.json digests). The spec's own
+      // framing treats a seed as "an ordinary file in static.index.json" —
+      // that's the authoritative file reference; this field uses the
+      // pathname itself as a stable, deterministic placeholder.
+      const seeds = {};
+      if (p.fallback?.filePath) {
+        seeds[p.pathname] = { file: p.pathname };
       }
-      onMiss = "blocking";
-    }
-    // seeds[pathname].file is deliberately NOT p.fallback.filePath — that
-    // value is a real, absolute path on the build machine (confirmed
-    // against a real build), and writing it into prerender.json would
-    // both leak build-machine filesystem structure and break build
-    // determinism (the same commit built on two different checkouts
-    // would get two different prerender.json digests). The spec's own
-    // framing treats a seed as "an ordinary file in static.index.json" —
-    // that's the authoritative file reference; this field uses the
-    // pathname itself as a stable, deterministic placeholder.
-    const seeds = {};
-    if (p.fallback?.filePath) {
-      seeds[p.pathname] = { file: p.pathname };
-    }
-    const entry = {
-      // id is the pathname, not p.route: a real build emits one route
-      // shared by an HTML page and its .rsc data variant as two
-      // separate outputs.prerenders entries with the SAME route but
-      // DIFFERENT pathnames (confirmed against a real build) — using
-      // route as id collided the two under one id, so a lookup by id
-      // could silently resolve to the wrong entry's config.
-      id: p.pathname,
-      match: "^" + escapeRegExp(p.pathname) + "$",
-      function: "ssr",
-      revalidateSec,
-      expireSec,
-      tags: [`group:${p.groupId}`],
-      seeds,
-      onMiss,
-      allowQuery: p.config?.allowQuery ?? [],
-      varyHeaders: (p.config?.allowHeader ?? []).filter((h) => !nextInternalVaryHeaders.has(h)),
-      bypassToken: { env: "NBO_PRERENDER_BYPASS" },
-    };
-    if (isPPR) {
-      entry["x-nbo-ppr"] = { postponedState: p.fallback.postponedState };
-    }
-    return entry;
-  });
+      const entry = {
+        // id is the pathname, not p.route: a real build emits one route
+        // shared by an HTML page and its .rsc data variant as two
+        // separate outputs.prerenders entries with the SAME route but
+        // DIFFERENT pathnames (confirmed against a real build) — using
+        // route as id collided the two under one id, so a lookup by id
+        // could silently resolve to the wrong entry's config.
+        id: p.pathname,
+        match: "^" + escapeRegExp(p.pathname) + "$",
+        function: "ssr",
+        revalidateSec,
+        expireSec,
+        tags: [`group:${p.groupId}`],
+        seeds,
+        onMiss,
+        allowQuery: p.config?.allowQuery ?? [],
+        varyHeaders: (p.config?.allowHeader ?? []).filter((h) => !nextInternalVaryHeaders.has(h)),
+        bypassToken: { env: "NBO_PRERENDER_BYPASS" },
+      };
+      if (isPPR) {
+        entry["x-nbo-ppr"] = { postponedState: p.fallback.postponedState };
+      }
+      return entry;
+    });
 }
 
 // assertSlice2Scope throws, naming the offending item, for any build
@@ -226,21 +232,29 @@ export function assertSlice2Scope(outputs) {
   if (outputs.middleware && outputs.middleware.runtime !== "nodejs") {
     throw new Error(
       `middleware with the ${outputs.middleware.runtime} runtime is not supported by this adapter version ` +
-        `(Slice 4 scope cut — add "export const config = { runtime: 'nodejs' }" to your middleware/proxy source): ${outputs.middleware.pathname}`
+        `(Slice 4 scope cut — add "export const config = { runtime: 'nodejs' }" to your middleware/proxy source): ${outputs.middleware.pathname}`,
     );
   }
   if (outputs.pages?.length) {
-    throw new Error(`the Pages Router is not supported by this adapter version (Slice 4 scope cut): ${outputs.pages[0].pathname}`);
+    throw new Error(
+      `the Pages Router is not supported by this adapter version (Slice 4 scope cut): ${outputs.pages[0].pathname}`,
+    );
   }
   if (outputs.pagesApi?.length) {
-    throw new Error(`the Pages Router is not supported by this adapter version (Slice 4 scope cut): ${outputs.pagesApi[0].pathname}`);
+    throw new Error(
+      `the Pages Router is not supported by this adapter version (Slice 4 scope cut): ${outputs.pagesApi[0].pathname}`,
+    );
   }
   for (const route of [...(outputs.appPages ?? []), ...(outputs.appRoutes ?? [])]) {
     if (route.runtime === "edge") {
-      throw new Error(`the edge runtime is not supported by this adapter version (Slice 4 scope cut): ${route.pathname}`);
+      throw new Error(
+        `the edge runtime is not supported by this adapter version (Slice 4 scope cut): ${route.pathname}`,
+      );
     }
     if (route.pathname.includes("[")) {
-      throw new Error(`dynamic route segments are not supported by this adapter version (Slice 4 scope cut): ${route.pathname}`);
+      throw new Error(
+        `dynamic route segments are not supported by this adapter version (Slice 4 scope cut): ${route.pathname}`,
+      );
     }
   }
 }

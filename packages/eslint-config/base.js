@@ -33,8 +33,14 @@ export const config = tseslint.config(
       "prefer-const": "error",
       "object-shorthand": "error",
       "no-throw-literal": "error",
-      "@typescript-eslint/consistent-type-imports": ["error", { prefer: "type-imports", fixStyle: "inline-type-imports", disallowTypeAnnotations: false }],
-      "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_", varsIgnorePattern: "^_", caughtErrors: "none", ignoreRestSiblings: true }],
+      "@typescript-eslint/consistent-type-imports": [
+        "error",
+        { prefer: "type-imports", fixStyle: "inline-type-imports", disallowTypeAnnotations: false },
+      ],
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_", caughtErrors: "none", ignoreRestSiblings: true },
+      ],
       "@typescript-eslint/no-explicit-any": "warn",
       // Tests use non-null assertions on fixtures they just created.
       "@typescript-eslint/no-non-null-assertion": "off",

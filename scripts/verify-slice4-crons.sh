@@ -90,7 +90,7 @@ fs.writeFileSync(path, JSON.stringify(m));
 EOF
 
 # deploy-app-name.js <projectId> <envName>: mirrors
-# packages/controlplane/src/deploy.ts's own deployAppName exactly —
+# packages/controlplane/src/deploys/deploy.ts's own deployAppName exactly —
 # computed here instead of guessed with a bash substring, so a future
 # id-format change can't silently desync this script's own cleanup
 # target from the real one the control plane deployed.

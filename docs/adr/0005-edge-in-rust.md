@@ -34,16 +34,16 @@ Taken 2026-11-08, when the Rust edge was built.
 - Backend and load generator: a small Go program written for this (`edgebench`, standard library only, not in the repository). The backend answers `ok` (2 bytes) or a 100 KB body with `content-length`. The generator is closed-loop HTTP/1.1 with keep-alive: 64 or 256 connections, one request in flight on each, 5 s warm-up, then 30 s measured. A request counts only when it got a 200 with the full body; no request failed in any run.
 - Three runs per case, edges alternating (Node, Rust, Node, ...). The table shows medians; "Runs" lists each run's requests per second. Peak memory is the process's peak working set.
 
-| Backend | Connections | Edge | Requests/s | p50 ms | p99 ms | Peak memory | Runs (requests/s) |
-|---|---|---|---|---|---|---|---|
-| 2 bytes | 64 | Node | 3,196 | 11.5 | 117.0 | 355 MB | 3,196, 2,562, 4,334 |
-| 2 bytes | 64 | Rust | 19,043 | 2.5 | 22.6 | 14 MB | 20,143, 10,353, 19,043 |
-| 2 bytes | 256 | Node | 3,981 | 51.7 | 199.2 | 388 MB | 3,232, 3,981, 4,169 |
-| 2 bytes | 256 | Rust | 13,274 | 17.0 | 63.5 | 28 MB | 13,274, 7,096, 18,638 |
-| 100 KB | 64 | Node | 2,735 | 18.4 | 49.1 | 216 MB | 2,735, 2,724, 2,754 |
-| 100 KB | 64 | Rust | 13,325 | 4.0 | 33.5 | 22 MB | 13,223, 13,336, 13,325 |
-| 100 KB | 256 | Node | 2,248 | 112.4 | 173.6 | 316 MB | 2,322, 2,248, 1,920 |
-| 100 KB | 256 | Rust | 9,429 | 25.5 | 65.2 | 58 MB | 9,878, 9,429, 7,664 |
+| Backend | Connections | Edge | Requests/s | p50 ms | p99 ms | Peak memory | Runs (requests/s)      |
+| ------- | ----------- | ---- | ---------- | ------ | ------ | ----------- | ---------------------- |
+| 2 bytes | 64          | Node | 3,196      | 11.5   | 117.0  | 355 MB      | 3,196, 2,562, 4,334    |
+| 2 bytes | 64          | Rust | 19,043     | 2.5    | 22.6   | 14 MB       | 20,143, 10,353, 19,043 |
+| 2 bytes | 256         | Node | 3,981      | 51.7   | 199.2  | 388 MB      | 3,232, 3,981, 4,169    |
+| 2 bytes | 256         | Rust | 13,274     | 17.0   | 63.5   | 28 MB       | 13,274, 7,096, 18,638  |
+| 100 KB  | 64          | Node | 2,735      | 18.4   | 49.1   | 216 MB      | 2,735, 2,724, 2,754    |
+| 100 KB  | 64          | Rust | 13,325     | 4.0    | 33.5   | 22 MB       | 13,223, 13,336, 13,325 |
+| 100 KB  | 256         | Node | 2,248      | 112.4  | 173.6  | 316 MB      | 2,322, 2,248, 1,920    |
+| 100 KB  | 256         | Rust | 9,429      | 25.5   | 65.2   | 58 MB       | 9,878, 9,429, 7,664    |
 
 Ratios of the medians, Rust over Node: 6.0x, 3.3x, 4.9x and 4.2x the requests per second, with a lower 99th percentile in all four cases. The gate's "at least 3x at a p99 no worse" holds on medians.
 

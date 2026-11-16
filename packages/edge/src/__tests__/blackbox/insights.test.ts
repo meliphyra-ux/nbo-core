@@ -10,7 +10,16 @@ import { buildScript } from "../../insights/script.js";
 import { insightsTag } from "../../insights/inject.js";
 import { bucketIndex } from "../../insights/histogram.js";
 import { pickSticky } from "../../sticky.js";
-import { adminPut, edgeImpl, send, startBackend, startEdge, type FakeBackend, type Reply, type RunningEdge } from "./harness.js";
+import {
+  adminPut,
+  edgeImpl,
+  send,
+  startBackend,
+  startEdge,
+  type FakeBackend,
+  type Reply,
+  type RunningEdge,
+} from "./harness.js";
 
 const UA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36";
 const SCRIPT = "/_nbo/insights/v1/script.js";
@@ -19,7 +28,12 @@ const NAV = { "sec-fetch-dest": "document" };
 
 // page answers with the given chunks, each written separately with a pause,
 // so the edge receives a tag split across reads.
-function page(res: ServerResponse, chunks: (string | Buffer)[], headers: Record<string, string> = {}, status = 200): void {
+function page(
+  res: ServerResponse,
+  chunks: (string | Buffer)[],
+  headers: Record<string, string> = {},
+  status = 200,
+): void {
   res.writeHead(status, { "content-type": "text/html; charset=utf-8", ...headers });
   let i = 0;
   const next = () => {
@@ -42,7 +56,8 @@ describe("black-box: Speed Insights", () => {
   let app: FakeBackend;
   let other: FakeBackend;
   // The page each test wants the app to serve next.
-  let respond: (res: ServerResponse, path: string) => void = (res) => page(res, ["<html><head></head><body>x</body></html>"]);
+  let respond: (res: ServerResponse, path: string) => void = (res) =>
+    page(res, ["<html><head></head><body>x</body></html>"]);
 
   beforeAll(async () => {
     app = await startBackend("app");
@@ -57,7 +72,10 @@ describe("black-box: Speed Insights", () => {
         })
       ).status,
     ).toBe(204);
-    await adminPut(edge.adminUrl, "si10.test", { backends: [{ id: "env_a", url: app.url, weight: 1 }], insights: { enabled: true, inject: false, sampleRate: 10 } });
+    await adminPut(edge.adminUrl, "si10.test", {
+      backends: [{ id: "env_a", url: app.url, weight: 1 }],
+      insights: { enabled: true, inject: false, sampleRate: 10 },
+    });
     await adminPut(edge.adminUrl, "manual.test", {
       backends: [
         { id: "env_a", url: app.url, weight: 50 },
@@ -71,7 +89,8 @@ describe("black-box: Speed Insights", () => {
     await Promise.all([app?.close(), other?.close()]);
   });
 
-  const get = (host: string, path: string, headers: Record<string, string> = {}, method = "GET") => send(`${edge.dataUrl}${path}`, { method, headers: { host, ...headers } });
+  const get = (host: string, path: string, headers: Record<string, string> = {}, method = "GET") =>
+    send(`${edge.dataUrl}${path}`, { method, headers: { host, ...headers } });
   const beacon = (host: string, body: unknown, headers: Record<string, string> = {}) =>
     send(`${edge.dataUrl}${VITALS}`, {
       method: "POST",
@@ -120,7 +139,14 @@ describe("black-box: Speed Insights", () => {
   });
 
   it("takes a valid beacon with 204 and answers 405 with Allow: POST to other methods", async () => {
-    const ok = await beacon("si.test", { metric: "LCP", value: 1200, route: "/", device: "desktop", environmentId: "env_a", contentId: "c1" });
+    const ok = await beacon("si.test", {
+      metric: "LCP",
+      value: 1200,
+      route: "/",
+      device: "desktop",
+      environmentId: "env_a",
+      contentId: "c1",
+    });
     expect(ok.status).toBe(204);
     expect(ok.raw.length).toBe(0);
     for (const method of ["GET", "PUT"]) {
@@ -171,20 +197,67 @@ describe("black-box: Speed Insights", () => {
 
   it("drains histograms in the control-plane's shape, normalising routes and bucketing values", async () => {
     await drain();
-    expect((await beacon("si.test", { metric: "LCP", value: 1234.5, route: "/users/12345/posts?x=1", device: "desktop", environmentId: "env_a", contentId: "dep-1" })).status).toBe(
-      204,
-    );
-    expect((await beacon("si.test", { metric: "LCP", value: 1234.5, route: "/users/999/posts", device: "desktop", environmentId: "env_a", contentId: "dep-1" })).status).toBe(204);
-    expect((await beacon("si.test", { metric: "CLS", value: 0.07, route: "/", device: "mobile", environmentId: "env_a" })).status).toBe(204);
+    expect(
+      (
+        await beacon("si.test", {
+          metric: "LCP",
+          value: 1234.5,
+          route: "/users/12345/posts?x=1",
+          device: "desktop",
+          environmentId: "env_a",
+          contentId: "dep-1",
+        })
+      ).status,
+    ).toBe(204);
+    expect(
+      (
+        await beacon("si.test", {
+          metric: "LCP",
+          value: 1234.5,
+          route: "/users/999/posts",
+          device: "desktop",
+          environmentId: "env_a",
+          contentId: "dep-1",
+        })
+      ).status,
+    ).toBe(204);
+    expect(
+      (await beacon("si.test", { metric: "CLS", value: 0.07, route: "/", device: "mobile", environmentId: "env_a" }))
+        .status,
+    ).toBe(204);
     const { batches } = await drain();
     expect(batches).toHaveLength(2);
     const lcp = batches.find((x) => x.metric === "LCP")!;
     const cls = batches.find((x) => x.metric === "CLS")!;
-    expect(Object.keys(lcp).sort()).toEqual(["buckets", "contentId", "count", "device", "environmentId", "host", "metric", "minute", "route"]);
-    expect(lcp).toMatchObject({ host: "si.test", environmentId: "env_a", contentId: "dep-1", route: "/users/[id]/posts", device: "desktop", count: 2 });
+    expect(Object.keys(lcp).sort()).toEqual([
+      "buckets",
+      "contentId",
+      "count",
+      "device",
+      "environmentId",
+      "host",
+      "metric",
+      "minute",
+      "route",
+    ]);
+    expect(lcp).toMatchObject({
+      host: "si.test",
+      environmentId: "env_a",
+      contentId: "dep-1",
+      route: "/users/[id]/posts",
+      device: "desktop",
+      count: 2,
+    });
     expect(lcp.buckets).toEqual({ [String(bucketIndex("LCP", 1234.5))]: 2 });
     expect(String(lcp.minute)).toMatch(/^\d{4}-\d\d-\d\dT\d\d:\d\d:00\.000Z$/);
-    expect(cls).toMatchObject({ host: "si.test", environmentId: "env_a", contentId: "", route: "/", device: "mobile", count: 1 });
+    expect(cls).toMatchObject({
+      host: "si.test",
+      environmentId: "env_a",
+      contentId: "",
+      route: "/",
+      device: "mobile",
+      count: 1,
+    });
     expect(cls.buckets).toEqual({ [String(bucketIndex("CLS", 0.07))]: 1 });
     // A drain empties the aggregator.
     expect((await drain()).batches).toEqual([]);
@@ -203,7 +276,15 @@ describe("black-box: Speed Insights", () => {
       },
       id,
     ).id;
-    expect((await beacon("manual.test", { metric: "TTFB", value: 90, route: "/p", device: "desktop" }, { cookie: `nbo_v=${id}` })).status).toBe(204);
+    expect(
+      (
+        await beacon(
+          "manual.test",
+          { metric: "TTFB", value: 90, route: "/p", device: "desktop" },
+          { cookie: `nbo_v=${id}` },
+        )
+      ).status,
+    ).toBe(204);
     const { batches } = await drain();
     expect(batches).toHaveLength(1);
     expect(batches[0]).toMatchObject({ host: "manual.test", environmentId: expected, metric: "TTFB" });
@@ -212,10 +293,16 @@ describe("black-box: Speed Insights", () => {
   // inOneMinute runs a scenario on a fresh host and drains its batches,
   // retrying when the beacons straddled a minute boundary (the limits are
   // per minute, so a split run proves nothing).
-  async function inOneMinute(name: string, scenario: (host: string) => Promise<void>): Promise<Record<string, unknown>[]> {
+  async function inOneMinute(
+    name: string,
+    scenario: (host: string) => Promise<void>,
+  ): Promise<Record<string, unknown>[]> {
     for (let attempt = 0; attempt < 3; attempt++) {
       const host = `${name}-${attempt}.test`;
-      await adminPut(edge.adminUrl, host, { backends: [{ id: "env_a", url: app.url, weight: 1 }], insights: { enabled: true, inject: false, sampleRate: 100 } });
+      await adminPut(edge.adminUrl, host, {
+        backends: [{ id: "env_a", url: app.url, weight: 1 }],
+        insights: { enabled: true, inject: false, sampleRate: 100 },
+      });
       await drain();
       await scenario(host);
       const batches = (await drain()).batches.filter((b) => b.host === host);
@@ -227,7 +314,17 @@ describe("black-box: Speed Insights", () => {
   it("folds routes past 100 per host per minute into (other), keeping routes already seen", async () => {
     const batches = await inOneMinute("limit-routes", async (host) => {
       for (let i = 1; i <= 105; i++) {
-        expect((await beacon(host, { metric: "FCP", value: 100, route: `/page-r${i}`, device: "desktop", environmentId: "env_a" })).status).toBe(204);
+        expect(
+          (
+            await beacon(host, {
+              metric: "FCP",
+              value: 100,
+              route: `/page-r${i}`,
+              device: "desktop",
+              environmentId: "env_a",
+            })
+          ).status,
+        ).toBe(204);
       }
       // A route admitted before the cap is still its own route.
       await beacon(host, { metric: "FCP", value: 100, route: "/page-r1", device: "desktop", environmentId: "env_a" });
@@ -243,9 +340,27 @@ describe("black-box: Speed Insights", () => {
   it("keeps 5 content ids per environment per minute; later ones count under an empty content id", async () => {
     const batches = await inOneMinute("limit-cids", async (host) => {
       for (let i = 1; i <= 7; i++) {
-        expect((await beacon(host, { metric: "TTFB", value: 50, route: "/", device: "mobile", environmentId: "env_a", contentId: `dep-${i}` })).status).toBe(204);
+        expect(
+          (
+            await beacon(host, {
+              metric: "TTFB",
+              value: 50,
+              route: "/",
+              device: "mobile",
+              environmentId: "env_a",
+              contentId: `dep-${i}`,
+            })
+          ).status,
+        ).toBe(204);
       }
-      await beacon(host, { metric: "TTFB", value: 50, route: "/", device: "mobile", environmentId: "env_a", contentId: "dep-1" });
+      await beacon(host, {
+        metric: "TTFB",
+        value: 50,
+        route: "/",
+        device: "mobile",
+        environmentId: "env_a",
+        contentId: "dep-1",
+      });
     });
     const byContent = new Map(batches.map((b) => [b.contentId as string, b.count as number]));
     expect([...byContent.keys()].sort()).toEqual(["", "dep-1", "dep-2", "dep-3", "dep-4", "dep-5"]);
@@ -262,7 +377,11 @@ describe("black-box: Speed Insights", () => {
   it("inserts the tag before a chunk-split </HEAD>, drops content-length and weakens a strong ETag", async () => {
     const html = "<html><HEAD><title>t</title></HEAD><body>hi</body></html>";
     respond = (res) =>
-      page(res, ["<html><HEAD><title>t</title></HE", "AD><body>hi</body></html>"], { "x-nbo-deployment-id": 'dep"1<', etag: '"abc"', "content-length": String(html.length) });
+      page(res, ["<html><HEAD><title>t</title></HE", "AD><body>hi</body></html>"], {
+        "x-nbo-deployment-id": 'dep"1<',
+        etag: '"abc"',
+        "content-length": String(html.length),
+      });
     const r = await get("si.test", "/", NAV);
     expect(r.status).toBe(200);
     expect(r.body).toBe(`<html><HEAD><title>t</title>${tag('dep"1<')}</HEAD><body>hi</body></html>`);
@@ -276,15 +395,39 @@ describe("black-box: Speed Insights", () => {
 
   it("Review Focus 3: </head> split across chunks, in mixed case, or absent (then </body>, then nothing)", async () => {
     const cases: { name: string; chunks: string[]; want: string }[] = [
-      { name: "split </he|ad>", chunks: ["<html><head><title>x</title></he", "ad><body></body></html>"], want: `<html><head><title>x</title>${tag()}</head><body></body></html>` },
+      {
+        name: "split </he|ad>",
+        chunks: ["<html><head><title>x</title></he", "ad><body></body></html>"],
+        want: `<html><head><title>x</title>${tag()}</head><body></body></html>`,
+      },
       { name: "split <|/head>", chunks: ["<head><", "/head>"], want: `<head>${tag()}</head>` },
       { name: "split one byte at a time", chunks: [..."<head></HeAd>x"], want: `<head>${tag()}</HeAd>x` },
-      { name: "mixed case", chunks: ["<HTML><HeAd></hEaD><BODY></BODY>"], want: `<HTML><HeAd>${tag()}</hEaD><BODY></BODY>` },
-      { name: "large chunk after a held tail", chunks: ["<p>x</p></h", "ead>" + "y".repeat(200)], want: `<p>x</p>${tag()}</head>${"y".repeat(200)}` },
-      { name: "no </head>: before </body>", chunks: ["<html><body>hi</bo", "dy></html>"], want: `<html><body>hi${tag()}</body></html>` },
-      { name: "</body> before </head>", chunks: ["<body></body><head></head>"], want: `<body>${tag()}</body><head></head>` },
+      {
+        name: "mixed case",
+        chunks: ["<HTML><HeAd></hEaD><BODY></BODY>"],
+        want: `<HTML><HeAd>${tag()}</hEaD><BODY></BODY>`,
+      },
+      {
+        name: "large chunk after a held tail",
+        chunks: ["<p>x</p></h", "ead>" + "y".repeat(200)],
+        want: `<p>x</p>${tag()}</head>${"y".repeat(200)}`,
+      },
+      {
+        name: "no </head>: before </body>",
+        chunks: ["<html><body>hi</bo", "dy></html>"],
+        want: `<html><body>hi${tag()}</body></html>`,
+      },
+      {
+        name: "</body> before </head>",
+        chunks: ["<body></body><head></head>"],
+        want: `<body>${tag()}</body><head></head>`,
+      },
       { name: "neither: unchanged", chunks: ["<p>no tags here</p>", "</he"], want: "<p>no tags here</p></he" },
-      { name: "only the first </head>", chunks: ["<head></head><head></head>"], want: `<head>${tag()}</head><head></head>` },
+      {
+        name: "only the first </head>",
+        chunks: ["<head></head><head></head>"],
+        want: `<head>${tag()}</head><head></head>`,
+      },
     ];
     for (const c of cases) {
       respond = (res) => page(res, c.chunks);
@@ -295,7 +438,13 @@ describe("black-box: Speed Insights", () => {
 
   it("leaves pages alone when the tag must not go in", async () => {
     const body = "<html><head></head><body></body></html>";
-    const cases: { name: string; headers: Record<string, string>; reqHeaders?: Record<string, string>; status?: number; method?: string }[] = [
+    const cases: {
+      name: string;
+      headers: Record<string, string>;
+      reqHeaders?: Record<string, string>;
+      status?: number;
+      method?: string;
+    }[] = [
       { name: "a fetch() of HTML", headers: {}, reqHeaders: { "sec-fetch-dest": "empty", accept: "text/html" } },
       { name: "no navigation headers", headers: {}, reqHeaders: {} },
       { name: "a 404 page", headers: {}, status: 404 },
@@ -306,7 +455,11 @@ describe("black-box: Speed Insights", () => {
     ];
     for (const c of cases) {
       respond = (res) => page(res, [body], { etag: '"e"', ...c.headers }, c.status ?? 200);
-      const r = await send(`${edge.dataUrl}/`, { method: c.method ?? "GET", headers: { host: "si.test", ...(c.reqHeaders ?? NAV) }, body: c.method === "POST" ? "x" : undefined });
+      const r = await send(`${edge.dataUrl}/`, {
+        method: c.method ?? "GET",
+        headers: { host: "si.test", ...(c.reqHeaders ?? NAV) },
+        body: c.method === "POST" ? "x" : undefined,
+      });
       expect(r.body, c.name).toBe(body);
       expect(r.headers.etag, c.name).toBe('"e"');
     }
@@ -321,7 +474,8 @@ describe("black-box: Speed Insights", () => {
       ["gzip", gzipSync(body)],
       ["br", brotliCompressSync(body)],
     ] as const) {
-      respond = (res) => page(res, [data], { "content-encoding": enc, "content-length": String(data.length), vary: "accept-encoding" });
+      respond = (res) =>
+        page(res, [data], { "content-encoding": enc, "content-length": String(data.length), vary: "accept-encoding" });
       const r = await get("si.test", "/", { ...NAV, "accept-encoding": "gzip, deflate, br" });
       expect(r.status).toBe(200);
       expect(decoded(r), enc).toBe(`<html><head><title>z</title>${tag()}</head><body>compressed</body></html>`);
@@ -338,30 +492,42 @@ describe("black-box: Speed Insights", () => {
       ["br", brotliCompressSync(body)],
     ] as const;
 
-  rustOnly("Review Focus 2 (pass-through): with inject off, a gzip or brotli page keeps its bytes and content-encoding", async () => {
-    for (const [enc, data] of compressed("<html><head></head><body>inject off</body></html>")) {
-      respond = (res) => page(res, [data], { "content-encoding": enc, "content-length": String(data.length), vary: "accept-encoding" });
-      const r = await get("si10.test", "/", { ...NAV, "accept-encoding": "gzip, deflate, br" });
-      expect(r.status).toBe(200);
-      expect(r.headers["content-encoding"], enc).toBe(enc);
-      expect(r.raw.equals(data), enc).toBe(true);
-    }
-  });
-
-  rustOnly("Review Focus 2 (pass-through): a compressed asset (a script, an image) keeps its bytes and content-encoding with inject on", async () => {
-    for (const [path, type] of [
-      ["/app.js", "text/javascript"],
-      ["/logo.svg", "image/svg+xml"],
-    ] as const) {
-      for (const [enc, data] of compressed("<html><head></head><body>not a page</body></html>")) {
-        respond = (res) => page(res, [data], { "content-type": type, "content-encoding": enc, "content-length": String(data.length) });
-        const r = await get("si.test", path, { "accept-encoding": "gzip, deflate, br" });
+  rustOnly(
+    "Review Focus 2 (pass-through): with inject off, a gzip or brotli page keeps its bytes and content-encoding",
+    async () => {
+      for (const [enc, data] of compressed("<html><head></head><body>inject off</body></html>")) {
+        respond = (res) =>
+          page(res, [data], {
+            "content-encoding": enc,
+            "content-length": String(data.length),
+            vary: "accept-encoding",
+          });
+        const r = await get("si10.test", "/", { ...NAV, "accept-encoding": "gzip, deflate, br" });
         expect(r.status).toBe(200);
-        expect(r.headers["content-encoding"], `${path} ${enc}`).toBe(enc);
-        expect(r.raw.equals(data), `${path} ${enc}`).toBe(true);
+        expect(r.headers["content-encoding"], enc).toBe(enc);
+        expect(r.raw.equals(data), enc).toBe(true);
       }
-    }
-  });
+    },
+  );
+
+  rustOnly(
+    "Review Focus 2 (pass-through): a compressed asset (a script, an image) keeps its bytes and content-encoding with inject on",
+    async () => {
+      for (const [path, type] of [
+        ["/app.js", "text/javascript"],
+        ["/logo.svg", "image/svg+xml"],
+      ] as const) {
+        for (const [enc, data] of compressed("<html><head></head><body>not a page</body></html>")) {
+          respond = (res) =>
+            page(res, [data], { "content-type": type, "content-encoding": enc, "content-length": String(data.length) });
+          const r = await get("si.test", path, { "accept-encoding": "gzip, deflate, br" });
+          expect(r.status).toBe(200);
+          expect(r.headers["content-encoding"], `${path} ${enc}`).toBe(enc);
+          expect(r.raw.equals(data), `${path} ${enc}`).toBe(true);
+        }
+      }
+    },
+  );
 
   // Five cases from the Speed Insights and live builds spec ("For the Rust
   // edge"); both edges must pass them.
@@ -369,7 +535,11 @@ describe("black-box: Speed Insights", () => {
     const data = Buffer.from([0x00, 0x01, 0xfe, 0xff, 0x42, 0x43]);
     for (const enc of ["x-custom", "gzip, x-custom"]) {
       respond = (res) => {
-        res.writeHead(200, { "content-type": "application/octet-stream", "content-encoding": enc, "content-length": String(data.length) });
+        res.writeHead(200, {
+          "content-type": "application/octet-stream",
+          "content-encoding": enc,
+          "content-length": String(data.length),
+        });
         res.end(data);
       };
       const r = await get("si.test", "/blob", { "accept-encoding": "gzip, deflate, br" });

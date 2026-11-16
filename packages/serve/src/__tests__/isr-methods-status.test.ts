@@ -50,7 +50,10 @@ interface Seen {
   range: string | null;
 }
 
-function recording(seen: Seen[], respond: (req: Request) => Response | Promise<Response> = () => new Response("page body")): Resolver {
+function recording(
+  seen: Seen[],
+  respond: (req: Request) => Response | Promise<Response> = () => new Response("page body"),
+): Resolver {
   return () => async (req: Request) => {
     seen.push({ method: req.method, body: req.body ? await req.text() : "", range: req.headers.get("range") });
     return respond(req);
@@ -123,7 +126,11 @@ describe("ISR request methods", () => {
     const getKey = prerenderCacheKey(new Request(page), cfg);
     store.set(getKey, { body: new TextEncoder().encode("cached page") }, 300, cfg.expireSec);
 
-    const res = await handlePrerender(state, new Request(page, { method: "POST", body: "form=1", headers: { "next-action": "abc" } }), decision(cfg));
+    const res = await handlePrerender(
+      state,
+      new Request(page, { method: "POST", body: "form=1", headers: { "next-action": "abc" } }),
+      decision(cfg),
+    );
 
     expect(await res.text()).toBe("action result");
     expect(seen).toEqual([{ method: "POST", body: "form=1", range: null }]);
@@ -225,7 +232,12 @@ describe("ISR keeps the render's status", () => {
     const cfg = cfgWith();
     const store = createStore();
     const state = stateWith(cfg, recording([]), () => createFakeCacheService(store));
-    store.set(prerenderCacheKey(new Request(page), cfg), { body: new TextEncoder().encode("legacy") }, 300, cfg.expireSec);
+    store.set(
+      prerenderCacheKey(new Request(page), cfg),
+      { body: new TextEncoder().encode("legacy") },
+      300,
+      cfg.expireSec,
+    );
     const res = await handlePrerender(state, new Request(page), decision(cfg));
     expect(res.status).toBe(200);
     expect(await res.text()).toBe("legacy");
@@ -234,8 +246,13 @@ describe("ISR keeps the render's status", () => {
 
 describe("middleware answering with a null-body status", () => {
   it("a 204 (CORS preflight) yields a decision with no body", async () => {
-    const resolve: Resolver = () => async () => new Response(null, { status: 204, headers: { "access-control-allow-origin": "*" } });
-    const outcome = await createMiddlewareInvoker(resolve, new Request("http://x/api", { method: "OPTIONS" }))("middleware", "/api", "OPTIONS");
+    const resolve: Resolver = () => async () =>
+      new Response(null, { status: 204, headers: { "access-control-allow-origin": "*" } });
+    const outcome = await createMiddlewareInvoker(resolve, new Request("http://x/api", { method: "OPTIONS" }))(
+      "middleware",
+      "/api",
+      "OPTIONS",
+    );
     expect(outcome.continue).toBe(false);
     expect(outcome.response?.middlewareStatus).toBe(204);
     expect(outcome.response?.middlewareBody).toBeUndefined();

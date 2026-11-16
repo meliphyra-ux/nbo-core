@@ -17,7 +17,7 @@ import { createHash, createVerify, generateKeyPairSync, randomBytes, randomUUID,
 import { mkdtemp, readFile, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, normalize, sep } from "node:path";
-import { run } from "../run.js";
+import { run } from "../builds/run.js";
 
 export interface FakeCall {
   method: string;
@@ -89,7 +89,12 @@ export interface FakeGitHub {
   manifests: { owner: string | null; manifest: Record<string, unknown>; state: string }[];
   app: FakeApp | null;
   // createApp registers an app directly (what a manifest conversion does).
-  createApp(input?: { name?: string; ownerLogin?: string; ownerType?: "User" | "Organization"; permissions?: Record<string, string> }): FakeApp;
+  createApp(input?: {
+    name?: string;
+    ownerLogin?: string;
+    ownerType?: "User" | "Organization";
+    permissions?: Record<string, string>;
+  }): FakeApp;
   // The person "signed in" to the fake for user authorization. GET /user and
   // GET /user/emails answer for the user as it was when the code was issued;
   // change login between sign-ins to rename them.
@@ -174,7 +179,14 @@ interface UserCode {
   user: FakeUser;
 }
 
-const defaultPermissions: Record<string, string> = { contents: "read", metadata: "read", checks: "write", pull_requests: "write", members: "read", email_addresses: "read" };
+const defaultPermissions: Record<string, string> = {
+  contents: "read",
+  metadata: "read",
+  checks: "write",
+  pull_requests: "write",
+  members: "read",
+  email_addresses: "read",
+};
 
 class HttpError extends Error {
   constructor(
@@ -187,11 +199,17 @@ class HttpError extends Error {
 
 function patternMatches(pattern: string | RegExp, path: string): boolean {
   if (pattern instanceof RegExp) return pattern.test(path);
-  const re = new RegExp(`^${pattern.split("*").map((s) => s.replace(/[.+?^${}()|[\]\\]/g, "\\$&")).join("[^/]+")}$`);
+  const re = new RegExp(
+    `^${pattern
+      .split("*")
+      .map((s) => s.replace(/[.+?^${}()|[\]\\]/g, "\\$&"))
+      .join("[^/]+")}$`,
+  );
   return re.test(path);
 }
 
-const b64urlJson = (s: string): Record<string, unknown> => JSON.parse(Buffer.from(s, "base64url").toString("utf8")) as Record<string, unknown>;
+const b64urlJson = (s: string): Record<string, unknown> =>
+  JSON.parse(Buffer.from(s, "base64url").toString("utf8")) as Record<string, unknown>;
 
 export async function startFakeGitHub(): Promise<FakeGitHub> {
   const root = await mkdtemp(join(tmpdir(), "fake-github-"));
@@ -199,7 +217,10 @@ export async function startFakeGitHub(): Promise<FakeGitHub> {
   let nextId = 1000;
   const id = () => ++nextId;
   let app: (FakeApp & { publicKey: KeyObject }) | null = null;
-  const manifestCodes = new Map<string, Record<string, unknown> & { ownerLogin: string; ownerType: "User" | "Organization" }>();
+  const manifestCodes = new Map<
+    string,
+    Record<string, unknown> & { ownerLogin: string; ownerType: "User" | "Organization" }
+  >();
   const installations = new Map<number, Installation>();
   const repos = new Map<number, Repo>();
   const tokens = new Map<string, InstallationToken>();
@@ -223,11 +244,22 @@ export async function startFakeGitHub(): Promise<FakeGitHub> {
 
   let baseUrl = "";
 
-  const makeApp = (input?: { name?: string; ownerLogin?: string; ownerType?: "User" | "Organization"; permissions?: Record<string, string>; events?: string[]; hookUrl?: string; setupUrl?: string }): FakeApp => {
+  const makeApp = (input?: {
+    name?: string;
+    ownerLogin?: string;
+    ownerType?: "User" | "Organization";
+    permissions?: Record<string, string>;
+    events?: string[];
+    hookUrl?: string;
+    setupUrl?: string;
+  }): FakeApp => {
     const { privateKey, publicKey } = generateKeyPairSync("rsa", { modulusLength: 2048 });
     const appId = id();
     const name = input?.name ?? "NBO";
-    const slug = `${name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}-${appId}`;
+    const slug = `${name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")}-${appId}`;
     const created: FakeApp & { publicKey: KeyObject } = {
       id: appId,
       slug,
@@ -241,7 +273,11 @@ export async function startFakeGitHub(): Promise<FakeGitHub> {
       ownerType: input?.ownerType ?? "User",
       permissions: input?.permissions ?? { ...defaultPermissions },
       events: input?.events ?? ["push", "pull_request", "repository", "check_run"],
-      hookConfig: { url: input?.hookUrl ?? "https://nbo.invalid/api/controlplane/github/webhook", content_type: "json", insecure_ssl: "0" },
+      hookConfig: {
+        url: input?.hookUrl ?? "https://nbo.invalid/api/controlplane/github/webhook",
+        content_type: "json",
+        insecure_ssl: "0",
+      },
       setupUrl: input?.setupUrl ?? "",
       publicKey,
     };
@@ -278,7 +314,9 @@ export async function startFakeGitHub(): Promise<FakeGitHub> {
   });
 
   const findRepo = (owner: string, name: string): Repo | undefined =>
-    [...repos.values()].find((r) => r.owner.toLowerCase() === owner.toLowerCase() && r.name.toLowerCase() === name.toLowerCase());
+    [...repos.values()].find(
+      (r) => r.owner.toLowerCase() === owner.toLowerCase() && r.name.toLowerCase() === name.toLowerCase(),
+    );
 
   // --- auth -------------------------------------------------------------
 
@@ -302,15 +340,22 @@ export async function startFakeGitHub(): Promise<FakeGitHub> {
       throw new HttpError(401, "A JSON web token could not be decoded");
     }
     if (header.alg !== "RS256") throw new HttpError(401, "'alg' must be RS256");
-    const ok = createVerify("RSA-SHA256").update(`${parts[0]}.${parts[1]}`).verify(app.publicKey, Buffer.from(parts[2]!, "base64url"));
+    const ok = createVerify("RSA-SHA256")
+      .update(`${parts[0]}.${parts[1]}`)
+      .verify(app.publicKey, Buffer.from(parts[2]!, "base64url"));
     if (!ok) throw new HttpError(401, "A JSON web token could not be decoded");
     const now = Math.floor(clock() / 1000);
     const exp = Number(claims.exp);
     const iat = Number(claims.iat);
     if (String(claims.iss) !== String(app.id)) throw new HttpError(401, "'Issuer' claim ('iss') must match the app id");
-    if (!Number.isFinite(exp) || exp <= now) throw new HttpError(401, "'Expiration time' claim ('exp') must be a numeric value representing the future time");
+    if (!Number.isFinite(exp) || exp <= now)
+      throw new HttpError(401, "'Expiration time' claim ('exp') must be a numeric value representing the future time");
     if (exp > now + 600) throw new HttpError(401, "'Expiration time' claim ('exp') is too far in the future");
-    if (!Number.isFinite(iat) || iat > now + 60) throw new HttpError(401, "'Issued at' claim ('iat') must be an Integer representing the time that the assertion was issued");
+    if (!Number.isFinite(iat) || iat > now + 60)
+      throw new HttpError(
+        401,
+        "'Issued at' claim ('iat') must be an Integer representing the time that the assertion was issued",
+      );
     return app;
   };
 
@@ -324,11 +369,13 @@ export async function startFakeGitHub(): Promise<FakeGitHub> {
   const canSee = (grant: InstallationToken, r: Repo): boolean =>
     r.installations.has(grant.installationId) && (grant.repositoryIds === null || grant.repositoryIds.includes(r.id));
 
-  const visibleRepos = (grant: InstallationToken): Repo[] => [...repos.values()].filter((r) => canSee(grant, r)).sort((a, b) => a.id - b.id);
+  const visibleRepos = (grant: InstallationToken): Repo[] =>
+    [...repos.values()].filter((r) => canSee(grant, r)).sort((a, b) => a.id - b.id);
 
   // --- git ---------------------------------------------------------------
 
-  const git = (cwd: string, args: string[], input?: string, env?: Record<string, string>) => run("git", args, { cwd, input, env: { GIT_TERMINAL_PROMPT: "0", ...env }, timeoutMs: 30_000 });
+  const git = (cwd: string, args: string[], input?: string, env?: Record<string, string>) =>
+    run("git", args, { cwd, input, env: { GIT_TERMINAL_PROMPT: "0", ...env }, timeoutMs: 30_000 });
 
   const writeTree = async (bare: string, files: Record<string, string>): Promise<string> => {
     const here = new Map<string, string>();
@@ -364,7 +411,14 @@ export async function startFakeGitHub(): Promise<FakeGitHub> {
     const tree = await writeTree(r.bareDir, files ?? { "README.md": `# ${r.name}\n\ncommit ${r.commits}\n` });
     const parent = (await headOf(r.bareDir, branch)) ?? (await headOf(r.bareDir, r.defaultBranch));
     const date = `${1_700_000_000 + r.commits * 60} +0000`;
-    const env = { GIT_AUTHOR_NAME: "Octo", GIT_AUTHOR_EMAIL: "octo@example.test", GIT_COMMITTER_NAME: "Octo", GIT_COMMITTER_EMAIL: "octo@example.test", GIT_AUTHOR_DATE: date, GIT_COMMITTER_DATE: date };
+    const env = {
+      GIT_AUTHOR_NAME: "Octo",
+      GIT_AUTHOR_EMAIL: "octo@example.test",
+      GIT_COMMITTER_NAME: "Octo",
+      GIT_COMMITTER_EMAIL: "octo@example.test",
+      GIT_AUTHOR_DATE: date,
+      GIT_COMMITTER_DATE: date,
+    };
     const args = ["commit-tree", tree, ...(parent ? ["-p", parent] : []), "-m", `commit ${r.commits} on ${branch}`];
     const sha = (await git(r.bareDir, args, undefined, env)).trim();
     await git(r.bareDir, ["update-ref", `refs/heads/${branch}`, sha]);
@@ -399,7 +453,10 @@ export async function startFakeGitHub(): Promise<FakeGitHub> {
       throw new HttpError(404, "Not Found");
     }
     const data = await readFile(file);
-    res.writeHead(200, { "Content-Type": rest.startsWith("objects/") ? "application/x-git-loose-object" : "text/plain", "Content-Length": data.length });
+    res.writeHead(200, {
+      "Content-Type": rest.startsWith("objects/") ? "application/x-git-loose-object" : "text/plain",
+      "Content-Length": data.length,
+    });
     res.end(req.method === "HEAD" ? undefined : data);
   };
 
@@ -432,7 +489,8 @@ export async function startFakeGitHub(): Promise<FakeGitHub> {
 
   // oauthAnswer: github.com's token endpoint answers form-encoded unless asked for JSON.
   const oauthAnswer = (req: IncomingMessage, res: ServerResponse, value: Record<string, string>): void => {
-    if (!fake.tokenAnswerAlwaysForm && (req.headers.accept ?? "").includes("application/json")) return json(res, 200, value);
+    if (!fake.tokenAnswerAlwaysForm && (req.headers.accept ?? "").includes("application/json"))
+      return json(res, 200, value);
     res.writeHead(200, { "Content-Type": "application/x-www-form-urlencoded; charset=utf-8" });
     res.end(new URLSearchParams(value).toString());
   };
@@ -466,13 +524,20 @@ export async function startFakeGitHub(): Promise<FakeGitHub> {
     }
 
     // Manifest flow (browser form posts).
-    if (method === "POST" && ((m = /^\/settings\/apps\/new$/.exec(path)) || (m = /^\/organizations\/([^/]+)\/settings\/apps\/new$/.exec(path)))) {
+    if (
+      method === "POST" &&
+      ((m = /^\/settings\/apps\/new$/.exec(path)) || (m = /^\/organizations\/([^/]+)\/settings\/apps\/new$/.exec(path)))
+    ) {
       const owner = m[1] ?? null;
       const manifest = JSON.parse(String(body.manifest ?? "{}")) as Record<string, unknown>;
       const state = q.get("state") ?? "";
       manifests.push({ owner, manifest, state });
       const code = randomBytes(10).toString("hex");
-      manifestCodes.set(code, { ...manifest, ownerLogin: owner ?? fake.user.login, ownerType: owner ? "Organization" : "User" });
+      manifestCodes.set(code, {
+        ...manifest,
+        ownerLogin: owner ?? fake.user.login,
+        ownerType: owner ? "Organization" : "User",
+      });
       const to = new URL(String(manifest.redirect_url));
       to.searchParams.set("code", code);
       to.searchParams.set("state", state);
@@ -527,7 +592,13 @@ export async function startFakeGitHub(): Promise<FakeGitHub> {
       if (!app || q.get("client_id") !== app.clientId) throw new HttpError(404, "Not Found");
       const redirectUri = q.get("redirect_uri") ?? "";
       const code = randomBytes(10).toString("hex");
-      userCodes.set(code, { clientId: app.clientId, redirectUri, challenge: q.get("code_challenge") ?? "", login: fake.user.login, user: structuredClone(fake.user) });
+      userCodes.set(code, {
+        clientId: app.clientId,
+        redirectUri,
+        challenge: q.get("code_challenge") ?? "",
+        login: fake.user.login,
+        user: structuredClone(fake.user),
+      });
       const to = new URL(redirectUri);
       to.searchParams.set("code", code);
       to.searchParams.set("state", q.get("state") ?? "");
@@ -538,15 +609,24 @@ export async function startFakeGitHub(): Promise<FakeGitHub> {
       const grant = userCodes.get(code);
       userCodes.delete(code);
       if (!app || !grant || body.client_id !== app.clientId || body.client_secret !== app.clientSecret) {
-        return oauthAnswer(req, res, { error: "bad_verification_code", error_description: "The code passed is incorrect or expired." });
+        return oauthAnswer(req, res, {
+          error: "bad_verification_code",
+          error_description: "The code passed is incorrect or expired.",
+        });
       }
       if (body.redirect_uri !== undefined && body.redirect_uri !== grant.redirectUri) {
-        return oauthAnswer(req, res, { error: "redirect_uri_mismatch", error_description: "The redirect_uri does not match." });
+        return oauthAnswer(req, res, {
+          error: "redirect_uri_mismatch",
+          error_description: "The redirect_uri does not match.",
+        });
       }
       if (grant.challenge !== "") {
         const verifier = String(body.code_verifier ?? "");
         if (createHash("sha256").update(verifier).digest("base64url") !== grant.challenge) {
-          return oauthAnswer(req, res, { error: "bad_verification_code", error_description: "The code_verifier does not match." });
+          return oauthAnswer(req, res, {
+            error: "bad_verification_code",
+            error_description: "The code_verifier does not match.",
+          });
         }
       }
       const token = `ghu_${randomBytes(18).toString("hex")}`;
@@ -559,7 +639,8 @@ export async function startFakeGitHub(): Promise<FakeGitHub> {
     if (method === "DELETE" && (m = /^\/applications\/([^/]+)\/token$/.exec(path))) {
       const basic = /^basic\s+(.+)$/i.exec(req.headers.authorization ?? "");
       const [cid, secret] = basic ? Buffer.from(basic[1]!.trim(), "base64").toString("utf8").split(":") : [];
-      if (!app || m[1] !== app.clientId || cid !== app.clientId || secret !== app.clientSecret) throw new HttpError(401, "Bad credentials");
+      if (!app || m[1] !== app.clientId || cid !== app.clientId || secret !== app.clientSecret)
+        throw new HttpError(401, "Bad credentials");
       const token = String(body.access_token ?? "");
       userTokens.delete(token);
       userTokenUsers.delete(token);
@@ -571,7 +652,15 @@ export async function startFakeGitHub(): Promise<FakeGitHub> {
     // App (JWT) endpoints.
     if (method === "GET" && path === "/app") {
       const a = requireAppJwt(req);
-      return json(res, 200, { id: a.id, slug: a.slug, name: a.name, owner: { login: a.ownerLogin }, html_url: a.htmlUrl, permissions: a.permissions, events: a.events });
+      return json(res, 200, {
+        id: a.id,
+        slug: a.slug,
+        name: a.name,
+        owner: { login: a.ownerLogin },
+        html_url: a.htmlUrl,
+        permissions: a.permissions,
+        events: a.events,
+      });
     }
     if (method === "GET" && path === "/app/installations") {
       requireAppJwt(req);
@@ -596,14 +685,23 @@ export async function startFakeGitHub(): Promise<FakeGitHub> {
       if (repositoryIds) {
         for (const rid of repositoryIds) {
           const r = repos.get(rid);
-          if (!r || !r.installations.has(inst.id)) throw new HttpError(422, "There is at least one repository that does not exist or is not accessible to the parent installation.");
+          if (!r || !r.installations.has(inst.id))
+            throw new HttpError(
+              422,
+              "There is at least one repository that does not exist or is not accessible to the parent installation.",
+            );
         }
       }
       const permissions = (body.permissions as Record<string, string> | undefined) ?? { ...(app?.permissions ?? {}) };
       const token = `ghs_${randomBytes(18).toString("hex")}`;
       const expiresAt = clock() + 60 * 60_000;
       tokens.set(token, { installationId: inst.id, repositoryIds, permissions, expiresAt });
-      return json(res, 201, { token, expires_at: new Date(expiresAt).toISOString(), permissions, repository_selection: repositoryIds ? "selected" : inst.repositorySelection });
+      return json(res, 201, {
+        token,
+        expires_at: new Date(expiresAt).toISOString(),
+        permissions,
+        repository_selection: repositoryIds ? "selected" : inst.repositorySelection,
+      });
     }
     if (path === "/app/hook/config") {
       const a = requireAppJwt(req);
@@ -658,9 +756,20 @@ export async function startFakeGitHub(): Promise<FakeGitHub> {
     if (method === "GET" && (path === "/user" || path === "/user/emails")) {
       const u = userTokenUsers.get(bearer(req));
       if (!u) throw new HttpError(401, "Bad credentials");
-      if (path === "/user") return json(res, 200, { login: u.login, id: u.id, name: u.name ?? null, avatar_url: `https://avatars.example.test/u/${u.id}`, type: "User" });
+      if (path === "/user")
+        return json(res, 200, {
+          login: u.login,
+          id: u.id,
+          name: u.name ?? null,
+          avatar_url: `https://avatars.example.test/u/${u.id}`,
+          type: "User",
+        });
       const emails = u.emails ?? [{ email: `${u.login}@example.test`, primary: true, verified: true }];
-      return json(res, 200, emails.map((e) => ({ ...e, visibility: e.primary ? "private" : null })));
+      return json(
+        res,
+        200,
+        emails.map((e) => ({ ...e, visibility: e.primary ? "private" : null })),
+      );
     }
 
     // Installation-token endpoints.
@@ -671,11 +780,17 @@ export async function startFakeGitHub(): Promise<FakeGitHub> {
       const inst = installations.get(grant.installationId);
       // An installation token reads members only of its own organization, with Members: read.
       if (!inst || inst.account.login.toLowerCase() !== org.toLowerCase()) throw new HttpError(404, "Not Found");
-      if (!(grant.permissions.members === "read" || grant.permissions.members === "write")) throw new HttpError(403, "Resource not accessible by integration");
+      if (!(grant.permissions.members === "read" || grant.permissions.members === "write"))
+        throw new HttpError(403, "Resource not accessible by integration");
       const state = memberships.get(`${org.toLowerCase()}/${login.toLowerCase()}`);
       if (!state) throw new HttpError(404, "Not Found");
       const userId = login.toLowerCase() === fake.user.login.toLowerCase() ? fake.user.id : accountId(login);
-      return json(res, 200, { state, role: "member", organization: { login: inst.account.login, id: inst.account.id }, user: { login, id: userId } });
+      return json(res, 200, {
+        state,
+        role: "member",
+        organization: { login: inst.account.login, id: inst.account.id },
+        user: { login, id: userId },
+      });
     }
     if (method === "GET" && path === "/installation/repositories") {
       const { grant } = requireInstallationToken(req);
@@ -683,7 +798,16 @@ export async function startFakeGitHub(): Promise<FakeGitHub> {
       const all = visibleRepos(grant);
       const slice = all.slice((page - 1) * perPage, page * perPage);
       const more = page * perPage < all.length;
-      return json(res, 200, { total_count: all.length, repository_selection: installations.get(grant.installationId)?.repositorySelection, repositories: slice.map(repoJson) }, more ? linkNext(path, q, { page: String(page + 1) }) : {});
+      return json(
+        res,
+        200,
+        {
+          total_count: all.length,
+          repository_selection: installations.get(grant.installationId)?.repositorySelection,
+          repositories: slice.map(repoJson),
+        },
+        more ? linkNext(path, q, { page: String(page + 1) }) : {},
+      );
     }
     if (method === "GET" && (m = /^\/repositories\/(\d+)$/.exec(path))) {
       const { grant } = requireInstallationToken(req);
@@ -725,9 +849,16 @@ export async function startFakeGitHub(): Promise<FakeGitHub> {
       const owner = String(body.owner ?? login);
       const name = String(body.name ?? "");
       if (name === "" || findRepo(owner, name)) throw new HttpError(422, "Name already exists on this account");
-      const insts = [...installations.values()].filter((i) => i.account.login.toLowerCase() === owner.toLowerCase() && i.repositorySelection === "all").map((i) => i.id);
+      const insts = [...installations.values()]
+        .filter((i) => i.account.login.toLowerCase() === owner.toLowerCase() && i.repositorySelection === "all")
+        .map((i) => i.id);
       const delayed = fake.generateGrantDelay > 0;
-      const created = await fake.addRepo(delayed ? [] : insts, { name, owner, private: body.private === true, defaultBranch: t.defaultBranch });
+      const created = await fake.addRepo(delayed ? [] : insts, {
+        name,
+        owner,
+        private: body.private === true,
+        defaultBranch: t.defaultBranch,
+      });
       if (delayed) pendingGrants.set(created.id, { insts, left: fake.generateGrantDelay });
       return json(res, 201, repoJson(repos.get(created.id)!));
     }
@@ -738,7 +869,8 @@ export async function startFakeGitHub(): Promise<FakeGitHub> {
         const token = bearer(req);
         const grant = tokens.get(token);
         const userOk = userTokens.has(token);
-        if (!userOk && (!grant || grant.expiresAt <= clock() || !canSee(grant, r))) throw new HttpError(404, "Not Found");
+        if (!userOk && (!grant || grant.expiresAt <= clock() || !canSee(grant, r)))
+          throw new HttpError(404, "Not Found");
       }
       return json(res, 200, repoJson(r));
     }
@@ -752,19 +884,30 @@ export async function startFakeGitHub(): Promise<FakeGitHub> {
       const text = await readBody(req);
       const headers: Record<string, string> = {};
       for (const [k, v] of Object.entries(req.headers)) if (typeof v === "string") headers[k] = v;
-      const call: FakeCall = { method: req.method ?? "GET", path: u.pathname, query: u.searchParams, body: parseBody(req, text), auth: req.headers.authorization ?? "", headers };
+      const call: FakeCall = {
+        method: req.method ?? "GET",
+        path: u.pathname,
+        query: u.searchParams,
+        body: parseBody(req, text),
+        auth: req.headers.authorization ?? "",
+        headers,
+      };
       calls.push(call);
       const hook = intercepts.findIndex((f) => f.method === call.method && patternMatches(f.pattern, call.path));
       if (hook >= 0) return intercepts.splice(hook, 1)[0]!.respond(res);
       const fail = failures.findIndex((f) => f.method === call.method && patternMatches(f.pattern, call.path));
       if (fail >= 0) {
         const f = failures.splice(fail, 1)[0]!;
-        return json(res, f.status, { message: `Fake failure ${f.status}`, documentation_url: "https://docs.github.com/rest" });
+        return json(res, f.status, {
+          message: `Fake failure ${f.status}`,
+          documentation_url: "https://docs.github.com/rest",
+        });
       }
       try {
         await handle(req, res, call);
       } catch (err) {
-        if (err instanceof HttpError) return json(res, err.status, { message: err.message, documentation_url: "https://docs.github.com/rest" });
+        if (err instanceof HttpError)
+          return json(res, err.status, { message: err.message, documentation_url: "https://docs.github.com/rest" });
         return json(res, 500, { message: err instanceof Error ? err.message : String(err) });
       }
     })().catch(() => {
@@ -813,7 +956,10 @@ export async function startFakeGitHub(): Promise<FakeGitHub> {
     async addRepo(installationIds, input) {
       const repoId = id();
       const bareDir = join(root, `${repoId}-${input.name}.git`);
-      await run("git", ["init", "--bare", "--quiet", bareDir], { env: { GIT_TERMINAL_PROMPT: "0" }, timeoutMs: 30_000 });
+      await run("git", ["init", "--bare", "--quiet", bareDir], {
+        env: { GIT_TERMINAL_PROMPT: "0" },
+        timeoutMs: 30_000,
+      });
       const r: Repo = {
         id: repoId,
         name: input.name,
@@ -880,4 +1026,3 @@ export async function startFakeGitHub(): Promise<FakeGitHub> {
   };
   return fake;
 }
-

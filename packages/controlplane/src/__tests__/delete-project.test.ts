@@ -36,7 +36,15 @@ describe("DELETE /projects/{id}", () => {
 
   it("with resources=true also tears down every custom environment's clouds", async () => {
     const id = await deployedProject(h, { clouds: bothClouds });
-    expect((await h.call("POST", `/projects/${id}/stages`, { name: "staging", branch: "staging", clouds: [{ target: "kubernetes" }] })).status).toBe(201);
+    expect(
+      (
+        await h.call("POST", `/projects/${id}/stages`, {
+          name: "staging",
+          branch: "staging",
+          clouds: [{ target: "kubernetes" }],
+        })
+      ).status,
+    ).toBe(201);
     const res = await h.call("DELETE", `/projects/${id}?resources=true`);
     expect(res.status).toBe(204);
     const p = `p${id.split("_")[1]!.slice(0, 8)}`;
@@ -49,7 +57,13 @@ describe("DELETE /projects/{id}", () => {
 
   it("removes every custom environment's host from the edge", async () => {
     const id = await deployedProject(h);
-    const stage = (await h.call("POST", `/projects/${id}/stages`, { name: "staging", branch: "staging", clouds: [{ target: "kubernetes" }] })).json;
+    const stage = (
+      await h.call("POST", `/projects/${id}/stages`, {
+        name: "staging",
+        branch: "staging",
+        clouds: [{ target: "kubernetes" }],
+      })
+    ).json;
     h.v2.queue.enqueue(id, h.head, { stageId: stage.id });
     await h.v2.queue.idle(id);
     expect(h.registry.get("staging--storefront.127.0.0.1.sslip.io")).toBeDefined();

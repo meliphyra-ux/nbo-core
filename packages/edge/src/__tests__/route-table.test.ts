@@ -35,7 +35,10 @@ describe("parseRouteTable", () => {
     expect(() => parse({ ...valid, targets: { "a.com": { backends: [], extra: 1 } } })).toThrow(/extra/);
   });
   it("rejects a non-https via.url", () => {
-    const bad = { ...valid, targets: { "a.com": { backends: [{ url: "http://x", weight: 1, via: { ...via, url: "http://r" } }] } } };
+    const bad = {
+      ...valid,
+      targets: { "a.com": { backends: [{ url: "http://x", weight: 1, via: { ...via, url: "http://r" } }] } },
+    };
     expect(() => parse(bad)).toThrow(/backends\[0\]/);
   });
   it("rejects a challenge token with a slash", () => {
@@ -71,7 +74,9 @@ describe("Registry.replaceAll", () => {
 describe("route table key hygiene", () => {
   const b = [{ url: "http://1.1.1.1", weight: 1 }];
   it("rejects hosts that normalise to the same key", () => {
-    expect(() => parse({ version: 1, targets: { "A.com": { backends: b }, "a.com.": { backends: b } } })).toThrow(/a\.com/);
+    expect(() => parse({ version: 1, targets: { "A.com": { backends: b }, "a.com.": { backends: b } } })).toThrow(
+      /a\.com/,
+    );
   });
   it("replaceAll rejects duplicate normalised hosts", () => {
     const r = createRegistry();
@@ -79,7 +84,10 @@ describe("route table key hygiene", () => {
     expect(() => r.replaceAll({ "A.com": { backends: be }, "a.com": { backends: be } })).toThrow(/a\.com/);
   });
   it("keeps a __proto__ host as own data", () => {
-    const t = parse({ version: 1, targets: JSON.parse('{"__proto__":{"backends":[{"url":"http://1.1.1.1","weight":1}]}}') });
+    const t = parse({
+      version: 1,
+      targets: JSON.parse('{"__proto__":{"backends":[{"url":"http://1.1.1.1","weight":1}]}}'),
+    });
     expect(Object.keys(t.targets)).toEqual(["__proto__"]);
   });
   it("treats constructor as a plain challenge token", () => {

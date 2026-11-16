@@ -85,10 +85,20 @@ function baseManifest(): Record<string, unknown> {
   return {
     specVersion: "1.0",
     build: { id: "b_test", createdAt: "2026-01-01T00:00:00Z", framework: { name: "nextjs" } },
-    requires: { capabilities: ["fn.streaming", "prerender.isr", "prerender.onDemand", "images.optimize"], extensions: [] },
+    requires: {
+      capabilities: ["fn.streaming", "prerender.isr", "prerender.onDemand", "images.optimize"],
+      extensions: [],
+    },
     routing: { trailingSlash: "never", cleanUrls: true, caseSensitive: true },
     functions: ["ssr", "middleware"],
-    crons: [{ id: "nightly", schedule: "0 3 * * *", timezone: "UTC", target: { function: "ssr", path: "/api/cron", method: "POST" } }],
+    crons: [
+      {
+        id: "nightly",
+        schedule: "0 3 * * *",
+        timezone: "UTC",
+        target: { function: "ssr", path: "/api/cron", method: "POST" },
+      },
+    ],
     digests: {},
   };
 }
@@ -112,7 +122,13 @@ function routesWith(rule: Record<string, unknown>): Record<string, unknown> {
 }
 
 function baseStaticEntry(): Record<string, unknown> {
-  return { file: "index.html", digest: `sha256:${"0".repeat(64)}`, size: 1, contentType: "text/html; charset=utf-8", cache: "revalidate" };
+  return {
+    file: "index.html",
+    digest: `sha256:${"0".repeat(64)}`,
+    size: 1,
+    contentType: "text/html; charset=utf-8",
+    cache: "revalidate",
+  };
 }
 
 function basePrerenderConfig(): Record<string, unknown> {
@@ -143,19 +159,37 @@ describe("compiledSchemas: 1.0 base shapes", () => {
   it("accepts the middleware rule, the SPA fallback and a 404 error page", () => {
     const routes = {
       version: 1,
-      beforeFiles: [{ id: "middleware-0", match: { path: "^/m" }, action: { type: "middleware", function: "middleware" } }],
-      fallback: [{ id: "spa-fallback", match: { path: "^/", pathNot: "\\.[A-Za-z0-9]+$" }, action: { type: "rewrite", path: "/" } }],
+      beforeFiles: [
+        { id: "middleware-0", match: { path: "^/m" }, action: { type: "middleware", function: "middleware" } },
+      ],
+      fallback: [
+        {
+          id: "spa-fallback",
+          match: { path: "^/", pathNot: "\\.[A-Za-z0-9]+$" },
+          action: { type: "rewrite", path: "/" },
+        },
+      ],
       error: { "404": { file: "/404" } },
     };
     expect(compiledSchemas.routes(routes)).toBe(true);
   });
 
   it("accepts a redirect with location and a 308 status", () => {
-    expect(compiledSchemas.routes(routesWith({ id: "r", match: { path: "^/old$" }, action: { type: "redirect", location: "/new", status: 308 } }))).toBe(true);
+    expect(
+      compiledSchemas.routes(
+        routesWith({ id: "r", match: { path: "^/old$" }, action: { type: "redirect", location: "/new", status: 308 } }),
+      ),
+    ).toBe(true);
   });
 
   it("accepts the PPR placeholder shape the Next adapter writes", () => {
-    const ppr = { ...basePrerenderConfig(), revalidateSec: 0, expireSec: 0, onMiss: "blocking", "x-nbo-ppr": { postponedState: "abc" } };
+    const ppr = {
+      ...basePrerenderConfig(),
+      revalidateSec: 0,
+      expireSec: 0,
+      onMiss: "blocking",
+      "x-nbo-ppr": { postponedState: "abc" },
+    };
     expect(compiledSchemas.prerender({ version: 1, prerenders: [ppr] })).toBe(true);
   });
 });
@@ -193,15 +227,28 @@ describe("compiledSchemas: reserved names are rejected", () => {
   });
 
   it("rejects a rewrite url", () => {
-    expect(compiledSchemas.routes(routesWith({ ...baseRule(), action: { type: "rewrite", url: "https://example.com/" } }))).toBe(false);
+    expect(
+      compiledSchemas.routes(routesWith({ ...baseRule(), action: { type: "rewrite", url: "https://example.com/" } })),
+    ).toBe(false);
   });
 
   it("rejects match.has", () => {
-    expect(compiledSchemas.routes(routesWith({ ...baseRule(), match: { path: "^/a$", has: [{ type: "header", key: "x", value: { eq: "1" } }] } }))).toBe(false);
+    expect(
+      compiledSchemas.routes(
+        routesWith({ ...baseRule(), match: { path: "^/a$", has: [{ type: "header", key: "x", value: { eq: "1" } }] } }),
+      ),
+    ).toBe(false);
   });
 
   it("rejects match.missing", () => {
-    expect(compiledSchemas.routes(routesWith({ ...baseRule(), match: { path: "^/a$", missing: [{ type: "header", key: "x", value: { eq: "1" } }] } }))).toBe(false);
+    expect(
+      compiledSchemas.routes(
+        routesWith({
+          ...baseRule(),
+          match: { path: "^/a$", missing: [{ type: "header", key: "x", value: { eq: "1" } }] },
+        }),
+      ),
+    ).toBe(false);
   });
 
   it('rejects error["500"]', () => {
@@ -213,15 +260,23 @@ describe("compiledSchemas: reserved names are rejected", () => {
   });
 
   it("rejects static variants", () => {
-    expect(compiledSchemas.staticIndex({ files: { "/": { ...baseStaticEntry(), variants: { br: `sha256:${"1".repeat(64)}` } } } })).toBe(false);
+    expect(
+      compiledSchemas.staticIndex({
+        files: { "/": { ...baseStaticEntry(), variants: { br: `sha256:${"1".repeat(64)}` } } },
+      }),
+    ).toBe(false);
   });
 
   it('rejects the "cron" capability', () => {
-    expect(compiledSchemas.manifest({ ...baseManifest(), requires: { capabilities: ["cron"], extensions: [] } })).toBe(false);
+    expect(compiledSchemas.manifest({ ...baseManifest(), requires: { capabilities: ["cron"], extensions: [] } })).toBe(
+      false,
+    );
   });
 
   it('rejects the "route.middleware" capability', () => {
-    expect(compiledSchemas.manifest({ ...baseManifest(), requires: { capabilities: ["route.middleware"], extensions: [] } })).toBe(false);
+    expect(
+      compiledSchemas.manifest({ ...baseManifest(), requires: { capabilities: ["route.middleware"], extensions: [] } }),
+    ).toBe(false);
   });
 
   it('rejects the "cron" capability on a function', () => {
@@ -229,15 +284,32 @@ describe("compiledSchemas: reserved names are rejected", () => {
   });
 
   it("rejects cleanUrls: false", () => {
-    expect(compiledSchemas.manifest({ ...baseManifest(), routing: { trailingSlash: "never", cleanUrls: false, caseSensitive: true } })).toBe(false);
+    expect(
+      compiledSchemas.manifest({
+        ...baseManifest(),
+        routing: { trailingSlash: "never", cleanUrls: false, caseSensitive: true },
+      }),
+    ).toBe(false);
   });
 
   it("rejects caseSensitive: false", () => {
-    expect(compiledSchemas.manifest({ ...baseManifest(), routing: { trailingSlash: "never", cleanUrls: true, caseSensitive: false } })).toBe(false);
+    expect(
+      compiledSchemas.manifest({
+        ...baseManifest(),
+        routing: { trailingSlash: "never", cleanUrls: true, caseSensitive: false },
+      }),
+    ).toBe(false);
   });
 
   it("rejects a cron timezone other than UTC (Europe/Paris)", () => {
-    const crons = [{ id: "n", schedule: "0 3 * * *", timezone: "Europe/Paris", target: { function: "ssr", path: "/c", method: "POST" } }];
+    const crons = [
+      {
+        id: "n",
+        schedule: "0 3 * * *",
+        timezone: "Europe/Paris",
+        target: { function: "ssr", path: "/c", method: "POST" },
+      },
+    ];
     expect(compiledSchemas.manifest({ ...baseManifest(), crons })).toBe(false);
   });
 
@@ -255,11 +327,19 @@ describe("compiledSchemas: reserved names are rejected", () => {
   });
 
   it("rejects redirect status 303", () => {
-    expect(compiledSchemas.routes(routesWith({ id: "r", match: { path: "^/old$" }, action: { type: "redirect", location: "/new", status: 303 } }))).toBe(false);
+    expect(
+      compiledSchemas.routes(
+        routesWith({ id: "r", match: { path: "^/old$" }, action: { type: "redirect", location: "/new", status: 303 } }),
+      ),
+    ).toBe(false);
   });
 
   it("rejects a redirect without a status", () => {
-    expect(compiledSchemas.routes(routesWith({ id: "r", match: { path: "^/old$" }, action: { type: "redirect", location: "/new" } }))).toBe(false);
+    expect(
+      compiledSchemas.routes(
+        routesWith({ id: "r", match: { path: "^/old$" }, action: { type: "redirect", location: "/new" } }),
+      ),
+    ).toBe(false);
   });
 });
 
@@ -277,7 +357,9 @@ describe("compiledSchemas: x- extension keys", () => {
   });
 
   it("accepts x-acme-tag on a prerender config", () => {
-    expect(compiledSchemas.prerender({ version: 1, prerenders: [{ ...basePrerenderConfig(), "x-acme-tag": [1] }] })).toBe(true);
+    expect(
+      compiledSchemas.prerender({ version: 1, prerenders: [{ ...basePrerenderConfig(), "x-acme-tag": [1] }] }),
+    ).toBe(true);
   });
 
   it("accepts x-acme-tag on a static-index entry", () => {
@@ -289,11 +371,17 @@ describe("compiledSchemas: x- extension keys", () => {
   });
 
   it("rejects an x- key on an object that isn't extendable (route action)", () => {
-    expect(compiledSchemas.routes(routesWith({ ...baseRule(), action: { type: "rewrite", function: "ssr", "x-acme-tag": 1 } }))).toBe(false);
+    expect(
+      compiledSchemas.routes(
+        routesWith({ ...baseRule(), action: { type: "rewrite", function: "ssr", "x-acme-tag": 1 } }),
+      ),
+    ).toBe(false);
   });
 
   it("still rejects x-nbo-ppr without postponedState next to the x- rule", () => {
-    expect(compiledSchemas.prerender({ version: 1, prerenders: [{ ...basePrerenderConfig(), "x-nbo-ppr": {} }] })).toBe(false);
+    expect(compiledSchemas.prerender({ version: 1, prerenders: [{ ...basePrerenderConfig(), "x-nbo-ppr": {} }] })).toBe(
+      false,
+    );
   });
 });
 

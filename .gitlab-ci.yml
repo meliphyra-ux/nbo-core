@@ -5,6 +5,13 @@
 # version. The pipeline only ever uses committed files: no job runs git add,
 # commit, push, stash, reset, checkout or clean.
 
+# An optional second file with more jobs, present only in a larger workspace.
+include:
+  - local: platform/ci.yml
+    rules:
+      - exists:
+          - platform/ci.yml
+
 stages:
   - check
   - determinism
@@ -76,14 +83,10 @@ node-checks:
     - pnpm test:ci
     - pnpm docs:check
 
-# pnpm lint reports about 95 errors that were there before the pipeline
-# (docs/points-to-improve-or-fix.md, item 16). It runs and shows them, but does
-# not fail the pipeline until they are fixed; then remove allow_failure.
 lint:
   extends: .node
   stage: check
   timeout: 15m
-  allow_failure: true
   script:
     - pnpm lint
 

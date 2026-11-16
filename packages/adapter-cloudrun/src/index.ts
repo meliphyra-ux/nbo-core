@@ -19,7 +19,22 @@ export {
   parseServiceLabels,
   serviceLabels,
 } from "./deploy.js";
-export { secretId, ensureSecretVersion, grantSecretAccessor, secretManagerAccessError, destroySupersededVersions, deleteAppSecrets } from "./secrets.js";
-export { defaultComputeServiceAccount, grantInvoker, serviceIdentityId, serviceIdentityEmail, ensureServiceIdentity, deleteServiceIdentity } from "./iam.js";
+export {
+  secretId,
+  ensureSecretVersion,
+  grantSecretAccessor,
+  secretManagerAccessError,
+  destroySupersededVersions,
+  deleteAppSecrets,
+} from "./secrets.js";
+export {
+  defaultComputeServiceAccount,
+  grantInvoker,
+  serviceIdentityId,
+  serviceIdentityEmail,
+  ensureServiceIdentity,
+  deleteServiceIdentity,
+} from "./iam.js";
 export type { ToolContext, CommandRunner } from "./run.js";
+export { childEnv } from "./run.js";
 export { pushImage } from "./image.js";

@@ -33,16 +33,19 @@ async function readIndex(nboDir: string): Promise<Record<string, IndexEntry>> {
   try {
     doc = JSON.parse(await readFile(join(nboDir, "static.index.json"), "utf8"));
   } catch (err) {
+    // eslint-disable-next-line preserve-caught-error -- message-only error, adding cause would change the error object
     throw new Error(`static.index.json: ${err instanceof Error ? err.message : String(err)}`);
   }
   const files = (doc as { files?: unknown } | null)?.files;
-  if (files === null || typeof files !== "object" || Array.isArray(files)) throw new Error("static.index.json: files must be an object");
+  if (files === null || typeof files !== "object" || Array.isArray(files))
+    throw new Error("static.index.json: files must be an object");
   return files as Record<string, IndexEntry>;
 }
 
 // safeRel accepts only a plain relative path that stays under static/.
 function safeRel(file: unknown): file is string {
-  if (typeof file !== "string" || file === "" || file.includes("\\") || file.startsWith("/") || file.includes("\0")) return false;
+  if (typeof file !== "string" || file === "" || file.includes("\\") || file.startsWith("/") || file.includes("\0"))
+    return false;
   return file.split("/").every((seg) => seg !== "" && seg !== "." && seg !== "..");
 }
 
@@ -51,7 +54,12 @@ async function writeEmpty(outDir: string): Promise<void> {
   await writeFile(join(outDir, "index.json"), JSON.stringify({ version: 1, contentId: "", files: {} }));
 }
 
-export async function writeCarry(previousNboDir: string, nboDir: string, outDir: string, maxBytes = CARRY_MAX_BYTES): Promise<CarrySummary> {
+export async function writeCarry(
+  previousNboDir: string,
+  nboDir: string,
+  outDir: string,
+  maxBytes = CARRY_MAX_BYTES,
+): Promise<CarrySummary> {
   const skip = async (reason: string): Promise<CarrySummary> => {
     await writeEmpty(outDir);
     return { files: 0, bytes: 0, hash: "", skipped: `previous build's files not kept: ${reason}` };
@@ -61,7 +69,9 @@ export async function writeCarry(previousNboDir: string, nboDir: string, outDir:
   let previousId: string;
   try {
     before = await readIndex(previousNboDir);
-    previousId = contentId(JSON.parse(await readFile(join(previousNboDir, "manifest.json"), "utf8")) as Record<string, unknown>);
+    previousId = contentId(
+      JSON.parse(await readFile(join(previousNboDir, "manifest.json"), "utf8")) as Record<string, unknown>,
+    );
   } catch (err) {
     const code = (err as NodeJS.ErrnoException).code;
     return skip(code === "ENOENT" ? "its output is missing" : err instanceof Error ? err.message : String(err));
@@ -77,7 +87,13 @@ export async function writeCarry(previousNboDir: string, nboDir: string, outDir:
   let bytes = 0;
   for (const path of Object.keys(before).sort()) {
     const entry = before[path]!;
-    if (entry === null || typeof entry !== "object" || entry.cache !== "immutable" || typeof entry.contentType !== "string") continue;
+    if (
+      entry === null ||
+      typeof entry !== "object" ||
+      entry.cache !== "immutable" ||
+      typeof entry.contentType !== "string"
+    )
+      continue;
     if (Object.hasOwn(after, path) || !safeRel(entry.file)) continue;
     let size: number;
     try {
@@ -90,7 +106,8 @@ export async function writeCarry(previousNboDir: string, nboDir: string, outDir:
     picked.push({ path, entry, size });
     bytes += size;
   }
-  if (bytes > maxBytes) return skip(`${Math.ceil(bytes / MIB)} MiB is over the ${Math.round((maxBytes / MIB) * 100) / 100} MiB limit`);
+  if (bytes > maxBytes)
+    return skip(`${Math.ceil(bytes / MIB)} MiB is over the ${Math.round((maxBytes / MIB) * 100) / 100} MiB limit`);
   if (picked.length === 0) {
     await writeEmpty(outDir);
     return { files: 0, bytes: 0, hash: "" };
@@ -146,7 +163,9 @@ export async function withCarry<T>(
     try {
       await rm(dir, { recursive: true, force: true });
     } catch (err) {
-      console.warn(`nbo: could not remove the carry directory ${dir}: ${err instanceof Error ? err.message : String(err)}`);
+      console.warn(
+        `nbo: could not remove the carry directory ${dir}: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
   }
 }

@@ -6,11 +6,11 @@ One naming note. This manual says **environment**. NBO's API, its code and Terra
 
 ## The built-in environments
 
-| Environment | What it does |
-| --- | --- |
-| **Production** | Everything NBO did before environments existed. Its branch is the project's production branch (`PUT /projects/{id}/git`), its clouds and traffic split are the project's clouds and split (`/projects/{id}/traffic`), its address is the project address. |
-| **Preview** | The variables every [ephemeral environment](#ephemeral-environments) uses. Preview itself is not an environment with one branch and one address: each ephemeral environment is a short-lived environment of its own that uses these values. |
-| **Development** | Variables only. It never deploys. `GET /projects/{id}/env` gives you its plain values, for example to write a `.env` file for your laptop. Secrets are listed by name with no value, because NBO never hands a secret back. |
+| Environment     | What it does                                                                                                                                                                                                                                              |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Production**  | Everything NBO did before environments existed. Its branch is the project's production branch (`PUT /projects/{id}/git`), its clouds and traffic split are the project's clouds and split (`/projects/{id}/traffic`), its address is the project address. |
+| **Preview**     | The variables every [ephemeral environment](#ephemeral-environments) uses. Preview itself is not an environment with one branch and one address: each ephemeral environment is a short-lived environment of its own that uses these values.               |
+| **Development** | Variables only. It never deploys. `GET /projects/{id}/env` gives you its plain values, for example to write a `.env` file for your laptop. Secrets are listed by name with no value, because NBO never hands a secret back.                               |
 
 Projects you made before this version have everything under Production: the same clouds, builds, domains and variables. Nothing changed for them.
 
@@ -54,12 +54,21 @@ Because every address is a different name under your base domain, **each environ
 
 ## Ephemeral environments
 
+> **Not tried for real yet.** Creating, building, expiry, removal and its retries, and the weekly certificate cap ran against fakes and local tests. No real cluster or Google project has built, served or removed an ephemeral environment.
+
 An **ephemeral environment** is a short-lived copy of your site: its own branch, its own address and an end time. NBO removes it by itself when the end time passes, so a forgotten one never keeps running (and costing cloud money). They suit preview deployments of branches and pull requests: make them through the API, for example from a CI job.
 
 Make one with `POST /projects/{id}/stages`:
 
 ```json
-{ "kind": "ephemeral", "branch": "feature/login", "hostLabel": "feature-login", "clouds": [{ "target": "kubernetes" }], "ttlHours": 72, "label": "pr #12" }
+{
+  "kind": "ephemeral",
+  "branch": "feature/login",
+  "hostLabel": "feature-login",
+  "clouds": [{ "target": "kubernetes" }],
+  "ttlHours": 72,
+  "label": "pr #12"
+}
 ```
 
 - **hostLabel** makes the address `<hostLabel>--<project>.<base domain>`, such as `feature-login--shop.apps.example.com`. It follows the environment name rules (lowercase letters, digits and hyphens, starting with a letter, never two hyphens in a row, not exactly two characters) and can be up to 40 characters. An address already in use is refused with "that address is taken".

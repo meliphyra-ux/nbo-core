@@ -105,7 +105,16 @@ async function setup() {
     "b.test": { backends: [{ url: b.url, weight: 1 }], tls: "b-tls" },
     "nocert.test": { backends: [{ url: b.url, weight: 1 }], tls: "missing", redirectHttps: true },
   });
-  const l = await startClusterListeners({ registry, certs, challenges, insights, httpPort: 0, httpsPort: 0, adminPort: 0, drainToken: "s3cret" });
+  const l = await startClusterListeners({
+    registry,
+    certs,
+    challenges,
+    insights,
+    httpPort: 0,
+    httpsPort: 0,
+    adminPort: 0,
+    drainToken: "s3cret",
+  });
   stop = l.close;
   return { l, b, a, bb, challenges };
 }
@@ -127,11 +136,21 @@ describe("cluster listeners", () => {
     challenges.replace({ tok1: "tok1.keyauth" });
     const tls = (path: string) =>
       new Promise<Reply>((resolve, reject) => {
-        const req = httpsRequest({ host: "127.0.0.1", port: l.ports.https, servername: "a.test", ca: a.cert, path, headers: { host: "a.test" } }, (res) => {
-          let body = "";
-          res.on("data", (c) => (body += c));
-          res.on("end", () => resolve({ status: res.statusCode!, headers: res.headers, body }));
-        });
+        const req = httpsRequest(
+          {
+            host: "127.0.0.1",
+            port: l.ports.https,
+            servername: "a.test",
+            ca: a.cert,
+            path,
+            headers: { host: "a.test" },
+          },
+          (res) => {
+            let body = "";
+            res.on("data", (c) => (body += c));
+            res.on("end", () => resolve({ status: res.statusCode!, headers: res.headers, body }));
+          },
+        );
         req.on("error", reject);
         req.end();
       });
@@ -159,7 +178,11 @@ describe("cluster listeners", () => {
 
   it("terminates TLS by SNI and sets x-forwarded-proto from the listener", async () => {
     const { l, b, a, bb } = await setup();
-    const r = await getTls(l.ports.https, "a.test", a.cert, { "x-forwarded-proto": "http", forwarded: "proto=http", accept: "text/html" });
+    const r = await getTls(l.ports.https, "a.test", a.cert, {
+      "x-forwarded-proto": "http",
+      forwarded: "proto=http",
+      accept: "text/html",
+    });
     expect(r.status).toBe(200);
     expect(b.seen.at(-1)!["x-forwarded-proto"]).toBe("https");
     expect(b.seen.at(-1)!.forwarded).toBeUndefined();
@@ -178,8 +201,17 @@ describe("cluster listeners", () => {
 
   it("forwards the socket's address and drops what the visitor claimed, on both listeners", async () => {
     const { l, b, a } = await setup();
-    const claimed = { "x-forwarded-for": "6.6.6.6", "x-real-ip": "6.6.6.6", forwarded: "for=6.6.6.6", "x-nbo-client-ip": "6.6.6.6", accept: "text/html" };
-    for (const send of [() => get(l.ports.http, "b.test", "/", claimed), () => getTls(l.ports.https, "a.test", a.cert, claimed)]) {
+    const claimed = {
+      "x-forwarded-for": "6.6.6.6",
+      "x-real-ip": "6.6.6.6",
+      forwarded: "for=6.6.6.6",
+      "x-nbo-client-ip": "6.6.6.6",
+      accept: "text/html",
+    };
+    for (const send of [
+      () => get(l.ports.http, "b.test", "/", claimed),
+      () => getTls(l.ports.https, "a.test", a.cert, claimed),
+    ]) {
       await send();
       const seen = b.seen.at(-1)!;
       expect(seen["x-forwarded-for"]).toBe("127.0.0.1");
@@ -232,16 +264,30 @@ describe("cluster bridge streaming", () => {
     });
     await new Promise<void>((r) => backend!.listen(0, "127.0.0.1", () => r()));
     const registry = createRegistry();
-    registry.replaceAll({ "s.test": { backends: [{ url: `http://127.0.0.1:${(backend.address() as AddressInfo).port}`, weight: 1 }] } });
-    const l = await startClusterListeners({ registry, certs: createCertStore(), challenges: createChallengeStore(), insights: createAggregator(), httpPort: 0, httpsPort: 0, adminPort: 0, drainToken: "t" });
+    registry.replaceAll({
+      "s.test": { backends: [{ url: `http://127.0.0.1:${(backend.address() as AddressInfo).port}`, weight: 1 }] },
+    });
+    const l = await startClusterListeners({
+      registry,
+      certs: createCertStore(),
+      challenges: createChallengeStore(),
+      insights: createAggregator(),
+      httpPort: 0,
+      httpsPort: 0,
+      adminPort: 0,
+      drainToken: "t",
+    });
     stop = l.close;
     await new Promise<void>((resolve, reject) => {
-      const req = httpRequest({ host: "127.0.0.1", port: l.ports.http, path: "/", headers: { host: "s.test" } }, (res) => {
-        res.once("data", () => {
-          req.destroy();
-          resolve();
-        });
-      });
+      const req = httpRequest(
+        { host: "127.0.0.1", port: l.ports.http, path: "/", headers: { host: "s.test" } },
+        (res) => {
+          res.once("data", () => {
+            req.destroy();
+            resolve();
+          });
+        },
+      );
       req.on("error", () => undefined);
       req.on("error", reject);
       req.end();
@@ -268,19 +314,33 @@ describe("cluster bridge streaming", () => {
     });
     await new Promise<void>((r) => backend!.listen(0, "127.0.0.1", () => r()));
     const registry = createRegistry();
-    registry.replaceAll({ "p.test": { backends: [{ url: `http://127.0.0.1:${(backend.address() as AddressInfo).port}`, weight: 1 }] } });
-    const l = await startClusterListeners({ registry, certs: createCertStore(), challenges: createChallengeStore(), insights: createAggregator(), httpPort: 0, httpsPort: 0, adminPort: 0, drainToken: "t" });
+    registry.replaceAll({
+      "p.test": { backends: [{ url: `http://127.0.0.1:${(backend.address() as AddressInfo).port}`, weight: 1 }] },
+    });
+    const l = await startClusterListeners({
+      registry,
+      certs: createCertStore(),
+      challenges: createChallengeStore(),
+      insights: createAggregator(),
+      httpPort: 0,
+      httpsPort: 0,
+      adminPort: 0,
+      drainToken: "t",
+    });
     stop = l.close;
     await new Promise<void>((resolve) => {
-      const req = httpRequest({ host: "127.0.0.1", port: l.ports.http, path: "/", headers: { host: "p.test" } }, (res) => {
-        res.pause();
-        setTimeout(() => {
-          // 2000 chunks = 128 MB; a paused client must leave most unread.
-          expect(written).toBeLessThan(600);
-          res.destroy();
-          resolve();
-        }, 800);
-      });
+      const req = httpRequest(
+        { host: "127.0.0.1", port: l.ports.http, path: "/", headers: { host: "p.test" } },
+        (res) => {
+          res.pause();
+          setTimeout(() => {
+            // 2000 chunks = 128 MB; a paused client must leave most unread.
+            expect(written).toBeLessThan(600);
+            res.destroy();
+            resolve();
+          }, 800);
+        },
+      );
       req.on("error", () => undefined);
       req.end();
     });

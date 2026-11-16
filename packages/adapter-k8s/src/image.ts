@@ -57,7 +57,9 @@ async function withBuildContext<T>(prefix: string, fn: (dir: string) => Promise<
     try {
       await rm(dir, { recursive: true, force: true });
     } catch (err) {
-      console.warn(`nbo: could not remove the build context ${dir}: ${err instanceof Error ? err.message : String(err)}`);
+      console.warn(
+        `nbo: could not remove the build context ${dir}: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
   }
 }
@@ -72,7 +74,14 @@ async function runDockerBuild(buildCtx: string, tag: string): Promise<void> {
 // builds and tags an image from it — port of BuildImage (image.go
 // lines 44-55), now Node-based rather than a single cross-compiled Go
 // binary (step 8's own Dockerfile swap).
-export async function buildImage(nboDir: string, cliDeployDir: string, tag: string, functionURLs?: Record<string, string>, envVars?: Record<string, string>, carryDir?: string): Promise<void> {
+export async function buildImage(
+  nboDir: string,
+  cliDeployDir: string,
+  tag: string,
+  functionURLs?: Record<string, string>,
+  envVars?: Record<string, string>,
+  carryDir?: string,
+): Promise<void> {
   await withBuildContext("nbo-image-", async (buildCtx) => {
     await assembleAppBuildContext(buildCtx, nboDir, cliDeployDir, functionURLs, envVars, carryDir);
     await runDockerBuild(buildCtx, tag);
@@ -90,7 +99,12 @@ export async function buildImage(nboDir: string, cliDeployDir: string, tag: stri
 // container never got any deploy-time env vars at all, so a cron
 // target's signature check (or any binding/secret a function route
 // reads) silently always failed.
-async function assembleFunctionBuildContext(buildCtx: string, bundleDir: string, functionJSONPath: string, envVars?: Record<string, string>): Promise<void> {
+async function assembleFunctionBuildContext(
+  buildCtx: string,
+  bundleDir: string,
+  functionJSONPath: string,
+  envVars?: Record<string, string>,
+): Promise<void> {
   await writeFile(join(buildCtx, "Dockerfile"), functionDockerfile);
   await cp(hostScriptPath(), join(buildCtx, "host.mjs"));
   await cp(bundleDir, join(buildCtx, "bundle"), { recursive: true });
@@ -104,7 +118,12 @@ async function assembleFunctionBuildContext(buildCtx: string, bundleDir: string,
 // env.json, then builds and tags an image from it — port of
 // BuildFunctionImage (image.go lines 117-128), extended with envVars
 // (Go's own version never had crons/this env-propagation gap to fix).
-export async function buildFunctionImage(bundleDir: string, functionJSONPath: string, tag: string, envVars?: Record<string, string>): Promise<void> {
+export async function buildFunctionImage(
+  bundleDir: string,
+  functionJSONPath: string,
+  tag: string,
+  envVars?: Record<string, string>,
+): Promise<void> {
   await withBuildContext("nbo-fn-image-", async (buildCtx) => {
     await assembleFunctionBuildContext(buildCtx, bundleDir, functionJSONPath, envVars);
     await runDockerBuild(buildCtx, tag);
@@ -119,7 +138,11 @@ export async function buildFunctionImage(bundleDir: string, functionJSONPath: st
 // images, so a deploy can skip a function whose live service already
 // runs this tag. Env values only ever enter the digest; the returned
 // 24 hex characters reveal nothing usable about them.
-export async function functionImageHash(bundleDir: string, functionJSONPath: string, envVars?: Record<string, string>): Promise<string> {
+export async function functionImageHash(
+  bundleDir: string,
+  functionJSONPath: string,
+  envVars?: Record<string, string>,
+): Promise<string> {
   const h = createHash("sha256");
   const field = (label: string, data: string | Buffer) => {
     h.update(`${label}\0${Buffer.byteLength(data)}\0`);
@@ -129,9 +152,18 @@ export async function functionImageHash(bundleDir: string, functionJSONPath: str
   field("host", await readFile(hostScriptPath()));
   field("function.json", await readFile(functionJSONPath));
   const env = envVars ?? {};
-  field("env", JSON.stringify(Object.keys(env).sort().map((k) => [k, env[k]])));
+  field(
+    "env",
+    JSON.stringify(
+      Object.keys(env)
+        .sort()
+        .map((k) => [k, env[k]]),
+    ),
+  );
   const walk = async (dir: string, rel: string): Promise<void> => {
-    const entries = (await readdir(dir, { withFileTypes: true })).sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+    const entries = (await readdir(dir, { withFileTypes: true })).sort((a, b) =>
+      a.name < b.name ? -1 : a.name > b.name ? 1 : 0,
+    );
     for (const e of entries) {
       const abs = join(dir, e.name);
       const r = rel ? `${rel}/${e.name}` : e.name;
@@ -274,7 +306,11 @@ export async function isrcacheImageTag(cliDeployDir: string): Promise<string> {
 // so a deploy of the same build after an NBO upgrade, or with other
 // function URLs or baked values, gets a new tag: Kubernetes pulls with
 // IfNotPresent and would otherwise start a node's older image.
-export async function appBakedHash(cliDeployDir: string, functionURLs?: Record<string, string>, envVars?: Record<string, string>): Promise<string> {
+export async function appBakedHash(
+  cliDeployDir: string,
+  functionURLs?: Record<string, string>,
+  envVars?: Record<string, string>,
+): Promise<string> {
   const code = await cliCodeHash(cliDeployDir);
   const h = createHash("sha256");
   for (const [name, text] of [

@@ -99,13 +99,25 @@ import { createProgress, type Progress, type ProgressOptions } from "./progress.
 export async function prepareCliDeployDir(): Promise<string> {
   await run("pnpm", ["--filter", "@nbo/cli...", "build"]);
   const tmpDir = await mkdtemp(join(tmpdir(), "nbo-cli-deploy-"));
-  await run("pnpm", ["--filter", "@nbo/cli", "deploy", "--prod", "--os=linux", "--cpu=x64", "--libc=glibc", "--config.node-linker=hoisted", tmpDir]);
+  await run("pnpm", [
+    "--filter",
+    "@nbo/cli",
+    "deploy",
+    "--prod",
+    "--os=linux",
+    "--cpu=x64",
+    "--libc=glibc",
+    "--config.node-linker=hoisted",
+    tmpDir,
+  ]);
   return tmpDir;
 }
 
 // cliDeployDirs shares one prepared CLI bundle between every deploy of
 // the same build running in this process (see cli-deploy-dir.ts).
-export const cliDeployDirs = createCliDeployDirCache(prepareCliDeployDir, (dir) => rm(dir, { recursive: true, force: true }));
+export const cliDeployDirs = createCliDeployDirCache(prepareCliDeployDir, (dir) =>
+  rm(dir, { recursive: true, force: true }),
+);
 
 // holdCliDeployDir keeps one build's CLI bundle alive across several
 // deploys of that build (the control-plane runner's parallel
@@ -165,7 +177,8 @@ function devPlacement(clusterName: string): Placement {
 function connectedPlacement(opts: KubernetesTargetOptions): Placement {
   const kube: ToolContext = { kubeconfig: opts.kubeconfig, namespace: opts.namespace, run: opts.run };
   const push: ToolContext = { env: opts.registryEnv, run: opts.run };
-  const imageRef = (_localTag: string, repoName: string, suffix: string) => `${opts.registryPrefix}/${repoName}:${suffix}`;
+  const imageRef = (_localTag: string, repoName: string, suffix: string) =>
+    `${opts.registryPrefix}/${repoName}:${suffix}`;
   return {
     shipLabel: { done: "image pushed", fail: "image push" },
     ship: async (localTag, repoName, suffix) => {
@@ -272,7 +285,11 @@ export interface KubernetesTarget {
   otherAppNames?: string[];
 }
 
-export function createKubernetesTarget(appName: string, opts?: KubernetesTargetOptions, progress?: ProgressOptions): KubernetesTarget {
+export function createKubernetesTarget(
+  appName: string,
+  opts?: KubernetesTargetOptions,
+  progress?: ProgressOptions,
+): KubernetesTarget {
   const clusterName = process.env.NBO_KIND_CLUSTER || "nbo-local";
   const host = `${appName}.127.0.0.1.sslip.io`;
   const place = opts ? connectedPlacement(opts) : devPlacement(clusterName);
@@ -297,7 +314,8 @@ export function createKubernetesTarget(appName: string, opts?: KubernetesTargetO
   // the complete set: applying it drops removed names; an empty set
   // deletes it. Applied once per target, before any Deployment, over stdin.
   let envSecretSynced = false;
-  const envSecretFor = (app: string): string | undefined => (Object.keys(target.userEnv?.vars ?? {}).length > 0 ? kubeName(`${app}-env`) : undefined);
+  const envSecretFor = (app: string): string | undefined =>
+    Object.keys(target.userEnv?.vars ?? {}).length > 0 ? kubeName(`${app}-env`) : undefined;
   const syncEnvSecret = async (app: string): Promise<void> => {
     const userEnv = target.userEnv;
     if (!userEnv || envSecretSynced) return;
@@ -336,7 +354,9 @@ export function createKubernetesTarget(appName: string, opts?: KubernetesTargetO
   const deployIsrCache = async (nboDir: string, app: string): Promise<string> => {
     const name = isrcacheObjectName(app);
     if ((target.otherAppNames ?? []).includes(name)) {
-      throw new Error(`ISR cache: its name ${name} is the app name of another environment of this project (a cluster named "isr" or ending in "-isr"); remove that environment to use ISR here`);
+      throw new Error(
+        `ISR cache: its name ${name} is the app name of another environment of this project (a cluster named "isr" or ending in "-isr"); remove that environment to use ISR here`,
+      );
     }
     // Never apply over another app's object that shares the name (a
     // function "<other>-fn-x-isr", an older environment's app): only an
@@ -346,10 +366,17 @@ export function createKubernetesTarget(appName: string, opts?: KubernetesTargetO
       taken = await isrcacheNameTaken(app, place.kube);
     } catch (err) {
       // eslint-disable-next-line preserve-caught-error -- the original error may carry secret values
-      throw new Error(redact(`ISR cache: reading ${name} failed: ${err instanceof Error ? err.message : String(err)}`, userSecretValues()));
+      throw new Error(
+        redact(
+          `ISR cache: reading ${name} failed: ${err instanceof Error ? err.message : String(err)}`,
+          userSecretValues(),
+        ),
+      );
     }
     if (taken) {
-      throw new Error(`ISR cache: ${taken} exists and is not this app's ISR cache; NBO won't replace it. Rename the function or environment that uses this name to use ISR here`);
+      throw new Error(
+        `ISR cache: ${taken} exists and is not this app's ISR cache; NBO won't replace it. Rename the function or environment that uses this name to use ISR here`,
+      );
     }
     const p = progressRoot.scope("isr cache");
     const cli = await p.timed("cli bundle prepared", "cli bundle preparation", () => cliDeployDirs.acquire(nboDir));
@@ -358,9 +385,15 @@ export function createKubernetesTarget(appName: string, opts?: KubernetesTargetO
       const repoName = "nbo-isrcache";
       const suffix = tag.slice(tag.indexOf(":") + 1);
       await p.timed("image built", "image build", () => buildIsrcacheImage(cli.dir, tag));
-      const imageTag = await p.timed(place.shipLabel.done, place.shipLabel.fail, () => place.ship(tag, repoName, suffix));
+      const imageTag = await p.timed(place.shipLabel.done, place.shipLabel.fail, () =>
+        place.ship(tag, repoName, suffix),
+      );
       await prepareNamespace(app);
-      const manifest = renderIsrcacheManifests({ appName: app, imageTag, ...(place.namespace ? { namespace: place.namespace, pullSecret: place.pullSecret } : {}) });
+      const manifest = renderIsrcacheManifests({
+        appName: app,
+        imageTag,
+        ...(place.namespace ? { namespace: place.namespace, pullSecret: place.pullSecret } : {}),
+      });
       await p.timed("manifests applied", "manifest apply", () => apply(manifest, place.kube));
       await p.timed("rollout finished", "rollout", () => waitForRollout(name, place.kube));
     } finally {
@@ -381,7 +414,11 @@ export function createKubernetesTarget(appName: string, opts?: KubernetesTargetO
     }
   };
 
-  const deployFunctions = async (nboDir: string, app: string, functionNames: string[]): Promise<Record<string, string>> => {
+  const deployFunctions = async (
+    nboDir: string,
+    app: string,
+    functionNames: string[],
+  ): Promise<Record<string, string>> => {
     const envVars = await imageEnvVars(nboDir, !!opts, target.extraEnv, target.userEnv);
     const fingerprint = target.userEnv?.fingerprint ?? undefined;
     if (functionNames.length > 0) {
@@ -389,7 +426,16 @@ export function createKubernetesTarget(appName: string, opts?: KubernetesTargetO
       await syncEnvSecret(app);
     }
     const deployed = await mapLimit(functionNames, functionConcurrency, (name) =>
-      deployOneFunction(nboDir, app, name, place, envVars, fingerprint, envSecretFor(app), progressRoot.scope(`function ${name}`)),
+      deployOneFunction(
+        nboDir,
+        app,
+        name,
+        place,
+        envVars,
+        fingerprint,
+        envSecretFor(app),
+        progressRoot.scope(`function ${name}`),
+      ),
     );
     const urls: Record<string, string> = {};
     functionNames.forEach((name, i) => (urls[name] = deployed[i]!));
@@ -405,22 +451,44 @@ export function createKubernetesTarget(appName: string, opts?: KubernetesTargetO
       const envVars = await imageEnvVars(nboDir, !!opts, target.extraEnv, target.userEnv);
       // With its own cache, the app must not find NBO's (dev) NBO_ISRCACHE_URL: it would win over __isrcache.
       if (target.isr?.enabled) delete envVars.NBO_ISRCACHE_URL;
-      const functionURLs = isrCacheURL ? { ...deployedFunctionURLs, [ISR_CACHE_KEY]: isrCacheURL } : deployedFunctionURLs;
-      const fp: { envFingerprint?: string; envSecret?: string } = target.userEnv?.fingerprint ? { envFingerprint: target.userEnv.fingerprint } : {};
+      const functionURLs = isrCacheURL
+        ? { ...deployedFunctionURLs, [ISR_CACHE_KEY]: isrCacheURL }
+        : deployedFunctionURLs;
+      const fp: { envFingerprint?: string; envSecret?: string } = target.userEnv?.fingerprint
+        ? { envFingerprint: target.userEnv.fingerprint }
+        : {};
       // Read at call time, like extraEnv: the previous build's hashed files ride in the image.
-      const { suffix, tag } = await withCarry(target.carryFrom, nboDir, (m) => p.report(m), async (carryDir, carryHash) => {
-        const suffix = appImageTag(id, carryHash, await appBakedHash(cliDeployDir, functionURLs, envVars));
-        const tag = `nbo-app-${app}:${suffix}`;
-        await p.timed("image built", "image build", () => buildImage(nboDir, cliDeployDir, tag, functionURLs, envVars, carryDir));
-        return { suffix, tag };
-      });
-      const imageTag = await p.timed(place.shipLabel.done, place.shipLabel.fail, () => place.ship(tag, `nbo-app-${app}`, suffix));
+      const { suffix, tag } = await withCarry(
+        target.carryFrom,
+        nboDir,
+        (m) => p.report(m),
+        async (carryDir, carryHash) => {
+          const suffix = appImageTag(id, carryHash, await appBakedHash(cliDeployDir, functionURLs, envVars));
+          const tag = `nbo-app-${app}:${suffix}`;
+          await p.timed("image built", "image build", () =>
+            buildImage(nboDir, cliDeployDir, tag, functionURLs, envVars, carryDir),
+          );
+          return { suffix, tag };
+        },
+      );
+      const imageTag = await p.timed(place.shipLabel.done, place.shipLabel.fail, () =>
+        place.ship(tag, `nbo-app-${app}`, suffix),
+      );
       await prepareNamespace(app);
       await syncEnvSecret(app);
       const envSecret = envSecretFor(app);
       if (envSecret) Object.assign(fp, { envSecret });
       const manifest = opts
-        ? renderManifests({ appName: app, imageTag, host: "", contentID: id, namespace: opts.namespace, ingress: false, pullSecret: pullSecretName, ...fp })
+        ? renderManifests({
+            appName: app,
+            imageTag,
+            host: "",
+            contentID: id,
+            namespace: opts.namespace,
+            ingress: false,
+            pullSecret: pullSecretName,
+            ...fp,
+          })
         : renderManifests({ appName: app, imageTag, host, contentID: id, ...fp });
       await p.timed("manifests applied", "manifest apply", () => apply(manifest, place.kube));
       await p.timed("rollout finished", "rollout", () => waitForRollout(app, place.kube));

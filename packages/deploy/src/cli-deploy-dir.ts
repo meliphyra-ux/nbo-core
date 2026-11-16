@@ -39,7 +39,10 @@ interface Entry {
   promise?: Promise<string>;
 }
 
-export function createCliDeployDirCache(prepare: () => Promise<string>, remove: (dir: string) => Promise<void>): CliDeployDirCache {
+export function createCliDeployDirCache(
+  prepare: () => Promise<string>,
+  remove: (dir: string) => Promise<void>,
+): CliDeployDirCache {
   const entries = new Map<string, Entry>();
   let queue: Promise<unknown> = Promise.resolve();
   const prepareSerially = (): Promise<string> => {

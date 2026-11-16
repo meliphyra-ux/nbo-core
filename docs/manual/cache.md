@@ -70,14 +70,14 @@ NBO can make the call for you. Each environment (Production, one of your own, or
 
 The cache belongs to one app: one environment on one cloud.
 
-| | Cache | Secret | A revalidation reaches |
-|---|---|---|---|
-| Production on two clouds | one per cloud | Production's | both |
-| A custom environment such as `staging` | one per cloud it runs on | its own | its own clouds |
-| An [ephemeral environment](./environments.md#ephemeral-environments) | one, on its cloud | its own | that cloud |
+|                                                                      | Cache                    | Secret       | A revalidation reaches |
+| -------------------------------------------------------------------- | ------------------------ | ------------ | ---------------------- |
+| Production on two clouds                                             | one per cloud            | Production's | both                   |
+| A custom environment such as `staging`                               | one per cloud it runs on | its own      | its own clouds         |
+| An [ephemeral environment](./environments.md#ephemeral-environments) | one, on its cloud        | its own      | that cloud             |
 
 - An ephemeral environment or `staging` can never write into Production's cache, and its secret cannot refresh Production.
-- When a site is on several clouds, NBO's edge sends your request to every cloud that serves the address, clouds at 0% traffic included, because each has its own cache. It answers `204` when all said yes. If they all gave the same answer, you get that answer (a wrong secret is a plain `401`). Otherwise you get `502` with a list of which cloud failed.
+- When a site is on several clouds, NBO's edge sends your request to every cloud that serves the address, clouds at 0% traffic included, because each has its own cache. It answers `204` when all said yes. If they all gave the same answer, you get that answer (a wrong secret is a plain `401`). Otherwise you get `502` with a list of which cloud failed, by environment id (`null` for a cloud the edge has no id for).
 - Upgrade the edge first (`nbo-server edge reinstall`). An older edge reaches only one cloud.
 - Without an edge (production mode with only Cloud Run), NBO's revalidate route calls each Cloud Run address itself. A cluster app has no public address without the edge, so it cannot be revalidated that way.
 
@@ -98,16 +98,16 @@ The cache belongs to one app: one environment on one cloud.
 
 ## If it does not work
 
-| What you see | What it means | What to do |
-|---|---|---|
-| `409`: "Nothing in this environment uses ISR yet" | The environment has never had a build with ISR pages, so there is no secret. | Deploy a build that has a page with `revalidate`, then try again. |
-| `409`: "certificate isn't active yet" | The address is not `https` yet, and NBO will not send the secret over plain `http`. | Wait for the certificate (see [Domains](./domains.md)), then try again. |
-| `409`: "has no address" or "nothing ... is deployed yet" | There is nowhere to send the call yet. | Finish a first deploy. |
-| `401` | The secret is wrong, or that cloud has not deployed since you rotated it. | Read the secret again. After a rotation, deploy that environment again. |
-| `400` | The body is not `{"tags": [...]}` or `{"paths": [...]}`. | Send only those fields; paths start with `/`. |
-| `502` with a list | Some clouds failed. The list names which. `unreachable or timed out` means no answer in 10 seconds. | Check that cloud (`GET /projects/{id}/summary`), then try again. |
-| `413` | The body is over 64 KiB; the edge refuses it. | Send fewer tags and paths per call. |
-| `500`: "no ISR cache service configured" | The live build has no ISR page, so no cache was started. | Deploy a build that has one. |
-| The old page still shows | Revalidation removes NBO's copy, so the cause is usually elsewhere: a browser or CDN (Cloudflare, for example) cache in front of NBO; the call went to a different address or environment than the page you are looking at; or the call answered `401` or `502` (see above). | Load the page with the browser cache off, check the address and environment, and read the answer of the call. |
+| What you see                                             | What it means                                                                                                                                                                                                                                                                | What to do                                                                                                    |
+| -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `409`: "Nothing in this environment uses ISR yet"        | The environment has never had a build with ISR pages, so there is no secret.                                                                                                                                                                                                 | Deploy a build that has a page with `revalidate`, then try again.                                             |
+| `409`: "certificate isn't active yet"                    | The address is not `https` yet, and NBO will not send the secret over plain `http`.                                                                                                                                                                                          | Wait for the certificate (see [Domains](./domains.md)), then try again.                                       |
+| `409`: "has no address" or "nothing ... is deployed yet" | There is nowhere to send the call yet.                                                                                                                                                                                                                                       | Finish a first deploy.                                                                                        |
+| `401`                                                    | The secret is wrong, or that cloud has not deployed since you rotated it.                                                                                                                                                                                                    | Read the secret again. After a rotation, deploy that environment again.                                       |
+| `400`                                                    | The body is not `{"tags": [...]}` or `{"paths": [...]}`.                                                                                                                                                                                                                     | Send only those fields; paths start with `/`.                                                                 |
+| `502` with a list                                        | Some clouds failed. The list names which. `unreachable or timed out` means no answer in 10 seconds.                                                                                                                                                                          | Check that cloud (`GET /projects/{id}/summary`), then try again.                                              |
+| `413`                                                    | The body is over 64 KiB; the edge refuses it.                                                                                                                                                                                                                                | Send fewer tags and paths per call.                                                                           |
+| `500`: "no ISR cache service configured"                 | The live build has no ISR page, so no cache was started.                                                                                                                                                                                                                     | Deploy a build that has one.                                                                                  |
+| The old page still shows                                 | Revalidation removes NBO's copy, so the cause is usually elsewhere: a browser or CDN (Cloudflare, for example) cache in front of NBO; the call went to a different address or environment than the page you are looking at; or the call answered `401` or `502` (see above). | Load the page with the browser cache off, check the address and environment, and read the answer of the call. |
 
 > **Not tried for real yet.** The page cache in a deploy (production ISR, 2026-11-09). One cache per app, the revalidation secret and the edge's fan-out ran against fakes and local tests. No real cluster or Google project has served a cached page, so cost figures are estimates. [What has been tried for real](./tried.md) lists the rest.

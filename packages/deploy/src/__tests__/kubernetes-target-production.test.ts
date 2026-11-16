@@ -35,12 +35,16 @@ function recorder(answer: (cmd: string, args: string[]) => string = () => "") {
 
 const prefix = "us-east1-docker.pkg.dev/my-proj/nbo";
 const id = "sha256:4b66654e468e0ed5a8fb3146fff2ca53131bafe78366b02e753b059ea5fca7d1";
-const pullerKey = '{"type":"service_account","private_key":"-----BEGIN PRIVATE KEY-----\\nabc\\n-----END PRIVATE KEY-----\\n"}';
+const pullerKey =
+  '{"type":"service_account","private_key":"-----BEGIN PRIVATE KEY-----\\nabc\\n-----END PRIVATE KEY-----\\n"}';
 
 async function fixture(): Promise<string> {
   const dir = await mkdtemp(join(tmpdir(), "k8s-target-prod-"));
   await mkdir(join(dir, "functions", "ssr", "bundle"), { recursive: true });
-  await writeFile(join(dir, "functions", "ssr", "function.json"), JSON.stringify({ handler: { entry: "index.mjs", export: "default" } }));
+  await writeFile(
+    join(dir, "functions", "ssr", "function.json"),
+    JSON.stringify({ handler: { entry: "index.mjs", export: "default" } }),
+  );
   await writeFile(join(dir, "manifest.json"), JSON.stringify({ specVersion: "1.0" }));
   return dir;
 }
@@ -49,7 +53,9 @@ describe("createKubernetesTarget with a connection", () => {
   it("pushes to the registry, never uses kind, and scopes every kubectl call to the project namespace", async () => {
     const dir = await fixture();
     try {
-      const { calls, run } = recorder((cmd, args) => (cmd === "kubectl" && args.includes("get") ? `Warning: skew\n${id}` : ""));
+      const { calls, run } = recorder((cmd, args) =>
+        cmd === "kubectl" && args.includes("get") ? `Warning: skew\n${id}` : "",
+      );
       const target = createKubernetesTarget("pabc-production", {
         kubeconfig: "/tmp/kc/kubeconfig",
         namespace: "nbo-p-abc",
@@ -64,7 +70,9 @@ describe("createKubernetesTarget with a connection", () => {
       const live = await target.deployer.liveContentID("pabc-production");
 
       expect(urls).toEqual({ ssr: "http://pabc-production-fn-ssr.nbo-p-abc.svc.cluster.local:8080" });
-      expect(target.deployer.urlFor!("pabc-production")).toBe("http://pabc-production.nbo-p-abc.svc.cluster.local:8080");
+      expect(target.deployer.urlFor!("pabc-production")).toBe(
+        "http://pabc-production.nbo-p-abc.svc.cluster.local:8080",
+      );
       expect(live).toEqual({ id, ok: true });
 
       expect(vi.mocked(loadImageIntoKind)).not.toHaveBeenCalled();
@@ -79,7 +87,8 @@ describe("createKubernetesTarget with a connection", () => {
 
       const kubectl = calls.filter((c) => c.cmd === "kubectl");
       expect(kubectl.length).toBeGreaterThan(0);
-      for (const c of kubectl) expect(c.args.slice(0, 4)).toEqual(["--kubeconfig", "/tmp/kc/kubeconfig", "-n", "nbo-p-abc"]);
+      for (const c of kubectl)
+        expect(c.args.slice(0, 4)).toEqual(["--kubeconfig", "/tmp/kc/kubeconfig", "-n", "nbo-p-abc"]);
 
       const applied = kubectl.filter((c) => c.args.includes("apply")).map((c) => c.input ?? "");
       const all = applied.join("\n---\n");
@@ -116,7 +125,9 @@ describe("createKubernetesTarget with a connection", () => {
       });
       await target.deployer.deployFunctions!(dir, "pabc-production", ["ssr"]);
       await target.deployer.buildAndDeploy(dir, "pabc-production", id);
-      expect(vi.mocked(buildImage).mock.calls.at(-1)?.[3]).toEqual({ ssr: "http://pabc-production-fn-ssr.nbo-p-abc.svc.cluster.local:8080" });
+      expect(vi.mocked(buildImage).mock.calls.at(-1)?.[3]).toEqual({
+        ssr: "http://pabc-production-fn-ssr.nbo-p-abc.svc.cluster.local:8080",
+      });
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
@@ -128,7 +139,10 @@ describe("createKubernetesTarget with a connection", () => {
     const app = "p0123abcd-k8s-a-very-long-cluster-name-x";
     try {
       await mkdir(join(dir, "functions", fn, "bundle"), { recursive: true });
-      await writeFile(join(dir, "functions", fn, "function.json"), JSON.stringify({ handler: { entry: "index.mjs", export: "default" } }));
+      await writeFile(
+        join(dir, "functions", fn, "function.json"),
+        JSON.stringify({ handler: { entry: "index.mjs", export: "default" } }),
+      );
       await writeFile(join(dir, "manifest.json"), JSON.stringify({ specVersion: "1.0" }));
       const { buildImage, functionObjectName } = await import("@nbo/adapter-k8s");
       const short = functionObjectName(app, fn);
@@ -145,7 +159,9 @@ describe("createKubernetesTarget with a connection", () => {
       });
       await target.deployer.deployFunctions!(dir, app, [fn]);
       await target.deployer.buildAndDeploy(dir, app, id);
-      expect(vi.mocked(buildImage).mock.calls.at(-1)?.[3]).toEqual({ [fn]: `http://${short}.nbo-p-0123abcd.svc.cluster.local:8080` });
+      expect(vi.mocked(buildImage).mock.calls.at(-1)?.[3]).toEqual({
+        [fn]: `http://${short}.nbo-p-0123abcd.svc.cluster.local:8080`,
+      });
       const kubectl = calls.filter((c) => c.cmd === "kubectl").map((c) => c.args.join(" "));
       expect(kubectl.some((a) => a.includes(`deployment/${short}`))).toBe(true);
       expect(kubectl.join(" ")).not.toContain(`${app}-fn-${fn}`);
@@ -194,7 +210,9 @@ describe("createKubernetesTarget with a connection", () => {
 
   it("skips an unchanged function: no build, push or apply when the live Deployment already runs its content-tagged image", async () => {
     const dir = await fixture();
-    const opts = (run: (cmd: string, args: string[], o?: { input?: string; env?: Record<string, string> }) => Promise<string>) => ({
+    const opts = (
+      run: (cmd: string, args: string[], o?: { input?: string; env?: Record<string, string> }) => Promise<string>,
+    ) => ({
       kubeconfig: "/kc",
       namespace: "nbo-p-abc",
       registryPrefix: prefix,
@@ -204,20 +222,28 @@ describe("createKubernetesTarget with a connection", () => {
     });
     try {
       const first = recorder();
-      await createKubernetesTarget("pabc-production", opts(first.run)).deployer.deployFunctions!(dir, "pabc-production", ["ssr"]);
+      await createKubernetesTarget("pabc-production", opts(first.run)).deployer.deployFunctions!(
+        dir,
+        "pabc-production",
+        ["ssr"],
+      );
       const pushed = first.calls.find((c) => c.cmd === "docker" && c.args[0] === "push")!.args[1]!;
       expect(pushed).toMatch(new RegExp(`^${prefix}/nbo-fn-pabc-production-ssr:[0-9a-f]{24}$`));
       const fnYaml = first.calls.map((c) => c.input ?? "").find((y) => y.includes("name: pabc-production-fn-ssr"))!;
       const config = /nbo\.dev\/fn-config: "([0-9a-f]+)"/.exec(fnYaml)![1]!;
 
       const liveAs = (state: string) =>
-        recorder((cmd, args) => (cmd === "kubectl" && args.includes("pabc-production-fn-ssr") && args.some((a) => a.includes("fn-config")) ? `Warning: skew\n${state}\n` : ""));
+        recorder((cmd, args) =>
+          cmd === "kubectl" && args.includes("pabc-production-fn-ssr") && args.some((a) => a.includes("fn-config"))
+            ? `Warning: skew\n${state}\n`
+            : "",
+        );
 
       const second = liveAs([pushed, config, "2", "2", "1", "1", "1"].join("\t"));
       const messages: string[] = [];
-      const urls = await createKubernetesTarget("pabc-production", opts(second.run), { onProgress: (m) => messages.push(m) }).deployer.deployFunctions!(dir, "pabc-production", [
-        "ssr",
-      ]);
+      const urls = await createKubernetesTarget("pabc-production", opts(second.run), {
+        onProgress: (m) => messages.push(m),
+      }).deployer.deployFunctions!(dir, "pabc-production", ["ssr"]);
       expect(urls).toEqual({ ssr: "http://pabc-production-fn-ssr.nbo-p-abc.svc.cluster.local:8080" });
       expect(second.calls.some((c) => c.cmd === "docker")).toBe(false);
       const applied = second.calls.filter((c) => c.args.includes("apply")).map((c) => c.input ?? "");
@@ -227,13 +253,21 @@ describe("createKubernetesTarget with a connection", () => {
 
       // A rollout that timed out (new ReplicaSet not available) is redeployed.
       const stuck = liveAs([pushed, config, "2", "2", "1", "1", "0"].join("\t"));
-      await createKubernetesTarget("pabc-production", opts(stuck.run)).deployer.deployFunctions!(dir, "pabc-production", ["ssr"]);
+      await createKubernetesTarget("pabc-production", opts(stuck.run)).deployer.deployFunctions!(
+        dir,
+        "pabc-production",
+        ["ssr"],
+      );
       expect(stuck.calls.some((c) => c.args.includes("rollout"))).toBe(true);
 
       // Same image, but the live annotation names another deploy config
       // (e.g. rendered before a manifest change): redeployed.
       const other = liveAs([pushed, "0123456789abcdef01234567", "2", "2", "1", "1", "1"].join("\t"));
-      await createKubernetesTarget("pabc-production", opts(other.run)).deployer.deployFunctions!(dir, "pabc-production", ["ssr"]);
+      await createKubernetesTarget("pabc-production", opts(other.run)).deployer.deployFunctions!(
+        dir,
+        "pabc-production",
+        ["ssr"],
+      );
       expect(other.calls.some((c) => c.args.includes("rollout"))).toBe(true);
     } finally {
       await rm(dir, { recursive: true, force: true });
@@ -242,7 +276,10 @@ describe("createKubernetesTarget with a connection", () => {
 
   it("takes no values from NBO's own environment, only its own extraEnv", async () => {
     const dir = await fixture();
-    await writeFile(join(dir, "manifest.json"), JSON.stringify({ specVersion: "1.0", env: { optional: ["SECRET_X"] } }));
+    await writeFile(
+      join(dir, "manifest.json"),
+      JSON.stringify({ specVersion: "1.0", env: { optional: ["SECRET_X"] } }),
+    );
     process.env.SECRET_X = "leak";
     try {
       const { buildImage, buildFunctionImage } = await import("@nbo/adapter-k8s");
@@ -276,7 +313,8 @@ describe("environment variables Secret (connected)", () => {
     pullSecret: { server: "s", username: "u", password: "p" },
     run,
   });
-  const secretCalls = (calls: Call[]) => calls.filter((c) => c.input?.includes("kind: Secret") && c.input.includes("name: pabc-env"));
+  const secretCalls = (calls: Call[]) =>
+    calls.filter((c) => c.input?.includes("kind: Secret") && c.input.includes("name: pabc-env"));
 
   it("applies the Secret via stdin before the Deployments, with envFrom on app and function", async () => {
     const dir = await fixture();
@@ -312,7 +350,16 @@ describe("environment variables Secret (connected)", () => {
       target.userEnv = { vars: {}, secretNames: [], fingerprint: null };
       await target.deployer.buildAndDeploy(dir, "pabc", id);
       const del = calls.find((c) => c.args.includes("delete"));
-      expect(del?.args).toEqual(["--kubeconfig", "/tmp/kc/kubeconfig", "-n", "nbo-p-abc", "delete", "secret", "pabc-env", "--ignore-not-found"]);
+      expect(del?.args).toEqual([
+        "--kubeconfig",
+        "/tmp/kc/kubeconfig",
+        "-n",
+        "nbo-p-abc",
+        "delete",
+        "secret",
+        "pabc-env",
+        "--ignore-not-found",
+      ]);
       expect(secretCalls(calls)).toHaveLength(0);
       expect(calls.some((c) => c.input?.includes("envFrom"))).toBe(false);
     } finally {
@@ -336,7 +383,9 @@ describe("environment variables Secret (connected)", () => {
     try {
       const run = async (_cmd: string, args: string[], o?: { input?: string }): Promise<string> => {
         if (args.includes("apply") && o?.input?.includes("name: pabc-env")) {
-          throw new Error("kubectl failed: invalid value s3cretVALUE and " + Buffer.from("s3cretVALUE").toString("base64"));
+          throw new Error(
+            "kubectl failed: invalid value s3cretVALUE and " + Buffer.from("s3cretVALUE").toString("base64"),
+          );
         }
         return "";
       };
@@ -429,7 +478,11 @@ describe("ISR cache (connected)", () => {
     const dir = await fixture();
     try {
       const app = "pabc-s-a-k8s-fn-x-k8s";
-      const { calls, run } = recorder((cmd, args) => (cmd === "kubectl" && args.includes("get") && args.includes("deployment,service") ? `Deployment\t${app}-isr\t\t\n` : ""));
+      const { calls, run } = recorder((cmd, args) =>
+        cmd === "kubectl" && args.includes("get") && args.includes("deployment,service")
+          ? `Deployment\t${app}-isr\t\t\n`
+          : "",
+      );
       const target = createKubernetesTarget(app, opts(run));
       target.isr = { enabled: true, removeCache: false };
       await expect(target.deployer.deployIsrCache!(dir, app)).rejects.toThrow(/not this app's ISR cache/);
@@ -443,12 +496,16 @@ describe("ISR cache (connected)", () => {
     const dir = await fixture();
     try {
       const { calls, run } = recorder((cmd, args) =>
-        cmd === "kubectl" && args.includes("get") && args.includes("deployment,service") ? "Deployment\tpabc-production-isr\tisrcache\tpabc-production\n" : "",
+        cmd === "kubectl" && args.includes("get") && args.includes("deployment,service")
+          ? "Deployment\tpabc-production-isr\tisrcache\tpabc-production\n"
+          : "",
       );
       const target = createKubernetesTarget("pabc-production", opts(run));
       target.isr = { enabled: true, removeCache: false };
       await target.deployer.deployIsrCache!(dir, "pabc-production");
-      expect(calls.some((c) => c.args.includes("apply") && (c.input ?? "").includes("nbo.dev/role: isrcache"))).toBe(true);
+      expect(calls.some((c) => c.args.includes("apply") && (c.input ?? "").includes("nbo.dev/role: isrcache"))).toBe(
+        true,
+      );
     } finally {
       await rm(dir, { recursive: true, force: true });
     }

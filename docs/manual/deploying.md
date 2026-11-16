@@ -5,8 +5,8 @@ How a `.nbo/` folder becomes running containers. This is the most cloud-specific
 ## The path through the code
 
 ```
-runner.runBuild                      packages/controlplane/src/runner.ts
-  `- triggerDeploy(env, nboDir)      packages/controlplane/src/deploy.ts
+runner.runBuild                      packages/controlplane/src/builds/runner.ts
+  `- triggerDeploy(env, nboDir)      packages/controlplane/src/deploys/deploy.ts
        |- createKubernetesTarget     packages/deploy/src/kubernetes-target.ts
        |  or createCloudRunTarget    packages/deploy/src/cloudrun-target.ts
        `- deploy(deployer, …)        packages/deploy/src/deploy.ts
@@ -19,7 +19,7 @@ runner.runBuild                      packages/controlplane/src/runner.ts
 
 ## `triggerDeploy`: one environment
 
-**File:** `packages/controlplane/src/deploy.ts`
+**File:** `packages/controlplane/src/deploys/deploy.ts`
 
 1. Loads the environment row.
 2. `deployAppName(env)` picks the name used for every cloud object, `p` + the first 8 characters of the project id + `-` + the environment name, for example `p4715bebb-k8s` (environment names are `cloudrun`, `k8s` for the local cluster or the upgraded `default` cluster, and `k8s-<cluster name>` for every other connected cluster). Stable across deploys, so each deploy updates the same objects.
@@ -189,7 +189,7 @@ Your own variables (workspace and project) are never baked into images; they rea
 
 **On Kubernetes**, all of a project's variables go into one Secret named `<app>-env` (plain ones too, so nothing readable sits in the Deployment). The app and every function Deployment load it with `envFrom`, marked `optional: true` so an old pod that restarts after a failed rollout removed or replaced the Secret still starts. The Deployment carries an `nbo.dev/env-fingerprint` annotation, so when a variable changes the pods restart and pick up the new set. With no variables there is no Secret: each deploy runs `kubectl delete secret <app>-env --ignore-not-found`, which does nothing when there was never one and removes a leftover Secret when the last variable was deleted.
 
-**Names only.** When NBO is set to [keep no variable values](./environments.md#dont-store-variable-values), the values come with the deploy request and are held in memory (`supplied-values.ts`) until the job ends. They are used in exactly these places: the build command's environment, the Kubernetes Secret, and Cloud Run's env file and Secret Manager. Redaction of build logs and the deployment's `error` text covers secrets and plain values of 6 or more characters. Turning the setting on blanks the database values but does not touch these cloud-side Secrets, so apps keep running with the values they had until their next deploy.
+**Names only.** When NBO is set to [keep no variable values](./environments.md#dont-store-variable-values), the values come with the deploy request and are held in memory (`variables/supplied-values.ts`) until the job ends. They are used in exactly these places: the build command's environment, the Kubernetes Secret, and Cloud Run's env file and Secret Manager. Redaction of build logs and the deployment's `error` text covers secrets and plain values of 6 or more characters. Turning the setting on blanks the database values but does not touch these cloud-side Secrets, so apps keep running with the values they had until their next deploy.
 
 **"Already live" includes the variables.** The check that skips an unchanged deploy compares the content id plus a fingerprint of the variable set (a keyed hash; it reveals no values). Changing a variable therefore redeploys even if the code is the same, and a project with no variables behaves exactly as before.
 
@@ -205,7 +205,7 @@ The edge has two editions with the same ports, settings and admin API. The **Nod
 
 ## Deleting
 
-`DELETE /projects/{id}?resources=true|false` deletes a project. With `resources=true`, `createCloudTeardown` (`packages/controlplane/src/cloud-teardown.ts`) runs `kubectl delete` for the app's Deployment/Service/Ingress and its functions, and `gcloud run services delete` for Cloud Run services. Images in registries are kept. Then the edge entry is removed and the database rows are deleted.
+`DELETE /projects/{id}?resources=true|false` deletes a project. With `resources=true`, `createCloudTeardown` (`packages/controlplane/src/clouds/cloud-teardown.ts`) runs `kubectl delete` for the app's Deployment/Service/Ingress and its functions, and `gcloud run services delete` for Cloud Run services. Images in registries are kept. Then the edge entry is removed and the database rows are deleted.
 
 Removing a single cloud (`POST /environments/{id}/archive`) only hides it; its cloud resources stay up.
 

@@ -23,7 +23,17 @@ async function writeManifestFixture(dir: string): Promise<void> {
   await writeFile(join(dir, "static", "index.html"), indexHTML);
 
   const staticIndex = Buffer.from(
-    canonicalize({ files: { "/": { file: "index.html", digest: sha256Hex(indexHTML), size: 2, contentType: "text/html; charset=utf-8", cache: "revalidate" } } }),
+    canonicalize({
+      files: {
+        "/": {
+          file: "index.html",
+          digest: sha256Hex(indexHTML),
+          size: 2,
+          contentType: "text/html; charset=utf-8",
+          cache: "revalidate",
+        },
+      },
+    }),
   );
   await writeFile(join(dir, "static.index.json"), staticIndex);
 
@@ -53,7 +63,9 @@ async function writeManifestFixtureWithFunction(dir: string, name: string): Prom
   const entry = Buffer.from("export default { fetch() {} };");
   await writeFile(join(bundleDir, "index.mjs"), entry);
 
-  const bundleIndex = Buffer.from(canonicalize({ files: { "index.mjs": { digest: sha256Hex(entry), size: entry.length } } }));
+  const bundleIndex = Buffer.from(
+    canonicalize({ files: { "index.mjs": { digest: sha256Hex(entry), size: entry.length } } }),
+  );
   await writeFile(join(bundleDir, "bundle.index.json"), bundleIndex);
 
   const functionJSON = Buffer.from(
@@ -332,7 +344,9 @@ describe("deploy progress", () => {
     const dir = await mkdtemp(join(tmpdir(), "deploy-"));
     const messages: string[] = [];
     const d: Deployer = { liveContentID: async () => ({ id: "", ok: false }), buildAndDeploy: async () => {} };
-    await expect(deploy(d, dir, "x", { onProgress: (m) => messages.push(m), now: clock() })).rejects.toThrow(/refusing to deploy an invalid build/);
+    await expect(deploy(d, dir, "x", { onProgress: (m) => messages.push(m), now: clock() })).rejects.toThrow(
+      /refusing to deploy an invalid build/,
+    );
     expect(messages).toEqual(["build validation failed after 1.5s"]);
   });
 
@@ -371,7 +385,11 @@ describe("deploy progress", () => {
 });
 
 // setManifestEnv adds manifest.env / bindings to an already-written fixture.
-async function setManifestEnv(dir: string, env: Record<string, unknown>, bindings?: { name: string; type: string }[]): Promise<void> {
+async function setManifestEnv(
+  dir: string,
+  env: Record<string, unknown>,
+  bindings?: { name: string; type: string }[],
+): Promise<void> {
   const manifestPath = join(dir, "manifest.json");
   const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
   manifest.env = env;
@@ -380,7 +398,11 @@ async function setManifestEnv(dir: string, env: Record<string, unknown>, binding
 }
 
 describe("deploy with user environment variables", () => {
-  const userEnv = (vars: Record<string, string>, fingerprint: string | null) => ({ vars, secretNames: [], fingerprint });
+  const userEnv = (vars: Record<string, string>, fingerprint: string | null) => ({
+    vars,
+    secretNames: [],
+    fingerprint,
+  });
 
   it("fails before any cloud call when a required variable is missing, naming it", async () => {
     const dir = await mkdtemp(join(tmpdir(), "deploy-"));
@@ -398,7 +420,9 @@ describe("deploy with user environment variables", () => {
       },
     };
     await expect(deploy(d, dir, "app")).rejects.toThrow(
-      new Error("deploy: missing required environment variable(s): DATABASE_URL, CACHE_URL - set them with PUT /projects/{id}/env/{name} or Terraform's nbo_env_var"),
+      new Error(
+        "deploy: missing required environment variable(s): DATABASE_URL, CACHE_URL - set them with PUT /projects/{id}/env/{name} or Terraform's nbo_env_var",
+      ),
     );
     expect(cloud).toBe(0);
   });
@@ -479,7 +503,18 @@ async function writePrerenderFixture(dir: string): Promise<void> {
   const doc = Buffer.from(
     canonicalize({
       version: 1,
-      prerenders: [{ id: "/isr", match: "^/isr$", function: "ssr", revalidateSec: 60, expireSec: 31536000, seeds: {}, onMiss: "blocking", bypassToken: { env: "NBO_PRERENDER_BYPASS" } }],
+      prerenders: [
+        {
+          id: "/isr",
+          match: "^/isr$",
+          function: "ssr",
+          revalidateSec: 60,
+          expireSec: 31536000,
+          seeds: {},
+          onMiss: "blocking",
+          bypassToken: { env: "NBO_PRERENDER_BYPASS" },
+        },
+      ],
     }),
   );
   await writeFile(join(dir, "prerender.json"), doc);
@@ -584,7 +619,9 @@ describe("deploy: ISR cache", () => {
       buildAndDeploy: async () => {},
     };
     await deploy(d, dir, "app", { onProgress: (m) => lines.push(m) });
-    expect(lines.filter((l) => l.includes("uncached"))).toEqual(["prerender routes are served uncached: this deploy runs no ISR cache"]);
+    expect(lines.filter((l) => l.includes("uncached"))).toEqual([
+      "prerender routes are served uncached: this deploy runs no ISR cache",
+    ]);
   });
 
   it("reads the cache steps from getters at call time", async () => {

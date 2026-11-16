@@ -13,7 +13,13 @@ import { Agent } from "undici";
 import { createRegistry } from "../registry.js";
 import { CLIENT_IP_HEADER } from "@nbo/nodehost";
 import { createCloudflareTrust } from "../cloudflare-trust.js";
-import { createProxyHandler, edgeResponseHeaderTimeoutMs, fanOutRevalidate, isRevalidateRequest, setEdgeStrictDispatcherForTest } from "../proxy.js";
+import {
+  createProxyHandler,
+  edgeResponseHeaderTimeoutMs,
+  fanOutRevalidate,
+  isRevalidateRequest,
+  setEdgeStrictDispatcherForTest,
+} from "../proxy.js";
 import type { Backend } from "../registry.js";
 
 let opensslAvailable = true;
@@ -28,7 +34,21 @@ function createSelfSignedCert(): { key: string; cert: string } {
   const keyPath = join(dir, "key.pem");
   const certPath = join(dir, "cert.pem");
   try {
-    execFileSync("openssl", ["req", "-x509", "-newkey", "rsa:2048", "-keyout", keyPath, "-out", certPath, "-days", "1", "-nodes", "-subj", "/CN=localhost"]);
+    execFileSync("openssl", [
+      "req",
+      "-x509",
+      "-newkey",
+      "rsa:2048",
+      "-keyout",
+      keyPath,
+      "-out",
+      certPath,
+      "-days",
+      "1",
+      "-nodes",
+      "-subj",
+      "/CN=localhost",
+    ]);
     return { key: readFileSync(keyPath, "utf8"), cert: readFileSync(certPath, "utf8") };
   } finally {
     rmSync(dir, { recursive: true, force: true });
@@ -152,6 +172,7 @@ describe("createProxyHandler", () => {
       const elapsed = Date.now() - start;
 
       expect(response.status).toBe(502);
+      expect(await response.text()).toBe("edge: backend unreachable");
       expect(elapsed).toBeLessThan(5000);
       expect(accepted).toBe(true);
     } finally {
@@ -159,15 +180,20 @@ describe("createProxyHandler", () => {
     }
   });
 
-  it("sets x-nbo-edge-backend to the picked backend's URL", async () => {
+  it("sets x-nbo-edge-backend to the picked backend's id, never its URL", async () => {
     const backendURL = await startBackend((_req, res) => res.end());
     const registry = createRegistry();
-    registry.set("app.test", [{ url: backendURL, weight: 1, insecureSkipVerify: false }]);
+    registry.set("app.test", [{ id: "env_k8s", url: backendURL, weight: 1, insecureSkipVerify: false }]);
+    registry.set("old.test", [{ url: backendURL, weight: 1, insecureSkipVerify: false }]);
     const handler = createProxyHandler(registry);
 
     const response = await handler(new Request("http://edge/", { headers: { host: "app.test" } }));
+    expect(response.headers.get("x-nbo-edge-backend")).toBe("env_k8s");
 
-    expect(response.headers.get("x-nbo-edge-backend")).toBe(backendURL);
+    // A backend without an id (an older route table) gets no header at all.
+    const old = await handler(new Request("http://edge/", { headers: { host: "old.test" } }));
+    expect(old.status).toBe(200);
+    expect(old.headers.get("x-nbo-edge-backend")).toBeNull();
   });
 
   it("sets x-forwarded-host to the original public host", async () => {
@@ -195,7 +221,16 @@ describe("createProxyHandler", () => {
     registry.set("public.test", [{ url: backendURL, weight: 1, insecureSkipVerify: false }]);
     const handler = createProxyHandler(registry);
 
-    await handler(new Request("http://edge/", { headers: { host: "public.test", "x-forwarded-for": "1.2.3.4", "x-real-ip": "1.2.3.4", forwarded: "for=1.2.3.4" } }));
+    await handler(
+      new Request("http://edge/", {
+        headers: {
+          host: "public.test",
+          "x-forwarded-for": "1.2.3.4",
+          "x-real-ip": "1.2.3.4",
+          forwarded: "for=1.2.3.4",
+        },
+      }),
+    );
 
     expect(got).toMatchObject({ "x-forwarded-for": "1.2.3.4", "x-real-ip": "1.2.3.4", forwarded: "for=1.2.3.4" });
   });
@@ -228,7 +263,12 @@ describe("createProxyHandler Cloudflare trust (cluster mode)", () => {
       res.end("ok");
     });
     const registry = createRegistry();
-    registry.replaceAll({ "a.test": { backends: [{ url, weight: 1, insecureSkipVerify: false }], ...(opts.cloudflare ? { cloudflare: true } : {}) } });
+    registry.replaceAll({
+      "a.test": {
+        backends: [{ url, weight: 1, insecureSkipVerify: false }],
+        ...(opts.cloudflare ? { cloudflare: true } : {}),
+      },
+    });
     const trust = createCloudflareTrust();
     trust.replace(["104.16.0.0/13", "2606:4700::/32"]);
     const handler = createProxyHandler(registry, { scheme: "https", cloudflareTrust: trust });
@@ -266,7 +306,12 @@ describe("createProxyHandler Cloudflare trust (cluster mode)", () => {
     expect(outsider["x-forwarded-for"]).toBe("::ffff:8.8.8.8");
   });
   it("never forwards true-client-ip or cf-connecting-ip", async () => {
-    const seen = await run({ cloudflare: false, peer: "8.8.8.8", cfIp: "1.2.3.4", extra: { "true-client-ip": "5.6.7.8" } });
+    const seen = await run({
+      cloudflare: false,
+      peer: "8.8.8.8",
+      cfIp: "1.2.3.4",
+      extra: { "true-client-ip": "5.6.7.8" },
+    });
     expect(seen["true-client-ip"]).toBeUndefined();
     expect(seen["cf-connecting-ip"]).toBeUndefined();
   });
@@ -275,9 +320,13 @@ describe("createProxyHandler Cloudflare trust (cluster mode)", () => {
 describe("createProxyHandler revalidation fan-out to a host with no backends", () => {
   it("answers as for an unknown host (404, the edge's text), not 204", async () => {
     // The registry refuses such a target, so a stand-in registry hands one over.
-    const registry = { get: (host: string) => ({ host, backends: [] }) } as unknown as ReturnType<typeof createRegistry>;
+    const registry = { get: (host: string) => ({ host, backends: [] }) } as unknown as ReturnType<
+      typeof createRegistry
+    >;
     const handler = createProxyHandler(registry);
-    const res = await handler(new Request("http://edge/_nbo/revalidate", { method: "POST", headers: { host: "empty.test" }, body: "{}" }));
+    const res = await handler(
+      new Request("http://edge/_nbo/revalidate", { method: "POST", headers: { host: "empty.test" }, body: "{}" }),
+    );
     expect(res.status).toBe(404);
     expect(await res.text()).toBe("edge: no target registered for host empty.test");
     expect(res.headers.get("x-nbo-edge-fanout")).toBe("0");
@@ -301,7 +350,12 @@ describe("fanOutRevalidate", () => {
     { id: "env_a", url: "http://a", weight: 1, insecureSkipVerify: false },
     { url: "http://b", weight: 0, insecureSkipVerify: false },
   ];
-  const post = (body: string) => new Request("http://e/_nbo/revalidate", { method: "POST", body, headers: { authorization: "Bearer t", "content-type": "application/json" } });
+  const post = (body: string) =>
+    new Request("http://e/_nbo/revalidate", {
+      method: "POST",
+      body,
+      headers: { authorization: "Bearer t", "content-type": "application/json" },
+    });
 
   it("calls every backend with the same body and headers and answers 204 when all are 2xx", async () => {
     const got: { url: string; body: string; auth: string | null }[] = [];
@@ -323,13 +377,18 @@ describe("fanOutRevalidate", () => {
     expect(res.headers.get("x-nbo-edge-fanout")).toBe("2");
   });
 
-  it("answers 502 with each id (URL as fallback) and status, 0 for a failed call", async () => {
+  it("answers 502 with each id (null without one, never the URL) and status, 0 for a failed call", async () => {
     const res = await fanOutRevalidate(post("{}"), backends, async (b) => {
       if (b.url === "http://b") throw new Error("refused");
       return new Response(null, { status: 204 });
     });
     expect(res.status).toBe(502);
-    expect(await res.json()).toEqual({ backends: [{ id: "env_a", status: 204 }, { id: "http://b", status: 0 }] });
+    expect(await res.json()).toEqual({
+      backends: [
+        { id: "env_a", status: 204 },
+        { id: null, status: 0 },
+      ],
+    });
   });
 
   it("answers 413 for a body over 65536 bytes without calling a backend", async () => {

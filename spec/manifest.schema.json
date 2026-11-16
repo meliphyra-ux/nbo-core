@@ -42,7 +42,22 @@
       "additionalProperties": false,
       "required": ["capabilities", "extensions"],
       "properties": {
-        "capabilities": { "type": "array", "items": { "type": "string", "enum": ["fn.streaming", "fn.edge", "fn.waitUntil", "fn.arm64", "prerender.isr", "prerender.onDemand", "images.optimize", "geo.headers"] } },
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "fn.streaming",
+              "fn.edge",
+              "fn.waitUntil",
+              "fn.arm64",
+              "prerender.isr",
+              "prerender.onDemand",
+              "images.optimize",
+              "geo.headers"
+            ]
+          }
+        },
         "extensions": {
           "type": "array",
           "items": {

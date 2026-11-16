@@ -3,7 +3,14 @@
 
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { buildImage, buildFunctionImage, functionImageHash, isrcacheImageTag, appBakedHash, buildIsrcacheImage } from "@nbo/adapter-k8s";
+import {
+  buildImage,
+  buildFunctionImage,
+  functionImageHash,
+  isrcacheImageTag,
+  appBakedHash,
+  buildIsrcacheImage,
+} from "@nbo/adapter-k8s";
 import {
   capabilities,
   deploy as cloudRunDeploy,
@@ -49,9 +56,14 @@ import { redact } from "./credentials.js";
 // own gcloud account and project.
 function secretManagerMessage(kind: "disabled" | "denied", opts: CloudRunTargetOptions | undefined): string {
   const reconnect = "reconnect Google Cloud (nbo-server connect google)";
-  if (kind === "disabled") return opts ? `${reconnect} to enable the Secret Manager API` : "enable the Secret Manager API in your Google Cloud project";
+  if (kind === "disabled")
+    return opts
+      ? `${reconnect} to enable the Secret Manager API`
+      : "enable the Secret Manager API in your Google Cloud project";
   if (!opts) return "your gcloud account needs roles/secretmanager.admin";
-  return opts.pastedKeyDeployer ? `grant roles/secretmanager.admin to ${opts.pastedKeyDeployer}` : `${reconnect} to grant Secret Manager access`;
+  return opts.pastedKeyDeployer
+    ? `grant roles/secretmanager.admin to ${opts.pastedKeyDeployer}`
+    : `${reconnect} to grant Secret Manager access`;
 }
 
 // createCloudRunTarget wraps a Deployer wired against a real Cloud
@@ -90,7 +102,13 @@ export interface CloudRunTarget {
   isr?: IsrOptions;
 }
 
-export function createCloudRunTarget(project: string, region: string, repo: string, opts?: CloudRunTargetOptions, progress?: ProgressOptions): CloudRunTarget {
+export function createCloudRunTarget(
+  project: string,
+  region: string,
+  repo: string,
+  opts?: CloudRunTargetOptions,
+  progress?: ProgressOptions,
+): CloudRunTarget {
   // Spread into adapter calls so the dev path passes exactly the
   // arguments it always did.
   const cx: [ToolContext] | [] = opts ? [opts.ctx] : [];
@@ -133,7 +151,11 @@ export function createCloudRunTarget(project: string, region: string, repo: stri
   // envFields is what a service's deploy carries for the user's
   // variables: nothing at all without any (exactly as before), unless
   // the live service had some or its state is unknown (clearEnv).
-  const envFields = (secretIds: Record<string, string>, liveFingerprint: string | undefined, liveUnknown = false): EnvFields => {
+  const envFields = (
+    secretIds: Record<string, string>,
+    liveFingerprint: string | undefined,
+    liveUnknown = false,
+  ): EnvFields => {
     const u = target.userEnv;
     if (!u) return {};
     const secret = new Set(u.secretNames);
@@ -154,7 +176,10 @@ export function createCloudRunTarget(project: string, region: string, repo: stri
       const ids: Record<string, string> = {};
       for (const name of [...(u?.secretNames ?? [])].sort()) {
         const id = secretId(app, name);
-        await guarded(() => ensureSecretVersion(project, id, u!.vars[name] ?? "", u!.secretHashes?.[name], ...cx), true);
+        await guarded(
+          () => ensureSecretVersion(project, id, u!.vars[name] ?? "", u!.secretHashes?.[name], ...cx),
+          true,
+        );
         ids[name] = id;
       }
       return ids;
@@ -173,7 +198,11 @@ export function createCloudRunTarget(project: string, region: string, repo: stri
   };
   // dropSecretMounts removes live secret mounts of names now delivered
   // as plain values (gcloud refuses one name as both), before the deploy.
-  const dropSecretMounts = async (service: string, liveSecretNames: string[] | undefined, plainEnv: Record<string, string> | undefined): Promise<void> => {
+  const dropSecretMounts = async (
+    service: string,
+    liveSecretNames: string[] | undefined,
+    plainEnv: Record<string, string> | undefined,
+  ): Promise<void> => {
     const names = (liveSecretNames ?? []).filter((n) => plainEnv && n in plainEnv);
     if (names.length > 0) await guarded(() => removeSecretEnv(service, project, region, names, ...cx));
   };
@@ -209,7 +238,12 @@ export function createCloudRunTarget(project: string, region: string, repo: stri
       return await serviceLabels(serviceName, project, region, ...cx);
     } catch (err) {
       // eslint-disable-next-line preserve-caught-error -- the original error may carry secret values
-      throw new Error(redact(`ISR cache: reading ${serviceName} failed: ${err instanceof Error ? err.message : String(err)}`, secretValues()));
+      throw new Error(
+        redact(
+          `ISR cache: reading ${serviceName} failed: ${err instanceof Error ? err.message : String(err)}`,
+          secretValues(),
+        ),
+      );
     }
   };
   const deployIsrCache = async (nboDir: string, app: string): Promise<string> => {
@@ -219,7 +253,9 @@ export function createCloudRunTarget(project: string, region: string, repo: stri
     // labelled as this app's cache (nbo-role=isrcache, nbo-app=<app>).
     const existing = await readIsrLabels(serviceName);
     if (existing && !isIsrcacheServiceOf(existing, app)) {
-      throw new Error(`ISR cache: ${serviceName} exists and is not this app's ISR cache; NBO won't replace it. Rename the service that uses this name to use ISR here`);
+      throw new Error(
+        `ISR cache: ${serviceName} exists and is not this app's ISR cache; NBO won't replace it. Rename the service that uses this name to use ISR here`,
+      );
     }
     const cli = await p.timed("cli bundle prepared", "cli bundle preparation", () => cliDeployDirs.acquire(nboDir));
     try {
@@ -263,7 +299,9 @@ export function createCloudRunTarget(project: string, region: string, repo: stri
           return guarded(() => cloudRunDeploy(deploySpec, ...cx));
         });
       }
-      await p.timed("invoker granted", "invoker grant", () => grantInvoker(serviceName, project, region, invoker, ...cx));
+      await p.timed("invoker granted", "invoker grant", () =>
+        grantInvoker(serviceName, project, region, invoker, ...cx),
+      );
       isrCacheURL = url;
       return url;
     } finally {
@@ -287,7 +325,11 @@ export function createCloudRunTarget(project: string, region: string, repo: stri
     }
   };
 
-  const deployFunctions = async (nboDir: string, app: string, functionNames: string[]): Promise<Record<string, string>> => {
+  const deployFunctions = async (
+    nboDir: string,
+    app: string,
+    functionNames: string[],
+  ): Promise<Record<string, string>> => {
     // Functions aren't content-id-tracked like the app; each one is
     // skipped instead when its live service already runs its
     // content-hash-tagged image (deployOne below). This call is skipped
@@ -300,7 +342,12 @@ export function createCloudRunTarget(project: string, region: string, repo: stri
     // function's) may read them, before any service mounts them.
     const secretIds = await syncSecrets(app);
     if (Object.keys(secretIds).length > 0) {
-      const accounts = perService ? [appIdentity!, ...(await mapLimit(functionNames, 1, (n) => ensureServiceIdentity(project, `${app}-fn-${n}`, ...cx)))] : [serviceAccount!];
+      const accounts = perService
+        ? [
+            appIdentity!,
+            ...(await mapLimit(functionNames, 1, (n) => ensureServiceIdentity(project, `${app}-fn-${n}`, ...cx))),
+          ]
+        : [serviceAccount!];
       for (const account of accounts) await grantSecrets(secretIds, account);
     }
     // Found running Slice 4's crons verify script for real: a
@@ -374,7 +421,9 @@ export function createCloudRunTarget(project: string, region: string, repo: stri
         p.report("unchanged, skipped");
         url = live.url;
       } else {
-        await p.timed("image built", "image build", () => buildFunctionImage(bundleDir, functionJSONPath, localTag, envVars));
+        await p.timed("image built", "image build", () =>
+          buildFunctionImage(bundleDir, functionJSONPath, localTag, envVars),
+        );
         await p.timed("image pushed", "image push", () => pushImage(localTag, remoteTag, ...cx));
         url = await p.timed("service deployed", "service deploy", async () => {
           const deploySpec: CloudRunDeploySpec = {
@@ -386,7 +435,9 @@ export function createCloudRunTarget(project: string, region: string, repo: stri
           return guarded(() => cloudRunDeploy(deploySpec, ...cx));
         });
       }
-      await p.timed("invoker granted", "invoker grant", () => grantInvoker(serviceName, project, region, invoker, ...cx));
+      await p.timed("invoker granted", "invoker grant", () =>
+        grantInvoker(serviceName, project, region, invoker, ...cx),
+      );
       return url;
     };
     const deployed = await mapLimit(functionNames, functionConcurrency, deployOne);
@@ -404,13 +455,22 @@ export function createCloudRunTarget(project: string, region: string, repo: stri
       const envVars = await imageEnvVars(nboDir, !!opts, target.extraEnv, target.userEnv);
       // With its own cache, the app must not find NBO's (dev) NBO_ISRCACHE_URL: it would win over __isrcache.
       if (target.isr?.enabled) delete envVars.NBO_ISRCACHE_URL;
-      const functionURLs = isrCacheURL ? { ...deployedFunctionURLs, [ISR_CACHE_KEY]: isrCacheURL } : deployedFunctionURLs;
+      const functionURLs = isrCacheURL
+        ? { ...deployedFunctionURLs, [ISR_CACHE_KEY]: isrCacheURL }
+        : deployedFunctionURLs;
       // Read at call time, like extraEnv: the previous build's hashed files ride in the image.
-      const suffix = await withCarry(target.carryFrom, nboDir, (m) => p.report(m), async (carryDir, carryHash) => {
-        const suffix = appImageTag(id, carryHash, await appBakedHash(cliDeployDir, functionURLs, envVars));
-        await p.timed("image built", "image build", () => buildImage(nboDir, cliDeployDir, `nbo-app-${app}:${suffix}`, functionURLs, envVars, carryDir));
-        return suffix;
-      });
+      const suffix = await withCarry(
+        target.carryFrom,
+        nboDir,
+        (m) => p.report(m),
+        async (carryDir, carryHash) => {
+          const suffix = appImageTag(id, carryHash, await appBakedHash(cliDeployDir, functionURLs, envVars));
+          await p.timed("image built", "image build", () =>
+            buildImage(nboDir, cliDeployDir, `nbo-app-${app}:${suffix}`, functionURLs, envVars, carryDir),
+          );
+          return suffix;
+        },
+      );
       const localTag = `nbo-app-${app}:${suffix}`;
       const remoteTag = `${repo}/nbo-app-${app}:${suffix}`;
       await p.timed("image pushed", "image push", () => pushImage(localTag, remoteTag, ...cx));
@@ -430,7 +490,12 @@ export function createCloudRunTarget(project: string, region: string, repo: stri
           ...(identity ? { serviceAccount: identity } : {}),
           ...envFields(secretIds, liveAppFingerprint),
         };
-        if (spec.plainEnv) await dropSecretMounts(app, (await liveServiceState(app, project, region, ...cx))?.secretEnvNames, spec.plainEnv);
+        if (spec.plainEnv)
+          await dropSecretMounts(
+            app,
+            (await liveServiceState(app, project, region, ...cx))?.secretEnvNames,
+            spec.plainEnv,
+          );
         const deployed = await guarded(() => cloudRunDeploy(spec, ...cx));
         await cleanupSecretVersions(secretIds);
         return deployed;

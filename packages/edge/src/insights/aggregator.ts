@@ -110,10 +110,19 @@ export function createAggregator(options: AggregatorOptions = {}): Aggregator {
         contentIdsSeen = new Map();
       }
       const route = admit(routesSeen, sample.host, sample.route, maxRoutes) ? sample.route : OTHER_ROUTE;
-      const contentId = admit(contentIdsSeen, `${sample.host}\0${sample.environmentId}`, sample.contentId, maxContentIds) ? sample.contentId : "";
+      const contentId = admit(
+        contentIdsSeen,
+        `${sample.host}\0${sample.environmentId}`,
+        sample.contentId,
+        maxContentIds,
+      )
+        ? sample.contentId
+        : "";
 
       const minute = new Date(minuteMs).toISOString();
-      const key = [sample.host, sample.environmentId, contentId, route, sample.metric, sample.device, minute].join("\0");
+      const key = [sample.host, sample.environmentId, contentId, route, sample.metric, sample.device, minute].join(
+        "\0",
+      );
       let batch = batches.get(key);
       if (!batch) {
         // Nothing drains in a core-only install: keep the newest, drop the
@@ -123,7 +132,17 @@ export function createAggregator(options: AggregatorOptions = {}): Aggregator {
           if (!oldest.done) batches.delete(oldest.value);
           dropped++;
         }
-        batch = { host: sample.host, environmentId: sample.environmentId, contentId, route, metric: sample.metric, device: sample.device, minute, buckets: {}, count: 0 };
+        batch = {
+          host: sample.host,
+          environmentId: sample.environmentId,
+          contentId,
+          route,
+          metric: sample.metric,
+          device: sample.device,
+          minute,
+          buckets: {},
+          count: 0,
+        };
         batches.set(key, batch);
       }
       const i = String(bucketIndex(sample.metric, sample.value));

@@ -43,13 +43,17 @@ Capture reads local files only; it makes no extra network or cloud calls.
 
 Builds made before NBO kept details have no details; their logs still work.
 
+## Reading a log as a stream
+
+`GET /builds/{id}/log` answers the stored log as plain text (it is already redacted). Add `?from=<bytes>` to skip that many bytes. Add `?follow=1` and the answer stays open: NBO checks the build every 500 ms, sends whatever was appended, and closes the answer when the build reaches a final status. An unknown build is a 404. Pass `from` the number of bytes you already have to continue where you left off. Logs over 256 KiB are cut with a marker, so a byte offset past the cut can skip text.
+
 ## Live builds
 
 The project summary (`GET /projects/{id}/summary`) names, for every cloud, the build it is serving (its live build) and its share of traffic, and names the **production build**: the live build of the cloud with the most traffic. They are worked out from deployments, not stored on the build row.
 
 ## Builds per environment
 
-Every commit build belongs to one [environment](./environments.md). A push to the production branch builds Production; a push to a custom environment's branch (with its auto-deploy on) builds that environment; a push to an [ephemeral environment](./environments.md#ephemeral-environments)'s branch builds that one until its removal starts; any other branch is ignored. The branch poller makes one `git ls-remote --heads` call per project each tick and compares every environment's head with the last one it saw. A build gets its environment's variables and deploys only to that environment's clouds. Starting one by hand (`POST /projects/{id}/builds`) takes an optional `stage`, the environment's name, and builds the head of its branch.
+Every commit build belongs to one [environment](./environments.md). A push to the production branch builds Production; a push to a custom environment's branch (with its auto-deploy on) builds that environment; a push to an [ephemeral environment](./environments.md#ephemeral-environments)'s branch builds that one until its removal starts; any other branch is ignored. The branch poller makes one `git ls-remote --heads` call per project each tick and compares every environment's head with the last one it saw. Check for new commits now with `POST /projects/{id}/git/poll` (no body): it runs the same check at once, shares the poller's bookkeeping so a push builds once, and answers the builds it queued; with automatic deploys off it answers a note and reads nothing. The per-project push webhook moves the same last-seen head, with a compare-and-set on the push's `before`: a push builds only when the head NBO last saw is that `before` (or nothing yet, for the first push or a new branch), or when the push is newer than the event that set the head (a manual build or a branch change can leave a head no push names). So a push the poller already built is not built again, and a delivery sent again later, the newest one or an older one, builds nothing: use a manual build (or Redeploy) to build a commit again. GitHub gives a push's time to the second, so two pushes to one branch in the same second, delivered out of order, can leave one of them to the next poll (about 45 seconds). A head that an older NBO stored without a time counts as seen at the upgrade. A build gets its environment's variables and deploys only to that environment's clouds. Starting one by hand (`POST /projects/{id}/builds`) takes an optional `stage`, the environment's name, and builds the head of its branch.
 
 When NBO is set to [keep no variable values](./environments.md#dont-store-variable-values), a push to an environment that has declared variable names is recorded as `skipped` with "Waiting for variable values", because there are no values to build with.
 
@@ -59,7 +63,7 @@ Deploying a stored build to a cloud is also a row in `builds`, with `kind` `prom
 
 ## The queue
 
-**File:** `packages/controlplane/src/build-queue.ts`
+**File:** `packages/controlplane/src/builds/build-queue.ts`
 
 - One build runs per project at a time; different projects build in parallel.
 - At most one build waits behind it **for each [environment](./environments.md)**. A newer request replaces the waiting build of the same environment only, so a staging push never throws away a waiting Production build. When the running build finishes, Production goes first, then custom environments, oldest first.
@@ -67,7 +71,7 @@ Deploying a stored build to a cloud is also a row in `builds`, with `kind` `prom
 
 ## Step by step: `runBuild`
 
-**File:** `packages/controlplane/src/runner.ts` → `createRunner(...).runBuild(buildId)`
+**File:** `packages/controlplane/src/builds/runner.ts` → `createRunner(...).runBuild(buildId)`
 
 Every command is printed to the log first as `$ command args`, so the log reads like a terminal session. Commands run through `step()`, which has a time limit; on timeout the whole process tree is killed (`taskkill /T /F` on Windows, process group kill elsewhere).
 
@@ -78,17 +82,19 @@ git clone -- <repo> <temp>/nbo-build-XXXX
 git -C <clone> checkout -q <sha>
 ```
 
-`gitEnv` (`src/gitremote.ts`) disables interactive prompts, so a private repository fails fast instead of waiting for a password forever.
+After the checkout, the runner runs `git branch -r --contains <sha>`. The clone is a full one (every branch and tag, but not the `refs/pull/*` refs), so this asks honestly whether the commit is on a branch of your repository. If it is not, for example because it only exists under a tag or in a pull request, the build fails with `commit <sha> is not on a branch of <repo>`. A normal build of a branch tip is as fast as before, because nothing extra is fetched. This also means a full Redeploy of an old commit fails once its branch was deleted, force-pushed away or squash-merged. Promote (deploying a stored build, with no rebuild) still works for rollbacks, as long as the build's stored output is kept.
 
-A private repository needs a git credential on the project (`src/git-credentials.ts`), set with `credential` on `POST /projects/setup` or `PUT /projects/{id}/git`:
+`gitEnv` (`src/git/gitremote.ts`) disables interactive prompts, so a private repository fails fast instead of waiting for a password forever.
+
+A private repository needs a git credential on the project (`src/git/git-credentials.ts`), set with `credential` on `POST /projects/setup` or `PUT /projects/{id}/git`:
 
 - **Token** (`https://` addresses): an HTTPS access token, with an optional user name. Git gets it as an `Authorization` header for that one repository address, through `GIT_CONFIG_*` variables in the environment of the git steps only (clone, checkout, reading the commit, `ls-remote`), with `http.followRedirects=false` so a redirect can't carry it to another address. The token never goes into the address, an argument, `.git/config` or the build command's environment, and the log and the build error hide it.
-- **Deploy key** (`ssh://git@host/path` or `git@host:path` addresses): `POST /projects/{id}/git/deploy-key` makes an SSH key pair and answers the public half; add it to the repository as a read-only deploy key. For each git step the private half is written to a file only NBO can read, used through `GIT_SSH_COMMAND`, and deleted when the step ends. Host keys of github.com, gitlab.com and bitbucket.org are checked against the keys those services publish (`src/git-host-keys.ts`, written to `known_hosts.published` next to the database) from the first connection. Any other host is remembered in `known_hosts` next to the database the first time; a changed key is refused either way.
+- **Deploy key** (`ssh://git@host/path` or `git@host:path` addresses): `POST /projects/{id}/git/deploy-key` makes an SSH key pair and answers the public half; add it to the repository as a read-only deploy key. For each git step the private half is written to a file only NBO can read, used through `GIT_SSH_COMMAND`, and deleted when the step ends. Host keys of github.com, gitlab.com and bitbucket.org are checked against the keys those services publish (`src/git/git-host-keys.ts`, written to `known_hosts.published` next to the database) from the first connection. Any other host is remembered in `known_hosts` next to the database the first time; a changed key is refused either way. A new project whose key isn't on the repository yet waits in the setup status `waiting-for-key`: NBO checks again on every poll for an hour, then every 10 minutes for 7 days (even with deploying automatically off), and builds the first commit once the read works (once, even if a setup retry runs at the same moment) (a project created to skip its first build only records the commit). After 7 days it becomes `needs-setup`.
 - **Public**: no credential (the default).
 
 A stored credential stays with its host: a `PUT /projects/{id}/git` that moves the repository to another host, port or scheme without a new `credential` is refused with "the repository moved to another host: give its credential again".
 
-Tokens and private keys are stored encrypted with the secret key; the API shows only the kind, the public key and the user name. Projects linked to an older NBO's own GitHub App keep building with a token NBO asks GitHub for (`src/github-legacy.ts`) until they get a credential of their own.
+Tokens and private keys are stored encrypted with the secret key; the API shows only the kind, the public key and the user name. Projects linked to an older NBO's own GitHub App keep building with a token NBO asks GitHub for (`src/git/github-legacy.ts`) until they get a credential of their own.
 
 ### 2. Find the app folder
 
@@ -109,6 +115,8 @@ NEXT_ADAPTER_PATH=<repo>/packages/next-adapter/src/adapter.js
 Next.js 16+ reads this and loads NBO's adapter during `next build`. You don't need to change `next.config.ts`. Other frameworks ignore it.
 
 The build command and the ignored build step also get three variables that say which [environment](./environments.md) the build is for: `NBO_ENV` (its name, such as `production` or `staging`), `NBO_GIT_COMMIT_REF` (its branch) and `NBO_GIT_COMMIT_SHA`. An ephemeral environment's builds get `NBO_ENV=preview`. (Earlier versions also set `NBO_GIT_PULL_REQUEST_ID` for previews; NBO no longer knows about pull requests, so it is gone.) User variables can't use `NBO_*` names, so these can't clash.
+
+**NBO's own settings stay out of builds.** The build command and the ignored build step inherit NBO's environment (`PATH`, `HOME`, proxy settings and so on) minus every `NBO_*` variable, because those name NBO's database, its secret key file, the link's enrolment code and its cloud accounts, and a build runs code from the repository. Three kinds pass: `NBO_ENV`, `NBO_GIT_*` and `NBO_BUILD_ID` (which pins the Next.js build id). NBO then adds `NBO_ENV`, `NBO_GIT_COMMIT_REF`, `NBO_GIT_COMMIT_SHA`, `NEXT_ADAPTER_PATH` and, for the build command, your variables. Only `NBO_*` names are dropped: every other variable in NBO's own environment (for example `GOOGLE_APPLICATION_CREDENTIALS`, `KUBECONFIG`, `DOCKER_HOST` or `CLOUDSDK_CONFIG` set for NBO's process) is still inherited by the build until builds are isolated; don't give NBO's process cloud credentials through its environment. Builds are not isolated yet either, so a build can still read files NBO can read.
 
 The build command gets **all** the variables of the build's environment (workspace ones, overridden by project ones; see [Environments](./environments.md#variables-per-environment)), secret or not, so `NEXT_PUBLIC_*` values can be baked into the bundle. Secret values are replaced with `[redacted]` in the build log, even when the output arrives split across chunks. Very short secrets (one or two characters) can over-redact, because every match in the log is hidden. The ignored build step (step 3) runs **without** your project variables.
 
@@ -205,7 +213,7 @@ Both producers only call this API, which keeps `.nbo/` consistent:
 - route patterns are RE2-compatible (`routes.ts`), without the JavaScript-only escapes;
 - functions have a valid `function.json` and bundle (`functions.ts`);
 - cron schedules are valid (`crons.ts`): five fields, numbers, `*` or `*/N`;
-- nothing looks like a leaked secret: long high-entropy strings (`secrets.ts`).
+- nothing looks like a leaked secret: long high-entropy strings (`store/secrets.ts`).
 
 A few checks are warnings, not errors, so builds stored before spec 1.0 keep deploying (today: a static file under `/_nbo/`, a `dispatch.json` that an older build left out of its bundle listing, and a prerender id used twice). `nbo validate --strict` makes warnings errors; CI uses it on fresh builds, and you can run it by hand on any `.nbo/` folder.
 

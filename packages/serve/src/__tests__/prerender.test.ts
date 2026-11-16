@@ -10,7 +10,13 @@ import { createRouter, type Decision } from "@nbo/router";
 import { createStore } from "@nbo/isrcache";
 import type { Resolver, FetchHandler } from "@nbo/funcproxy";
 import type { ServeState, PrerenderConfig } from "../serve.js";
-import { prerenderCacheKey, handlePrerender, handleRevalidate, backgroundWrites, BACKGROUND_WRITE_LIMIT } from "../prerender.js";
+import {
+  prerenderCacheKey,
+  handlePrerender,
+  handleRevalidate,
+  backgroundWrites,
+  BACKGROUND_WRITE_LIMIT,
+} from "../prerender.js";
 import { createFakeCacheService } from "./fake-cache-service.js";
 
 const originalBypassEnv = process.env.TEST_NBO_PRERENDER_BYPASS;
@@ -55,12 +61,21 @@ function prerenderDecision(cfg: PrerenderConfig): Decision {
 }
 
 // pprState is a state whose /blog/hello seed is the given shell.
-async function pprState(cfg: PrerenderConfig, resolve?: Resolver, shell = "shell|", resolveCache?: Resolver): Promise<ServeState> {
+async function pprState(
+  cfg: PrerenderConfig,
+  resolve?: Resolver,
+  shell = "shell|",
+  resolveCache?: Resolver,
+): Promise<ServeState> {
   const state = newTestState(cfg, resolve, resolveCache);
   state.nboDir = await mkdtemp(join(tmpdir(), "serve-prerender-ppr-"));
   await mkdir(join(state.nboDir, "static"), { recursive: true });
   await writeFile(join(state.nboDir, "static", "blog-hello.html"), shell);
-  state.index.set("/blog/hello", { file: "blog-hello.html", contentType: "text/html; charset=utf-8", cache: "revalidate" });
+  state.index.set("/blog/hello", {
+    file: "blog-hello.html",
+    contentType: "text/html; charset=utf-8",
+    cache: "revalidate",
+  });
   return state;
 }
 
@@ -159,7 +174,11 @@ describe("handlePrerender", () => {
     state.nboDir = await mkdtemp(join(tmpdir(), "serve-prerender-"));
     await mkdir(join(state.nboDir, "static"), { recursive: true });
     await writeFile(join(state.nboDir, "static", "blog-hello.html"), "seed body");
-    state.index.set("/blog/hello", { file: "blog-hello.html", contentType: "text/html; charset=utf-8", cache: "revalidate" });
+    state.index.set("/blog/hello", {
+      file: "blog-hello.html",
+      contentType: "text/html; charset=utf-8",
+      cache: "revalidate",
+    });
 
     let regenDoneKey: string | undefined;
     state.onRegenDone = (k) => (regenDoneKey = k);
@@ -293,7 +312,11 @@ describe("handlePrerender", () => {
     state.nboDir = await mkdtemp(join(tmpdir(), "serve-prerender-ppr-"));
     await mkdir(join(state.nboDir, "static"), { recursive: true });
     await writeFile(join(state.nboDir, "static", "blog-hello.html"), "shell|");
-    state.index.set("/blog/hello", { file: "blog-hello.html", contentType: "text/html; charset=utf-8", cache: "revalidate" });
+    state.index.set("/blog/hello", {
+      file: "blog-hello.html",
+      contentType: "text/html; charset=utf-8",
+      cache: "revalidate",
+    });
 
     const res = await handlePrerender(state, new Request("http://x/blog/hello"), prerenderDecision(cfg));
     expect(res.status).toBe(200);
@@ -320,7 +343,11 @@ describe("handlePrerender", () => {
     });
     const state = newTestState(cfg, resolve);
 
-    const request = new Request("http://x/blog/hello", { method: "POST", headers: { "next-action": "abc123" }, body: "action-payload" });
+    const request = new Request("http://x/blog/hello", {
+      method: "POST",
+      headers: { "next-action": "abc123" },
+      body: "action-payload",
+    });
     const res = await handlePrerender(state, request, prerenderDecision(cfg));
     expect(res.status).toBe(200);
     expect(await res.text()).toBe("action result");
@@ -357,7 +384,13 @@ describe("handlePrerender", () => {
     const errors = vi.spyOn(console, "error").mockImplementation(() => {});
     try {
       const cfg = testPrerenderConfig({ "x-nbo-ppr": { postponedState: "opaque-state-1" } });
-      const state = await pprState(cfg, stubResolver(async () => { throw new Error("function unreachable"); }), "shell body");
+      const state = await pprState(
+        cfg,
+        stubResolver(async () => {
+          throw new Error("function unreachable");
+        }),
+        "shell body",
+      );
       const res = await handlePrerender(state, new Request("http://x/blog/hello"), prerenderDecision(cfg));
       expect(res.status).toBe(200);
       expect(await res.text()).toBe("shell body</body></html>");
@@ -436,7 +469,11 @@ describe("handlePrerender", () => {
     });
     const state = await pprState(cfg, resolve);
     const visitor = new AbortController();
-    const res = await handlePrerender(state, new Request("http://x/blog/hello", { signal: visitor.signal }), prerenderDecision(cfg));
+    const res = await handlePrerender(
+      state,
+      new Request("http://x/blog/hello", { signal: visitor.signal }),
+      prerenderDecision(cfg),
+    );
     await res.body!.getReader().read();
 
     expect(captured!.signal.aborted).toBe(false);
@@ -450,14 +487,16 @@ describe("handlePrerender", () => {
     let bodyCancelled = false;
     const resolve = stubResolver(async (req) => {
       captured = req;
-      return new Response(new ReadableStream<Uint8Array>({
-        start(controller) {
-          controller.enqueue(new TextEncoder().encode("first"));
-        },
-        cancel() {
-          bodyCancelled = true;
-        },
-      }));
+      return new Response(
+        new ReadableStream<Uint8Array>({
+          start(controller) {
+            controller.enqueue(new TextEncoder().encode("first"));
+          },
+          cancel() {
+            bodyCancelled = true;
+          },
+        }),
+      );
     });
     const state = await pprState(cfg, resolve);
     const res = await handlePrerender(state, new Request("http://x/blog/hello"), prerenderDecision(cfg));
@@ -504,15 +543,18 @@ describe("handlePrerender", () => {
     const cfg = testPrerenderConfig({ "x-nbo-ppr": { postponedState: "opaque-state-1" } });
     const second = deferred();
     const encoder = new TextEncoder();
-    const resolve = stubResolver(async () =>
-      new Response(new ReadableStream<Uint8Array>({
-        async start(controller) {
-          controller.enqueue(encoder.encode("one"));
-          await second.promise;
-          controller.enqueue(encoder.encode("two"));
-          controller.close();
-        },
-      })),
+    const resolve = stubResolver(
+      async () =>
+        new Response(
+          new ReadableStream<Uint8Array>({
+            async start(controller) {
+              controller.enqueue(encoder.encode("one"));
+              await second.promise;
+              controller.enqueue(encoder.encode("two"));
+              controller.close();
+            },
+          }),
+        ),
     );
     const state = await pprState(cfg, resolve);
     const pending = handlePrerender(state, new Request("http://x/blog/hello"), prerenderDecision(cfg));
@@ -536,8 +578,14 @@ describe("handlePrerender", () => {
   // may keep it, whatever a route's own header rule says.
   it("marks GET and HEAD answers of a ppr-flagged route private, over any route header rule", async () => {
     const cfg = testPrerenderConfig({ "x-nbo-ppr": { postponedState: "opaque-state-1" } });
-    const state = await pprState(cfg, stubResolver(async () => new Response("resumed")));
-    const decision: Decision = { ...prerenderDecision(cfg), headerOps: [{ set: { "cache-control": "public, max-age=3600", "x-rule": "kept" } }] };
+    const state = await pprState(
+      cfg,
+      stubResolver(async () => new Response("resumed")),
+    );
+    const decision: Decision = {
+      ...prerenderDecision(cfg),
+      headerOps: [{ set: { "cache-control": "public, max-age=3600", "x-rule": "kept" } }],
+    };
     for (const method of ["GET", "HEAD"]) {
       const res = await handlePrerender(state, new Request("http://x/blog/hello", { method }), decision);
       expect(res.headers.get("cache-control")).toBe("private, no-store");
@@ -557,7 +605,11 @@ describe("handlePrerender", () => {
       return new Response("resumed");
     });
     const state = await pprState(cfg, resolve);
-    const res = await handlePrerender(state, new Request("http://x/blog/hello", { method: "HEAD" }), prerenderDecision(cfg));
+    const res = await handlePrerender(
+      state,
+      new Request("http://x/blog/hello", { method: "HEAD" }),
+      prerenderDecision(cfg),
+    );
     expect(res.status).toBe(200);
     expect(res.headers.get("content-type")).toBe("text/html; charset=utf-8");
     expect(await res.text()).toBe("");
@@ -577,7 +629,14 @@ describe("handlePrerender", () => {
     });
     const state = await pprState(cfg, resolve);
     const request = new Request("http://x/blog/hello?_rsc=abc", {
-      headers: { rsc: "1", "next-router-state-tree": "tree", "next-url": "/from", cookie: "session=abc", "next-action": "evil", "if-none-match": '"e"' },
+      headers: {
+        rsc: "1",
+        "next-router-state-tree": "tree",
+        "next-url": "/from",
+        cookie: "session=abc",
+        "next-action": "evil",
+        "if-none-match": '"e"',
+      },
     });
     const res = await handlePrerender(state, request, prerenderDecision(cfg));
     expect(await res.text()).toBe("rsc payload");
@@ -613,7 +672,11 @@ describe("handlePrerender", () => {
       return new Response(body, { headers: { "content-type": "text/x-component" } });
     });
     const state = await pprState(cfg, resolve);
-    const res = await handlePrerender(state, new Request("http://x/blog/hello", { headers: { rsc: "1" } }), prerenderDecision(cfg));
+    const res = await handlePrerender(
+      state,
+      new Request("http://x/blog/hello", { headers: { rsc: "1" } }),
+      prerenderDecision(cfg),
+    );
     const reader = res.body!.getReader();
     const first = await reader.read();
     expect(new TextDecoder().decode(first.value)).toBe("first|");
@@ -630,7 +693,11 @@ describe("handlePrerender", () => {
         throw new Error("boom");
       }),
     );
-    const res = await handlePrerender(state, new Request("http://x/blog/hello", { headers: { rsc: "1" } }), prerenderDecision(cfg));
+    const res = await handlePrerender(
+      state,
+      new Request("http://x/blog/hello", { headers: { rsc: "1" } }),
+      prerenderDecision(cfg),
+    );
     expect(res.status).toBe(502);
   });
 
@@ -657,7 +724,11 @@ describe("handlePrerender", () => {
       return new Response("flight");
     });
     const state = await pprState(cfg, resolve);
-    await handlePrerender(state, new Request("http://x/blog/hello", { headers: { rsc: "1", "next-router-prefetch": "2" } }), prerenderDecision(cfg));
+    await handlePrerender(
+      state,
+      new Request("http://x/blog/hello", { headers: { rsc: "1", "next-router-prefetch": "2" } }),
+      prerenderDecision(cfg),
+    );
     expect(captured!.method).toBe("POST");
     expect(captured!.headers.get("next-router-prefetch")).toBe("2");
   });
@@ -683,7 +754,15 @@ describe("handlePrerender", () => {
     });
     const res = await handlePrerender(state, request, prerenderDecision(cfg));
     await res.text();
-    for (const h of ["next-action", "next-router-state-tree", "next-router-prefetch", "next-router-segment-prefetch", "next-url", "x-prerender-revalidate", "rsc"]) {
+    for (const h of [
+      "next-action",
+      "next-router-state-tree",
+      "next-router-prefetch",
+      "next-router-segment-prefetch",
+      "next-url",
+      "x-prerender-revalidate",
+      "rsc",
+    ]) {
       expect(captured!.headers.has(h), h).toBe(false);
     }
   });
@@ -697,7 +776,10 @@ describe("handlePrerender", () => {
     const resolve = stubResolver(async (req) => {
       captured = req;
       sentBody = await req.text();
-      return new Response("<!DOCTYPE html>whole</html>", { status: 200, headers: { "content-type": "text/html", "cache-control": "s-maxage=31536000" } });
+      return new Response("<!DOCTYPE html>whole</html>", {
+        status: 200,
+        headers: { "content-type": "text/html", "cache-control": "s-maxage=31536000" },
+      });
     });
     const state = await pprState(cfg, resolve, "shell|", () => createFakeCacheService(cacheStore));
 
@@ -724,7 +806,10 @@ describe("handlePrerender", () => {
 
   it("varies a ppr document on the headers that turn it into an RSC answer", async () => {
     const cfg = testPrerenderConfig({ "x-nbo-ppr": { postponedState: "opaque-state-1" } });
-    const state = await pprState(cfg, stubResolver(async () => new Response("resumed")));
+    const state = await pprState(
+      cfg,
+      stubResolver(async () => new Response("resumed")),
+    );
     for (const method of ["GET", "HEAD"]) {
       const res = await handlePrerender(state, new Request("http://x/blog/hello", { method }), prerenderDecision(cfg));
       expect(res.headers.get("vary")).toBe("rsc, next-router-state-tree, next-router-prefetch");
@@ -740,7 +825,10 @@ describe("handlePrerender", () => {
       return new Response("resumed");
     });
     const state = await pprState(cfg, resolve);
-    const res = await handlePrerender(state, new Request("http://x/alias?tab=2"), { ...prerenderDecision(cfg), prerenderPath: "/blog/hello" });
+    const res = await handlePrerender(state, new Request("http://x/alias?tab=2"), {
+      ...prerenderDecision(cfg),
+      prerenderPath: "/blog/hello",
+    });
     expect(res.status).toBe(200);
     expect(await res.text()).toBe("shell|resumed");
     expect(captured!.url).toBe("http://x/blog/hello?tab=2");
@@ -756,7 +844,10 @@ describe("handlePrerender", () => {
       return new Response("page");
     });
     const state = newTestState(cfg, resolve, () => createFakeCacheService(cacheStore));
-    const res = await handlePrerender(state, new Request("http://x/alias"), { ...prerenderDecision(cfg), prerenderPath: "/blog/hello" });
+    const res = await handlePrerender(state, new Request("http://x/alias"), {
+      ...prerenderDecision(cfg),
+      prerenderPath: "/blog/hello",
+    });
     expect(await res.text()).toBe("page");
     expect(captured!.url).toBe("http://x/blog/hello");
     expect(cacheStore.get(prerenderCacheKey(new Request("http://x/blog/hello"), cfg))).toBeDefined();
@@ -774,12 +865,20 @@ describe("handlePrerender", () => {
 // Minimal mode writes s-maxage for the platform to read. A shared cache that
 // ignores Vary would otherwise store flight data at the page's URL.
 describe("forwarded flight data", () => {
-  const flight = (cacheControl: string) => stubResolver(async () => new Response("flight", { headers: { "content-type": "text/x-component", "cache-control": cacheControl } }));
+  const flight = (cacheControl: string) =>
+    stubResolver(
+      async () =>
+        new Response("flight", { headers: { "content-type": "text/x-component", "cache-control": cacheControl } }),
+    );
 
   it("is private on an ISR route, with no s-maxage", async () => {
     const cfg = testPrerenderConfig();
     const state = newTestState(cfg, flight("s-maxage=31536000"));
-    const res = await handlePrerender(state, new Request("http://x/blog/hello?_rsc=abc", { headers: { rsc: "1" } }), prerenderDecision(cfg));
+    const res = await handlePrerender(
+      state,
+      new Request("http://x/blog/hello?_rsc=abc", { headers: { rsc: "1" } }),
+      prerenderDecision(cfg),
+    );
     expect(res.headers.get("cache-control")).toBe("private");
   });
 
@@ -794,14 +893,22 @@ describe("forwarded flight data", () => {
   it("keeps a no-store the function asked for", async () => {
     const cfg = testPrerenderConfig();
     const state = newTestState(cfg, flight("private, no-cache, no-store, max-age=0, must-revalidate"));
-    const res = await handlePrerender(state, new Request("http://x/blog/hello?_rsc=abc", { headers: { rsc: "1" } }), prerenderDecision(cfg));
+    const res = await handlePrerender(
+      state,
+      new Request("http://x/blog/hello?_rsc=abc", { headers: { rsc: "1" } }),
+      prerenderDecision(cfg),
+    );
     expect(res.headers.get("cache-control")).toBe("private, no-cache, no-store, max-age=0, must-revalidate");
   });
 
   it("leaves a server action's answer as the function wrote it", async () => {
     const cfg = testPrerenderConfig({ "x-nbo-ppr": { postponedState: "s" } });
     const state = await pprState(cfg, flight("no-cache"));
-    const request = new Request("http://x/blog/hello", { method: "POST", headers: { rsc: "1", "next-action": "abc" }, body: "[]" });
+    const request = new Request("http://x/blog/hello", {
+      method: "POST",
+      headers: { rsc: "1", "next-action": "abc" },
+      body: "[]",
+    });
     const res = await handlePrerender(state, request, prerenderDecision(cfg));
     expect(res.headers.get("cache-control")).toBe("no-cache");
   });
@@ -893,7 +1000,15 @@ describe("handlePrerender and RSC requests", () => {
       },
     });
     await (await handlePrerender(state, request, prerenderDecision(cfg))).text();
-    for (const h of ["rsc", "next-router-state-tree", "next-router-prefetch", "next-router-segment-prefetch", "next-url", "next-action", "next-hmr-refresh"]) {
+    for (const h of [
+      "rsc",
+      "next-router-state-tree",
+      "next-router-prefetch",
+      "next-router-segment-prefetch",
+      "next-url",
+      "next-action",
+      "next-hmr-refresh",
+    ]) {
       expect(calls[0]!.headers.has(h), h).toBe(false);
     }
   });
@@ -905,7 +1020,12 @@ describe("handlePrerender and RSC requests", () => {
     const seed = await handlePrerender(state, plainRequest(), prerenderDecision(cfg));
     expect(seed.headers.get("vary")).toBe("rsc, next-router-state-tree, next-router-prefetch");
 
-    cacheStore.set(prerenderCacheKey(plainRequest(), cfg), { body: new TextEncoder().encode("page"), header: { vary: ["accept, RSC"] } }, 60, 3600);
+    cacheStore.set(
+      prerenderCacheKey(plainRequest(), cfg),
+      { body: new TextEncoder().encode("page"), header: { vary: ["accept, RSC"] } },
+      60,
+      3600,
+    );
     const cached = await handlePrerender(state, plainRequest(), prerenderDecision(cfg));
     expect(cached.headers.get("vary")).toBe("accept, RSC, next-router-state-tree, next-router-prefetch");
   });
@@ -957,7 +1077,10 @@ describe("handleRevalidate", () => {
       return new Response(null, { status: 204 });
     };
     const state = newTestState(cfg, undefined, resolveCache);
-    const res = await handleRevalidate(state, new Request("http://x/_nbo/revalidate", { method: "POST", body: JSON.stringify({ tags: ["blog"] }) }));
+    const res = await handleRevalidate(
+      state,
+      new Request("http://x/_nbo/revalidate", { method: "POST", body: JSON.stringify({ tags: ["blog"] }) }),
+    );
     expect(res.status).toBe(401);
     expect(cacheServiceCalled).toBe(false);
   });
@@ -968,7 +1091,26 @@ describe("handleRevalidate", () => {
     const state = newTestState(cfg, undefined, () => async () => new Response(null, { status: 204 }));
     const res = await handleRevalidate(
       state,
-      new Request("http://x/_nbo/revalidate", { method: "POST", headers: { authorization: "Bearer wrong" }, body: JSON.stringify({ tags: ["blog"] }) }),
+      new Request("http://x/_nbo/revalidate", {
+        method: "POST",
+        headers: { authorization: "Bearer wrong" },
+        body: JSON.stringify({ tags: ["blog"] }),
+      }),
+    );
+    expect(res.status).toBe(401);
+  });
+
+  it("a wrong token of the right length is a clean 401 too", async () => {
+    process.env.TEST_NBO_PRERENDER_BYPASS = "secret-bypass";
+    const cfg = testPrerenderConfig();
+    const state = newTestState(cfg, undefined, () => async () => new Response(null, { status: 204 }));
+    const res = await handleRevalidate(
+      state,
+      new Request("http://x/_nbo/revalidate", {
+        method: "POST",
+        headers: { authorization: "Bearer secret-bypasx" },
+        body: JSON.stringify({ tags: ["blog"] }),
+      }),
     );
     expect(res.status).toBe(401);
   });
@@ -993,19 +1135,29 @@ describe("handleRevalidate", () => {
     expect(cacheStore.get("k1")).toBeUndefined();
   });
 
-  it.each([["[]"], ['["blog"]'], ["null"], ['"blog"']])("a body of %s is a 400, never reaching the cache service", async (body) => {
-    process.env.TEST_NBO_PRERENDER_BYPASS = "secret-bypass";
-    let cacheServiceCalled = false;
-    const cfg = testPrerenderConfig();
-    const resolveCache: Resolver = () => async () => {
-      cacheServiceCalled = true;
-      return new Response(null, { status: 204 });
-    };
-    const state = newTestState(cfg, undefined, resolveCache);
-    const res = await handleRevalidate(state, new Request("http://x/_nbo/revalidate", { method: "POST", headers: { authorization: "Bearer secret-bypass" }, body }));
-    expect(res.status).toBe(400);
-    expect(cacheServiceCalled).toBe(false);
-  });
+  it.each([["[]"], ['["blog"]'], ["null"], ['"blog"']])(
+    "a body of %s is a 400, never reaching the cache service",
+    async (body) => {
+      process.env.TEST_NBO_PRERENDER_BYPASS = "secret-bypass";
+      let cacheServiceCalled = false;
+      const cfg = testPrerenderConfig();
+      const resolveCache: Resolver = () => async () => {
+        cacheServiceCalled = true;
+        return new Response(null, { status: 204 });
+      };
+      const state = newTestState(cfg, undefined, resolveCache);
+      const res = await handleRevalidate(
+        state,
+        new Request("http://x/_nbo/revalidate", {
+          method: "POST",
+          headers: { authorization: "Bearer secret-bypass" },
+          body,
+        }),
+      );
+      expect(res.status).toBe(400);
+      expect(cacheServiceCalled).toBe(false);
+    },
+  );
 });
 
 // settledWithin reports whether p settles within ms of real time.
@@ -1032,7 +1184,11 @@ describe("production ISR: content-id keys and cache failures", () => {
     const cfg = testPrerenderConfig({ onMiss: "blocking" });
     const cacheStore = createStore();
     const resolveCache: Resolver = () => createFakeCacheService(cacheStore);
-    const stateA = newTestState(cfg, stubResolver(async () => new Response("old build page")), resolveCache);
+    const stateA = newTestState(
+      cfg,
+      stubResolver(async () => new Response("old build page")),
+      resolveCache,
+    );
     stateA.deploymentId = "A";
     let bCalls = 0;
     const stateB = newTestState(
@@ -1060,7 +1216,11 @@ describe("production ISR: content-id keys and cache failures", () => {
     const resolveCache: Resolver = () => async () => {
       throw new Error("cache unreachable");
     };
-    const state = newTestState(cfg, stubResolver(async () => new Response("rendered")), resolveCache);
+    const state = newTestState(
+      cfg,
+      stubResolver(async () => new Response("rendered")),
+      resolveCache,
+    );
     state.deploymentId = "A";
 
     const res = await handlePrerender(state, new Request("http://x/blog/hello"), prerenderDecision(cfg));
@@ -1071,7 +1231,11 @@ describe("production ISR: content-id keys and cache failures", () => {
   it("a cache answering 500 is a miss", async () => {
     const cfg = testPrerenderConfig({ onMiss: "blocking" });
     const resolveCache: Resolver = () => async () => new Response("boom", { status: 500 });
-    const state = newTestState(cfg, stubResolver(async () => new Response("rendered")), resolveCache);
+    const state = newTestState(
+      cfg,
+      stubResolver(async () => new Response("rendered")),
+      resolveCache,
+    );
 
     const res = await handlePrerender(state, new Request("http://x/blog/hello"), prerenderDecision(cfg));
     expect(res.status).toBe(200);
@@ -1083,10 +1247,16 @@ describe("production ISR: content-id keys and cache failures", () => {
     try {
       const cfg = testPrerenderConfig({ onMiss: "blocking" });
       const resolveCache: Resolver = () => () => new Promise<Response>(() => {});
-      const state = newTestState(cfg, stubResolver(async () => new Response("rendered")), resolveCache);
+      const state = newTestState(
+        cfg,
+        stubResolver(async () => new Response("rendered")),
+        resolveCache,
+      );
 
       let settled: Response | undefined;
-      void handlePrerender(state, new Request("http://x/blog/hello"), prerenderDecision(cfg)).then((r) => (settled = r));
+      void handlePrerender(state, new Request("http://x/blog/hello"), prerenderDecision(cfg)).then(
+        (r) => (settled = r),
+      );
       await vi.advanceTimersByTimeAsync(1900);
       expect(settled).toBeUndefined();
       await vi.advanceTimersByTimeAsync(600);
@@ -1108,7 +1278,11 @@ describe("production ISR: content-id keys and cache failures", () => {
       }
       return new Response(null, { status: 404 });
     };
-    const state = newTestState(cfg, stubResolver(async () => new Response("rendered")), resolveCache);
+    const state = newTestState(
+      cfg,
+      stubResolver(async () => new Response("rendered")),
+      resolveCache,
+    );
 
     const answer = handlePrerender(state, new Request("http://x/blog/hello"), prerenderDecision(cfg));
     expect(await settledWithin(answer, 500)).toBe(true);
@@ -1122,7 +1296,11 @@ describe("production ISR: content-id keys and cache failures", () => {
       if (request.method === "PUT") throw new Error("cache down");
       return new Response(null, { status: 404 });
     };
-    const state = newTestState(cfg, stubResolver(async () => new Response("rendered")), resolveCache);
+    const state = newTestState(
+      cfg,
+      stubResolver(async () => new Response("rendered")),
+      resolveCache,
+    );
 
     const res = await handlePrerender(state, new Request("http://x/blog/hello"), prerenderDecision(cfg));
     expect(res.status).toBe(200);
@@ -1133,7 +1311,12 @@ describe("production ISR: content-id keys and cache failures", () => {
     const cfg = testPrerenderConfig({ onMiss: "shell" });
     const cacheStore = createStore();
     const resolveCache: Resolver = () => createFakeCacheService(cacheStore);
-    const state = await pprState(cfg, stubResolver(async () => new Response("regenerated")), "seed", resolveCache);
+    const state = await pprState(
+      cfg,
+      stubResolver(async () => new Response("regenerated")),
+      "seed",
+      resolveCache,
+    );
     state.deploymentId = "A";
     let regenKey: string | undefined;
     state.onRegenDone = (k) => (regenKey = k);
@@ -1165,7 +1348,11 @@ describe("production ISR: a cache that accepts and never answers", () => {
     vi.useFakeTimers();
     try {
       const cfg = testPrerenderConfig({ onMiss: "blocking" });
-      const state = newTestState(cfg, stubResolver(async () => new Response("rendered")), hungCache);
+      const state = newTestState(
+        cfg,
+        stubResolver(async () => new Response("rendered")),
+        hungCache,
+      );
       const before = backgroundWrites.inFlight;
       const res = await handlePrerender(state, new Request("http://x/blog/hung"), prerenderDecision(cfg));
       expect(await res.text()).toBe("rendered");
@@ -1182,7 +1369,11 @@ describe("production ISR: a cache that accepts and never answers", () => {
     vi.useFakeTimers();
     try {
       const cfg = testPrerenderConfig({ onMiss: "blocking" });
-      const state = newTestState(cfg, stubResolver(async () => new Response("rendered")), hungCache);
+      const state = newTestState(
+        cfg,
+        stubResolver(async () => new Response("rendered")),
+        hungCache,
+      );
       const startInFlight = backgroundWrites.inFlight;
       const startSkipped = backgroundWrites.skipped;
       const total = BACKGROUND_WRITE_LIMIT + 6;
@@ -1204,7 +1395,12 @@ describe("production ISR: a cache that accepts and never answers", () => {
     vi.useFakeTimers();
     try {
       const cfg = testPrerenderConfig({ onMiss: "shell" });
-      const state = await pprState(cfg, stubResolver(async () => new Response("regenerated")), "seed", hungCache);
+      const state = await pprState(
+        cfg,
+        stubResolver(async () => new Response("regenerated")),
+        "seed",
+        hungCache,
+      );
       let done = false;
       state.onRegenDone = () => (done = true);
 
@@ -1227,7 +1423,14 @@ describe("production ISR: a cache that accepts and never answers", () => {
       const cfg = testPrerenderConfig();
       const state = newTestState(cfg, undefined, hungCache);
       let settled: Response | undefined;
-      void handleRevalidate(state, new Request("http://x/_nbo/revalidate", { method: "POST", headers: { authorization: "Bearer secret-bypass" }, body: JSON.stringify({ tags: ["a"] }) })).then((r) => (settled = r));
+      void handleRevalidate(
+        state,
+        new Request("http://x/_nbo/revalidate", {
+          method: "POST",
+          headers: { authorization: "Bearer secret-bypass" },
+          body: JSON.stringify({ tags: ["a"] }),
+        }),
+      ).then((r) => (settled = r));
       await vi.advanceTimersByTimeAsync(4900);
       expect(settled).toBeUndefined();
       await vi.advanceTimersByTimeAsync(200);
@@ -1243,7 +1446,14 @@ describe("production ISR: a cache that accepts and never answers", () => {
     const state = newTestState(cfg, undefined, () => async () => {
       throw new Error("cache down");
     });
-    const res = await handleRevalidate(state, new Request("http://x/_nbo/revalidate", { method: "POST", headers: { authorization: "Bearer secret-bypass" }, body: JSON.stringify({ paths: ["/x"] }) }));
+    const res = await handleRevalidate(
+      state,
+      new Request("http://x/_nbo/revalidate", {
+        method: "POST",
+        headers: { authorization: "Bearer secret-bypass" },
+        body: JSON.stringify({ paths: ["/x"] }),
+      }),
+    );
     expect(res.status).toBe(502);
   });
 });

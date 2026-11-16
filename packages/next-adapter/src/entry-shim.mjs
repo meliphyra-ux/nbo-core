@@ -6,7 +6,6 @@ import { createServer } from "node:http";
 import { readFileSync } from "node:fs";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { dirname, join } from "node:path";
-import { Readable } from "node:stream";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const dispatch = JSON.parse(readFileSync(join(here, "dispatch.json"), "utf8"));
@@ -91,7 +90,9 @@ function ensureServer() {
         try {
           await handle(req, res);
         } catch (err) {
-          console.error(JSON.stringify({ level: "error", msg: "next handler threw", url: req.url, error: String(err) }));
+          console.error(
+            JSON.stringify({ level: "error", msg: "next handler threw", url: req.url, error: String(err) }),
+          );
           if (res.headersSent) res.destroy();
           else res.writeHead(500).end();
         }

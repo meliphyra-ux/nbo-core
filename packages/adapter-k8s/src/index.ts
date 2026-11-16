@@ -25,5 +25,14 @@ export {
 } from "./manifest.js";
 export type { ToolContext, CommandRunner } from "./run.js";
 export { kubectlArgs } from "./run.js";
-export { buildImage, buildFunctionImage, functionImageHash, isrcacheImageTag, appBakedHash, buildIsrcacheImage, loadImageIntoKind, pushImage } from "./image.js";
+export {
+  buildImage,
+  buildFunctionImage,
+  functionImageHash,
+  isrcacheImageTag,
+  appBakedHash,
+  buildIsrcacheImage,
+  loadImageIntoKind,
+  pushImage,
+} from "./image.js";
 export { renderIsrcacheDockerfile } from "./templates.js";

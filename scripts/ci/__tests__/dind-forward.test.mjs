@@ -13,7 +13,14 @@ function setup() {
   const dir = mkdtempSync(join(tmpdir(), "nbo-hosts-"));
   const hosts = join(dir, "hosts");
   writeFileSync(hosts, "127.0.0.1 localhost\n");
-  return { t, hosts, done: () => { t.cleanup(); rmSync(dir, { recursive: true, force: true }); } };
+  return {
+    t,
+    hosts,
+    done: () => {
+      t.cleanup();
+      rmSync(dir, { recursive: true, force: true });
+    },
+  };
 }
 
 test("NBO_CI_DIND=1: three forwards, kubeconfig server, hosts entries", async () => {
@@ -25,7 +32,11 @@ test("NBO_CI_DIND=1: three forwards, kubeconfig server, hosts entries", async ()
       PATH: pathWith(s.t.binDir),
     });
     assert.equal(r.code, 0, r.stderr);
-    for (let i = 0; i < 50 && s.t.readLog().filter((a) => a.length && a.some((x) => x.startsWith("TCP-LISTEN"))).length < 3; i++) {
+    for (
+      let i = 0;
+      i < 50 && s.t.readLog().filter((a) => a.length && a.some((x) => x.startsWith("TCP-LISTEN"))).length < 3;
+      i++
+    ) {
       await new Promise((res) => setTimeout(res, 100));
     }
     const log = s.t.readLog();
@@ -36,9 +47,7 @@ test("NBO_CI_DIND=1: three forwards, kubeconfig server, hosts entries", async ()
         `forward for ${p}`,
       );
     }
-    assert.ok(
-      log.some((a) => a.join(" ") === "config set-cluster kind-nbo-local --server=https://127.0.0.1:6443"),
-    );
+    assert.ok(log.some((a) => a.join(" ") === "config set-cluster kind-nbo-local --server=https://127.0.0.1:6443"));
     const hosts = readFileSync(s.hosts, "utf8");
     assert.match(hosts, /127\.0\.0\.1\s+next-app\.127\.0\.0\.1\.sslip\.io/);
     assert.match(hosts, /127\.0\.0\.1\s+ppr-app\.127\.0\.0\.1\.sslip\.io/);

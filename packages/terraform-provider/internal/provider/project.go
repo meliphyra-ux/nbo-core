@@ -206,6 +206,8 @@ func setupOutcome(s *client.ProjectSummary) (bool, error) {
 		return true, nil
 	case client.SetupNeedsSetup:
 		return true, fmt.Errorf("setup failed: %s", s.Project.SetupError)
+	case client.SetupWaitingForKey:
+		return true, fmt.Errorf("setup is waiting for the deploy key: %s", s.Project.SetupError)
 	}
 	return false, nil
 }

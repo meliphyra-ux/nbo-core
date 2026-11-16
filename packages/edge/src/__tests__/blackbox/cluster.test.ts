@@ -6,7 +6,12 @@
 // the 308, TLS by SNI, forwarding headers, Cloudflare trust, relays.
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { connect as tlsConnect } from "node:tls";
-import { connect as http2Connect, type ClientHttp2Session, type IncomingHttpHeaders as Http2Headers, type OutgoingHttpHeaders } from "node:http2";
+import {
+  connect as http2Connect,
+  type ClientHttp2Session,
+  type IncomingHttpHeaders as Http2Headers,
+  type OutgoingHttpHeaders,
+} from "node:http2";
 import { createServer as createHttps } from "node:https";
 import {
   createTestCa,
@@ -52,17 +57,36 @@ describe("black-box: cluster mode", () => {
         "cf.test": { backends, cloudflare: true },
         "plain.test": { backends },
         "relayed.test": {
-          backends: [{ id: "env_r", url: `http://${UPSTREAM}`, weight: 1, via: { url: `${relayFake.url}/`, caPem: ca.cert, token: RELAY_TOKEN } }],
+          backends: [
+            {
+              id: "env_r",
+              url: `http://${UPSTREAM}`,
+              weight: 1,
+              via: { url: `${relayFake.url}/`, caPem: ca.cert, token: RELAY_TOKEN },
+            },
+          ],
         },
         "fan-relayed.test": {
           backends: [
             { id: "env_a", url: app.url, weight: 1 },
-            { id: "env_r", url: `http://${UPSTREAM}`, weight: 0, via: { url: `${relayFake.url}/`, caPem: ca.cert, token: RELAY_TOKEN } },
+            {
+              id: "env_r",
+              url: `http://${UPSTREAM}`,
+              weight: 0,
+              via: { url: `${relayFake.url}/`, caPem: ca.cert, token: RELAY_TOKEN },
+            },
           ],
         },
         // Pins a CA that did not sign the relay's certificate.
         "relayed-badca.test": {
-          backends: [{ id: "env_r", url: `http://${UPSTREAM}`, weight: 1, via: { url: `${relayFake.url}/`, caPem: otherCa.cert, token: RELAY_TOKEN } }],
+          backends: [
+            {
+              id: "env_r",
+              url: `http://${UPSTREAM}`,
+              weight: 1,
+              via: { url: `${relayFake.url}/`, caPem: otherCa.cert, token: RELAY_TOKEN },
+            },
+          ],
         },
         ...(overrides.extraHosts ?? {}),
       },
@@ -77,7 +101,9 @@ describe("black-box: cluster mode", () => {
     otherCa = await createTestCa();
     app = await startBackend("app");
     const relayLeaf = await ca.leaf({ ip: ["127.0.0.1"] });
-    relayFake = await startBackend("relay", (listener) => createHttps({ cert: relayLeaf.cert, key: relayLeaf.key }, listener));
+    relayFake = await startBackend("relay", (listener) =>
+      createHttps({ cert: relayLeaf.cert, key: relayLeaf.key }, listener),
+    );
     certA = await ca.leaf({ dns: ["a.test"] });
     certB = await ca.leaf({ dns: ["b.test"] });
     // The production namespace, not the binary's default (nbo-system).
@@ -104,7 +130,8 @@ describe("black-box: cluster mode", () => {
     if (dir) removeDir(dir);
   });
 
-  const http = (host: string, path = "/", headers: Record<string, string> = {}) => send(`${edge.dataUrl}${path}`, { headers: { host, ...headers } });
+  const http = (host: string, path = "/", headers: Record<string, string> = {}) =>
+    send(`${edge.dataUrl}${path}`, { headers: { host, ...headers } });
   const https = (host: string, path = "/", headers: Record<string, string> = {}) =>
     send(`${edge.httpsUrl}${path}`, { ca: ca.cert, servername: host, headers: { host, ...headers } });
   const admin = (path: string, method = "GET") => send(`${edge.adminUrl}${path}`, { method });
@@ -187,7 +214,10 @@ describe("black-box: cluster mode", () => {
   // by ALPN. The Node edge speaks only HTTP/1.1, so this runs only on Rust.
   const rustOnly = edgeImpl() === "rust" ? it : it.skip;
 
-  function h2Get(session: ClientHttp2Session, headers: OutgoingHttpHeaders): Promise<{ headers: Http2Headers; body: string }> {
+  function h2Get(
+    session: ClientHttp2Session,
+    headers: OutgoingHttpHeaders,
+  ): Promise<{ headers: Http2Headers; body: string }> {
     return new Promise((resolve, reject) => {
       const stream = session.request(headers);
       let body = "";
@@ -200,89 +230,110 @@ describe("black-box: cluster mode", () => {
     });
   }
 
-  rustOnly("Intended difference 2: HTTP/2 by ALPN on the HTTPS listener, :authority routing, CONNECT refused, idle close, NBO_EDGE_HTTP2=off offers only HTTP/1.1", async () => {
-    const session = http2Connect(edge.httpsUrl!, { ca: ca.cert, servername: "a.test" });
-    session.on("error", () => {});
-    try {
-      await new Promise<void>((resolve, reject) => {
-        session.once("connect", () => resolve());
-        session.once("error", reject);
-      });
-      expect(session.alpnProtocol).toBe("h2");
-      const r = await h2Get(session, { ":path": "/h2?x=1", ":authority": "a.test", "sec-fetch-dest": "document", "x-forwarded-for": "6.6.6.6" });
-      expect(r.headers[":status"]).toBe(200);
-      expect(r.body).toBe("app");
-      expect(r.headers["x-nbo-edge-backend"]).toBe(app.url);
-      expect(String(r.headers["set-cookie"])).toMatch(/; Secure$/);
-      const seen = app.seen.at(-1)!;
-      expect(seen.url).toBe("/h2?x=1");
-      expect(seen.headers["x-forwarded-proto"]).toBe("https");
-      expect(seen.headers["x-forwarded-host"]).toBe("a.test");
-      expect(seen.headers["x-forwarded-for"]).toBe("127.0.0.1");
-      // :authority names the site over HTTP/2, not a Host header beside it.
-      await h2Get(session, { ":path": "/authority", ":authority": "plain.test", host: "b.test" });
-      expect(app.seen.at(-1)!.url).toBe("/authority");
-      expect(app.seen.at(-1)!.headers["x-forwarded-host"]).toBe("plain.test");
-      const unknown = await h2Get(session, { ":path": "/", ":authority": "unknown.test", host: "plain.test" });
-      expect(unknown.headers[":status"]).toBe(404);
-      expect(unknown.body).toBe("edge: no target registered for host unknown.test");
-      const acme = await h2Get(session, { ":path": "/.well-known/acme-challenge/tok1", ":authority": "a.test" });
-      expect(acme.headers[":status"]).toBe(200);
-      expect(acme.body).toBe("tok1.keyauth");
-
-      // CONNECT gets no answer (as over HTTP/1.1) and never reaches the app.
-      const before = app.seen.length;
-      const connect = session.request({ ":method": "CONNECT", ":authority": "evil.example:443" });
-      const outcome = await new Promise<string>((resolve) => {
-        connect.on("response", (h) => resolve(`answered ${h[":status"]}`));
-        connect.on("error", () => resolve("refused"));
-        connect.on("close", () => resolve("closed"));
-      });
-      expect(outcome).not.toMatch(/^answered/);
-      expect(app.seen).toHaveLength(before);
-    } finally {
-      session.close();
-    }
-
-    // An idle HTTP/2 connection is closed (GOAWAY), like an idle HTTP/1.1
-    // keep-alive one. NBO_EDGE_IDLE_TIMEOUT_MS (Rust, tests only) shortens
-    // the 5 s wait.
-    const idle = await startEdge({ mode: "cluster", env: { ...edgeEnv, NBO_EDGE_IDLE_TIMEOUT_MS: "300" } });
-    try {
-      const s = http2Connect(idle.httpsUrl!, { ca: ca.cert, servername: "a.test" });
-      s.on("error", () => {});
-      const r = await h2Get(s, { ":path": "/idle", ":authority": "a.test" });
-      expect(r.headers[":status"]).toBe(200);
-      const answeredAt = Date.now();
-      const how = await new Promise<string>((resolve) => {
-        s.on("goaway", () => resolve("goaway"));
-        s.on("close", () => resolve("close"));
-        setTimeout(() => resolve("still open"), 5000);
-      });
-      expect(how).not.toBe("still open");
-      expect(Date.now() - answeredAt).toBeGreaterThanOrEqual(250);
-      s.destroy();
-    } finally {
-      await idle.stop();
-    }
-
-    const off = await startEdge({ mode: "cluster", env: { ...edgeEnv, NBO_EDGE_HTTP2: "off" } });
-    try {
-      const alpn = await new Promise<string | false | undefined>((resolve, reject) => {
-        const socket = tlsConnect({ host: "127.0.0.1", port: off.ports.https!, servername: "a.test", ca: ca.cert, ALPNProtocols: ["h2", "http/1.1"] }, () => {
-          resolve(socket.alpnProtocol);
-          socket.end();
+  rustOnly(
+    "Intended difference 2: HTTP/2 by ALPN on the HTTPS listener, :authority routing, CONNECT refused, idle close, NBO_EDGE_HTTP2=off offers only HTTP/1.1",
+    async () => {
+      const session = http2Connect(edge.httpsUrl!, { ca: ca.cert, servername: "a.test" });
+      session.on("error", () => {});
+      try {
+        await new Promise<void>((resolve, reject) => {
+          session.once("connect", () => resolve());
+          session.once("error", reject);
         });
-        socket.on("error", reject);
-      });
-      expect(alpn).toBe("http/1.1");
-    } finally {
-      await off.stop();
-    }
-  });
+        expect(session.alpnProtocol).toBe("h2");
+        const r = await h2Get(session, {
+          ":path": "/h2?x=1",
+          ":authority": "a.test",
+          "sec-fetch-dest": "document",
+          "x-forwarded-for": "6.6.6.6",
+        });
+        expect(r.headers[":status"]).toBe(200);
+        expect(r.body).toBe("app");
+        expect(r.headers["x-nbo-edge-backend"]).toBe("env_a");
+        expect(String(r.headers["set-cookie"])).toMatch(/; Secure$/);
+        const seen = app.seen.at(-1)!;
+        expect(seen.url).toBe("/h2?x=1");
+        expect(seen.headers["x-forwarded-proto"]).toBe("https");
+        expect(seen.headers["x-forwarded-host"]).toBe("a.test");
+        expect(seen.headers["x-forwarded-for"]).toBe("127.0.0.1");
+        // :authority names the site over HTTP/2, not a Host header beside it.
+        await h2Get(session, { ":path": "/authority", ":authority": "plain.test", host: "b.test" });
+        expect(app.seen.at(-1)!.url).toBe("/authority");
+        expect(app.seen.at(-1)!.headers["x-forwarded-host"]).toBe("plain.test");
+        const unknown = await h2Get(session, { ":path": "/", ":authority": "unknown.test", host: "plain.test" });
+        expect(unknown.headers[":status"]).toBe(404);
+        expect(unknown.body).toBe("edge: no target registered for host unknown.test");
+        const acme = await h2Get(session, { ":path": "/.well-known/acme-challenge/tok1", ":authority": "a.test" });
+        expect(acme.headers[":status"]).toBe(200);
+        expect(acme.body).toBe("tok1.keyauth");
+
+        // CONNECT gets no answer (as over HTTP/1.1) and never reaches the app.
+        const before = app.seen.length;
+        const connect = session.request({ ":method": "CONNECT", ":authority": "evil.example:443" });
+        const outcome = await new Promise<string>((resolve) => {
+          connect.on("response", (h) => resolve(`answered ${h[":status"]}`));
+          connect.on("error", () => resolve("refused"));
+          connect.on("close", () => resolve("closed"));
+        });
+        expect(outcome).not.toMatch(/^answered/);
+        expect(app.seen).toHaveLength(before);
+      } finally {
+        session.close();
+      }
+
+      // An idle HTTP/2 connection is closed (GOAWAY), like an idle HTTP/1.1
+      // keep-alive one. NBO_EDGE_IDLE_TIMEOUT_MS (Rust, tests only) shortens
+      // the 5 s wait.
+      const idle = await startEdge({ mode: "cluster", env: { ...edgeEnv, NBO_EDGE_IDLE_TIMEOUT_MS: "300" } });
+      try {
+        const s = http2Connect(idle.httpsUrl!, { ca: ca.cert, servername: "a.test" });
+        s.on("error", () => {});
+        const r = await h2Get(s, { ":path": "/idle", ":authority": "a.test" });
+        expect(r.headers[":status"]).toBe(200);
+        const answeredAt = Date.now();
+        const how = await new Promise<string>((resolve) => {
+          s.on("goaway", () => resolve("goaway"));
+          s.on("close", () => resolve("close"));
+          setTimeout(() => resolve("still open"), 5000);
+        });
+        expect(how).not.toBe("still open");
+        expect(Date.now() - answeredAt).toBeGreaterThanOrEqual(250);
+        s.destroy();
+      } finally {
+        await idle.stop();
+      }
+
+      const off = await startEdge({ mode: "cluster", env: { ...edgeEnv, NBO_EDGE_HTTP2: "off" } });
+      try {
+        const alpn = await new Promise<string | false | undefined>((resolve, reject) => {
+          const socket = tlsConnect(
+            {
+              host: "127.0.0.1",
+              port: off.ports.https!,
+              servername: "a.test",
+              ca: ca.cert,
+              ALPNProtocols: ["h2", "http/1.1"],
+            },
+            () => {
+              resolve(socket.alpnProtocol);
+              socket.end();
+            },
+          );
+          socket.on("error", reject);
+        });
+        expect(alpn).toBe("http/1.1");
+      } finally {
+        await off.stop();
+      }
+    },
+  );
 
   it("sets x-forwarded-proto from the listener and a Secure cookie over https only", async () => {
-    const tls = await https("a.test", "/s1", { "x-forwarded-proto": "http", forwarded: "proto=http", "sec-fetch-dest": "document" });
+    const tls = await https("a.test", "/s1", {
+      "x-forwarded-proto": "http",
+      forwarded: "proto=http",
+      "sec-fetch-dest": "document",
+    });
     expect(app.seen.at(-1)!.url).toBe("/s1");
     expect(app.seen.at(-1)!.headers["x-forwarded-proto"]).toBe("https");
     expect(app.seen.at(-1)!.headers["x-forwarded-host"]).toBe("a.test");
@@ -313,7 +364,16 @@ describe("black-box: cluster mode", () => {
       const seen = app.seen.at(-1)!;
       expect(seen.url).toBe("/rf5");
       expect(seen.headers["x-forwarded-for"], name).toBe("127.0.0.1");
-      for (const h of ["x-real-ip", "forwarded", "x-nbo-client-ip", "true-client-ip", "cf-connecting-ip", "x-secret", "x-nbo-relay-token", "x-nbo-upstream"]) {
+      for (const h of [
+        "x-real-ip",
+        "forwarded",
+        "x-nbo-client-ip",
+        "true-client-ip",
+        "cf-connecting-ip",
+        "x-secret",
+        "x-nbo-relay-token",
+        "x-nbo-upstream",
+      ]) {
         expect(seen.headers[h], `${name} ${h}`).toBeUndefined();
       }
     }
@@ -341,7 +401,10 @@ describe("black-box: cluster mode", () => {
   });
 
   it("reaches a via backend through its relay with the CA pinned, the token and the upstream set by the edge", async () => {
-    const r = await http("relayed.test", "/p/q?x=1", { "x-nbo-relay-token": "stolen", "x-nbo-upstream": "evil.nbo-p-x.svc.cluster.local:8080" });
+    const r = await http("relayed.test", "/p/q?x=1", {
+      "x-nbo-relay-token": "stolen",
+      "x-nbo-upstream": "evil.nbo-p-x.svc.cluster.local:8080",
+    });
     expect(r.status).toBe(200);
     expect(r.body).toBe("relay");
     const seen = relayFake.seen.at(-1)!;
@@ -350,7 +413,7 @@ describe("black-box: cluster mode", () => {
     expect(seen.headers["x-nbo-upstream"]).toBe(UPSTREAM);
     expect(seen.headers["x-forwarded-host"]).toBe("relayed.test");
     expect(seen.headers["x-forwarded-for"]).toBe("127.0.0.1");
-    expect(r.headers["x-nbo-edge-backend"]).toBe(`http://${UPSTREAM}`);
+    expect(r.headers["x-nbo-edge-backend"]).toBe("env_r");
   });
 
   it("fans POST /_nbo/revalidate out to a direct and a relayed backend, the relayed one through its relay", async () => {
@@ -360,7 +423,12 @@ describe("black-box: cluster mode", () => {
     const r = await send(`${edge.dataUrl}/_nbo/revalidate`, {
       method: "POST",
       body,
-      headers: { host: "fan-relayed.test", authorization: "Bearer s3cret", "content-type": "application/json", "x-nbo-relay-token": "stolen" },
+      headers: {
+        host: "fan-relayed.test",
+        authorization: "Bearer s3cret",
+        "content-type": "application/json",
+        "x-nbo-relay-token": "stolen",
+      },
     });
     expect(r.status).toBe(204);
     expect(r.headers["x-nbo-edge-fanout"]).toBe("2");
@@ -387,17 +455,22 @@ describe("black-box: cluster mode", () => {
     const before = relayFake.seen.length;
     const r = await http("relayed-badca.test", "/p");
     expect(r.status).toBe(502);
-    expect(r.body.startsWith("edge: ")).toBe(true);
+    expect(r.body).toBe("edge: backend unreachable");
     expect(relayFake.seen).toHaveLength(before);
   });
 
   it("reads only its own namespace (NBO_EDGE_NAMESPACE), never a ConfigMap elsewhere", async () => {
-    kube.otherConfigmaps["nbo-system"] = JSON.stringify({ version: 1, targets: { "decoy.test": { backends: [{ url: app.url, weight: 1 }] } }, challenges: {} });
+    kube.otherConfigmaps["nbo-system"] = JSON.stringify({
+      version: 1,
+      targets: { "decoy.test": { backends: [{ url: app.url, weight: 1 }] } },
+      challenges: {},
+    });
     await kube.nextPoll();
     expect((await http("decoy.test")).status).toBe(404);
     expect((await http("plain.test")).body).toBe("app");
     expect(kube.paths.length).toBeGreaterThan(0);
-    for (const path of kube.paths) expect(path.startsWith(`/api/v1/namespaces/${PRODUCTION_NAMESPACE}/`), path).toBe(true);
+    for (const path of kube.paths)
+      expect(path.startsWith(`/api/v1/namespaces/${PRODUCTION_NAMESPACE}/`), path).toBe(true);
     delete kube.otherConfigmaps["nbo-system"];
   });
 
@@ -412,8 +485,16 @@ describe("black-box: cluster mode", () => {
     for (const bad of [
       "{not json",
       JSON.stringify({ version: 2, targets: {}, challenges: {} }),
-      JSON.stringify({ version: 1, targets: { "a.test": { backends: [{ url: app.url, weight: 1 }], surprise: true } }, challenges: {} }),
-      JSON.stringify({ version: 1, targets: { "a.test": { backends: [{ url: app.url, weight: 0 }] } }, challenges: {} }),
+      JSON.stringify({
+        version: 1,
+        targets: { "a.test": { backends: [{ url: app.url, weight: 1 }], surprise: true } },
+        challenges: {},
+      }),
+      JSON.stringify({
+        version: 1,
+        targets: { "a.test": { backends: [{ url: app.url, weight: 0 }] } },
+        challenges: {},
+      }),
       JSON.stringify({ version: 1, targets: {}, challenges: { "bad token!": "x" } }),
       JSON.stringify({ version: 1, targets: {}, challenges: {}, cloudflareRanges: ["10.0.0.0/33"] }),
     ]) {

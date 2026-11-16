@@ -17,7 +17,11 @@ async function writeNodeHostScript(): Promise<string> {
   return scriptPath;
 }
 
-function spawnFunctionHost(scriptPath: string, nboDir: string, name: string): Promise<{ child: ChildProcess; port: number }> {
+function spawnFunctionHost(
+  scriptPath: string,
+  nboDir: string,
+  name: string,
+): Promise<{ child: ChildProcess; port: number }> {
   // host.mjs joins its own working directory against ".." to find
   // function.json, so bundleDir must be absolute — a relative nboDir
   // (exactly what `nbo serve app/.nbo` passes) would otherwise double
@@ -91,7 +95,10 @@ async function killAll(children: ChildProcess[]): Promise<void> {
 // NewLocalSpawner (which blocks internally on a synchronous stdout
 // read), this constructor is itself async: Node has no synchronous way
 // to wait on a child process's stdout.
-export async function createLocalSpawner(nboDir: string, functionNames: string[]): Promise<{ resolve: Resolver; stop: () => Promise<void> }> {
+export async function createLocalSpawner(
+  nboDir: string,
+  functionNames: string[],
+): Promise<{ resolve: Resolver; stop: () => Promise<void> }> {
   const scriptPath = await writeNodeHostScript();
   const ports = new Map<string, number>();
   const children: ChildProcess[] = [];

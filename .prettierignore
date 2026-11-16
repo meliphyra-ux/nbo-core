@@ -10,4 +10,13 @@ fixtures/*/next-env.d.ts
 .impeccable
 *.log
 fixtures
-platform
+cluster.yaml
+**/pnpm-lock.yaml
+packages/edge-rs/target
+**/*.go
+**/*.rs
+# byte-compared by the Rust edge tests and embedded in the binary
+packages/edge-rs/assets
+packages/edge-rs/tests/golden
+# hand-laid-out tour; scripts/docs/check-docs.mjs reads its API table by text
+docs/architecture/index.html

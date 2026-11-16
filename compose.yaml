@@ -1,10 +1,14 @@
 # NBO on one machine: `docker compose up -d`. See docs/production.md.
+# Pulls the ready-made image the nbo-core repository builds on every push to main
+# (.github/workflows/core-image.yml). To build from this folder instead:
+#   docker compose -f compose.yaml -f compose.build.yaml up -d --build
 name: nbo
 
 services:
   nbo:
-    build: .
-    image: nbo:local
+    # NBO_IMAGE in .env pins another image, for example one commit's
+    # ghcr.io/meliphyra-ux/nbo-core:sha-<first 12 characters of the commit> to roll back.
+    image: ${NBO_IMAGE:-ghcr.io/meliphyra-ux/nbo-core:latest}
     platform: linux/amd64
     # Root, because NBO talks to the Docker socket below, and the socket's
     # group differs from host to host. Whoever controls this container controls
@@ -23,6 +27,11 @@ services:
       # Which edge the next install or reinstall builds: unset is the Node
       # edge, `rust` opts in to the Rust edge. Set it in .env.
       NBO_EDGE_IMPL: ${NBO_EDGE_IMPL:-}
+      # One-time enrollment in a hosted dashboard; ignored once linked. Set
+      # them in .env. See docs/manual/link.md.
+      NBO_LINK_ENROLL_URL: ${NBO_LINK_ENROLL_URL:-}
+      NBO_LINK_ENROLL_CODE: ${NBO_LINK_ENROLL_CODE:-}
+      NBO_LINK_OWNER_KEY: ${NBO_LINK_OWNER_KEY:-}
       # Builds are large: keep them on the data volume, not the container layer.
       TEMP: /data/tmp
       TMP: /data/tmp
@@ -37,7 +46,13 @@ services:
       - "127.0.0.1:${NBO_PORT:-8081}:8081"
     healthcheck:
       # /healthz answers 200 to any caller, with no token.
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8081/healthz').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:8081/healthz').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))",
+        ]
       interval: 30s
       timeout: 5s
       start_period: 20s

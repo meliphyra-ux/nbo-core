@@ -11,7 +11,7 @@ A hosting platform like Vercel that supports most of Vercel's functionality and 
 | Item                                                                                                                                | Status                                                                                            |
 | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
 | v1 scope: Next.js, React single-page apps and static sites only                                                                     | **Decided** by the owner                                                                          |
-| Build in vertical slices; spec 1.0 only after Next.js passes on all three targets                                  | **Accepted** plan                                                                                 |
+| Build in vertical slices; spec 1.0 only after Next.js passes on all three targets                                                   | **Accepted** plan                                                                                 |
 | "React" means client-side SPAs (e.g. Vite). Server-rendered React goes through Next.js; React Router framework mode is out of scope | **Assumption** — confirm with the owner before building SPA-specific features beyond the fallback |
 | What "switch" means in v1 (proposed: target per environment + planned migration, no active-active)                                  | **Proposed** — goes into the Step 0 ADR                                                           |
 | Targets in order: Kubernetes → Cloud Run → Lambda                                                                                   | **Proposed** — Step 0 ADR                                                                         |
@@ -62,17 +62,17 @@ Put shared logic in one writer library (`@nbo/writer`); each producer is then a 
 
 ### Next.js → NBO mapping
 
-| Next.js output                                         | NBO                                                                                                                                                                                               |
-| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `outputs.staticFiles`                                  | `static.index.json`; `immutable` when `immutableHash` is set                                                                                                                                      |
-| `appPages`, `appRoutes`, `pages`, `pagesApi` (Node.js) | One `ssr` function grouping all routes; `maxDuration` taken as the max                                                                                                                            |
-| Outputs with `runtime: 'edge'`                         | `edge` functions (expect few)                                                                                                                                                                     |
-| `outputs.middleware` + `config.matchers`               | Middleware function plus one `beforeFiles` rule per matcher, `sourceRegex` checked against RE2                                                                                                    |
+| Next.js output                                         | NBO                                                                                                                                                                                                   |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `outputs.staticFiles`                                  | `static.index.json`; `immutable` when `immutableHash` is set                                                                                                                                          |
+| `appPages`, `appRoutes`, `pages`, `pagesApi` (Node.js) | One `ssr` function grouping all routes; `maxDuration` taken as the max                                                                                                                                |
+| Outputs with `runtime: 'edge'`                         | `edge` functions (expect few)                                                                                                                                                                         |
+| `outputs.middleware` + `config.matchers`               | Middleware function plus one `beforeFiles` rule per matcher, `sourceRegex` checked against RE2                                                                                                        |
 | `outputs.prerenders`                                   | `prerender.json` entries: `fallback.filePath` → seed; `initialRevalidate`/`initialExpiration` → `revalidateSec`/`expireSec`; `allowQuery`/`allowHeader` → cache key; `PARTIALLY_STATIC` → `x-nbo-ppr` |
-| `routing.beforeMiddleware` + `beforeFiles`             | `beforeFiles`, with redirects and headers ordered before the middleware rule                                                                                                                      |
-| `routing.afterFiles` + `dynamicRoutes`                 | `afterFiles`                                                                                                                                                                                      |
-| `routing.onMatch`, `routing.fallback`                  | `onMatch`, `fallback`                                                                                                                                                                             |
-| `routing.rsc`                                          | `has` header conditions so `.rsc` requests reach the right output                                                                                                                                 |
+| `routing.beforeMiddleware` + `beforeFiles`             | `beforeFiles`, with redirects and headers ordered before the middleware rule                                                                                                                          |
+| `routing.afterFiles` + `dynamicRoutes`                 | `afterFiles`                                                                                                                                                                                          |
+| `routing.onMatch`, `routing.fallback`                  | `onMatch`, `fallback`                                                                                                                                                                                 |
+| `routing.rsc`                                          | `has` header conditions so `.rsc` requests reach the right output                                                                                                                                     |
 
 ### Adapter skeleton (shape, not drop-in code — `@nbo/writer` doesn't exist yet)
 
@@ -85,7 +85,8 @@ export default {
   async onBuildComplete({ outputs, routing, config, nextVersion }) {
     const nbo = new NboWriter({ outDir: ".nbo", framework: { name: "nextjs", version: nextVersion } });
 
-    for (const f of outputs.staticFiles) nbo.addStatic(f.pathname, f.filePath, { cache: f.immutableHash ? "immutable" : "revalidate" });
+    for (const f of outputs.staticFiles)
+      nbo.addStatic(f.pathname, f.filePath, { cache: f.immutableHash ? "immutable" : "revalidate" });
 
     const ssr = nbo.addFunction("ssr", { runtime: { kind: "node", version: ">=20" }, concurrency: "multi" });
     for (const r of [...outputs.appPages, ...outputs.appRoutes, ...outputs.pages, ...outputs.pagesApi]) {

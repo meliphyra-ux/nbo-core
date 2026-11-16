@@ -6,24 +6,28 @@ import { mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { createServer } from "node:http";
 import { nodeToFetch } from "@nbo/nodehost";
-import { createStore, type Store } from "./store.js";
-import { ErrStrandedSettings } from "./migrate.js";
-import { createMux } from "./handlers.js";
-import { triggerDeploy, type Orchestrator, type TriggerDeployOptions } from "./deploy.js";
-import { run } from "./scheduler.js";
+import { createStore, type Store } from "./store/store.js";
+import { ErrStrandedSettings } from "./store/migrate.js";
+import { createMux } from "./http/handlers.js";
+import { triggerDeploy, type Orchestrator, type TriggerDeployOptions } from "./deploys/deploy.js";
+import { run } from "./deploys/scheduler.js";
 import { wireV2, recoverInterruptedWork } from "./v2.js";
-import { sweepStaleGitKeys } from "./git-credentials.js";
-import { createCloudSetup } from "./cloud-setup.js";
-import { runPoller } from "./poller.js";
-import { runStageExpiry } from "./stage-expiry.js";
+import { sweepStaleGitKeys } from "./git/git-credentials.js";
+import { createCloudSetup } from "./clouds/cloud-setup.js";
+import { runPoller } from "./git/poller.js";
+import { runStageExpiry } from "./stages/stage-expiry.js";
 import { parseMode } from "./mode.js";
-import { ErrSecretKey, loadOrCreateKey, secretKeyPath } from "./secrets.js";
-import { createArtifactStore, resolveArtifactsDir } from "./artifacts.js";
+import { ErrSecretKey, loadOrCreateKey, secretKeyPath } from "./store/secrets.js";
+import { createArtifactStore, resolveArtifactsDir } from "./builds/artifacts.js";
 import { httpDrainSource, startInsightsDrain, type InsightsSink } from "./insights/drain.js";
-import { clusterEdgeActive, createClusterDrainSource, storeKubeconfig } from "./edge-table.js";
-import { parseServiceAnnotations } from "./edge-manifests.js";
-import { createSuppliedValues } from "./supplied-values.js";
-import { parsePublicUrl } from "./public-url.js";
+import { clusterEdgeActive, createClusterDrainSource, storeKubeconfig } from "./edge/edge-table.js";
+import { parseServiceAnnotations } from "./edge/edge-manifests.js";
+import { createSuppliedValues } from "./variables/supplied-values.js";
+import { parsePublicUrl } from "./http/public-url.js";
+import { createDispatcher } from "./link/dispatch.js";
+import { startLinkClient } from "./link/client.js";
+import { enrollFromEnvironment } from "./link/enroll.js";
+import { createLinkControl } from "./link/routes.js";
 
 // resolveControlPlaneAddr picks the listen address — loopback-only by
 // default, since this API triggers real deploys and its only authentication
@@ -60,7 +64,9 @@ export function initSecretKey(store: Store, keyPath: string): void {
     store.verifySecretKey();
   } catch (err) {
     if (err instanceof ErrSecretKey) {
-      throw new ErrSecretKey(`secret key file ${keyPath} does not decrypt the secrets stored in this database — restore the original key file or set NBO_SECRET_KEY_FILE to it`);
+      throw new ErrSecretKey(
+        `secret key file ${keyPath} does not decrypt the secrets stored in this database — restore the original key file or set NBO_SECRET_KEY_FILE to it`,
+      );
     }
     throw err;
   }
@@ -81,7 +87,10 @@ export interface MainExtras {
 
 // main starts the control-plane from env. It returns undefined, with
 // process.exitCode set, when a setting stops startup.
-export function main(env: Record<string, string | undefined> = process.env, extras: MainExtras = {}): Started | undefined {
+export function main(
+  env: Record<string, string | undefined> = process.env,
+  extras: MainExtras = {},
+): Started | undefined {
   const dbPath = env.NBO_CONTROL_PLANE_DB;
   if (!dbPath) {
     console.error("control-plane: NBO_CONTROL_PLANE_DB must be set to a SQLite file path");
@@ -116,7 +125,9 @@ export function main(env: Record<string, string | undefined> = process.env, extr
   // that moved out; say so once, so nobody mistakes them for live data.
   const legacy = store.legacyTablesInUse();
   if (legacy.length > 0) {
-    console.log(`control-plane: this database holds data from features that moved to the hosted dashboard (${legacy.join(", ")}); it is kept, unused, until you migrate`);
+    console.log(
+      `control-plane: this database holds data from features that moved to the hosted dashboard (${legacy.join(", ")}); it is kept, unused, until you migrate`,
+    );
   }
   const artifacts = createArtifactStore(artifactsDir, (projectId) => store.listBuilds(projectId).map((b) => b.id));
   try {
@@ -130,7 +141,10 @@ export function main(env: Record<string, string | undefined> = process.env, extr
     throw err;
   }
   const orchestrator: Orchestrator = { store, mode };
-  const deploymentTrigger = { triggerDeploy: (environmentId: string, nboDir: string, opts?: TriggerDeployOptions) => triggerDeploy(orchestrator, environmentId, nboDir, opts) };
+  const deploymentTrigger = {
+    triggerDeploy: (environmentId: string, nboDir: string, opts?: TriggerDeployOptions) =>
+      triggerDeploy(orchestrator, environmentId, nboDir, opts),
+  };
   recoverInterruptedWork(store);
   // Deploy key files a stopped process left behind (before any git step runs).
   sweepStaleGitKeys();
@@ -152,7 +166,11 @@ export function main(env: Record<string, string | undefined> = process.env, extr
     process.exitCode = 1;
     return undefined;
   }
+  // The link routes exist before the link client does; the client is
+  // attached once started below.
+  const link = createLinkControl();
   const v2 = wireV2(store, {
+    link,
     publicUrl,
     // Deploy keys check host keys against this file, next to the database.
     knownHostsFile: join(dirname(dbPath), "known_hosts"),
@@ -176,7 +194,20 @@ export function main(env: Record<string, string | undefined> = process.env, extr
   // The background loops; close() waits for a tick that is running.
   const loops: Promise<unknown>[] = [];
   loops.push(run({ store }, stop.signal));
-  loops.push(runPoller({ store, queue: v2.queue, edgeSync: v2.edgeSync, lsRemoteHeads: v2.lsRemoteHeads, gitAuth: v2.gitAuth }, stop.signal));
+  loops.push(
+    runPoller(
+      {
+        store,
+        queue: v2.queue,
+        edgeSync: v2.edgeSync,
+        lsRemoteHeads: v2.lsRemoteHeads,
+        gitAuth: v2.gitAuth,
+        poller: v2.poller,
+        setup: v2.setup,
+      },
+      stop.signal,
+    ),
+  );
   // Ephemeral stages: remove the expired ones every 10 minutes.
   loops.push(runStageExpiry(v2.stageExpiry, stop.signal));
   // Speed Insights: with a sink supplied, pull the edge's Web Vitals every
@@ -190,6 +221,15 @@ export function main(env: Record<string, string | undefined> = process.env, extr
   // Domains: DNS checks and Let's Encrypt certificates every 60 s, in
   // production (each tick does nothing until an edge is installed).
   if (mode === "production") loops.push(v2.domains.run(stop.signal));
+
+  // The link to a hosted dashboard, outside `loops`: it runs in the
+  // background, does nothing while unlinked, and nothing above waits on it.
+  const dispatcher = createDispatcher({ store, mux, supplied: v2.supplied, github: v2.legacyGitHub });
+  const linkClient = startLinkClient({ store, dispatcher, signal: stop.signal });
+  link.attach(linkClient);
+  // Install-time enrollment (NBO_LINK_ENROLL_*): in the background too; a
+  // linked core ignores the settings, a refusal is one log line.
+  const enrolling = enrollFromEnvironment(env, { store, signal: stop.signal, onLinked: () => link.restart() });
 
   const { host, port } = resolveControlPlaneAddr(env);
   // clientIp: the socket's address reaches handlers as x-nbo-client-ip (a
@@ -210,7 +250,7 @@ export function main(env: Record<string, string | undefined> = process.env, extr
       server.closeAllConnections();
       await new Promise<void>((resolve) => server.close(() => resolve()));
       // A tick already running finishes on an open database.
-      await Promise.allSettled(loops);
+      await Promise.allSettled([...loops, linkClient.stop(), enrolling]);
       store.close();
     },
   };

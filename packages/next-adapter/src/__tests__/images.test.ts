@@ -48,28 +48,49 @@ describe("fromNextImages", () => {
   });
 
   it("writes a pattern with no pathname as any path, as Next reads it", () => {
-    const images = fromNextImages(baseConfig({ localPatterns: [{ search: "" }], remotePatterns: [{ protocol: "https", hostname: "cdn.acme.com" }] }));
+    const images = fromNextImages(
+      baseConfig({
+        localPatterns: [{ search: "" }],
+        remotePatterns: [{ protocol: "https", hostname: "cdn.acme.com" }],
+      }),
+    );
     expect(images.localPatterns).toEqual([{ pathname: "^.*$" }]);
     expect(images.remotePatterns).toEqual([{ protocol: "https", hostname: "^cdn\\.acme\\.com$", pathname: "^.*$" }]);
   });
 
   it("anchors a literal remote hostname/pathname with every regex metacharacter escaped", () => {
-    const images = fromNextImages(baseConfig({ remotePatterns: [{ protocol: "https", hostname: "cdn.acme.com", pathname: "/media/photo.jpg" }] }));
-    expect(images.remotePatterns).toEqual([{ protocol: "https", hostname: "^cdn\\.acme\\.com$", pathname: "^/media/photo\\.jpg$" }]);
+    const images = fromNextImages(
+      baseConfig({ remotePatterns: [{ protocol: "https", hostname: "cdn.acme.com", pathname: "/media/photo.jpg" }] }),
+    );
+    expect(images.remotePatterns).toEqual([
+      { protocol: "https", hostname: "^cdn\\.acme\\.com$", pathname: "^/media/photo\\.jpg$" },
+    ]);
   });
 
   it("converts a single * into a single-segment wildcard that doesn't cross the separator", () => {
-    const images = fromNextImages(baseConfig({ remotePatterns: [{ protocol: "https", hostname: "*.acme.com", pathname: "/media/*" }] }));
-    expect(images.remotePatterns).toEqual([{ protocol: "https", hostname: "^[^.]*\\.acme\\.com$", pathname: "^/media/[^/]*$" }]);
+    const images = fromNextImages(
+      baseConfig({ remotePatterns: [{ protocol: "https", hostname: "*.acme.com", pathname: "/media/*" }] }),
+    );
+    expect(images.remotePatterns).toEqual([
+      { protocol: "https", hostname: "^[^.]*\\.acme\\.com$", pathname: "^/media/[^/]*$" },
+    ]);
   });
 
   it("converts a double ** into a cross-segment wildcard", () => {
-    const images = fromNextImages(baseConfig({ remotePatterns: [{ protocol: "https", hostname: "**.acme.com", pathname: "/media/**" }] }));
-    expect(images.remotePatterns).toEqual([{ protocol: "https", hostname: "^.*\\.acme\\.com$", pathname: "^/media/.*$" }]);
+    const images = fromNextImages(
+      baseConfig({ remotePatterns: [{ protocol: "https", hostname: "**.acme.com", pathname: "/media/**" }] }),
+    );
+    expect(images.remotePatterns).toEqual([
+      { protocol: "https", hostname: "^.*\\.acme\\.com$", pathname: "^/media/.*$" },
+    ]);
   });
 
   it("drops port and search — not part of the target schema", () => {
-    const images = fromNextImages(baseConfig({ remotePatterns: [{ protocol: "https", hostname: "acme.com", port: "8080", pathname: "/x", search: "?v=1" }] }));
+    const images = fromNextImages(
+      baseConfig({
+        remotePatterns: [{ protocol: "https", hostname: "acme.com", port: "8080", pathname: "/x", search: "?v=1" }],
+      }),
+    );
     expect(images.remotePatterns).toEqual([{ protocol: "https", hostname: "^acme\\.com$", pathname: "^/x$" }]);
   });
 

@@ -87,7 +87,7 @@ Right after you add a domain it already answers over plain HTTP, so you can test
 
 | Status                  | Meaning                                                                         | What to do                                                        |
 | ----------------------- | ------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| **Waiting for DNS**       | The domain's DNS does not point at the edge yet (or the change has not spread). | Create the record shown; wait up to the record's TTL.             |
+| **Waiting for DNS**     | The domain's DNS does not point at the edge yet (or the change has not spread). | Create the record shown; wait up to the record's TTL.             |
 | **Issuing certificate** | DNS is right. NBO is getting the certificate from Let's Encrypt.                | Wait a minute or two.                                             |
 | **Active**              | Served over HTTPS with a valid certificate.                                     | Nothing.                                                          |
 | **Failed**              | Let's Encrypt refused, or saving the certificate failed. The message is shown.  | Read it (see Troubleshooting below), fix it, run the check again. |

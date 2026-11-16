@@ -139,7 +139,7 @@ On Kubernetes and Cloud Run, a build with ISR pages also runs a small cache next
 
 ### Partial prerendering
 
-A page with `cacheComponents` and a `<Suspense>` around something per-request has two halves: a static shell made at build time and a dynamic hole made per visitor. The visitor gets the shell at once, with the Suspense fallback showing, and the hole streams into the same response behind it (`handlePPR` and `streamAfterShell` in `packages/serve/src/prerender.ts`). Next's browser code plays no part in this; NBO calls your function itself.
+A page with `cacheComponents` and a `<Suspense>` around something per-request has two halves: a static shell made at build time and a dynamic hole made per visitor. The visitor gets the shell at once, with the Suspense fallback showing, and the hole streams into the same response behind it (`handlePPR` and `streamAfterShell` in `packages/serve/src/prerender-ppr.ts`). Next's browser code plays no part in this; NBO calls your function itself.
 
 - **The hole sees the real visitor.** `cookies()`, `headers()` and `searchParams` work there as on any server-rendered page. Cookies set while the hole renders don't reach the browser: the response's headers already went out with the shell.
 - **Server actions work on these pages.** The form's `POST` goes straight to the function, and the answer brings the cookie and the fresh page with it. `revalidatePath()` and `revalidateTag()` only reach the function, though: on an ISR page, a reload still shows the cached copy until it goes stale. Call `POST /_nbo/revalidate` when other visitors must see the change at once.
@@ -154,4 +154,4 @@ A page with `cacheComponents` and a `<Suspense>` around something per-request ha
 
 ## Scheduled jobs (crons)
 
-A build's `crons.json` lists paths and schedules. The control-plane's scheduler (`packages/controlplane/src/scheduler.ts`, checks every 30 seconds, schedules in UTC only) finds due jobs in the `crons` table and calls the app's path with a signature made from `NBO_CRON_SIGNING_SECRET` (`signCron` in `cron.ts`). Only one environment per project has crons enabled, so jobs don't run twice.
+A build's `crons.json` lists paths and schedules. The control-plane's scheduler (`packages/controlplane/src/deploys/scheduler.ts`, checks every 30 seconds, schedules in UTC only) finds due jobs in the `crons` table and calls the app's path with a signature made from `NBO_CRON_SIGNING_SECRET` (`signCron` in `deploys/cron.ts`). Only one environment per project has crons enabled, so jobs don't run twice.

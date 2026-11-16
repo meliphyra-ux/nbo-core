@@ -83,7 +83,10 @@ describe("capabilities", () => {
       build: { id: "b1", createdAt: new Date(), framework: { name: "next" } },
       digests: {},
       functions: ["ssr"],
-      requires: { capabilities: ["fn.streaming", "images.optimize", "prerender.isr", "prerender.onDemand"], extensions: [] },
+      requires: {
+        capabilities: ["fn.streaming", "images.optimize", "prerender.isr", "prerender.onDemand"],
+        extensions: [],
+      },
       specVersion: "1.0",
     };
     const fns: Record<string, NboFunction> = { ssr: { name: "ssr" } as NboFunction };

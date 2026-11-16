@@ -2,7 +2,13 @@
 // Copyright 2026 Nikita Dovhich
 
 import { NboWriter } from "@nbo/writer";
-import { translateRoutes, translateMiddleware, translatePrerenders, assertSlice2Scope, isInternalNextRoute } from "./translate-routing.js";
+import {
+  translateRoutes,
+  translateMiddleware,
+  translatePrerenders,
+  assertSlice2Scope,
+  isInternalNextRoute,
+} from "./translate-routing.js";
 import { fromNextImages } from "./images.js";
 import { fromNextEnv } from "./env.js";
 import { toStaticEntry } from "./static-files.js";
@@ -69,7 +75,9 @@ function addPrerenderSeeds(nbo, prerenders) {
 // what that bootstrap file is for.
 function addFunctionRoute(fn, route, projectRoot, repoRoot, nextDispatch) {
   fn.addRoute(route.id, route.pathname, route.filePath);
-  const strippedAssets = Object.fromEntries(Object.entries(route.assets).map(([key, source]) => [stripProjectRoot(key, projectRoot), source]));
+  const strippedAssets = Object.fromEntries(
+    Object.entries(route.assets).map(([key, source]) => [stripProjectRoot(key, projectRoot), source]),
+  );
   fn.addFiles(strippedAssets);
   // route.filePath isn't documented as necessarily appearing as one of
   // route.assets' own values — if it doesn't, add it explicitly under
@@ -90,7 +98,9 @@ function addFunctionRoute(fn, route, projectRoot, repoRoot, nextDispatch) {
   // build-specific, so find it among whichever route's traced assets
   // happened to include it.
   if (!nextDispatch.__setupNodeEnv) {
-    const setupPath = Object.keys(strippedAssets).find((p) => p.endsWith("next/dist/build/adapter/setup-node-env.external.js"));
+    const setupPath = Object.keys(strippedAssets).find((p) =>
+      p.endsWith("next/dist/build/adapter/setup-node-env.external.js"),
+    );
     if (setupPath) nextDispatch.__setupNodeEnv = setupPath;
   }
 }
@@ -128,7 +138,9 @@ function addMiddlewareFunction(nbo, outputs, projectRoot, repoRoot) {
     entryFilePath: middlewareEntryShimPath,
     capabilities: [],
   });
-  const strippedAssets = Object.fromEntries(Object.entries(mw.assets).map(([key, source]) => [stripProjectRoot(key, projectRoot), source]));
+  const strippedAssets = Object.fromEntries(
+    Object.entries(mw.assets).map(([key, source]) => [stripProjectRoot(key, projectRoot), source]),
+  );
   fn.addFiles(strippedAssets);
   let relPath = Object.keys(strippedAssets).find((p) => strippedAssets[p] === mw.filePath);
   if (!relPath) {
@@ -136,7 +148,9 @@ function addMiddlewareFunction(nbo, outputs, projectRoot, repoRoot) {
     fn.addFiles({ [relPath]: mw.filePath });
   }
   const dispatch = { compiledPath: relPath };
-  const setupPath = Object.keys(strippedAssets).find((p) => p.endsWith("next/dist/build/adapter/setup-node-env.external.js"));
+  const setupPath = Object.keys(strippedAssets).find((p) =>
+    p.endsWith("next/dist/build/adapter/setup-node-env.external.js"),
+  );
   if (setupPath) dispatch.__setupNodeEnv = setupPath;
   fn.addFile("middleware-dispatch.json", JSON.stringify(dispatch));
 }

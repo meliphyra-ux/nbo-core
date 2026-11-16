@@ -8,28 +8,31 @@ import { join } from "node:path";
 import { randomBytes } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
 import { startHarness, deployedProject, type Harness } from "./v2-harness.js";
-import { transferConfig } from "../transfer.js";
-import { createSuppliedValues } from "../supplied-values.js";
-import { createRunner } from "../runner.js";
-import { createBuildQueue } from "../build-queue.js";
-import type { GitConfig } from "../git.js";
+import { transferConfig } from "../deploys/transfer.js";
+import { createSuppliedValues } from "../variables/supplied-values.js";
+import { createRunner } from "../builds/runner.js";
+import { createBuildQueue } from "../builds/build-queue.js";
+import type { GitConfig } from "../git/git.js";
 
 // dbFileText is the database file and any journal or WAL beside it, as text.
 async function dbFileText(dbPath: string): Promise<string> {
   const parts: string[] = [];
-  for (const p of [dbPath, `${dbPath}-journal`, `${dbPath}-wal`]) if (existsSync(p)) parts.push((await readFile(p)).toString("latin1"));
+  for (const p of [dbPath, `${dbPath}-journal`, `${dbPath}-wal`])
+    if (existsSync(p)) parts.push((await readFile(p)).toString("latin1"));
   return parts.join("\n");
 }
 
 const namesOnlyMessage = "This NBO doesn't store variable values. Send them with each deploy.";
-const waitingNote = "Waiting for variable values: this NBO doesn't store them. Deploy with values in POST /projects/{id}/builds or from Terraform (nbo_deployment).";
+const waitingNote =
+  "Waiting for variable values: this NBO doesn't store them. Deploy with values in POST /projects/{id}/builds or from Terraform (nbo_deployment).";
 
 const SECRET = "s3cr3t-token-value-XYZ";
 const PLAIN = "https://plain-value.example";
 const SHORT = "prod";
 const values = { SECRET_TOKEN: SECRET, API_URL: PLAIN, SHORT_NAME: SHORT };
 
-const printVar = (name: string) => (process.platform === "win32" ? `echo VAL_${name}=%${name}%` : `echo VAL_${name}=$${name}`);
+const printVar = (name: string) =>
+  process.platform === "win32" ? `echo VAL_${name}=%${name}%` : `echo VAL_${name}=$${name}`;
 const echoAll = ["SECRET_TOKEN", "API_URL", "SHORT_NAME"].map(printVar).join(" && ");
 
 let h: Harness;
@@ -80,7 +83,7 @@ describe("workspace setting: don't store variable values", () => {
     expect((await h.call("GET", "/workspace/settings")).json).toEqual({ storeEnvValues: false });
   });
 
-  it("turning it on needs confirm: \"delete values\"", async () => {
+  it('turning it on needs confirm: "delete values"', async () => {
     const res = await h.call("PATCH", "/system/workspace-settings", { storeEnvValues: false });
     expect(res.status).toBe(400);
     expect(res.json.error).toMatch(/delete values/);
@@ -89,7 +92,12 @@ describe("workspace setting: don't store variable values", () => {
 
   it("a token can't change it (403)", async () => {
     const { secret } = h.store.createApiToken("ci");
-    const res = await h.call("PATCH", "/system/workspace-settings", { storeEnvValues: false, confirm: "delete values" }, { authorization: `Bearer ${secret}` });
+    const res = await h.call(
+      "PATCH",
+      "/system/workspace-settings",
+      { storeEnvValues: false, confirm: "delete values" },
+      { authorization: `Bearer ${secret}` },
+    );
     expect(res.status).toBe(403);
     expect((await h.call("GET", "/workspace/settings")).json).toEqual({ storeEnvValues: true });
   });
@@ -103,7 +111,9 @@ describe("workspace setting: don't store variable values", () => {
 
     const db = new DatabaseSync(h.dbPath, { readOnly: true });
     try {
-      const rows = db.prepare("SELECT project_id, name, value, secret, stage, has_value FROM env_vars ORDER BY name").all();
+      const rows = db
+        .prepare("SELECT project_id, name, value, secret, stage, has_value FROM env_vars ORDER BY name")
+        .all();
       expect(rows).toEqual([
         { project_id: id, name: "PROJ_PLAIN", value: "", secret: 0, stage: "production", has_value: 0 },
         { project_id: id, name: "PROJ_SECRET", value: "", secret: 1, stage: "preview", has_value: 0 },
@@ -148,7 +158,9 @@ describe("names only", () => {
     const refused = await h.call("PUT", `/projects/${id}/env/API_URL`, { value: "https://x.example", secret: false });
     expect(refused.status).toBe(400);
     expect(refused.json.error).toBe(namesOnlyMessage);
-    expect((await h.call("PUT", "/workspace/env/API_URL", { value: "https://x.example", secret: false })).json.error).toBe(namesOnlyMessage);
+    expect(
+      (await h.call("PUT", "/workspace/env/API_URL", { value: "https://x.example", secret: false })).json.error,
+    ).toBe(namesOnlyMessage);
     const declared = await h.call("PUT", `/projects/${id}/env/API_URL`, { secret: true });
     expect(declared.status).toBe(200);
     expect(declared.json).toMatchObject({ name: "API_URL", secret: true, hasValue: false, stage: "production" });
@@ -180,7 +192,9 @@ describe("names only", () => {
     const id = await deployedProject(h);
     const res = await h.call("POST", `/projects/${id}/builds`, { values: { API_URL: "https://x.example" } });
     expect(res.status).toBe(400);
-    expect(res.json.error).toBe("This NBO stores variable values, so a deploy takes none: set them with PUT /projects/{id}/env/{name} or Terraform's nbo_env_var");
+    expect(res.json.error).toBe(
+      "This NBO stores variable values, so a deploy takes none: set them with PUT /projects/{id}/env/{name} or Terraform's nbo_env_var",
+    );
     expect((await h.call("POST", `/projects/${id}/builds`, { values: {} })).status).toBe(202);
     await h.v2.queue.idle(id);
   });
@@ -290,7 +304,11 @@ describe("names only", () => {
     expect(h.v2.supplied.size()).toBe(0);
     const longValues = [SECRET, PLAIN];
     const rows = JSON.stringify(h.store.listBuilds(id));
-    const deployments = JSON.stringify(h.store.listEnvironments(id, { includeArchived: true, allStages: true }).flatMap((e) => h.store.listDeployments(e.id)));
+    const deployments = JSON.stringify(
+      h.store
+        .listEnvironments(id, { includeArchived: true, allStages: true })
+        .flatMap((e) => h.store.listDeployments(e.id)),
+    );
     const dbBytes = (await readFile(h.dbPath)).toString("latin1");
     const artifactFiles = await allFiles(join(h.dbPath, "..", "artifacts"));
     const artifactText = (await Promise.all(artifactFiles.map((f) => readFile(f, "latin1")))).join("\n");
@@ -372,7 +390,10 @@ describe("turning names only on scrubs the database file", () => {
     expect((await h.call("DELETE", `/projects/${id}/env/DELETED_PLAIN`)).status).toBe(204);
 
     // A build log that printed values (stored mode redacts secrets only).
-    setBuildCommand(id, `${printVar("KEEP_PLAIN")} && ${printVar("KEEP_SECRET")} && mkdir dist && echo hi > dist/index.html`);
+    setBuildCommand(
+      id,
+      `${printVar("KEEP_PLAIN")} && ${printVar("KEEP_SECRET")} && mkdir dist && echo hi > dist/index.html`,
+    );
     const built = await h.call("POST", `/projects/${id}/builds`, {});
     await h.v2.queue.idle(id);
     expect(h.store.getBuild(built.json.id).log).toContain("VAL_KEEP_PLAIN=old-plain-value-222");
@@ -387,11 +408,21 @@ describe("turning names only on scrubs the database file", () => {
     expect((await turnOn()).status).toBe(200);
 
     const after = await dbFileText(h.dbPath);
-    for (const v of ["edited-away-plain-000", "old-plain-value-222", "old-secret-value-111", "deleted-secret-333", "deleted-plain-444", "workspace-secret-555", ...ciphertexts]) {
+    for (const v of [
+      "edited-away-plain-000",
+      "old-plain-value-222",
+      "old-secret-value-111",
+      "deleted-secret-333",
+      "deleted-plain-444",
+      "workspace-secret-555",
+      ...ciphertexts,
+    ]) {
       expect(after.includes(v), v).toBe(false);
     }
     expect(h.store.getBuild(built.json.id).log).toMatch(/VAL_KEEP_PLAIN=\S/);
-    expect(h.store.listDeployments(k8s!.id).find((d) => d.id === dep.id)!.error).toMatch(/^deploy failed: .+ rejected$/);
+    expect(h.store.listDeployments(k8s!.id).find((d) => d.id === dep.id)!.error).toMatch(
+      /^deploy failed: .+ rejected$/,
+    );
   }, 30_000);
 });
 

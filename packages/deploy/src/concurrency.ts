@@ -7,7 +7,11 @@
 // settle (so nothing is left running, and no rejection goes
 // unhandled), then rejects with that first error — the same "stop at
 // the first failure" outcome a sequential loop has, minus the waiting.
-export async function mapLimit<T, R>(items: readonly T[], limit: number, fn: (item: T, index: number) => Promise<R>): Promise<R[]> {
+export async function mapLimit<T, R>(
+  items: readonly T[],
+  limit: number,
+  fn: (item: T, index: number) => Promise<R>,
+): Promise<R[]> {
   const results = new Array<R>(items.length);
   let next = 0;
   let failed = false;

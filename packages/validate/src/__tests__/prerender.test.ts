@@ -58,7 +58,9 @@ describe("checkPrerender", () => {
     const want = "sha256:" + "0".repeat(64);
     const { errors } = checkPrerender(dir, { digests: { "prerender.json": want } });
     expect(errors).toHaveLength(1);
-    expect(errors[0]!.message).toMatch(/^prerender\.json: digest mismatch: manifest says sha256:0{64}, actual is sha256:[0-9a-f]{64}$/);
+    expect(errors[0]!.message).toMatch(
+      /^prerender\.json: digest mismatch: manifest says sha256:0{64}, actual is sha256:[0-9a-f]{64}$/,
+    );
   });
 
   it("fails on a schema error", () => {
@@ -70,7 +72,9 @@ describe("checkPrerender", () => {
   it("fails when prerender.json exists but the manifest has no digest for it", () => {
     writePrerender(goodDoc);
     const { errors } = checkPrerender(dir, { digests: {} });
-    expect(errors.map((e) => e.message)).toEqual(["prerender.json: present, but manifest.json digests has no entry for it"]);
+    expect(errors.map((e) => e.message)).toEqual([
+      "prerender.json: present, but manifest.json digests has no entry for it",
+    ]);
   });
 
   it("fails when the manifest has a digest but prerender.json is missing", () => {

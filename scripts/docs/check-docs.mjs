@@ -13,18 +13,16 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 // A pending check still runs, but its findings only print to stderr unless the
 // check is named with --only. A default run also fails on a pending entry that
 // has no findings left ("remove it"), so the lists can only shrink.
-export const PENDING_CHECKS = {
-};
+export const PENDING_CHECKS = {};
 // Findings in these files print to stderr as pending and do not fail the run
 // (under --only too, so the Task 2 gate holds).
-export const PENDING_FILES = {
-};
+export const PENDING_FILES = {};
 
 // The core manual. Chapters link to each other as ./<slug>.md#<heading-id>.
 const CHAPTERS = "docs/manual";
 const SETTINGS_CHAPTER = `${CHAPTERS}/server-settings.md`;
 const ALLOWLIST = "scripts/docs/env-allowlist.json";
-const ACCESS = "packages/controlplane/src/access.ts";
+const ACCESS = "packages/controlplane/src/http/access.ts";
 // The architecture tour and API reference (an HTML page with the API rows).
 const ARCHITECTURE = "docs/architecture/index.html";
 const TOP_DIRS = ["packages", "docs", "scripts", "spec", "fixtures", "cmd", "internal", "router", "adapters"]; // last four: the removed Go tree, so stale citations are caught
@@ -128,7 +126,8 @@ export async function checkLinks(root) {
           continue;
         }
         if (target.startsWith("#")) {
-          if (target.length > 1 && !anchorsOf(file).has(target.slice(1))) add(file, line, `anchor not found: ${target}`);
+          if (target.length > 1 && !anchorsOf(file).has(target.slice(1)))
+            add(file, line, `anchor not found: ${target}`);
           continue;
         }
         if (SKIP_TARGET.test(target)) continue;
@@ -159,7 +158,8 @@ export async function checkLinks(root) {
         const target = m[1];
         if (target === "" || /^(?:[a-z][a-z0-9+.-]*:|\/|\{)/i.test(target)) continue;
         if (target.startsWith("#")) {
-          if (target.length > 1 && !ids.has(target.slice(1))) add(file, i + 1, `anchor not found in this page: ${target}`);
+          if (target.length > 1 && !ids.has(target.slice(1)))
+            add(file, i + 1, `anchor not found in this page: ${target}`);
           continue;
         }
         const path = target.split("#")[0].split("?")[0];
@@ -201,10 +201,13 @@ export async function checkEnv(root) {
   const findings = [];
   const sources = [];
   for (const pkg of ["controlplane", "edge", "serve", "cli"]) {
-    sources.push(...listFiles(join(root, "packages", pkg, "src"), (p) => p.endsWith(".ts") && !/__tests__|\.test\.ts$/.test(p)));
+    sources.push(
+      ...listFiles(join(root, "packages", pkg, "src"), (p) => p.endsWith(".ts") && !/__tests__|\.test\.ts$/.test(p)),
+    );
   }
   sources.push(...listFiles(join(root, "packages", "edge-rs", "src"), (p) => p.endsWith(".rs")));
-  for (const f of ["compose.yaml", "compose.public.yaml", "Dockerfile"]) if (existsSync(join(root, f))) sources.push(join(root, f));
+  for (const f of ["compose.yaml", "compose.public.yaml", "Dockerfile"])
+    if (existsSync(join(root, f))) sources.push(join(root, f));
 
   const chapter = readIf(join(root, SETTINGS_CHAPTER));
   const allow = readIf(join(root, ALLOWLIST));
@@ -220,7 +223,12 @@ export async function checkEnv(root) {
   for (const file of sources) {
     splitLines(readFileSync(file, "utf8")).forEach((text, i) => {
       if (/NBO_\$\{/.test(text)) {
-        findings.push({ check: "env", file: rel(root, file), line: i + 1, problem: "dynamic name (NBO_${...}): list the names it can build in the allowlist or the chapter" });
+        findings.push({
+          check: "env",
+          file: rel(root, file),
+          line: i + 1,
+          problem: "dynamic name (NBO_${...}): list the names it can build in the allowlist or the chapter",
+        });
       }
       for (const m of text.matchAll(/\bNBO_[A-Z0-9_]+/g)) {
         if (m[0].endsWith("_")) continue;
@@ -229,12 +237,22 @@ export async function checkEnv(root) {
     });
   }
   if (!chapter) {
-    findings.push({ check: "env", file: SETTINGS_CHAPTER, line: 1, problem: `${SETTINGS_CHAPTER} does not exist yet, so no server setting is documented` });
+    findings.push({
+      check: "env",
+      file: SETTINGS_CHAPTER,
+      line: 1,
+      problem: `${SETTINGS_CHAPTER} does not exist yet, so no server setting is documented`,
+    });
     return findings;
   }
   for (const [name, at] of [...first].sort((a, b) => a[0].localeCompare(b[0]))) {
     if (documented.has(name) || allowed.has(name)) continue;
-    findings.push({ check: "env", file: at.file, line: at.line, problem: `${name} is in neither ${SETTINGS_CHAPTER} nor ${ALLOWLIST}` });
+    findings.push({
+      check: "env",
+      file: at.file,
+      line: at.line,
+      problem: `${name} is in neither ${SETTINGS_CHAPTER} nor ${ALLOWLIST}`,
+    });
   }
   return findings;
 }
@@ -266,13 +284,24 @@ export async function checkApi(root) {
     const line = page.slice(0, m.index).split("\n").length;
     const route = routes.get(key);
     if (!route) {
-      findings.push({ check: "api", file: ARCHITECTURE, line, problem: `${m[1]} ${m[2]} has no route in ${ACCESS}: remove the row` });
+      findings.push({
+        check: "api",
+        file: ARCHITECTURE,
+        line,
+        problem: `${m[1]} ${m[2]} has no route in ${ACCESS}: remove the row`,
+      });
     } else if (m[4] !== route.access) {
-      findings.push({ check: "api", file: ARCHITECTURE, line, problem: `${m[1]} ${m[2]} says access "${m[4]}", ${ACCESS} says "${route.access}"` });
+      findings.push({
+        check: "api",
+        file: ARCHITECTURE,
+        line,
+        problem: `${m[1]} ${m[2]} says access "${m[4]}", ${ACCESS} says "${route.access}"`,
+      });
     }
   }
   for (const [key, r] of routes) {
-    if (!rows.has(key)) findings.push({ check: "api", file: ACCESS, line: r.line, problem: `${r.route} has no row in ${ARCHITECTURE}` });
+    if (!rows.has(key))
+      findings.push({ check: "api", file: ACCESS, line: r.line, problem: `${r.route} has no row in ${ARCHITECTURE}` });
   }
   return findings;
 }
@@ -292,8 +321,7 @@ export async function main(argv, { pendingFiles = PENDING_FILES, pendingChecks =
         console.error("docs: --only needs at least one check (links, paths, env, api)");
         return 1;
       }
-    }
-    else {
+    } else {
       console.error(`docs: unknown argument ${argv[i]}`);
       return 1;
     }

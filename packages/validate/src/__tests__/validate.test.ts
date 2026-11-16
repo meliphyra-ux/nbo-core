@@ -115,7 +115,9 @@ describe("validate", () => {
     writeFileSync(p, canonicalize(m));
     writeFileSync(join(dir, "static", "index.html"), "<h1>tampered</h1>");
     const messages = validate(dir).map((e) => e.message);
-    expect(messages[0]).toBe("manifest.json: built for NBO spec 1.1; this nbo reads spec 1.0 and older 1.x; upgrade NBO");
+    expect(messages[0]).toBe(
+      "manifest.json: built for NBO spec 1.1; this nbo reads spec 1.0 and older 1.x; upgrade NBO",
+    );
     expect(messages.some((msg) => msg.includes("index.html"))).toBe(true);
   });
 
@@ -258,7 +260,9 @@ describe("validate: spec 1.0 checks", () => {
     writeNboDir(dir);
     writeValidFunctionFixture(dir, "ssr");
     writeFileSync(join(dir, "prerender.json"), canonicalize(pprPrerender("x-nbo-ppr")));
-    expect(validate(dir).map((e) => e.message)).toContain("prerender.json: present, but manifest.json digests has no entry for it");
+    expect(validate(dir).map((e) => e.message)).toContain(
+      "prerender.json: present, but manifest.json digests has no entry for it",
+    );
   });
 
   it("refuses an undeclared x-nbo-pp on a prerender config (Review Focus 3)", () => {
@@ -277,7 +281,12 @@ describe("validate: spec 1.0 checks", () => {
     writeNboDir(dir);
     writeValidFunctionFixture(dir, "ssr");
     writePrerenderFile(dir, pprPrerender("x-nbo-ppr"));
-    writeRoutesFile(dir, { version: 1, afterFiles: [{ id: "r", match: { path: "^/api" }, action: { type: "rewrite", function: "ssr" }, "x-acme-tag": "blue" }] });
+    writeRoutesFile(dir, {
+      version: 1,
+      afterFiles: [
+        { id: "r", match: { path: "^/api" }, action: { type: "rewrite", function: "ssr" }, "x-acme-tag": "blue" },
+      ],
+    });
     patchManifest(dir, (m) => {
       m.requires.extensions = [
         { id: "x-nbo-ppr", version: "1", critical: true },
@@ -289,8 +298,13 @@ describe("validate: spec 1.0 checks", () => {
 
   it("reports a rewrite to an undeclared function", () => {
     writeNboDir(dir);
-    writeRoutesFile(dir, { version: 1, afterFiles: [{ id: "r", match: { path: "^/api" }, action: { type: "rewrite", function: "ssr" } }] });
-    expect(validate(dir).map((e) => e.message)).toEqual(['routes.json: rule "r": function "ssr" is not declared in manifest functions']);
+    writeRoutesFile(dir, {
+      version: 1,
+      afterFiles: [{ id: "r", match: { path: "^/api" }, action: { type: "rewrite", function: "ssr" } }],
+    });
+    expect(validate(dir).map((e) => e.message)).toEqual([
+      'routes.json: rule "r": function "ssr" is not declared in manifest functions',
+    ]);
   });
 
   it("accepts an unlisted dispatch.json at a bundle root and refuses an unlisted extra.js (Review Focus 1)", () => {
@@ -299,7 +313,9 @@ describe("validate: spec 1.0 checks", () => {
     writeFileSync(join(dir, "functions", "ssr", "bundle", "dispatch.json"), '{"routes":{}}');
     expect(validate(dir).map((e) => e.message)).toEqual([]);
     writeFileSync(join(dir, "functions", "ssr", "bundle", "extra.js"), "1");
-    expect(validate(dir).map((e) => e.message)).toEqual(["functions/ssr/bundle/extra.js: not listed in bundle.index.json"]);
+    expect(validate(dir).map((e) => e.message)).toEqual([
+      "functions/ssr/bundle/extra.js: not listed in bundle.index.json",
+    ]);
   });
 
   it("checks function names before joining them into paths, so nothing outside .nbo/ is read", () => {
@@ -329,7 +345,14 @@ describe("validate: spec 1.0 checks", () => {
     writeNboDir(dir);
     writeValidFunctionFixture(dir, "ssr");
     patchManifest(dir, (m) => {
-      m.crons = [{ id: "c", schedule: "0-5 * * * *", timezone: "UTC", target: { function: "ssr", path: "/api/cron", method: "GET" } }];
+      m.crons = [
+        {
+          id: "c",
+          schedule: "0-5 * * * *",
+          timezone: "UTC",
+          target: { function: "ssr", path: "/api/cron", method: "GET" },
+        },
+      ];
     });
     const messages = validate(dir).map((e) => e.message);
     expect(messages.some((msg) => msg.startsWith('manifest.json: crons: cron "c": schedule "0-5 * * * *"'))).toBe(true);
@@ -362,7 +385,8 @@ describe("validate: warnings for stored builds", () => {
     writeNboDir(dir);
     writeValidFunctionFixture(dir, "ssr");
     writeFileSync(join(dir, "functions", "ssr", "bundle", "dispatch.json"), '{"routes":{}}');
-    const dispatchMsg = "functions/ssr/bundle/dispatch.json: not listed in bundle.index.json (accepted only for builds made before spec 1.0 final)";
+    const dispatchMsg =
+      "functions/ssr/bundle/dispatch.json: not listed in bundle.index.json (accepted only for builds made before spec 1.0 final)";
     const report = validateReport(dir);
     expect(report.errors).toEqual([]);
     expect(report.warnings.map((e) => e.message)).toEqual([dispatchMsg]);
@@ -397,7 +421,9 @@ describe("validate: core files must be in manifest.digests (final review I1)", (
     patchManifest(dir, (m) => {
       delete m.digests["functions/ssr/function.json"];
     });
-    expect(validate(dir).map((e) => e.message)).toContain("functions/ssr/function.json: manifest.json digests has no entry for it");
+    expect(validate(dir).map((e) => e.message)).toContain(
+      "functions/ssr/function.json: manifest.json digests has no entry for it",
+    );
   });
 
   it("refuses a manifest with no digests block at all", () => {

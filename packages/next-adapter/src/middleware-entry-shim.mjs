@@ -15,7 +15,9 @@ const dispatch = JSON.parse(readFileSync(join(here, "middleware-dispatch.json"),
 // so adapter.js records its relative path here under the same reserved
 // key.
 const setupNodeEnvRelPath = dispatch.__setupNodeEnv;
-const setupNodeEnvPromise = setupNodeEnvRelPath ? import(pathToFileURL(join(here, setupNodeEnvRelPath)).href) : Promise.resolve();
+const setupNodeEnvPromise = setupNodeEnvRelPath
+  ? import(pathToFileURL(join(here, setupNodeEnvRelPath)).href)
+  : Promise.resolve();
 
 const modPromise = import(pathToFileURL(join(here, dispatch.compiledPath)).href);
 
@@ -96,6 +98,9 @@ export default {
     const handler = mod.handler ?? mod.default.handler;
     const response = await handler(request, { waitUntil: () => {} });
     const requestURL = new URL(request.url);
-    return new Response(response.body, { status: response.status, headers: renameMiddlewareHeaders(response.headers, requestURL) });
+    return new Response(response.body, {
+      status: response.status,
+      headers: renameMiddlewareHeaders(response.headers, requestURL),
+    });
   },
 };

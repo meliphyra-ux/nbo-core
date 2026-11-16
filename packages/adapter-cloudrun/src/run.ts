@@ -3,7 +3,11 @@
 
 import { spawn } from "node:child_process";
 
-export type CommandRunner = (cmd: string, args: string[], opts?: { env?: Record<string, string>; input?: string }) => Promise<string>;
+export type CommandRunner = (
+  cmd: string,
+  args: string[],
+  opts?: { env?: Record<string, string>; input?: string },
+) => Promise<string>;
 
 // ToolContext matches @nbo/deploy's ToolContext structurally (this
 // package sits below @nbo/deploy), plus an optional runner and sleep so
@@ -25,7 +29,8 @@ export function runWith(ctx: ToolContext | undefined, cmd: string, args: string[
 }
 
 const propagationDelays = [2000, 4000, 8000, 16000];
-const notYetPropagated = /service account[^\n]*does not exist|does not exist[^\n]*service account|or it may not exist|iam\.serviceaccounts\.actAs/i;
+const notYetPropagated =
+  /service account[^\n]*does not exist|does not exist[^\n]*service account|or it may not exist|iam\.serviceaccounts\.actAs/i;
 
 // retryWhile retries fn, with 2/4/8/16s backoff, while its error
 // matches retryable.
@@ -77,19 +82,16 @@ function quoteWindowsArg(arg: string): string {
   return `"${escaped}"`;
 }
 
-// run shells out to cmd with args, rejecting with the combined
-// stdout+stderr on a non-zero exit — matching Go's own
-// `fmt.Errorf("... failed: %w\n%s", err, out)` shape wherever this
-// adapter's Go source calls exec.Command(...).CombinedOutput(). This
-// package's own copy of @nbo/adapter-k8s's identical helper — not a
-// shared import, per this plan's own Architecture (each is ~15 lines,
-// not worth a third package just to avoid two small copies).
+// This is the shared copy: @nbo/deploy and the control-plane import it.
 // childEnv builds a child's environment from the host's plus overrides.
 // A connected call (one that brings its own CLOUDSDK_CONFIG) must not
 // inherit the host's gcloud overrides (CLOUDSDK_* properties or
 // GOOGLE_APPLICATION_CREDENTIALS), which would beat the connection's own
 // credentials or project. Calls without overrides inherit as before.
-export function childEnv(base: NodeJS.ProcessEnv, overrides: Record<string, string> | undefined): NodeJS.ProcessEnv | undefined {
+export function childEnv(
+  base: NodeJS.ProcessEnv,
+  overrides: Record<string, string> | undefined,
+): NodeJS.ProcessEnv | undefined {
   if (!overrides) return undefined;
   const env: NodeJS.ProcessEnv = { ...base };
   if (overrides.CLOUDSDK_CONFIG !== undefined) {
@@ -101,7 +103,12 @@ export function childEnv(base: NodeJS.ProcessEnv, overrides: Record<string, stri
   return { ...env, ...overrides };
 }
 
-export function run(cmd: string, args: string[], options?: { input?: string; env?: Record<string, string> }): Promise<string> {
+// run shells out to cmd with args, rejecting with the combined stdout+stderr on a non-zero exit.
+export function run(
+  cmd: string,
+  args: string[],
+  options?: { input?: string; env?: Record<string, string> },
+): Promise<string> {
   return new Promise((resolve, reject) => {
     const windows = process.platform === "win32";
     const env = childEnv(process.env, options?.env);

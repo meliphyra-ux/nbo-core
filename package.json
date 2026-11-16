@@ -9,11 +9,11 @@
     "test": "turbo run test",
     "test:ci": "node --test \"scripts/ci/__tests__/*.test.mjs\"",
     "docs:check": "node scripts/docs/check-docs.mjs",
-    "format": "prettier --write .",
+    "format": "prettier --write packages scripts spec test-support docs",
     "check-types": "turbo run check-types",
     "spec:generate": "cd spec && ./generate.sh",
     "lint:fix": "eslint --config eslint.config.mjs eslint.config.mjs packages scripts test-support --fix",
-    "format:check": "prettier --check .",
+    "format:check": "prettier --check packages scripts spec test-support docs",
     "knip": "knip"
   },
   "devDependencies": {

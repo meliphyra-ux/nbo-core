@@ -6,11 +6,11 @@ import { mkdtemp } from "node:fs/promises";
 import { randomBytes } from "node:crypto";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { createStore, type Store } from "../store.js";
-import { createSetup, parseCloudChoice } from "../setup.js";
-import { createCloudSetup, type CloudSetup } from "../cloud-setup.js";
-import { transferConfig } from "../transfer.js";
-import { environmentView } from "../v2-routes.js";
+import { createStore, type Store } from "../store/store.js";
+import { createSetup, parseCloudChoice } from "../deploys/setup.js";
+import { createCloudSetup, type CloudSetup } from "../clouds/cloud-setup.js";
+import { transferConfig } from "../deploys/transfer.js";
+import { environmentView } from "../http/v2-routes.js";
 import { startHarness, deployedProject, type Harness } from "./v2-harness.js";
 
 const stores: Store[] = [];
@@ -44,14 +44,23 @@ function productionSetup(store: Store) {
 }
 
 function cluster(store: Store, name: string): string {
-  return store.saveKubernetesConnection({ name, server: `https://${name}.example:6443`, registry: { kind: "custom", server: "ghcr.io", username: "me" } }, { kubeconfig: name }).id;
+  return store.saveKubernetesConnection(
+    { name, server: `https://${name}.example:6443`, registry: { kind: "custom", server: "ghcr.io", username: "me" } },
+    { kubeconfig: name },
+  ).id;
 }
 
 describe("cloud choice", () => {
   it("accepts an optional clusterId on Kubernetes and rejects a malformed one", () => {
     expect(parseCloudChoice({ target: "kubernetes" })).toEqual({ target: "kubernetes" });
-    expect(parseCloudChoice({ target: "kubernetes", clusterId: "kc_0123abcd" })).toEqual({ target: "kubernetes", clusterId: "kc_0123abcd" });
-    expect(parseCloudChoice({ target: "kubernetes", clusterId: "kc_default" })).toEqual({ target: "kubernetes", clusterId: "kc_default" });
+    expect(parseCloudChoice({ target: "kubernetes", clusterId: "kc_0123abcd" })).toEqual({
+      target: "kubernetes",
+      clusterId: "kc_0123abcd",
+    });
+    expect(parseCloudChoice({ target: "kubernetes", clusterId: "kc_default" })).toEqual({
+      target: "kubernetes",
+      clusterId: "kc_default",
+    });
     expect(() => parseCloudChoice({ target: "kubernetes", clusterId: "--kubeconfig=/etc" })).toThrow(/clusterId/);
   });
 });
@@ -72,8 +81,12 @@ describe("Kubernetes environments in production", () => {
     cluster(s, "gke-us");
     const setup = productionSetup(s);
     const p = s.createProject("shop");
-    await expect(setup.addCloud(p.id, { target: "kubernetes" })).rejects.toThrow("choose a Kubernetes cluster: hetzner-eu, gke-us");
-    await expect(setup.addCloud(p.id, { target: "kubernetes", clusterId: "kc_unknown" })).rejects.toThrow(/not connected/);
+    await expect(setup.addCloud(p.id, { target: "kubernetes" })).rejects.toThrow(
+      "choose a Kubernetes cluster: hetzner-eu, gke-us",
+    );
+    await expect(setup.addCloud(p.id, { target: "kubernetes", clusterId: "kc_unknown" })).rejects.toThrow(
+      /not connected/,
+    );
     expect(s.listEnvironments(p.id)).toEqual([]);
   });
 
@@ -81,7 +94,10 @@ describe("Kubernetes environments in production", () => {
     const s = await openStore();
     const gke = cluster(s, "gke-us");
     // An upgraded install's cluster (what the migration creates).
-    const defaultId = s.saveKubernetesConnection({ id: undefined, name: "default", server: "https://d", registry: { kind: "artifact-registry" } }, { kubeconfig: "d" }).id;
+    const defaultId = s.saveKubernetesConnection(
+      { id: undefined, name: "default", server: "https://d", registry: { kind: "artifact-registry" } },
+      { kubeconfig: "d" },
+    ).id;
     expect(defaultId).not.toBe("kc_default"); // a fresh "default" is not the upgraded one
     const setup = productionSetup(s);
     const p = s.createProject("shop");
@@ -89,19 +105,23 @@ describe("Kubernetes environments in production", () => {
     const b = await setup.addCloud(p.id, { target: "kubernetes", clusterId: defaultId });
     expect([a.name, b.name]).toEqual(["k8s-gke-us", "k8s-default"]);
     expect(JSON.parse(b.config)).toEqual({ cronsEnabled: false, clusterId: defaultId });
-    await expect(setup.addCloud(p.id, { target: "kubernetes", clusterId: gke })).rejects.toThrow(/already runs on gke-us/);
+    await expect(setup.addCloud(p.id, { target: "kubernetes", clusterId: gke })).rejects.toThrow(
+      /already runs on gke-us/,
+    );
   });
 
   it("names the environment k8s on kc_default", async () => {
     const dir = await mkdtemp(join(tmpdir(), "controlplane-multi-cluster-"));
     const { DatabaseSync } = await import("node:sqlite");
-    const { legacyConnectionsSchema } = await import("../connections.js");
-    const { seal } = await import("../secrets.js");
+    const { legacyConnectionsSchema } = await import("../clouds/connections.js");
+    const { seal } = await import("../store/secrets.js");
     const key = randomBytes(32);
     const path = join(dir, "t.db");
     const db = new DatabaseSync(path);
     db.exec(legacyConnectionsSchema);
-    db.prepare("INSERT INTO connections (kind, config, secret, status, created_at) VALUES ('kubernetes', ?, ?, 'connected', '2026-10-01T00:00:00Z')").run(
+    db.prepare(
+      "INSERT INTO connections (kind, config, secret, status, created_at) VALUES ('kubernetes', ?, ?, 'connected', '2026-10-01T00:00:00Z')",
+    ).run(
       JSON.stringify({ name: "prod", server: "https://k", registry: { kind: "artifact-registry" } }),
       seal(key, JSON.stringify({ kubeconfig: "k" })),
     );
@@ -119,7 +139,13 @@ describe("Kubernetes environments in production", () => {
     const a = cluster(s, "hetzner-eu");
     const b = cluster(s, "gke-us");
     s.saveGoogleConnection(
-      { project: "acme", region: "us-east1", arRepo: "us-east1-docker.pkg.dev/acme/nbo", deployer: "d@x", puller: "p@x" },
+      {
+        project: "acme",
+        region: "us-east1",
+        arRepo: "us-east1-docker.pkg.dev/acme/nbo",
+        deployer: "d@x",
+        puller: "p@x",
+      },
       { deployerKey: "{}", pullerKey: "{}" },
     );
     const setup = productionSetup(s);
@@ -145,7 +171,14 @@ describe("Kubernetes environments in production", () => {
     const s = await openStore();
     const a = cluster(s, "a");
     const setup = productionSetup(s);
-    const base = { name: "shop", repo: "https://github.com/acme/shop.git", productionBranch: "main", framework: "static" as const, spa: false, buildCommand: "true" };
+    const base = {
+      name: "shop",
+      repo: "https://github.com/acme/shop.git",
+      productionBranch: "main",
+      framework: "static" as const,
+      spa: false,
+      buildCommand: "true",
+    };
     expect(() =>
       setup.start({
         ...base,
@@ -166,7 +199,11 @@ describe("display names", () => {
     const k = s.createEnvironment(p.id, "k8s-hetzner-eu", "kubernetes", JSON.stringify({ clusterId: id }));
     const c = s.createEnvironment(p.id, "cloudrun", "cloudrun", JSON.stringify({ project: "p" }));
     const dev = s.createEnvironment(p.id, "k8s", "kubernetes", "{}");
-    expect(environmentView(s, "production", k)).toMatchObject({ clusterId: id, displayName: "hetzner-eu", config: { clusterId: id } });
+    expect(environmentView(s, "production", k)).toMatchObject({
+      clusterId: id,
+      displayName: "hetzner-eu",
+      config: { clusterId: id },
+    });
     expect(environmentView(s, "production", c)).toMatchObject({ clusterId: null, displayName: "Cloud Run" });
     expect(environmentView(s, "dev", dev)).toMatchObject({ clusterId: null, displayName: "Kubernetes" });
   });
@@ -177,10 +214,22 @@ describe("production preflight with several clusters", () => {
   it("summarises ready, partly failing and missing clusters", async () => {
     const s = await openStore();
     const pf = () => createCloudSetup(dockerOnly, { mode: "production", store: s }).preflight();
-    expect((await pf()).kubernetes).toEqual({ reachable: false, context: "", ready: false, reason: "Kubernetes is not connected", summary: "not connected", clusters: [] });
+    expect((await pf()).kubernetes).toEqual({
+      reachable: false,
+      context: "",
+      ready: false,
+      reason: "Kubernetes is not connected",
+      summary: "not connected",
+      clusters: [],
+    });
     const a = cluster(s, "hetzner-eu");
     const b = cluster(s, "gke-us");
-    expect((await pf()).kubernetes).toMatchObject({ ready: true, reason: null, summary: "2 clusters ready", context: "hetzner-eu, gke-us" });
+    expect((await pf()).kubernetes).toMatchObject({
+      ready: true,
+      reason: null,
+      summary: "2 clusters ready",
+      context: "hetzner-eu, gke-us",
+    });
     s.recordConnectionCheck("kubernetes", "Unauthorized", b);
     const partly = (await pf()).kubernetes;
     expect(partly).toMatchObject({ ready: true, reason: null, summary: "1 of 2 failing" });
@@ -189,7 +238,11 @@ describe("production preflight with several clusters", () => {
       { id: b, name: "gke-us", ready: false, reason: "Unauthorized" },
     ]);
     s.recordConnectionCheck("kubernetes", "timed out", a);
-    expect((await pf()).kubernetes).toMatchObject({ ready: false, reason: "hetzner-eu: timed out; gke-us: Unauthorized", summary: "2 of 2 failing" });
+    expect((await pf()).kubernetes).toMatchObject({
+      ready: false,
+      reason: "hetzner-eu: timed out; gke-us: Unauthorized",
+      summary: "2 of 2 failing",
+    });
   });
 });
 
@@ -208,7 +261,12 @@ describe("transfer between two clusters (production)", () => {
     expect(h.store.getTransfer(res.json.id)).toMatchObject({ status: "done", weight: 100 });
     const summary = (await h.call("GET", `/projects/${id}/summary`)).json;
     expect(
-      summary.environments.map((e: { name: string; displayName: string; clusterId: string; trafficWeight: number }) => [e.name, e.displayName, e.clusterId, e.trafficWeight]),
+      summary.environments.map((e: { name: string; displayName: string; clusterId: string; trafficWeight: number }) => [
+        e.name,
+        e.displayName,
+        e.clusterId,
+        e.trafficWeight,
+      ]),
     ).toEqual([
       ["k8s-hetzner-eu", "hetzner-eu", a, 0],
       ["k8s-gke-us", "gke-us", b, 100],
@@ -223,13 +281,21 @@ describe("transfer between two clusters (production)", () => {
     const id = await deployedProject(h, { clouds: [{ target: "kubernetes", clusterId: a }] });
     const res = await h.call("POST", `/projects/${id}/environments/add`, { target: "kubernetes", clusterId: b });
     expect(res.status).toBe(201);
-    expect(res.json).toMatchObject({ name: "k8s-gke-us", clusterId: b, displayName: "gke-us", config: { clusterId: b } });
-    expect((await h.call("POST", `/projects/${id}/environments/add`, { target: "kubernetes", clusterId: b })).status).toBe(409);
+    expect(res.json).toMatchObject({
+      name: "k8s-gke-us",
+      clusterId: b,
+      displayName: "gke-us",
+      config: { clusterId: b },
+    });
+    expect(
+      (await h.call("POST", `/projects/${id}/environments/add`, { target: "kubernetes", clusterId: b })).status,
+    ).toBe(409);
   });
 });
 
 describe("review follow-ups", () => {
-  const cronsOf = (s: Store, envId: string) => (JSON.parse(s.getEnvironment(envId).config) as { cronsEnabled?: boolean }).cronsEnabled;
+  const cronsOf = (s: Store, envId: string) =>
+    (JSON.parse(s.getEnvironment(envId).config) as { cronsEnabled?: boolean }).cronsEnabled;
 
   it("a transfer moves traffic off every other environment in proportion, and leaves crons only on the target", async () => {
     transferConfig.stepDelayMs = 5;
@@ -245,7 +311,9 @@ describe("review follow-ups", () => {
       ],
     });
     const [ea, eb] = h.store.listEnvironments(id);
-    expect((await h.call("PUT", `/projects/${id}/traffic`, { weights: { [ea!.id]: 60, [eb!.id]: 40 } })).status).toBe(200);
+    expect((await h.call("PUT", `/projects/${id}/traffic`, { weights: { [ea!.id]: 60, [eb!.id]: 40 } })).status).toBe(
+      200,
+    );
     const before = h.edgePuts.length;
     const res = await h.call("POST", `/projects/${id}/transfer`, { target: "kubernetes", clusterId: c });
     expect(res.status).toBe(202);
@@ -269,9 +337,18 @@ describe("review follow-ups", () => {
     cluster(s, "a");
     cluster(s, "b");
     const setup = productionSetup(s);
-    const base = { name: "shop", repo: "https://github.com/acme/shop.git", productionBranch: "main", framework: "static" as const, spa: false, buildCommand: "true" };
+    const base = {
+      name: "shop",
+      repo: "https://github.com/acme/shop.git",
+      productionBranch: "main",
+      framework: "static" as const,
+      spa: false,
+      buildCommand: "true",
+    };
     expect(() => setup.start({ ...base, clouds: [{ target: "kubernetes" }] })).toThrow(/choose a Kubernetes cluster/);
-    expect(() => setup.start({ ...base, clouds: [{ target: "kubernetes", clusterId: "kc_unknown" }] })).toThrow(/not connected/);
+    expect(() => setup.start({ ...base, clouds: [{ target: "kubernetes", clusterId: "kc_unknown" }] })).toThrow(
+      /not connected/,
+    );
     expect(s.listProjects()).toEqual([]);
   });
 
@@ -317,7 +394,9 @@ describe("review follow-ups", () => {
     const p = h.store.createProject("legacy");
     const post = (body: unknown) => h.call("POST", `/projects/${p.id}/environments`, body);
     expect((await post({ name: "k8s-hetzner-eu", target: "kubernetes" })).status).toBe(400);
-    expect((await post({ name: "k8s-hetzner-eu", target: "kubernetes", config: { clusterId: "kc_unknown" } })).status).toBe(400);
+    expect(
+      (await post({ name: "k8s-hetzner-eu", target: "kubernetes", config: { clusterId: "kc_unknown" } })).status,
+    ).toBe(400);
     expect((await post({ name: "prod", target: "kubernetes", config: { clusterId: a } })).status).toBe(400);
     const ok = await post({ name: "k8s-hetzner-eu", target: "kubernetes", config: { clusterId: a } });
     expect(ok.status).toBe(201);
@@ -332,7 +411,11 @@ describe("review follow-ups", () => {
     const p = h.store.createProject("legacy");
     const staging = h.store.createStage(p.id, { name: "staging", branch: "staging", host: "" });
     h.store.createEnvironment(p.id, "s-staging-k8s", "kubernetes", JSON.stringify({ clusterId: a }), staging.id);
-    const res = await h.call("POST", `/projects/${p.id}/environments`, { name: "k8s-hetzner-eu", target: "kubernetes", config: { clusterId: a } });
+    const res = await h.call("POST", `/projects/${p.id}/environments`, {
+      name: "k8s-hetzner-eu",
+      target: "kubernetes",
+      config: { clusterId: a },
+    });
     expect(res.status).toBe(201);
   });
 
@@ -350,7 +433,9 @@ describe("review follow-ups", () => {
     const [ea, eb] = h.store.listEnvironments(id);
     const res = await h.call("PUT", `/projects/${id}/traffic`, { weights: { [ea!.id]: 30, [eb!.id]: 70 } });
     expect(res.status).toBe(200);
-    expect(res.json.backends.map((x: { environmentId: string; weight: number }) => [x.environmentId, x.weight])).toEqual([
+    expect(
+      res.json.backends.map((x: { environmentId: string; weight: number }) => [x.environmentId, x.weight]),
+    ).toEqual([
       [ea!.id, 30],
       [eb!.id, 70],
     ]);
@@ -399,7 +484,14 @@ describe("returning to a cloud after archiving its environment", () => {
     expect(a2).not.toBe(a);
     const res = await h.call("POST", `/projects/${id}/environments/add`, { target: "kubernetes", clusterId: a2 });
     expect(res.status).toBe(201);
-    expect(res.json).toMatchObject({ id: ea!.id, name: "k8s-a", clusterId: a2, displayName: "a", trafficWeight: 0, archived: false });
+    expect(res.json).toMatchObject({
+      id: ea!.id,
+      name: "k8s-a",
+      clusterId: a2,
+      displayName: "a",
+      trafficWeight: 0,
+      archived: false,
+    });
   });
 
   it("the legacy environments route revives an archived environment of the same name and target", async () => {
@@ -442,7 +534,9 @@ describe("transfers with three environments", () => {
       ],
     });
     const [ea, eb] = h.store.listEnvironments(id);
-    expect((await h.call("PUT", `/projects/${id}/traffic`, { weights: { [ea!.id]: 60, [eb!.id]: 40 } })).status).toBe(200);
+    expect((await h.call("PUT", `/projects/${id}/traffic`, { weights: { [ea!.id]: 60, [eb!.id]: 40 } })).status).toBe(
+      200,
+    );
     const res = await h.call("POST", `/projects/${id}/transfer`, { target: "kubernetes", clusterId: c });
     expect(res.status).toBe(202);
     const transferId = res.json.id as string;

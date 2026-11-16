@@ -29,9 +29,12 @@ beforeEach(() => {
        }
        res.writeHead(200, { "x-handled-by": "home" });
        res.end("home:" + req.url);
-     };`
+     };`,
   );
-  writeFileSync(join(here, "dispatch.json"), JSON.stringify({ routes: { home: { pathname: "/" }, stream: { pathname: "/stream" } } }));
+  writeFileSync(
+    join(here, "dispatch.json"),
+    JSON.stringify({ routes: { home: { pathname: "/" }, stream: { pathname: "/stream" } } }),
+  );
   writeFileSync(join(here, "next-dispatch.json"), JSON.stringify({ home: "routes/home.js", stream: "routes/home.js" }));
 });
 
@@ -46,7 +49,7 @@ describe("entry-shim", () => {
     writeFileSync(join(here, "setup-node-env.js"), "globalThis.__NBO_TEST_SETUP_RAN = true;");
     writeFileSync(
       join(here, "next-dispatch.json"),
-      JSON.stringify({ __setupNodeEnv: "setup-node-env.js", home: "routes/home.js", stream: "routes/home.js" })
+      JSON.stringify({ __setupNodeEnv: "setup-node-env.js", home: "routes/home.js", stream: "routes/home.js" }),
     );
     delete (globalThis as any).__NBO_TEST_SETUP_RAN;
     try {
@@ -78,7 +81,9 @@ describe("entry-shim", () => {
     const start = Date.now();
     const first = await reader.read();
     const firstAt = Date.now() - start;
-    while (!(await reader.read()).done) {}
+    while (!(await reader.read()).done) {
+      // drain the stream
+    }
     const totalAt = Date.now() - start;
     expect(first.done).toBe(false);
     expect(firstAt).toBeLessThan(totalAt / 2);
@@ -113,12 +118,15 @@ describe("entry-shim", () => {
       `exports.handler = async function (req, res) {
          res.writeHead(200);
          res.end(String(req.headers["x-prerender-revalidate"]));
-       };`
+       };`,
     );
     writeFileSync(join(here, "dispatch.json"), JSON.stringify({ routes: { home: { pathname: "/" } } }));
     writeFileSync(join(here, "next-dispatch.json"), JSON.stringify({ home: "routes/echo-prerender-revalidate.js" }));
     mkdirSync(join(here, ".next"), { recursive: true });
-    writeFileSync(join(here, ".next", "prerender-manifest.json"), JSON.stringify({ preview: { previewModeId: "test-preview-mode-id" } }));
+    writeFileSync(
+      join(here, ".next", "prerender-manifest.json"),
+      JSON.stringify({ preview: { previewModeId: "test-preview-mode-id" } }),
+    );
     try {
       const { default: shim } = await import("../entry-shim.mjs?prerender-revalidate-test");
       const response = await shim.fetch(new Request("http://x/"));
@@ -145,15 +153,20 @@ describe("entry-shim", () => {
       `exports.handler = async function (req, res) {
          res.writeHead(200);
          res.end(String(req.headers["x-prerender-revalidate"]));
-       };`
+       };`,
     );
     writeFileSync(join(here, "dispatch.json"), JSON.stringify({ routes: { home: { pathname: "/" } } }));
     writeFileSync(join(here, "next-dispatch.json"), JSON.stringify({ home: "routes/echo-prerender-revalidate.js" }));
     mkdirSync(join(here, ".next"), { recursive: true });
-    writeFileSync(join(here, ".next", "prerender-manifest.json"), JSON.stringify({ preview: { previewModeId: "test-preview-mode-id" } }));
+    writeFileSync(
+      join(here, ".next", "prerender-manifest.json"),
+      JSON.stringify({ preview: { previewModeId: "test-preview-mode-id" } }),
+    );
     try {
       const { default: shim } = await import("../entry-shim.mjs?no-revalidate-on-resume-test");
-      const response = await shim.fetch(new Request("http://x/", { method: "POST", headers: { "next-resume": "1" }, body: "postponed-state" }));
+      const response = await shim.fetch(
+        new Request("http://x/", { method: "POST", headers: { "next-resume": "1" }, body: "postponed-state" }),
+      );
       expect(await response.text()).toBe("undefined");
     } finally {
       rmSync(join(here, "routes", "echo-prerender-revalidate.js"), { force: true });
@@ -174,7 +187,7 @@ describe("entry-shim", () => {
       `exports.handler = async function (req, res, ctx) {
          res.writeHead(200);
          res.end(JSON.stringify(ctx.requestMeta));
-       };`
+       };`,
     );
     writeFileSync(join(here, "dispatch.json"), JSON.stringify({ routes: { home: { pathname: "/" } } }));
     writeFileSync(join(here, "next-dispatch.json"), JSON.stringify({ home: "routes/echo-request-meta.js" }));
@@ -199,13 +212,16 @@ describe("entry-shim", () => {
       `exports.handler = async function (req, res) {
          res.writeHead(200);
          res.end(String(req.headers["x-invocation-id"]));
-       };`
+       };`,
     );
     writeFileSync(join(here, "dispatch.json"), JSON.stringify({ routes: { home: { pathname: "/" } } }));
     writeFileSync(join(here, "next-dispatch.json"), JSON.stringify({ home: "routes/echo-invocation-id.js" }));
     try {
       const { default: shim } = await import("../entry-shim.mjs?invocation-id-test");
-      const ask = () => shim.fetch(new Request("http://x/", { headers: { "x-invocation-id": "from-a-visitor" } })).then((r: Response) => r.text());
+      const ask = () =>
+        shim
+          .fetch(new Request("http://x/", { headers: { "x-invocation-id": "from-a-visitor" } }))
+          .then((r: Response) => r.text());
       const [first, second] = [await ask(), await ask()];
       expect(first).not.toBe("undefined");
       expect(first).not.toBe("from-a-visitor");
@@ -228,10 +244,16 @@ describe("entry-shim", () => {
          }
          res.writeHead(307, { location: "/target" });
          res.end();
-       };`
+       };`,
     );
-    writeFileSync(join(here, "dispatch.json"), JSON.stringify({ routes: { home: { pathname: "/" }, target: { pathname: "/target" } } }));
-    writeFileSync(join(here, "next-dispatch.json"), JSON.stringify({ home: "routes/redirecting.js", target: "routes/redirecting.js" }));
+    writeFileSync(
+      join(here, "dispatch.json"),
+      JSON.stringify({ routes: { home: { pathname: "/" }, target: { pathname: "/target" } } }),
+    );
+    writeFileSync(
+      join(here, "next-dispatch.json"),
+      JSON.stringify({ home: "routes/redirecting.js", target: "routes/redirecting.js" }),
+    );
     try {
       const { default: shim } = await import("../entry-shim.mjs?redirect-test");
       const response = await shim.fetch(new Request("http://x/"));
@@ -248,7 +270,7 @@ describe("entry-shim", () => {
       `exports.handler = async function (req, res) {
          res.writeHead(200, { "set-cookie": ["a=1; Path=/", "b=2; Path=/"] });
          res.end("ok");
-       };`
+       };`,
     );
     writeFileSync(join(here, "dispatch.json"), JSON.stringify({ routes: { home: { pathname: "/" } } }));
     writeFileSync(join(here, "next-dispatch.json"), JSON.stringify({ home: "routes/cookies.js" }));
@@ -268,7 +290,7 @@ describe("entry-shim", () => {
          res.on("close", () => { globalThis.__NBO_TEST_RENDER_CLOSED = res.writableFinished === false; });
          res.writeHead(200);
          res.write("first");
-       };`
+       };`,
     );
     writeFileSync(join(here, "dispatch.json"), JSON.stringify({ routes: { home: { pathname: "/" } } }));
     writeFileSync(join(here, "next-dispatch.json"), JSON.stringify({ home: "routes/hanging.js" }));

@@ -12,7 +12,10 @@ afterEach(async () => {
   for (const d of dirs.splice(0)) await rm(d, { recursive: true, force: true });
 });
 
-async function fn(files: Record<string, string> = { "index.mjs": "export default () => 1;", "lib/a.js": "a" }, functionJSON = '{"handler":{"entry":"index.mjs"}}') {
+async function fn(
+  files: Record<string, string> = { "index.mjs": "export default () => 1;", "lib/a.js": "a" },
+  functionJSON = '{"handler":{"entry":"index.mjs"}}',
+) {
   const dir = await mkdtemp(join(tmpdir(), "fn-hash-"));
   dirs.push(dir);
   const bundle = join(dir, "bundle");

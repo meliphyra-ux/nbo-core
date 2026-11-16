@@ -6,28 +6,26 @@ Status: the pipeline file and its scripts are written and tested locally (`pnpm 
 
 ## The 10 jobs
 
-| Job | Stage | When it runs | What it does |
-| --- | --- | --- | --- |
-| `node-checks` | check | every pipeline | Build, type-check and test the whole workspace, then `pnpm test:ci` (tests of the CI scripts themselves) and `pnpm docs:check` (links, repo paths, server settings and the API table in the docs) |
-| `lint` | check | every pipeline | `pnpm lint`. Allowed to fail for now (see below) |
-| `terraform-provider` | check | every pipeline | `go vet` and `go test` in `packages/terraform-provider` |
-| `rust` | check | every pipeline | `cargo fmt --check`, clippy, tests, and a release build of the Rust edge |
-| `edge-rust-blackbox` | check | every pipeline | Runs the edge black-box suite against the Rust binary from `rust` |
-| `determinism-static` | determinism | every pipeline | Builds the static site and the React app twice (`scripts/verify-step0.sh`); the content ids must match and each build must pass `nbo validate --strict` |
-| `determinism-next` | determinism | every pipeline | Builds the two Next.js fixtures twice (`scripts/ci/determinism-next.sh`). The content ids must match, or differ only in pages the app rendered at build time (see below); each build must pass `nbo validate --strict` |
-| `kubernetes` | targets | merge requests, the default branch and schedules; by hand on other branches | The Next.js harness against `nbo serve`, then against a throwaway kind cluster made inside the job |
-| `cloudrun` | targets | protected branches only, with the Google key set: schedules, or a manual start. Never on merge requests | The same harness against real Cloud Run. Deletes everything it made afterwards |
-| `cloudrun-janitor` | targets | schedules only, same conditions as `cloudrun` | Deletes leftover `ci-` services and images older than 3 hours |
+| Job                  | Stage       | When it runs                                                                                            | What it does                                                                                                                                                                                                           |
+| -------------------- | ----------- | ------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `node-checks`        | check       | every pipeline                                                                                          | Build, type-check and test the whole workspace, then `pnpm test:ci` (tests of the CI scripts themselves) and `pnpm docs:check` (links, repo paths, server settings and the API table in the docs)                      |
+| `lint`               | check       | every pipeline                                                                                          | `pnpm lint`. Blocks the pipeline                                                                                                                                                                                       |
+| `terraform-provider` | check       | every pipeline                                                                                          | `go vet` and `go test` in `packages/terraform-provider`                                                                                                                                                                |
+| `rust`               | check       | every pipeline                                                                                          | `cargo fmt --check`, clippy, tests, and a release build of the Rust edge                                                                                                                                               |
+| `edge-rust-blackbox` | check       | every pipeline                                                                                          | Runs the edge black-box suite against the Rust binary from `rust`                                                                                                                                                      |
+| `determinism-static` | determinism | every pipeline                                                                                          | Builds the static site and the React app twice (`scripts/verify-step0.sh`); the content ids must match and each build must pass `nbo validate --strict`                                                                |
+| `determinism-next`   | determinism | every pipeline                                                                                          | Builds the two Next.js fixtures twice (`scripts/ci/determinism-next.sh`). The content ids must match, or differ only in pages the app rendered at build time (see below); each build must pass `nbo validate --strict` |
+| `kubernetes`         | targets     | merge requests, the default branch and schedules; by hand on other branches                             | The Next.js harness against `nbo serve`, then against a throwaway kind cluster made inside the job                                                                                                                     |
+| `cloudrun`           | targets     | protected branches only, with the Google key set: schedules, or a manual start. Never on merge requests | The same harness against real Cloud Run. Deletes everything it made afterwards                                                                                                                                         |
+| `cloudrun-janitor`   | targets     | schedules only, same conditions as `cloudrun`                                                           | Deletes leftover `ci-` services and images older than 3 hours                                                                                                                                                          |
+
+A larger workspace may add jobs through an optional local `include` (skipped when its file is absent), and `scripts/ci/check-pipeline.mjs` checks the included jobs with the same rules.
 
 The pipeline uses only committed files. A job never commits, pushes, stashes or resets.
 
 ## Next.js determinism
 
 Two builds of a Next.js fixture can't always match exactly: pages that print the clock are rendered again on each build, and the partial prerendering resume state carries the time each `"use cache"` entry was made. `determinism-next` therefore passes when the content ids match, or when the only differences are those build-time renders (prerender seed files in `static.index.json`, `x-nbo-ppr.postponedState` in `prerender.json`); it prints `deterministic apart from build-time renders: <fixture>` and the paths. Any other difference fails the pipeline and names every differing path. The rule is the spec's Determinism section (`docs/nbo-spec.md`); `scripts/ci/nbo-diff.mjs --classify` applies it.
-
-## One check that is allowed to fail
-
-- `lint`: `pnpm lint` has about 95 errors that were there before the pipeline (same file, item 16). Fix them, then remove `allow_failure` from the job.
 
 ## What it costs
 
@@ -74,14 +72,15 @@ Skip this and `cloudrun` and `cloudrun-janitor` simply never run.
 4. Make a key and download it: `gcloud iam service-accounts keys create nbo-ci-key.json --iam-account=$SA`. Treat the file like a password. Delete your copy after step 5.
 5. In GitLab, open Settings, CI/CD, Variables, and add these four. For each, tick Protect variable (so only protected branches see it). Tick Mask where GitLab allows it.
 
-   | Variable | Type | Value |
-   | --- | --- | --- |
-   | `NBO_CI_GCP_KEY` | File | the whole contents of `nbo-ci-key.json` |
-   | `NBO_CI_GCP_PROJECT` | Variable | the CI project id |
-   | `NBO_CI_GCP_REGION` | Variable | `europe-west1` (or your region) |
-   | `NBO_CI_AR_REPO` | Variable | `europe-west1-docker.pkg.dev/PROJECT/nbo-ci` |
+   | Variable             | Type     | Value                                        |
+   | -------------------- | -------- | -------------------------------------------- |
+   | `NBO_CI_GCP_KEY`     | File     | the whole contents of `nbo-ci-key.json`      |
+   | `NBO_CI_GCP_PROJECT` | Variable | the CI project id                            |
+   | `NBO_CI_GCP_REGION`  | Variable | `europe-west1` (or your region)              |
+   | `NBO_CI_AR_REPO`     | Variable | `europe-west1-docker.pkg.dev/PROJECT/nbo-ci` |
 
    `NBO_CI_GCP_PROJECT` matters most: the cleanup script refuses to delete anything unless it matches the project the job is using, which proves the project is the CI one. A File variable can't be masked; keep it protected.
+
 6. Make sure `main` is a protected branch (Settings, Repository, Protected branches). It usually is by default.
 7. Start one `cloudrun` job by hand on `main` (Build, Pipelines, Run pipeline, then the play button on `cloudrun`). Watch it. If it fails, the log is kept for a day as a job artifact.
 8. Add the schedule: Build, Pipeline schedules, New schedule, target branch `main`, for example every night at 03:00. The schedule runs `cloudrun`, `cloudrun-janitor` and `kubernetes`. The janitor only does work when something was left behind.
@@ -110,4 +109,4 @@ The harness prints one line per check and ends with `all checks passed` on succe
 - `pnpm test:ci` runs the tests of the CI scripts (`scripts/ci/__tests__`), with fake `gcloud`, `kubectl` and `docker`. It touches no real cloud.
 - `node scripts/ci/check-pipeline.mjs` (add `--file path` for another file) checks `.gitlab-ci.yml` against the safety rules: pinned images, the three refusing rules and `resource_group` on every job that sees the Google key, cleanup in `after_script`, `allow_failure` only where allowed, and no git writes. `pnpm test:ci` runs it too.
 - `scripts/verify-headless.sh` (not a pipeline job; it needs the local kind cluster from `scripts/bootstrap-local-k8s.sh`) takes a fresh core with no web interface from an empty database to a live site, using only `nbo-server`, the API and `curl`: it starts the edge and the control-plane in dev mode on a temporary database, runs `nbo-server status`, makes a token with `nbo-server token create`, sets up the public static-site repository named by `NBO_HEADLESS_REPO_URL` on local Kubernetes with that token, waits up to 15 minutes for the first build, checks the page through the edge, keeps the traffic split at 100% with `nbo-server api`, then deletes the project and its cluster objects. `NBO_HEADLESS_BUILD_COMMAND`, `NBO_HEADLESS_OUTPUT_DIR` and `NBO_HEADLESS_EXPECT` (text the page must contain) fit it to the repository. A command after `--` runs against the same running core with `NBO_ENDPOINT` and `NBO_TOKEN` set, for example the Terraform acceptance test. It passed on 2026-11-12 against `https://github.com/octocat/Spoon-Knife`. That repository has no build step and no `package.json`, so the default build command fails there: that run set `NBO_HEADLESS_BUILD_COMMAND` (and `NBO_ACC_BUILD_COMMAND`, for the Terraform test) to a command that copies its two files into `dist`, such as `node -e "const fs=require('fs');fs.mkdirSync('dist',{recursive:true});for(const f of ['index.html','styles.css'])fs.copyFileSync(f,'dist/'+f)"`, and `NBO_HEADLESS_EXPECT` to text from its page.
-- `pnpm docs:check` (`scripts/docs/check-docs.mjs`, `--only links,paths,env,api` runs part of it) checks the docs against the code: links and repo paths, the server settings (`NBO_*`) against the code, and the API table's control-plane rows against `access.ts` (the rows for the edge's admin API and public paths are not checked: both edges match those paths by hand, so keep the rows in step when an edge changes). It runs in `node-checks` after `pnpm test:ci`. The in-app manual's own checks (`docs-integrity`, including the "Not tried for real yet." label) run with the dashboard tests.
+- `pnpm docs:check` (`scripts/docs/check-docs.mjs`, `--only links,paths,env,api` runs part of it) checks the docs against the code: links and repo paths, the server settings (`NBO_*`) against the code, and the API table's control-plane rows against `http/access.ts` (the rows for the edge's admin API and public paths are not checked: both edges match those paths by hand, so keep the rows in step when an edge changes). It runs in `node-checks` after `pnpm test:ci`. The in-app manual's own checks (`docs-integrity`, including the "Not tried for real yet." label) run with the dashboard tests.

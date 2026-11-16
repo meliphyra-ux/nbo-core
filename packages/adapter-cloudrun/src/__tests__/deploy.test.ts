@@ -2,7 +2,16 @@
 // Copyright 2026 Nikita Dovhich
 
 import { describe, it, expect } from "vitest";
-import { buildDeployArgs, contentIDLabel, isServiceNotFound, extractContentIDLabel, deleteService, serviceLabels, isIsrcacheServiceOf, isrcacheServiceLabels } from "../deploy.js";
+import {
+  buildDeployArgs,
+  contentIDLabel,
+  isServiceNotFound,
+  extractContentIDLabel,
+  deleteService,
+  serviceLabels,
+  isIsrcacheServiceOf,
+  isrcacheServiceLabels,
+} from "../deploy.js";
 
 describe("buildDeployArgs", () => {
   it("includes --memory and --timeout when resources are set", () => {
@@ -77,7 +86,10 @@ describe("isServiceNotFound", () => {
 
 describe("extractContentIDLabel fingerprint", () => {
   it("returns the nbo-env label as the fingerprint when present", () => {
-    const got = extractContentIDLabel({ status: { url: "" }, metadata: { labels: { "nbo-content-id": "abc", "nbo-env": "f00d" } } });
+    const got = extractContentIDLabel({
+      status: { url: "" },
+      metadata: { labels: { "nbo-content-id": "abc", "nbo-env": "f00d" } },
+    });
     expect(got).toEqual({ id: "abc", ok: true, fingerprint: "f00d" });
   });
 
@@ -108,8 +120,23 @@ describe("buildDeployArgs scaling and cpu", () => {
 
   it("renders none of them when absent, so existing services' arguments don't change", () => {
     const args = buildDeployArgs(base);
-    for (const flag of ["--min-instances", "--max-instances", "--concurrency", "--cpu", "--execution-environment"]) expect(args).not.toContain(flag);
-    expect(args).toEqual(["run", "deploy", "svc", "--image", "img", "--project", "p", "--region", "r", "--labels", "nbo-content-id=0123456789ab", "--quiet", "--no-allow-unauthenticated"]);
+    for (const flag of ["--min-instances", "--max-instances", "--concurrency", "--cpu", "--execution-environment"])
+      expect(args).not.toContain(flag);
+    expect(args).toEqual([
+      "run",
+      "deploy",
+      "svc",
+      "--image",
+      "img",
+      "--project",
+      "p",
+      "--region",
+      "r",
+      "--labels",
+      "nbo-content-id=0123456789ab",
+      "--quiet",
+      "--no-allow-unauthenticated",
+    ]);
   });
 });
 
@@ -136,12 +163,26 @@ describe("deleteService", () => {
 });
 
 describe("ISR cache labels and execution environment", () => {
-  const base = { serviceName: "a-isr", imageTag: "img", project: "p", region: "r", contentID: "0123456789ab", allowUnauthenticated: false };
+  const base = {
+    serviceName: "a-isr",
+    imageTag: "img",
+    project: "p",
+    region: "r",
+    contentID: "0123456789ab",
+    allowUnauthenticated: false,
+  };
 
   it("renders --execution-environment and extra labels after NBO's own", () => {
-    const args = buildDeployArgs({ ...base, executionEnvironment: "gen1", fnConfig: "f".repeat(32), labels: isrcacheServiceLabels("a") });
+    const args = buildDeployArgs({
+      ...base,
+      executionEnvironment: "gen1",
+      fnConfig: "f".repeat(32),
+      labels: isrcacheServiceLabels("a"),
+    });
     expect(args[args.indexOf("--execution-environment") + 1]).toBe("gen1");
-    expect(args[args.indexOf("--labels") + 1]).toBe(`nbo-content-id=0123456789ab,nbo-fn-config=${"f".repeat(32)},nbo-role=isrcache,nbo-app=a`);
+    expect(args[args.indexOf("--labels") + 1]).toBe(
+      `nbo-content-id=0123456789ab,nbo-fn-config=${"f".repeat(32)},nbo-role=isrcache,nbo-app=a`,
+    );
   });
 
   it("isIsrcacheServiceOf needs both labels, for this app", () => {

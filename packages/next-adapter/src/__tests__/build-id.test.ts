@@ -29,8 +29,6 @@ describe("withBuildId", () => {
   });
 
   it("rejects characters outside letters, digits, - and _", () => {
-    expect(() => withBuildId({}, { NBO_BUILD_ID: "a/b" })).toThrow(
-      'NBO_BUILD_ID must be letters, digits, "-" or "_"',
-    );
+    expect(() => withBuildId({}, { NBO_BUILD_ID: "a/b" })).toThrow('NBO_BUILD_ID must be letters, digits, "-" or "_"');
   });
 });

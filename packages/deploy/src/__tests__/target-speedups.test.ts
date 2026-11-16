@@ -11,7 +11,11 @@ import { join } from "node:path";
 // hashes and the manifest renderers stay real.
 vi.mock("@nbo/adapter-k8s", async (importOriginal) => ({
   // Every CLI-spawning export throws unless stubbed below.
-  ...(await import("./cli-guard.js")).guardCLI(await importOriginal<typeof import("@nbo/adapter-k8s")>(), "adapter-k8s", (await import("./cli-guard.js")).K8S_CLI_EXPORTS),
+  ...(await import("./cli-guard.js")).guardCLI(
+    await importOriginal<typeof import("@nbo/adapter-k8s")>(),
+    "adapter-k8s",
+    (await import("./cli-guard.js")).K8S_CLI_EXPORTS,
+  ),
   buildImage: vi.fn().mockResolvedValue(undefined),
   buildFunctionImage: vi.fn().mockResolvedValue(undefined),
   loadImageIntoKind: vi.fn().mockResolvedValue(undefined),
@@ -48,7 +52,10 @@ async function fixture(names: string[]): Promise<string> {
   for (const n of names) {
     await mkdir(join(dir, "functions", n, "bundle"), { recursive: true });
     await writeFile(join(dir, "functions", n, "bundle", "index.mjs"), `export default () => "${n}";`);
-    await writeFile(join(dir, "functions", n, "function.json"), JSON.stringify({ handler: { entry: "index.mjs", export: "default" } }));
+    await writeFile(
+      join(dir, "functions", n, "function.json"),
+      JSON.stringify({ handler: { entry: "index.mjs", export: "default" } }),
+    );
   }
   await writeFile(join(dir, "manifest.json"), JSON.stringify({ specVersion: "1.0" }));
   return dir;
@@ -74,7 +81,9 @@ function trackBuilds(failFor?: string) {
   return state;
 }
 
-type Target = { deployer: { deployFunctions?: (d: string, a: string, n: string[]) => Promise<Record<string, string>> } };
+type Target = {
+  deployer: { deployFunctions?: (d: string, a: string, n: string[]) => Promise<Record<string, string>> };
+};
 const targets: [string, () => Target, (n: string) => string][] = [
   ["kubernetes", () => createKubernetesTarget("myapp"), (n) => `http://myapp-fn-${n}:8080`],
   ["cloudrun", () => createCloudRunTarget("proj", "us-central1", "repo"), (n) => `https://myapp-fn-${n}.run.app`],
@@ -134,7 +143,9 @@ describe("kubernetes: unchanged functions are skipped only when healthy and iden
       const { tag, config } = await firstDeploy(dir);
       vi.mocked(k8s.liveFunctionState).mockResolvedValue({ image: tag, config, healthy: true });
       const messages: string[] = [];
-      const urls = await createKubernetesTarget("myapp", undefined, { onProgress: (m) => messages.push(m) }).deployer.deployFunctions(dir, "myapp", ["ssr"]);
+      const urls = await createKubernetesTarget("myapp", undefined, {
+        onProgress: (m) => messages.push(m),
+      }).deployer.deployFunctions(dir, "myapp", ["ssr"]);
       expect(urls).toEqual({ ssr: "http://myapp-fn-ssr:8080" });
       expect(k8s.buildFunctionImage).not.toHaveBeenCalled();
       expect(k8s.loadImageIntoKind).not.toHaveBeenCalled();
@@ -223,16 +234,29 @@ describe("cloudrun: unchanged functions are skipped only when ready and identica
     const dir = await fixture(["ssr"]);
     try {
       const { image, config } = await firstDeploy(dir);
-      vi.mocked(cr.liveServiceState).mockResolvedValue({ image, config, ready: true, url: "https://myapp-fn-ssr-live.run.app" });
+      vi.mocked(cr.liveServiceState).mockResolvedValue({
+        image,
+        config,
+        ready: true,
+        url: "https://myapp-fn-ssr-live.run.app",
+      });
       const messages: string[] = [];
       let t = 0;
-      const target = createCloudRunTarget("proj", "us-central1", "repo", undefined, { onProgress: (m) => messages.push(m), now: () => (t += 1000) });
+      const target = createCloudRunTarget("proj", "us-central1", "repo", undefined, {
+        onProgress: (m) => messages.push(m),
+        now: () => (t += 1000),
+      });
       const urls = await target.deployer.deployFunctions!(dir, "myapp", ["ssr"]);
       expect(urls).toEqual({ ssr: "https://myapp-fn-ssr-live.run.app" });
       expect(k8s.buildFunctionImage).not.toHaveBeenCalled();
       expect(cr.pushImage).not.toHaveBeenCalled();
       expect(cr.deploy).not.toHaveBeenCalled();
-      expect(cr.grantInvoker).toHaveBeenCalledWith("myapp-fn-ssr", "proj", "us-central1", "123-compute@developer.gserviceaccount.com");
+      expect(cr.grantInvoker).toHaveBeenCalledWith(
+        "myapp-fn-ssr",
+        "proj",
+        "us-central1",
+        "123-compute@developer.gserviceaccount.com",
+      );
       expect(messages).toEqual(["function ssr: unchanged, skipped", "function ssr: invoker granted in 1.0s"]);
     } finally {
       await rm(dir, { recursive: true, force: true });
@@ -256,7 +280,12 @@ describe("cloudrun: unchanged functions are skipped only when ready and identica
     const dir = await fixture(["ssr"]);
     try {
       const { image } = await firstDeploy(dir);
-      vi.mocked(cr.liveServiceState).mockResolvedValue({ image, config: "0".repeat(32), ready: true, url: "https://x.run.app" });
+      vi.mocked(cr.liveServiceState).mockResolvedValue({
+        image,
+        config: "0".repeat(32),
+        ready: true,
+        url: "https://x.run.app",
+      });
       await createCloudRunTarget("proj", "us-central1", "repo").deployer.deployFunctions!(dir, "myapp", ["ssr"]);
       expect(cr.deploy).toHaveBeenCalledTimes(1);
     } finally {
@@ -267,8 +296,15 @@ describe("cloudrun: unchanged functions are skipped only when ready and identica
   it("redeploys when the live service runs a different image", async () => {
     const dir = await fixture(["ssr"]);
     try {
-      vi.mocked(cr.liveServiceState).mockResolvedValue({ image: "repo/nbo-fn-myapp-ssr:20261101000000", config: "", ready: true, url: "https://old.run.app" });
-      const urls = await createCloudRunTarget("proj", "us-central1", "repo").deployer.deployFunctions!(dir, "myapp", ["ssr"]);
+      vi.mocked(cr.liveServiceState).mockResolvedValue({
+        image: "repo/nbo-fn-myapp-ssr:20261101000000",
+        config: "",
+        ready: true,
+        url: "https://old.run.app",
+      });
+      const urls = await createCloudRunTarget("proj", "us-central1", "repo").deployer.deployFunctions!(dir, "myapp", [
+        "ssr",
+      ]);
       expect(cr.deploy).toHaveBeenCalledTimes(1);
       expect(cr.grantInvoker).toHaveBeenCalledTimes(1);
       expect(urls).toEqual({ ssr: "https://myapp-fn-ssr.run.app" });
@@ -286,9 +322,15 @@ describe("the CLI bundle is shared, not raced", () => {
     try {
       const a = createKubernetesTarget("p1-k8s");
       const b = createCloudRunTarget("proj", "us-central1", "repo");
-      await Promise.all([a.deployer.buildAndDeploy(dir, "p1-k8s", id), b.deployer.buildAndDeploy(dir, "p1-cloudrun", id)]);
+      await Promise.all([
+        a.deployer.buildAndDeploy(dir, "p1-k8s", id),
+        b.deployer.buildAndDeploy(dir, "p1-cloudrun", id),
+      ]);
       expect(buildCalls()).toBe(1);
-      const ctxDirs = new Set([vi.mocked(k8s.buildImage).mock.calls[0]![1], vi.mocked(k8s.buildImage).mock.calls[1]![1]]);
+      const ctxDirs = new Set([
+        vi.mocked(k8s.buildImage).mock.calls[0]![1],
+        vi.mocked(k8s.buildImage).mock.calls[1]![1],
+      ]);
       expect(ctxDirs.size).toBe(1);
     } finally {
       await rm(dir, { recursive: true, force: true });

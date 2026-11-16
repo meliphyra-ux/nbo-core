@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: FSL-1.1-ALv2
 // Copyright 2026 Nikita Dovhich
 
-import type { Environment, Store } from "../store.js";
-import type { Build } from "../git.js";
+import type { Environment, Store } from "../store/store.js";
+import type { Build } from "../git/git.js";
 import type { Histogram } from "./histogram.js";
-import { liveBuild } from "../artifacts.js";
+import { liveBuild } from "../builds/artifacts.js";
 
 // The metrics the edge reports.
 export const METRICS = ["LCP", "INP", "CLS", "FCP", "TTFB"] as const;
@@ -70,7 +70,13 @@ const metricSet = new Set<string>(METRICS);
 function validBatch(b: unknown): b is DrainBatch {
   if (typeof b !== "object" || b === null) return false;
   const r = b as Record<string, unknown>;
-  if (typeof r.host !== "string" || typeof r.environmentId !== "string" || typeof r.contentId !== "string" || typeof r.route !== "string") return false;
+  if (
+    typeof r.host !== "string" ||
+    typeof r.environmentId !== "string" ||
+    typeof r.contentId !== "string" ||
+    typeof r.route !== "string"
+  )
+    return false;
   if (typeof r.metric !== "string" || !metricSet.has(r.metric)) return false;
   if (r.device !== "mobile" && r.device !== "desktop") return false;
   if (typeof r.minute !== "string" || Number.isNaN(Date.parse(r.minute))) return false;
@@ -192,7 +198,8 @@ export function createInsightsDrain(store: Store, options: InsightsDrainOptions)
         .map((p) => [p.edgeHost.toLowerCase(), p.id]),
     );
     // A project's own domains (public edge) report under their host too.
-    for (const d of store.listDomains()) if (!projects.has(d.host.toLowerCase())) projects.set(d.host.toLowerCase(), d.projectId);
+    for (const d of store.listDomains())
+      if (!projects.has(d.host.toLowerCase())) projects.set(d.host.toLowerCase(), d.projectId);
     const contexts = new Map<string, ProjectContext>();
     const merged = new Map<string, VitalsRow>();
     for (const b of batches) {
@@ -217,7 +224,15 @@ export function createInsightsDrain(store: Store, options: InsightsDrainOptions)
         histogram: b.buckets,
         count: b.count,
       };
-      const key = JSON.stringify([row.projectId, row.environmentId, row.buildId, row.route, row.metric, row.device, row.hour]);
+      const key = JSON.stringify([
+        row.projectId,
+        row.environmentId,
+        row.buildId,
+        row.route,
+        row.metric,
+        row.device,
+        row.hour,
+      ]);
       const prev = merged.get(key);
       if (prev) {
         for (const [k, n] of Object.entries(row.histogram)) prev.histogram[k] = (prev.histogram[k] ?? 0) + n;
@@ -237,7 +252,9 @@ export function createInsightsDrain(store: Store, options: InsightsDrainOptions)
         const rows = toRows(batches);
         if (rows.length > 0) await options.sink.write(rows);
       } catch (err) {
-        console.error(`control-plane: Speed Insights drain: the sink failed, this batch is lost: ${err instanceof Error ? err.message : String(err)}`);
+        console.error(
+          `control-plane: Speed Insights drain: the sink failed, this batch is lost: ${err instanceof Error ? err.message : String(err)}`,
+        );
       }
     },
 
@@ -247,7 +264,9 @@ export function createInsightsDrain(store: Store, options: InsightsDrainOptions)
         try {
           await drain.once();
         } catch (err) {
-          console.error(`control-plane: Speed Insights drain tick failed: ${err instanceof Error ? err.message : String(err)}`);
+          console.error(
+            `control-plane: Speed Insights drain tick failed: ${err instanceof Error ? err.message : String(err)}`,
+          );
         }
         await new Promise<void>((resolve) => {
           // Aborted during the tick: no wait, the loop ends.
@@ -273,7 +292,12 @@ export function createInsightsDrain(store: Store, options: InsightsDrainOptions)
 // (it empties what it returns). Without a sink the edge's own bound on what
 // it holds keeps its memory in check. Returns the running loop (it settles
 // once signal aborts and a running tick ends), or undefined with no sink.
-export function startInsightsDrain(store: Store, sink: InsightsSink | undefined, options: Omit<InsightsDrainOptions, "sink">, signal: AbortSignal): Promise<void> | undefined {
+export function startInsightsDrain(
+  store: Store,
+  sink: InsightsSink | undefined,
+  options: Omit<InsightsDrainOptions, "sink">,
+  signal: AbortSignal,
+): Promise<void> | undefined {
   if (!sink) return undefined;
   return createInsightsDrain(store, { ...options, sink }).run(signal);
 }

@@ -10,6 +10,7 @@ type SharpInstance = ReturnType<typeof sharp>;
 import { hasJsOnlyEscape } from "@nbo/router";
 import { readStaticFile, type ServeState, type ImagesConfig, type ImagePattern } from "./serve.js";
 import { cacheGet, storeInBackground, resolveCacheHandler } from "./prerender.js";
+import { fetchRemoteImage } from "./remote-image.js";
 
 // remoteFetchTimeoutMs and remoteFetchCap bound a remote source
 // fetch — generous for a real image, finite so a slow or oversized
@@ -83,7 +84,10 @@ function compilePatterns(patterns: ImagePattern[] | undefined): CompiledImagePat
 // compile. Without this, every single cache-miss request recompiled
 // every pattern from scratch, contradicting this plan's own stated
 // architecture and the comment compilePatterns itself used to carry.
-const compiledPatternsCache = new WeakMap<ImagesConfig, { local: CompiledImagePattern[]; remote: CompiledImagePattern[] }>();
+const compiledPatternsCache = new WeakMap<
+  ImagesConfig,
+  { local: CompiledImagePattern[]; remote: CompiledImagePattern[] }
+>();
 
 // anyLocalPath stands in for an absent or empty localPatterns: Next allows
 // every local path when the list is unset, and the Next producer wrote []
@@ -121,34 +125,12 @@ function looksAbsolute(raw: string): boolean {
   }
 }
 
-async function readCapped(body: ReadableStream<Uint8Array> | null, cap: number): Promise<Uint8Array> {
-  if (!body) return new Uint8Array();
-  const reader = body.getReader();
-  const chunks: Uint8Array[] = [];
-  let total = 0;
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    total += value.length;
-    chunks.push(value);
-    if (total > cap) break; // truncate rather than hang reading further — matches io.LimitReader
-  }
-  const out = new Uint8Array(Math.min(total, cap));
-  let offset = 0;
-  for (const chunk of chunks) {
-    const take = Math.min(chunk.length, out.length - offset);
-    out.set(chunk.subarray(0, take), offset);
-    offset += take;
-    if (offset >= out.length) break;
-  }
-  return out;
-}
-
 // fetchImageSource resolves and reads the raw bytes for rawURL —
 // local (no scheme: a static.index.json entry, read via
-// readStaticFile) or remote (an absolute URL, fetched with
-// remoteFetchCap/remoteFetchTimeoutMs) — port of
-// server.fetchImageSource (image.go lines 139-175).
+// readStaticFile) or remote (an absolute URL, fetched by
+// fetchRemoteImage: redirects and addresses re-checked, image/* only).
+// A source refused after the pattern check is a 502 whose detail goes
+// to the log only.
 async function fetchImageSource(
   state: ServeState,
   localPatterns: CompiledImagePattern[],
@@ -172,14 +154,17 @@ async function fetchImageSource(
   }
   if (!matchesAnyRemotePattern(remotePatterns, url)) return { body: null, status: 400 };
 
-  let res: Response;
   try {
-    res = await fetch(rawURL, { signal: AbortSignal.timeout(remoteFetchTimeoutMs) });
-  } catch {
+    const body = await fetchRemoteImage(url, (u) => matchesAnyRemotePattern(remotePatterns, u), {
+      timeoutMs: remoteFetchTimeoutMs,
+      cap: remoteFetchCap,
+      deps: state.remoteImage,
+    });
+    return { body, status: 0 };
+  } catch (err) {
+    console.error(`nbo: remote image ${url.href} refused: ${err instanceof Error ? err.message : String(err)}`);
     return { body: null, status: 502 };
   }
-  const body = await readCapped(res.body, remoteFetchCap);
-  return { body, status: 0 };
 }
 
 // encodeImage picks PNG when src carries real transparency (to not
@@ -202,7 +187,11 @@ async function fetchImageSource(
 // is its K (black) channel, not an alpha channel at all, and
 // meta.hasAlpha is false for CMYK regardless — Go never hits this
 // case either, since it always decodes into NRGBA.
-async function encodeImage(image: SharpInstance, width: number, quality: number): Promise<{ body: Buffer; contentType: string }> {
+async function encodeImage(
+  image: SharpInstance,
+  width: number,
+  quality: number,
+): Promise<{ body: Buffer; contentType: string }> {
   const resizedBuffer = await image.resize({ width }).png().toBuffer();
   const meta = await sharp(resizedBuffer).metadata();
 
@@ -229,11 +218,19 @@ export async function handleImage(state: ServeState, request: Request): Promise<
   const rawURL = url.searchParams.get("url") ?? "";
   const width = Number(url.searchParams.get("w"));
   if (!Number.isInteger(width) || !intAllowed(cfg.widths, width)) {
-    return new Response(cfg.widths?.length ? "serve: w must be one of the configured widths" : "serve: the images config lists no widths", { status: 400 });
+    return new Response(
+      cfg.widths?.length ? "serve: w must be one of the configured widths" : "serve: the images config lists no widths",
+      { status: 400 },
+    );
   }
   const quality = Number(url.searchParams.get("q"));
   if (!Number.isInteger(quality) || !intAllowed(cfg.qualities, quality)) {
-    return new Response(cfg.qualities?.length ? "serve: q must be one of the configured qualities" : "serve: the images config lists no qualities", { status: 400 });
+    return new Response(
+      cfg.qualities?.length
+        ? "serve: q must be one of the configured qualities"
+        : "serve: the images config lists no qualities",
+      { status: 400 },
+    );
   }
 
   const cacheHandler = resolveCacheHandler(state);
@@ -261,7 +258,8 @@ export async function handleImage(state: ServeState, request: Request): Promise<
     decoded = sharp(Buffer.from(source.body));
     await decoded.metadata();
   } catch (err) {
-    return new Response(`serve: could not decode image source: ${err instanceof Error ? err.message : String(err)}`, { status: 502 });
+    console.error(`nbo: could not decode image source ${rawURL}: ${err instanceof Error ? err.message : String(err)}`);
+    return new Response("serve: could not decode image source", { status: 502 });
   }
 
   let body: Buffer;
@@ -271,13 +269,23 @@ export async function handleImage(state: ServeState, request: Request): Promise<
     body = encoded.body;
     contentType = encoded.contentType;
   } catch (err) {
-    return new Response(`serve: could not encode resized image: ${err instanceof Error ? err.message : String(err)}`, { status: 502 });
+    console.error(`nbo: could not encode resized image ${rawURL}: ${err instanceof Error ? err.message : String(err)}`);
+    return new Response("serve: could not encode resized image", { status: 502 });
   }
 
   const headers = new Headers({ "content-type": contentType });
   if (cacheHandler) {
     const ttl = cfg.minimumCacheTTLSec ?? 0;
-    storeInBackground(cacheHandler, cacheKey, new Uint8Array(body), { "content-type": [contentType] }, undefined, rawURL, ttl, ttl);
+    storeInBackground(
+      cacheHandler,
+      cacheKey,
+      new Uint8Array(body),
+      { "content-type": [contentType] },
+      undefined,
+      rawURL,
+      ttl,
+      ttl,
+    );
   }
   return new Response(new Uint8Array(body), { status: 200, headers });
 }

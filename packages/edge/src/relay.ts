@@ -49,7 +49,9 @@ export function createRelayHandler(options: RelayOptions): FetchHandler {
     try {
       return await fetchUpstream(url, forwarded);
     } catch (err) {
-      return new Response(`relay: ${String(err)}`, { status: 502 });
+      // The detail goes to the log only: the answer reaches visitors through the edge.
+      console.error(`relay: upstream ${upstream} unreachable: ${String(err)}`);
+      return new Response("relay: upstream unreachable", { status: 502 });
     }
   };
 }

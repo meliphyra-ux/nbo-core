@@ -4,8 +4,23 @@
 import { describe, it, expect } from "vitest";
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { dirname } from "node:path";
-import { buildDeployArgs, deploy, functionDeployConfigHash, liveServiceState, removeSecretEnv, renderEnvVarsFile, type DeploySpec } from "../deploy.js";
-import { secretId, ensureSecretVersion, grantSecretAccessor, secretManagerAccessError, destroySupersededVersions, deleteAppSecrets } from "../secrets.js";
+import {
+  buildDeployArgs,
+  deploy,
+  functionDeployConfigHash,
+  liveServiceState,
+  removeSecretEnv,
+  renderEnvVarsFile,
+  type DeploySpec,
+} from "../deploy.js";
+import {
+  secretId,
+  ensureSecretVersion,
+  grantSecretAccessor,
+  secretManagerAccessError,
+  destroySupersededVersions,
+  deleteAppSecrets,
+} from "../secrets.js";
 import type { ToolContext } from "../run.js";
 
 type Call = { cmd: string; args: string[]; env?: Record<string, string>; input?: string };
@@ -61,7 +76,8 @@ describe("renderEnvVarsFile", () => {
     const file = renderEnvVarsFile(tricky);
     expect(decode(file)).toEqual(tricky);
     // YAML 1.1 line breaks and non-printables never appear raw.
-    for (const ch of ["\u2028", "\u2029", "\u0085", "\u007f", "\u009f", "\ufeff", "\u0000", "\r", "\t"]) expect(file).not.toContain(ch);
+    for (const ch of ["\u2028", "\u2029", "\u0085", "\u007f", "\u009f", "\ufeff", "\u0000", "\r", "\t"])
+      expect(file).not.toContain(ch);
     expect(file).toContain('"YES": "NO"\n');
     expect(file).toContain('"EMPTY": ""\n');
     expect(file).toContain("😀");
@@ -93,16 +109,28 @@ describe("buildDeployArgs with variables", () => {
   it("maps secrets with --set-secrets NAME=<id>:latest, sorted, and clears plain env when there is none", () => {
     const args = buildDeployArgs({ ...spec, secretEnv: { ZED: "nbo-svc-2", ALPHA: "nbo-svc-1" } });
     const base = buildDeployArgs(spec);
-    expect(args.slice(base.length)).toEqual(["--clear-env-vars", "--set-secrets", "ALPHA=nbo-svc-1:latest,ZED=nbo-svc-2:latest"]);
+    expect(args.slice(base.length)).toEqual([
+      "--clear-env-vars",
+      "--set-secrets",
+      "ALPHA=nbo-svc-1:latest,ZED=nbo-svc-2:latest",
+    ]);
   });
 
   it("sets both when both kinds exist", () => {
     const args = buildDeployArgs({ ...spec, plainEnv: { A: "1" }, secretEnv: { S: "nbo-svc-s" } }, "/f");
-    expect(args.slice(buildDeployArgs(spec).length)).toEqual(["--env-vars-file", "/f", "--set-secrets", "S=nbo-svc-s:latest"]);
+    expect(args.slice(buildDeployArgs(spec).length)).toEqual([
+      "--env-vars-file",
+      "/f",
+      "--set-secrets",
+      "S=nbo-svc-s:latest",
+    ]);
   });
 
   it("clearEnv with no variables clears both kinds", () => {
-    expect(buildDeployArgs({ ...spec, clearEnv: true }).slice(buildDeployArgs(spec).length)).toEqual(["--clear-env-vars", "--clear-secrets"]);
+    expect(buildDeployArgs({ ...spec, clearEnv: true }).slice(buildDeployArgs(spec).length)).toEqual([
+      "--clear-env-vars",
+      "--clear-secrets",
+    ]);
   });
 });
 
@@ -156,7 +184,9 @@ describe("deploy with plain variables", () => {
     const { calls, sleeps, ctx } = fake((_c, args, n) => {
       if (args.includes("describe")) return describeOut;
       return n === 1
-        ? new Error("Permission denied on secret: projects/1/secrets/nbo-svc-x/versions/latest for Revision service account 1-compute@developer.gserviceaccount.com.")
+        ? new Error(
+            "Permission denied on secret: projects/1/secrets/nbo-svc-x/versions/latest for Revision service account 1-compute@developer.gserviceaccount.com.",
+          )
         : "";
     });
     await deploy({ ...spec, secretEnv: { S: "nbo-svc-x" } }, ctx);
@@ -171,9 +201,16 @@ describe("liveServiceState fingerprint", () => {
       JSON.stringify({
         metadata: { labels },
         spec: { template: { spec: { containers: [{ image: "img" }] } } },
-        status: { url: "https://u", latestReadyRevisionName: "a", latestCreatedRevisionName: "a", conditions: [{ type: "Ready", status: "True" }] },
+        status: {
+          url: "https://u",
+          latestReadyRevisionName: "a",
+          latestCreatedRevisionName: "a",
+          conditions: [{ type: "Ready", status: "True" }],
+        },
       });
-    await expect(liveServiceState("s", "p", "r", fake(() => out({ "nbo-env": "f00d" })).ctx)).resolves.toMatchObject({ fingerprint: "f00d" });
+    await expect(liveServiceState("s", "p", "r", fake(() => out({ "nbo-env": "f00d" })).ctx)).resolves.toMatchObject({
+      fingerprint: "f00d",
+    });
     await expect(liveServiceState("s", "p", "r", fake(() => out({})).ctx)).resolves.toMatchObject({ fingerprint: "" });
   });
 });
@@ -245,7 +282,9 @@ describe("ensureSecretVersion", () => {
 
 describe("grantSecretAccessor", () => {
   it("binds secretAccessor on the one secret and retries a not-yet-visible account", async () => {
-    const { calls, sleeps, ctx } = fake((_c, _a, n) => (n === 1 ? new Error("Service account nbo-x@acme.iam.gserviceaccount.com does not exist.") : ""));
+    const { calls, sleeps, ctx } = fake((_c, _a, n) =>
+      n === 1 ? new Error("Service account nbo-x@acme.iam.gserviceaccount.com does not exist.") : "",
+    );
     await grantSecretAccessor("acme", "nbo-a-0123456789abcdef", "nbo-x@acme.iam.gserviceaccount.com", ctx);
     expect(sleeps).toEqual([2000]);
     expect(calls[1]!.args).toEqual([
@@ -264,7 +303,10 @@ describe("grantSecretAccessor", () => {
 
   it("does not retry a plain permission denial that says '(or it may not exist)'", async () => {
     const { calls, sleeps, ctx } = fake(
-      () => new Error("PERMISSION_DENIED: Permission 'secretmanager.secrets.setIamPolicy' denied for resource 'projects/acme/secrets/x' (or it may not exist)."),
+      () =>
+        new Error(
+          "PERMISSION_DENIED: Permission 'secretmanager.secrets.setIamPolicy' denied for resource 'projects/acme/secrets/x' (or it may not exist).",
+        ),
     );
     await expect(grantSecretAccessor("acme", "x", "a@b", ctx)).rejects.toThrow(/setIamPolicy/);
     expect(calls).toHaveLength(1);
@@ -279,17 +321,36 @@ describe("secretManagerAccessError", () => {
         "ERROR: (gcloud.secrets.create) PERMISSION_DENIED: Secret Manager API has not been used in project 1 before or it is disabled. reason: SERVICE_DISABLED",
       ),
     ).toBe("disabled");
-    expect(secretManagerAccessError("API [secretmanager.googleapis.com] not enabled on project [acme]. Would you like to enable and retry?")).toBe("disabled");
-    expect(secretManagerAccessError("ERROR: (gcloud.secrets.create) PERMISSION_DENIED: Permission 'secretmanager.secrets.create' denied")).toBe("denied");
+    expect(
+      secretManagerAccessError(
+        "API [secretmanager.googleapis.com] not enabled on project [acme]. Would you like to enable and retry?",
+      ),
+    ).toBe("disabled");
+    expect(
+      secretManagerAccessError(
+        "ERROR: (gcloud.secrets.create) PERMISSION_DENIED: Permission 'secretmanager.secrets.create' denied",
+      ),
+    ).toBe("denied");
     expect(secretManagerAccessError("ERROR: something else broke")).toBeUndefined();
   });
 });
 
 describe("destroySupersededVersions", () => {
   it("destroys every enabled version but the newest", async () => {
-    const { calls, ctx } = fake((_c, args) => (args[2] === "list" ? "WARNING: x\nprojects/1/secrets/x/versions/3\nprojects/1/secrets/x/versions/1\n2\n" : ""));
+    const { calls, ctx } = fake((_c, args) =>
+      args[2] === "list" ? "WARNING: x\nprojects/1/secrets/x/versions/3\nprojects/1/secrets/x/versions/1\n2\n" : "",
+    );
     await destroySupersededVersions("acme", "x", ctx);
-    expect(calls[0]!.args).toEqual(["secrets", "versions", "list", "x", "--filter=state:ENABLED", "--format=value(name)", "--project", "acme"]);
+    expect(calls[0]!.args).toEqual([
+      "secrets",
+      "versions",
+      "list",
+      "x",
+      "--filter=state:ENABLED",
+      "--format=value(name)",
+      "--project",
+      "acme",
+    ]);
     expect(calls.slice(1).map((c) => c.args)).toEqual([
       ["secrets", "versions", "destroy", "2", "--secret", "x", "--project", "acme", "--quiet"],
       ["secrets", "versions", "destroy", "1", "--secret", "x", "--project", "acme", "--quiet"],
@@ -314,7 +375,14 @@ describe("deleteAppSecrets", () => {
       return "";
     });
     await deleteAppSecrets("acme", "pabc-cloudrun", ctx);
-    expect(calls[0]!.args).toEqual(["secrets", "list", "--filter=name~nbo-pabc-cloudrun-", "--format=value(name)", "--project", "acme"]);
+    expect(calls[0]!.args).toEqual([
+      "secrets",
+      "list",
+      "--filter=name~nbo-pabc-cloudrun-",
+      "--format=value(name)",
+      "--project",
+      "acme",
+    ]);
     expect(calls.slice(1).map((c) => c.args)).toEqual([
       ["secrets", "delete", mine, "--project", "acme", "--quiet"],
       ["secrets", "delete", mine2, "--project", "acme", "--quiet"],
@@ -322,7 +390,10 @@ describe("deleteAppSecrets", () => {
   });
 
   it("a project that never used Secret Manager has nothing to delete", async () => {
-    for (const msg of ["PERMISSION_DENIED: Secret Manager API has not been used in project 1 before or it is disabled. SERVICE_DISABLED", "PERMISSION_DENIED: denied"]) {
+    for (const msg of [
+      "PERMISSION_DENIED: Secret Manager API has not been used in project 1 before or it is disabled. SERVICE_DISABLED",
+      "PERMISSION_DENIED: denied",
+    ]) {
       const { calls, ctx } = fake(() => new Error(msg));
       await expect(deleteAppSecrets("acme", "a", ctx)).resolves.toBeUndefined();
       expect(calls).toHaveLength(1);
@@ -354,14 +425,23 @@ describe("live secret env and removing it", () => {
           },
         },
       },
-      status: { url: "https://u", latestReadyRevisionName: "a", latestCreatedRevisionName: "a", conditions: [{ type: "Ready", status: "True" }] },
+      status: {
+        url: "https://u",
+        latestReadyRevisionName: "a",
+        latestCreatedRevisionName: "a",
+        conditions: [{ type: "Ready", status: "True" }],
+      },
     });
-    await expect(liveServiceState("s", "p", "r", fake(() => out).ctx)).resolves.toMatchObject({ secretEnvNames: ["TOKEN"] });
+    await expect(liveServiceState("s", "p", "r", fake(() => out).ctx)).resolves.toMatchObject({
+      secretEnvNames: ["TOKEN"],
+    });
   });
 
   it("removeSecretEnv drops the named secret env vars in one update", async () => {
     const { calls, ctx } = fake();
     await removeSecretEnv("svc", "acme", "r", ["A", "B"], ctx);
-    expect(calls.map((c) => c.args)).toEqual([["run", "services", "update", "svc", "--region", "r", "--project", "acme", "--remove-secrets", "A,B", "--quiet"]]);
+    expect(calls.map((c) => c.args)).toEqual([
+      ["run", "services", "update", "svc", "--region", "r", "--project", "acme", "--remove-secrets", "A,B", "--quiet"],
+    ]);
   });
 });

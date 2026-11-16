@@ -15,7 +15,9 @@ afterEach(async () => {
   }
 });
 
-function startBackend(handler: (req: import("node:http").IncomingMessage, res: import("node:http").ServerResponse) => void): Promise<string> {
+function startBackend(
+  handler: (req: import("node:http").IncomingMessage, res: import("node:http").ServerResponse) => void,
+): Promise<string> {
   return new Promise((resolve) => {
     server = createServer(handler);
     server.listen(0, () => {

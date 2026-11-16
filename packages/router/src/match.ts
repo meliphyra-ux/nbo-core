@@ -42,7 +42,9 @@ export function compileMatch(m: Match): CompiledMatch {
     throw new Error("match: has/missing conditions are not supported in this router version (Slice 1 scope cut)");
   }
   if (hasJsOnlyEscape(m.path)) {
-    throw new Error(`match: path "${m.path}" does not compile as RE2: uses a JS-only escape (\\C, \\c, or \\u) Go's regexp.Compile does not accept`);
+    throw new Error(
+      `match: path "${m.path}" does not compile as RE2: uses a JS-only escape (\\C, \\c, or \\u) Go's regexp.Compile does not accept`,
+    );
   }
   let path: RE2Instance;
   try {
@@ -53,12 +55,16 @@ export function compileMatch(m: Match): CompiledMatch {
   let pathNot: RE2Instance | undefined;
   if (m.pathNot) {
     if (hasJsOnlyEscape(m.pathNot)) {
-      throw new Error(`match: pathNot "${m.pathNot}" does not compile as RE2: uses a JS-only escape (\\C, \\c, or \\u) Go's regexp.Compile does not accept`);
+      throw new Error(
+        `match: pathNot "${m.pathNot}" does not compile as RE2: uses a JS-only escape (\\C, \\c, or \\u) Go's regexp.Compile does not accept`,
+      );
     }
     try {
       pathNot = new RE2(m.pathNot);
     } catch (err) {
-      throw new Error(`match: pathNot "${m.pathNot}" does not compile as RE2: ${(err as Error).message}`, { cause: err });
+      throw new Error(`match: pathNot "${m.pathNot}" does not compile as RE2: ${(err as Error).message}`, {
+        cause: err,
+      });
     }
   }
   const methods = m.methods && m.methods.length > 0 ? new Set(m.methods.map((meth) => meth.toUpperCase())) : undefined;

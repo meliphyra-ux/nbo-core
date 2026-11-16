@@ -75,14 +75,18 @@ describe("middleware-entry-shim", () => {
   // clean 502, even though @nbo/serve and the function it's forwarding
   // to are the exact same loopback server.
   it("narrows a same-origin absolute x-middleware-rewrite even when Next renamed 127.0.0.1 to localhost", async () => {
-    writeFixtureMiddleware(`async () => new Response(null, { headers: { "x-middleware-rewrite": "http://localhost:4100/new" } })`);
+    writeFixtureMiddleware(
+      `async () => new Response(null, { headers: { "x-middleware-rewrite": "http://localhost:4100/new" } })`,
+    );
     const { default: shim } = await import("../middleware-entry-shim.mjs?rewrite-loopback-rename");
     const res = await shim.fetch(new Request("http://127.0.0.1:4100/"));
     expect(res.headers.get("x-nbo-rewrite")).toBe("/new");
   });
 
   it("leaves a genuinely cross-origin x-middleware-rewrite absolute", async () => {
-    writeFixtureMiddleware(`async () => new Response(null, { headers: { "x-middleware-rewrite": "https://elsewhere.example/new" } })`);
+    writeFixtureMiddleware(
+      `async () => new Response(null, { headers: { "x-middleware-rewrite": "https://elsewhere.example/new" } })`,
+    );
     const { default: shim } = await import("../middleware-entry-shim.mjs?rewrite-cross-origin");
     const res = await shim.fetch(new Request("http://x/"));
     expect(res.headers.get("x-nbo-rewrite")).toBe("https://elsewhere.example/new");

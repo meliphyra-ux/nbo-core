@@ -30,7 +30,10 @@ function chainRules(n: number): Rule[] {
 
 describe("route", () => {
   it("matches a prerender route before the implicit filesystem check", async () => {
-    const rt = createRouter({ version: 1, prerenders: [{ id: "blog-detail", matchPath: "^/blog/(?P<slug>[^/]+)$", functionName: "ssr" }] }, "never");
+    const rt = createRouter(
+      { version: 1, prerenders: [{ id: "blog-detail", matchPath: "^/blog/(?P<slug>[^/]+)$", functionName: "ssr" }] },
+      "never",
+    );
     // staticSet("/blog/hello") simulates a seeded page already present
     // in static.index.json — proving the prerender check runs first,
     // "so seeded ISR pages never bypass their cache" (docs/nbo-spec.md:251).
@@ -40,7 +43,10 @@ describe("route", () => {
   });
 
   it("records the path a prerender route matched", async () => {
-    const rt = createRouter({ version: 1, prerenders: [{ id: "blog-detail", matchPath: "^/blog/(?P<slug>[^/]+)$", functionName: "ssr" }] }, "never");
+    const rt = createRouter(
+      { version: 1, prerenders: [{ id: "blog-detail", matchPath: "^/blog/(?P<slug>[^/]+)$", functionName: "ssr" }] },
+      "never",
+    );
     const dec = await rt.route("/blog/hello", "GET", staticSet(), noMiddleware);
     expect(dec.prerenderPath).toBe("/blog/hello");
   });
@@ -82,12 +88,18 @@ describe("route", () => {
     const rt = createRouter(
       {
         version: 1,
-        beforeFiles: [{ id: "mw", match: { path: "^/alias$" }, action: { type: "middleware", function: "middleware" } }],
+        beforeFiles: [
+          { id: "mw", match: { path: "^/alias$" }, action: { type: "middleware", function: "middleware" } },
+        ],
         prerenders: [{ id: "blog-detail", matchPath: "^/blog/(?P<slug>[^/]+)$", functionName: "ssr" }],
       },
       "never",
     );
-    const invoke: MiddlewareInvoker = () => ({ continue: true, rewritePath: "/blog/hello", mergeHeaders: [{ set: { "x-mw": "1" } }] });
+    const invoke: MiddlewareInvoker = () => ({
+      continue: true,
+      rewritePath: "/blog/hello",
+      mergeHeaders: [{ set: { "x-mw": "1" } }],
+    });
     const dec = await rt.route("/alias", "GET", staticSet("/blog/hello"), invoke);
     expect(dec.kind).toBe("prerender");
     expect(dec.prerenderPath).toBe("/blog/hello");
@@ -95,7 +107,10 @@ describe("route", () => {
   });
 
   it("a non-matching path still reaches the implicit filesystem check", async () => {
-    const rt = createRouter({ version: 1, prerenders: [{ id: "blog-detail", matchPath: "^/blog/(?P<slug>[^/]+)$", functionName: "ssr" }] }, "never");
+    const rt = createRouter(
+      { version: 1, prerenders: [{ id: "blog-detail", matchPath: "^/blog/(?P<slug>[^/]+)$", functionName: "ssr" }] },
+      "never",
+    );
     const dec = await rt.route("/about", "GET", staticSet("/about"), noMiddleware);
     expect(dec.kind).toBe("serve");
   });
@@ -111,7 +126,13 @@ describe("route", () => {
     const rt = createRouter(
       {
         version: 1,
-        beforeFiles: [{ id: "old-docs", match: { path: "^/docs/v1/(?P<rest>.*)$" }, action: { type: "redirect", location: "/docs/$rest", status: 308 } }],
+        beforeFiles: [
+          {
+            id: "old-docs",
+            match: { path: "^/docs/v1/(?P<rest>.*)$" },
+            action: { type: "redirect", location: "/docs/$rest", status: 308 },
+          },
+        ],
       },
       "never",
     );
@@ -123,7 +144,16 @@ describe("route", () => {
 
   it("a fallback rewrite serves index for a deep link", async () => {
     const rt = createRouter(
-      { version: 1, fallback: [{ id: "spa-fallback", match: { path: "^/", pathNot: "\\.[A-Za-z0-9]+$" }, action: { type: "rewrite", path: "/" } }] },
+      {
+        version: 1,
+        fallback: [
+          {
+            id: "spa-fallback",
+            match: { path: "^/", pathNot: "\\.[A-Za-z0-9]+$" },
+            action: { type: "rewrite", path: "/" },
+          },
+        ],
+      },
       "never",
     );
     const dec = await rt.route("/settings/profile", "GET", staticSet("/"), noMiddleware);
@@ -133,7 +163,16 @@ describe("route", () => {
 
   it("a fallback rewrite miss still gives a clean NotFound", async () => {
     const rt = createRouter(
-      { version: 1, fallback: [{ id: "spa-fallback", match: { path: "^/", pathNot: "\\.[A-Za-z0-9]+$" }, action: { type: "rewrite", path: "/" } }] },
+      {
+        version: 1,
+        fallback: [
+          {
+            id: "spa-fallback",
+            match: { path: "^/", pathNot: "\\.[A-Za-z0-9]+$" },
+            action: { type: "rewrite", path: "/" },
+          },
+        ],
+      },
       "never",
     );
     const dec = await rt.route("/settings/profile", "GET", staticSet(), noMiddleware);
@@ -142,7 +181,16 @@ describe("route", () => {
 
   it("a missing asset still 404s even with a fallback rule", async () => {
     const rt = createRouter(
-      { version: 1, fallback: [{ id: "spa-fallback", match: { path: "^/", pathNot: "\\.[A-Za-z0-9]+$" }, action: { type: "rewrite", path: "/" } }] },
+      {
+        version: 1,
+        fallback: [
+          {
+            id: "spa-fallback",
+            match: { path: "^/", pathNot: "\\.[A-Za-z0-9]+$" },
+            action: { type: "rewrite", path: "/" },
+          },
+        ],
+      },
       "never",
     );
     const dec = await rt.route("/assets/missing.js", "GET", staticSet("/"), noMiddleware);
@@ -151,7 +199,17 @@ describe("route", () => {
 
   it("onMatch headers apply to a static hit", async () => {
     const rt = createRouter(
-      { version: 1, onMatch: [{ id: "blog-cache", match: { path: "^/blog/" }, action: { type: "headers", set: { "cdn-cache-control": "max-age=60" } }, continue: true }] },
+      {
+        version: 1,
+        onMatch: [
+          {
+            id: "blog-cache",
+            match: { path: "^/blog/" },
+            action: { type: "headers", set: { "cdn-cache-control": "max-age=60" } },
+            continue: true,
+          },
+        ],
+      },
       "never",
     );
     const dec = await rt.route("/blog/hello", "GET", staticSet("/blog/hello"), noMiddleware);
@@ -233,7 +291,12 @@ describe("route", () => {
       {
         version: 1,
         fallback: [
-          { id: "cache-header", match: { path: "^/" }, action: { type: "headers", set: { "x-foo": "bar" } }, continue: true },
+          {
+            id: "cache-header",
+            match: { path: "^/" },
+            action: { type: "headers", set: { "x-foo": "bar" } },
+            continue: true,
+          },
           { id: "hop1", match: { path: "^/deep$" }, action: { type: "rewrite", path: "/mid" } },
           { id: "hop2", match: { path: "^/mid$" }, action: { type: "rewrite", path: "/" } },
         ],
@@ -251,8 +314,22 @@ describe("route", () => {
     const rt = createRouter(
       {
         version: 1,
-        beforeFiles: [{ id: "security-headers", match: { path: "^/" }, action: { type: "headers", set: { "x-frame-options": "DENY" } }, continue: true }],
-        onMatch: [{ id: "security-headers", match: { path: "^/" }, action: { type: "headers", set: { "cdn-cache-control": "max-age=60" } }, continue: true }],
+        beforeFiles: [
+          {
+            id: "security-headers",
+            match: { path: "^/" },
+            action: { type: "headers", set: { "x-frame-options": "DENY" } },
+            continue: true,
+          },
+        ],
+        onMatch: [
+          {
+            id: "security-headers",
+            match: { path: "^/" },
+            action: { type: "headers", set: { "cdn-cache-control": "max-age=60" } },
+            continue: true,
+          },
+        ],
       },
       "never",
     );
@@ -264,7 +341,10 @@ describe("route", () => {
   });
 
   it("rewrite to a function ends routing with a Function decision", async () => {
-    const rt = createRouter({ version: 1, afterFiles: [{ id: "ssr", match: { path: "^/$" }, action: { type: "rewrite", function: "ssr" } }] }, "never");
+    const rt = createRouter(
+      { version: 1, afterFiles: [{ id: "ssr", match: { path: "^/$" }, action: { type: "rewrite", function: "ssr" } }] },
+      "never",
+    );
     const dec = await rt.route("/", "GET", () => false, noMiddleware);
     expect(dec.kind).toBe("function");
     expect(dec.functionName).toBe("ssr");
@@ -272,7 +352,10 @@ describe("route", () => {
 
   it("a function rewrite never checks the filesystem more than once", async () => {
     let calls = 0;
-    const rt = createRouter({ version: 1, afterFiles: [{ id: "ssr", match: { path: "^/$" }, action: { type: "rewrite", function: "ssr" } }] }, "never");
+    const rt = createRouter(
+      { version: 1, afterFiles: [{ id: "ssr", match: { path: "^/$" }, action: { type: "rewrite", function: "ssr" } }] },
+      "never",
+    );
     await rt.route(
       "/",
       "GET",
@@ -286,7 +369,13 @@ describe("route", () => {
   });
 
   it("no matching function route still gives NotFound", async () => {
-    const rt = createRouter({ version: 1, afterFiles: [{ id: "ssr", match: { path: "^/known$" }, action: { type: "rewrite", function: "ssr" } }] }, "never");
+    const rt = createRouter(
+      {
+        version: 1,
+        afterFiles: [{ id: "ssr", match: { path: "^/known$" }, action: { type: "rewrite", function: "ssr" } }],
+      },
+      "never",
+    );
     const dec = await rt.route("/unknown", "GET", () => false, noMiddleware);
     expect(dec.kind).toBe("notFound");
   });
@@ -367,7 +456,13 @@ describe("route", () => {
   });
 
   it("middleware merge headers always apply", async () => {
-    const rt = createRouter({ version: 1, beforeFiles: [{ id: "mw", match: { path: "^/" }, action: { type: "middleware", function: "middleware" } }] }, "never");
+    const rt = createRouter(
+      {
+        version: 1,
+        beforeFiles: [{ id: "mw", match: { path: "^/" }, action: { type: "middleware", function: "middleware" } }],
+      },
+      "never",
+    );
     const dec = await rt.route("/missing", "GET", staticSet(), () => ({
       continue: true,
       mergeHeaders: [{ set: { "Set-Cookie": "a=b" } }],
@@ -384,7 +479,13 @@ describe("route", () => {
   // HeaderOp per value, not one HeaderOp whose set map collapses
   // repeated keys to their last write.
   it("middleware merge headers carry every value of a multi-valued header", async () => {
-    const rt = createRouter({ version: 1, beforeFiles: [{ id: "mw", match: { path: "^/" }, action: { type: "middleware", function: "middleware" } }] }, "never");
+    const rt = createRouter(
+      {
+        version: 1,
+        beforeFiles: [{ id: "mw", match: { path: "^/" }, action: { type: "middleware", function: "middleware" } }],
+      },
+      "never",
+    );
     const mergeHeaders: HeaderOp[] = [{ append: { "Set-Cookie": "a=1" } }, { append: { "Set-Cookie": "b=2" } }];
     const dec = await rt.route("/missing", "GET", staticSet(), () => ({ continue: true, mergeHeaders }));
     expect(dec.headerOps).toHaveLength(2);

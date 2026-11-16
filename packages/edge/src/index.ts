@@ -6,7 +6,16 @@ export { createProxyHandler, type FetchHandler } from "./proxy.js";
 export { createRelayHandler } from "./relay.js";
 export { createAdminMux } from "./admin.js";
 export { resolveEdgeAddrs } from "./main.js";
-export { bucketIndex, bucketValue, metricValue, mergeBuckets, quantile, METRICS, type Metric, type Buckets } from "./insights/histogram.js";
+export {
+  bucketIndex,
+  bucketValue,
+  metricValue,
+  mergeBuckets,
+  quantile,
+  METRICS,
+  type Metric,
+  type Buckets,
+} from "./insights/histogram.js";
 export { createAggregator, type Aggregator, type Batch, type Device, type Sample } from "./insights/aggregator.js";
 export { normalizeRoute } from "./insights/route.js";
 export { SCRIPT_PATH, VITALS_PATH } from "./insights/script.js";

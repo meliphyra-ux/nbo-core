@@ -29,12 +29,6 @@ export function mergeHistograms(a: Histogram, b: Histogram): Histogram {
   return out;
 }
 
-export function histogramCount(h: Histogram): number {
-  let n = 0;
-  for (const c of Object.values(h)) n += c;
-  return n;
-}
-
 // quantile returns the representative value of the bucket holding the
 // q-th sample (nearest rank), or null for an empty histogram. Values are
 // in bucket units (CLS still scaled ×1000).

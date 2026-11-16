@@ -6,10 +6,10 @@ import { appendFile, readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { randomBytes } from "node:crypto";
 import { startHarness, deployedProject, bothClouds, type Harness } from "./v2-harness.js";
-import { createRunner } from "../runner.js";
-import { createBuildQueue } from "../build-queue.js";
-import { createSuppliedValues } from "../supplied-values.js";
-import { transferConfig } from "../transfer.js";
+import { createRunner } from "../builds/runner.js";
+import { createBuildQueue } from "../builds/build-queue.js";
+import { createSuppliedValues } from "../variables/supplied-values.js";
+import { transferConfig } from "../deploys/transfer.js";
 
 let h: Harness;
 const defaultStepDelayMs = transferConfig.stepDelayMs;
@@ -112,7 +112,9 @@ describe("deploy a chosen build (promote)", () => {
     await h.v2.queue.idle(id);
     const job = h.store.getBuild(res.json.id);
     expect(job.status).toBe("failed");
-    expect(job.error).toBe("This build's stored output is damaged: rebuild it");
+    expect(job.error).toBe(
+      "This build's stored output is damaged: rebuild it (works only while its commit is still on a branch)",
+    );
     expect(job.timeline?.map((e) => [e.name, e.status])).toEqual([["validate", "failed"]]);
     expect(h.deploys.deployed.length).toBe(deploysBefore);
   });
@@ -125,7 +127,9 @@ describe("deploy a chosen build (promote)", () => {
     await h.v2.queue.idle(id);
     const job = h.store.getBuild(res.json.id);
     expect(job.status).toBe("failed");
-    expect(job.error).toBe("This build's stored output is damaged: rebuild it");
+    expect(job.error).toBe(
+      "This build's stored output is damaged: rebuild it (works only while its commit is still on a branch)",
+    );
     expect(h.deploys.deployed.length).toBe(deploysBefore);
   });
 
@@ -136,7 +140,9 @@ describe("deploy a chosen build (promote)", () => {
     await h.v2.queue.idle(id);
     const job = h.store.getBuild(res.json.id);
     expect(job.status).toBe("failed");
-    expect(job.error).toBe("This build's stored output was cleaned up: rebuild it to deploy it");
+    expect(job.error).toBe(
+      "This build's stored output was cleaned up: rebuild it to deploy it (works only while its commit is still on a branch)",
+    );
   });
 
   it("a deploy failure is recorded on the job", async () => {
@@ -154,7 +160,9 @@ describe("deploy a chosen build (promote)", () => {
     const { id, a, cr } = await twoBuilds();
     h.deploys.delayMs = 300;
     const res = await h.call("POST", `/builds/${a}/deploy`, { environmentId: cr });
-    await waitFor(() => (h.deploys.deployed.length > 0 && h.store.getBuild(res.json.id).status === "running" ? true : undefined));
+    await waitFor(() =>
+      h.deploys.deployed.length > 0 && h.store.getBuild(res.json.id).status === "running" ? true : undefined,
+    );
     const removed = await h.artifacts.prune(id, () => false);
     expect(removed).not.toContain(a);
     expect(h.artifacts.path(a)).not.toBeNull();
@@ -245,7 +253,13 @@ describe("per-cloud auto-deploy", () => {
     const res = await h.call("POST", `/projects/${id}/builds`);
     await h.v2.queue.idle(id);
     const build = h.store.getBuild(res.json.id);
-    expect(build).toMatchObject({ status: "succeeded", deploymentIds: [], artifact: true, error: "", note: "Built — no cloud set to deploy new commits automatically" });
+    expect(build).toMatchObject({
+      status: "succeeded",
+      deploymentIds: [],
+      artifact: true,
+      error: "",
+      note: "Built — no cloud set to deploy new commits automatically",
+    });
     // The production build is still the one the clouds serve.
     const summary = (await h.call("GET", `/projects/${id}/summary`)).json;
     expect(summary.productionBuild.id).toBe(before);
@@ -272,7 +286,9 @@ describe("variables fingerprint", () => {
     expect(before.status).toBe(200);
     expect(Object.keys(before.json)).toEqual(["fingerprint"]);
     expect(before.json.fingerprint).toBe((await h.call("GET", `/builds/${b}`)).json.input.envFingerprint);
-    expect((await h.call("PUT", `/projects/${id}/env/API_URL`, { value: "https://api.example.com", secret: false })).status).toBe(200);
+    expect(
+      (await h.call("PUT", `/projects/${id}/env/API_URL`, { value: "https://api.example.com", secret: false })).status,
+    ).toBe(200);
     const after = await h.call("GET", `/projects/${id}/env/fingerprint`);
     expect(after.json.fingerprint).not.toBe(before.json.fingerprint);
     expect(after.text).not.toContain("api.example.com");
@@ -422,7 +438,10 @@ describe("final review follow-ups", () => {
     expect(summary.productionDeployment.id).not.toBe(h.store.getBuild(a).deploymentId);
 
     h.store.setBuildDetails(a, { artifact: false });
-    expect((await h.call("GET", `/projects/${id}/summary`)).json.environments.find((e: any) => e.id === cr).liveBuild.artifact).toBe(false);
+    expect(
+      (await h.call("GET", `/projects/${id}/summary`)).json.environments.find((e: any) => e.id === cr).liveBuild
+        .artifact,
+    ).toBe(false);
   });
 });
 
@@ -455,7 +474,9 @@ describe("carrying the cloud's live build into the next deploy", () => {
     const last = h.deploys.options[h.deploys.options.length - 1]!;
     expect(last).toMatchObject({ buildId: a, carryFrom: h.artifacts.path(b) });
     const job = h.store.listBuilds(id).find((x) => x.kind === "promote")!;
-    expect(job.log).toContain(`Keeping the files of build ${h.store.getBuild(b).revision.slice(0, 7)} during the rollout`);
+    expect(job.log).toContain(
+      `Keeping the files of build ${h.store.getBuild(b).revision.slice(0, 7)} during the rollout`,
+    );
   });
 
   it("a promote onto a cloud already running that build carries nothing", async () => {
@@ -492,8 +513,17 @@ describe("builds per stage", () => {
   it("a staging build deploys only to staging; promoting it to a Production cloud uses Production variables", async () => {
     const { id, staging, row, prod } = await stagingProject();
     h.store.setSecretKey(randomBytes(32)); // the variables fingerprint is keyed
-    expect((await h.call("PUT", `/projects/${id}/env/API_URL`, { value: "https://prod.example.com", secret: false })).status).toBe(200);
-    expect((await h.call("PUT", `/projects/${id}/env/API_URL?stage=staging`, { value: "https://staging.example.com", secret: false })).status).toBe(200);
+    expect(
+      (await h.call("PUT", `/projects/${id}/env/API_URL`, { value: "https://prod.example.com", secret: false })).status,
+    ).toBe(200);
+    expect(
+      (
+        await h.call("PUT", `/projects/${id}/env/API_URL?stage=staging`, {
+          value: "https://staging.example.com",
+          secret: false,
+        })
+      ).status,
+    ).toBe(200);
     const before = h.deploys.deployed.length;
 
     const res = await h.call("POST", `/projects/${id}/builds`, { stage: "staging", revision: h.head });
@@ -503,7 +533,9 @@ describe("builds per stage", () => {
     const built = h.store.getBuild(res.json.id);
     expect(built.status).toBe("succeeded");
     expect(h.deploys.deployed.slice(before)).toEqual([row.id]);
-    expect(h.deploys.options[h.deploys.options.length - 1]!.env?.vars).toEqual({ API_URL: "https://staging.example.com" });
+    expect(h.deploys.options[h.deploys.options.length - 1]!.env?.vars).toEqual({
+      API_URL: "https://staging.example.com",
+    });
 
     const promote = await h.call("POST", `/builds/${built.id}/deploy`, { environmentId: prod.id });
     expect(promote.status).toBe(202);

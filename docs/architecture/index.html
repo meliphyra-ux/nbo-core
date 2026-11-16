@@ -1002,7 +1002,7 @@
     <div class="leaf stack">
       <p>
         The resource name is <code>p&lt;first 8 chars of the project id&gt;-&lt;cloud name&gt;</code> (<code>deployAppName</code> in
-        <code>packages/controlplane/src/deploy.ts</code>). Type a project id and see exactly what gets applied.
+        <code>packages/controlplane/src/deploys/deploy.ts</code>). Type a project id and see exactly what gets applied.
       </p>
       <div class="form-row">
         <div class="field"><label class="label" for="k-proj">Project id</label><input id="k-proj" value="proj_0896d60bc168e19d" spellcheck="false" autocomplete="off" /></div>
@@ -1058,7 +1058,7 @@
       <div class="leaf stack">
         <span class="label">Who owns the split</span>
         <p>
-          The control-plane is the source of truth. Each cloud row stores <code>traffic_weight</code>; <code>edge-sync.ts</code> turns them into the edge's target for the
+          The control-plane is the source of truth. Each cloud row stores <code>traffic_weight</code>; <code>edge/edge-sync.ts</code> turns them into the edge's target for the
           project's host.
         </p>
         <p>
@@ -1205,7 +1205,7 @@ PUT http://127.0.0.1:9444/targets/storefront.127.0.0.1.sslip.io
       <h1 class="display">API reference</h1>
       <p class="prose">
         Every route of the control-plane (<code>127.0.0.1:8081</code>) and the edge admin API (<code>127.0.0.1:9444</code>). Bodies are JSON; errors are
-        <code>{"error": "…"}</code> with the real message. <strong>Access</strong> is read from <code>packages/controlplane/src/access.ts</code>:
+        <code>{"error": "…"}</code> with the real message. <strong>Access</strong> is read from <code>packages/controlplane/src/http/access.ts</code>:
         <code>token</code> takes an API token from anywhere, or no token from this computer; <code>local</code> takes no token, from this computer only (a token gets
         <code>403</code> <code>API tokens can't use this route</code>): every <code>/system/*</code> route and the two legacy routes; <code>webhook</code> is checked by its signature;
         <code>public</code> needs nothing. <code>pnpm docs:check</code> fails when a route has no row here, a row has no route, or the access differs.
@@ -1230,10 +1230,22 @@ PUT http://127.0.0.1:9444/targets/storefront.127.0.0.1.sslip.io
       </div>
       <p class="empty" id="api-empty" hidden>No route matches that filter.</p>
     </div>
+    <div class="leaf stack">
+      <h2 class="section-h">The link</h2>
+      <p>
+        A hosted dashboard can drive a core over one connection the core opens itself (a WebSocket, or HTTPS long-poll). Each message is an
+        <em>instruction</em>: an envelope naming one route of this API, with an id, a sequence number, a nonce and an expiry (60 seconds), signed by the dashboard's
+        pinned key. Core verifies it (signature, expiry, a 64-wide replay window kept in the journal, then the route's tier from <code>routeLinkTier</code> in
+        <code>http/access.ts</code>), opens any sealed field with its own key, calls the same handler the HTTP API uses, filters the answer so no secret leaves, and writes the journal row.
+        Tier 0 reads, Tier 1 operates, Tier 2 changes what runs and also needs a signature from a member key (Admin or Owner). A build, deploy or transfer is Tier 1 unless its body has a <code>values</code> key (supplied variable values, names-only servers): then it is Tier 2 (<code>suppliedValuesTier</code>). Creating an environment is Tier 1 only for an ephemeral one (<code>stageCreateTier</code>); adding a domain and installing a certificate are Tier 2. Nothing in a deploy, poll, certificate, cron or
+        expiry path waits on the link. The routes are in the table above under "The link to a hosted dashboard"; the manual chapter is <code>docs/manual/link.md</code>
+        and the decision record is <code>docs/adr/0008-the-link.md</code>.
+      </p>
+    </div>
     <div class="leaf stack" id="git">
       <span class="label">Git: credentials, two ways to see a push</span>
       <p>
-        <strong>Credentials.</strong> Each project reaches its repository with a credential of its own (<code>src/git-credentials.ts</code>, table
+        <strong>Credentials.</strong> Each project reaches its repository with a credential of its own (<code>src/git/git-credentials.ts</code>, table
         <code>project_git_credentials</code>): <code>public</code> (none), <code>token</code> (an <code>https://</code> address; the token goes to git steps only through
         <code>GIT_CONFIG_COUNT</code>, <code>GIT_CONFIG_KEY_n</code> and <code>GIT_CONFIG_VALUE_n</code>, never in the URL, and is added to the build's redaction list) or
         <code>deploy-key</code> (an <code>ssh://</code> or <code>git@host:path</code> address; NBO makes the key pair and keeps the private half sealed). Tokens and private keys are
@@ -1249,21 +1261,21 @@ PUT http://127.0.0.1:9444/targets/storefront.127.0.0.1.sslip.io
       </p>
       <p>
         <strong>Host keys.</strong> github.com, gitlab.com and bitbucket.org are checked against the host keys they publish, which NBO carries in
-        <code>src/git-host-keys.ts</code> and writes to <code>known_hosts.published</code> next to the database. Any other host is remembered in <code>known_hosts</code>
+        <code>src/git/git-host-keys.ts</code> and writes to <code>known_hosts.published</code> next to the database. Any other host is remembered in <code>known_hosts</code>
         the first time NBO reaches it and refused if its key changes.
       </p>
       <p>
         <strong>Seeing a push.</strong> The poller asks every project's repository for its branch heads every 45 seconds (<code>git ls-remote</code>), which needs nothing
         else. The per-project webhook (<code>POST /projects/{id}/webhooks/github</code>, HMAC-checked) is faster when GitHub can reach NBO. Both go through
-        <code>advanceHead</code>, a compare-and-set on the head, so a commit builds once. A database from an older NBO that had its own GitHub App keeps building those
-        projects with a token NBO asks GitHub for (<code>src/github-legacy.ts</code>) until they get a credential of their own.
+        <code>advanceHead</code>, a compare-and-set on the head (the push's <code>before</code>), so a commit builds once and a replayed delivery builds nothing. A database from an older NBO that had its own GitHub App keeps building those
+        projects with a token NBO asks GitHub for (<code>src/git/github-legacy.ts</code>) until they get a credential of their own.
       </p>
     </div>
     <div class="leaf stack" id="access">
       <span class="label">Access: tokens and the loopback rule</span>
       <p>
-        NBO has no sign-in, members or roles. <code>guardRequest</code> (<code>packages/controlplane/src/api-tokens.ts</code>) runs once per request in
-        <code>createMux</code> (<code>handlers.ts</code>), after <code>router.match</code> found the route, and reads that route's row in <code>access.ts</code>:
+        NBO has no sign-in, members or roles. <code>guardRequest</code> (<code>packages/controlplane/src/http/api-tokens.ts</code>) runs once per request in
+        <code>createMux</code> (<code>http/handlers.ts</code>), after <code>router.match</code> found the route, and reads that route's row in <code>http/access.ts</code>:
       </p>
       <ul>
         <li><code>public</code> (only <code>GET /healthz</code>): allowed from any Host, no token.</li>
@@ -1308,14 +1320,14 @@ terraform apply
             └─ ssh -L 8081:127.0.0.1:8081  (the only supported path)
                  └─ control-plane: guardRequest → router</pre>
         <p>
-          <code>guardRequest</code> (<code>packages/controlplane/src/api-tokens.ts</code>) runs before the handler. The API has no path prefix: an endpoint is
+          <code>guardRequest</code> (<code>packages/controlplane/src/http/api-tokens.ts</code>) runs before the handler. The API has no path prefix: an endpoint is
           <code>http://localhost:8081</code>, not an older NBO's <code>/api/controlplane</code>.
         </p>
         <ol>
           <li>An <code>Authorization</code> header that isn't a valid <code>Bearer nbo_…</code> token: <strong>401</strong>, even on loopback.</li>
           <li>A valid token on a <code>local</code> route (every <code>/system/*</code> route and the legacy <code>/environments/{id}/deployments</code> and <code>/projects/{id}/environments</code>): <strong>403</strong>.</li>
           <li>A valid token anywhere else: allowed, whatever the Host and Origin. Responses leave out the webhook signing secret.</li>
-          <li>No header: the loopback rule (non-loopback <code>Host</code> or cross-site <code>Origin</code> refused).</li>
+          <li>No header: the loopback rule (a missing or non-loopback <code>Host</code>, or a cross-site <code>Origin</code>, refused).</li>
         </ol>
         <p>Webhook routes skip 1 to 3: their signature is the authentication. <code>GET /healthz</code> needs nothing.</p>
       </div>
@@ -1727,44 +1739,44 @@ terraform apply</pre>
         },
         {
           t: "Setup",
-          files: ["controlplane/src/setup.ts", "controlplane/src/cloud-setup.ts"],
+          files: ["controlplane/src/deploys/setup.ts", "controlplane/src/clouds/cloud-setup.ts"],
           d: `<p><code>POST /projects/setup</code> validates everything (name, URL, paths, GCP formats), creates the project with host <code>&lt;name&gt;.127.0.0.1.sslip.io</code> and its git config, then in the background provisions each cloud: a cloud <code>k8s</code> and/or <code>cloudrun</code>. If anything fails the project's <code>setup_status</code> is <code>needs-setup</code> with the real error; <code>POST /projects/{id}/setup/retry</code> (<code>nbo-server project retry</code>) tries again.</p>`,
         },
         {
           t: "Resolve the commit",
-          files: ["controlplane/src/gitremote.ts"],
+          files: ["controlplane/src/git/gitremote.ts"],
           d: `<p><code>git ls-remote -- &lt;repo&gt; refs/heads/&lt;branch&gt;</code> with prompts disabled (<code>GIT_TERMINAL_PROMPT=0</code>) and a 30 s limit, so a private or wrong URL fails fast. The head becomes <code>last_seen_sha</code>.</p>`,
         },
         {
           t: "Queue",
-          files: ["controlplane/src/build-queue.ts"],
+          files: ["controlplane/src/builds/build-queue.ts"],
           d: `<p>One job runs per project at a time; at most one commit build waits. A newer commit replaces the waiting build (recorded as <em>skipped: superseded</em>); promote jobs (a stored build deployed to one cloud) wait in order behind it and are never replaced. Poll ticks, Redeploy, webhooks, setup and transfers all go through this queue.</p>`,
         },
         {
           t: "Build",
-          files: ["controlplane/src/runner.ts", "controlplane/src/run.ts"],
+          files: ["controlplane/src/builds/runner.ts", "controlplane/src/builds/run.ts"],
           d: `<p><code>git clone</code> → <code>git checkout &lt;sha&gt;</code> → optional ignored-build-step (exit 0 skips) → your build command, in the Root Directory, with <code>NEXT_ADAPTER_PATH</code> set. Every command's output streams into the build log. A command that times out has its whole process tree killed.</p><p>Static builds: <code>produce(outputDir → .nbo/)</code>. Next.js: the adapter already wrote <code>.nbo/</code>; if it landed in a subfolder the error names the Root Directory to set.</p>`,
         },
         {
           t: "Deploy to each cloud",
-          files: ["controlplane/src/deploy.ts", "deploy/src/deploy.ts"],
+          files: ["controlplane/src/deploys/deploy.ts", "deploy/src/deploy.ts"],
           d: `<p>For every live cloud with <em>Deploy new commits automatically</em> on, in order: validate → plan → content id → compare with what's live (<code>liveContentID</code>) → if different, deploy functions, then the app. The build succeeds only if every cloud succeeded; each cloud's result is recorded separately.</p>`,
         },
         {
           t: "Edge",
-          files: ["controlplane/src/edge-sync.ts"],
+          files: ["controlplane/src/edge/edge-sync.ts"],
           d: `<p>After each successful cloud deploy, <code>onDeployed</code> pushes the project's split to the edge. On the project's first success, that cloud gets 100%.</p>`,
         },
         {
           t: "Keep deploying",
-          files: ["controlplane/src/poller.ts"],
-          d: `<p>Every 45 s the poller checks each ready project's branch head and queues new commits (a failed head isn't retried; use Redeploy), then reconciles the edge. The same <code>ls-remote</code> gives the head of every custom and running ephemeral environment's branch. Every 10 minutes an expiry pass (<code>stage-expiry.ts</code>) removes ephemeral environments past their end time, and their certificate orders are capped at 20 per registered domain per 7 days.</p>`,
+          files: ["controlplane/src/git/poller.ts"],
+          d: `<p>Every 45 s the poller checks each ready project's branch head and queues new commits (a failed head isn't retried; use Redeploy), then reconciles the edge. The same <code>ls-remote</code> gives the head of every custom and running ephemeral environment's branch. Every 10 minutes an expiry pass (<code>stages/stage-expiry.ts</code>) removes ephemeral environments past their end time, and their certificate orders are capped at 20 per registered domain per 7 days.</p>`,
         },
       ],
       k8s: [
         {
           t: "Preflight",
-          files: ["controlplane/src/cloud-setup.ts"],
+          files: ["controlplane/src/clouds/cloud-setup.ts"],
           d: `<p><code>kubectl --context kind-nbo-local get nodes -o name</code> (answered within 4 s or treated as unreachable) and <code>docker info</code>. No cloud account involved.</p><pre>./scripts/bootstrap-local-k8s.sh   # creates kind cluster nbo-local
 # pins kindest/node:v1.31.4 (cgroup v1 hosts), installs
 # ingress-nginx, cert-manager and a selfsigned ClusterIssuer</pre>`,
@@ -1809,12 +1821,12 @@ kind load docker-image nbo-app-&lt;app&gt;:… --name nbo-local</pre><p><strong>
         },
         {
           t: "URL and edge",
-          files: ["deploy/src/kubernetes-target.ts", "controlplane/src/edge-sync.ts"],
+          files: ["deploy/src/kubernetes-target.ts", "controlplane/src/edge/edge-sync.ts"],
           d: `<p>The deployment URL is <code>https://&lt;app&gt;.127.0.0.1.sslip.io</code>. sslip.io resolves any <code>*.127.0.0.1.sslip.io</code> to 127.0.0.1, where kind maps ports 80/443 to ingress-nginx. The edge proxies to it with TLS verification off (self-signed).</p>`,
         },
         {
           t: "Teardown",
-          files: ["controlplane/src/cloud-teardown.ts"],
+          files: ["controlplane/src/clouds/cloud-teardown.ts"],
           d: `<p><code>DELETE /projects/{id}?resources=true</code>:</p><pre>kubectl --context kind-nbo-local delete deployment,service,ingress &lt;app&gt; --ignore-not-found
 kubectl --context kind-nbo-local get deployments -o name
 kubectl --context kind-nbo-local delete deployment,service &lt;app&gt;-fn-&lt;fn&gt; --ignore-not-found</pre><p>Archiving a cloud (<code>POST /environments/{id}/archive</code>) never deletes anything in the cluster.</p>`,
@@ -1823,7 +1835,7 @@ kubectl --context kind-nbo-local delete deployment,service &lt;app&gt;-fn-&lt;fn
       cloudrun: [
         {
           t: "Preflight",
-          files: ["controlplane/src/cloud-setup.ts"],
+          files: ["controlplane/src/clouds/cloud-setup.ts"],
           d: `<p>Read in parallel (cached 15 s):</p><pre>gcloud config get-value account
 gcloud config get-value project
 gcloud config get-value run/region      # falls back to compute/region, then us-central1
@@ -1831,7 +1843,7 @@ docker info --format {{.ServerVersion}}</pre><p>Automatic setup (<code>mode: "au
         },
         {
           t: "Automatic setup",
-          files: ["controlplane/src/cloud-setup.ts"],
+          files: ["controlplane/src/clouds/cloud-setup.ts"],
           d: `<p>Runs once per project setup, in your existing project (it never creates projects or touches billing):</p><pre>gcloud services enable run.googleapis.com artifactregistry.googleapis.com --project &lt;p&gt;
 gcloud artifacts repositories create nbo --repository-format=docker \\
   --location &lt;region&gt; --project &lt;p&gt; --quiet        # ALREADY_EXISTS counts as success
@@ -1863,7 +1875,7 @@ gcloud run deploy &lt;app&gt; --image … --labels nbo-content-id=&lt;32 hex&gt;
         },
         {
           t: "Teardown",
-          files: ["controlplane/src/cloud-teardown.ts"],
+          files: ["controlplane/src/clouds/cloud-teardown.ts"],
           d: `<pre>gcloud run services list --project &lt;p&gt; --region &lt;r&gt; --format=value(metadata.name)
 gcloud run services delete &lt;app&gt; --project &lt;p&gt; --region &lt;r&gt; --quiet
 gcloud run services delete &lt;app&gt;-fn-&lt;fn&gt; … --quiet</pre><p>Images stay in Artifact Registry.</p>`,
@@ -2145,10 +2157,12 @@ spec:
       ["PUT","/projects/{id}/git","Repo (https, or ssh with a deploy key), branch, framework, build command, outputDir, rootDirectory, ignored build step, and credential (public, token or deploy-key). A github field is 400.","control-plane","token","Git, builds and webhooks"],
       ["GET","/projects/{id}/git","The git config plus credential: { kind, publicKey?, username? }, never the token or private key.","control-plane","token","Git, builds and webhooks"],
       ["POST","/projects/{id}/git/deploy-key","Make (or replace) the project's SSH deploy key pair; 201 { publicKey }.","control-plane","token","Git, builds and webhooks"],
+      ["POST","/projects/{id}/git/poll","Check the branch heads now and queue a build for each unseen head (the poll loop's own check); no body. 200 { queued, setupStatus, note? }; 502 when the repository can't be read.","control-plane","token","Git, builds and webhooks"],
       ["POST","/projects/{id}/builds","Queue a build of the branch head, or { revision } for an exact commit. { stage } picks the environment (default production); { values } carries the variable values when NBO keeps names only.","control-plane","token","Git, builds and webhooks"],
       ["GET","/projects/{id}/builds","Builds, oldest first, without logs or captured details.","control-plane","token","Git, builds and webhooks"],
       ["GET","/builds/{id}","One build with its full log and captured details (commit, input, timeline, output summary).","control-plane","token","Git, builds and webhooks"],
       ["GET","/builds/{id}/files","The build's static files, paged (?prefix=, ?cursor=, ?limit=); 404 once its stored output was cleaned up.","control-plane","token","Git, builds and webhooks"],
+      ["GET","/builds/{id}/log","The build's stored log as plain text, already redacted (?from= byte offset; ?follow=1 keeps the body open and sends new text every 500 ms until the build is final); 404 for an unknown build.","control-plane","token","Git, builds and webhooks"],
       ["GET","/builds/{id}/functions","The build's functions with sizes and routes, read from its stored output.","control-plane","token","Git, builds and webhooks"],
       ["POST","/builds/{id}/deploy","Deploy a stored build to one cloud of any environment: { environmentId, values? }. The target's variables apply. Queues a promote job (validated stored .nbo/, content id checked, no rebuild); 202.","control-plane","token","Git, builds and webhooks"],
       ["POST","/projects/{id}/webhooks/github","GitHub webhook (HMAC-verified). push: queues the commit for Production's, a custom environment's or a running ephemeral environment's branch; any other branch, a branch deletion and every pull_request are ignored. Answers 202 { status: queued, buildId } or 200 { status: ignored, reason }. Records last_webhook_at.","control-plane","webhook","Git, builds and webhooks"],
@@ -2213,6 +2227,14 @@ spec:
       ["GET","/system/terraform-provider/{platform}","The provider file for one platform (linux_amd64, linux_arm64, darwin_amd64, darwin_arm64, windows_amd64) as an attachment. Refused to tokens.","control-plane","local","API tokens and the Terraform provider"],
       ["POST","/system/api-tokens","Create a token: { name }; the token appears in the answer once (201). nbo-server token create <name>.","control-plane","local","API tokens and the Terraform provider"],
       ["DELETE","/system/api-tokens/{id}","Revoke a token at once (204). nbo-server token revoke <id>.","control-plane","local","API tokens and the Terraform provider"],
+      ["GET","/link/status","The link's state: { linked, coreId?, teamId?, linkUrl?, platformKeyId?, platformKeyFingerprint?, connection (off, connecting, connected), transport, lastConnectedAt, lastError, memberKeys (a count) }. Link tier 0. nbo-server link status.","control-plane","token","The link to a hosted dashboard"],
+      ["GET","/link/journal","What the platform asked of this core, newest first: ?limit=1..500 (default 100), ?before=<ISO time>. Every instruction, accepted or refused, with its tier, route, signer and answer; kept 90 days and after an unlink. Link tier 0. nbo-server link journal.","control-plane","token","The link to a hosted dashboard"],
+      ["GET","/link/member-keys","The member keys that may sign Tier 2 instructions: [{ keyId, memberId, role, fingerprint, addedAt, addedBy }]. Link tier 0. nbo-server keys list.","control-plane","token","The link to a hosted dashboard"],
+      ["POST","/link/member-keys","Register a member signing key: { memberId, role: \"owner\" | \"admin\", publicKey, resetCode? }; 201, 400 for another role or a key that does not import, 409 for a key already listed or an unlinked core. Over the link: Tier 2, signed by an Owner key, or carrying a reset code (an Owner key only, the one the code names).","control-plane","token","The link to a hosted dashboard"],
+      ["DELETE","/link/member-keys/{keyId}","Remove a member key (204); 409 for the last Owner key. Over the link: Tier 2, signed by an Owner key.","control-plane","token","The link to a hosted dashboard"],
+      ["POST","/system/link/enroll","Link this core: { url, code, ownerKeyFingerprint }; 201 { linked, coreId, teamId, linkUrl, platformKeyId }, 400 for a refused code, 409 when already linked, 502 when the platform can't be reached. The code is never echoed. Never over the link. nbo-server link <code|->.","control-plane","local","The link to a hosted dashboard"],
+      ["POST","/system/link/unlink","Drop the link: the pinned platform key, core's link keys, member keys and reset codes go, the connection closes and stays closed; the journal is kept (204). Never over the link. nbo-server unlink.","control-plane","local","The link to a hosted dashboard"],
+      ["POST","/system/link/keys-reset","A one-time code (128 random bits, base32 in groups of four) that registers one Owner key over the link within 1 hour, only the key named by { keyFingerprint } (sha256:...): { code, expiresAt, keyFingerprint }, shown once, stored only as its SHA-256; tried with another key it is refused and used up; 400 without a fingerprint, 409 when not linked. Never over the link. nbo-server keys reset --key.","control-plane","local","The link to a hosted dashboard"],
       ["PUT","/targets/{host}","Set a host's weighted backends ({ backends: [{ id?, url, weight, insecureSkipVerify? }] }; id = the backend's stable key for sticky visitors).","edge admin","none","Edge admin API (127.0.0.1:9444)"],
       ["GET","/targets/{host}","Read a host's target.","edge admin","none","Edge admin API (127.0.0.1:9444)"],
       ["DELETE","/targets/{host}","Remove a host.","edge admin","none","Edge admin API (127.0.0.1:9444)"],

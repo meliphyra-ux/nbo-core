@@ -20,7 +20,9 @@ export function createCertStore(): CertStore {
         contexts.set(secretName, createSecureContext({ cert: certPem, key: keyPem }));
       } catch (err) {
         // A bad pair never takes the edge down; the host just has no certificate.
-        console.error(`edge: certificate ${JSON.stringify(secretName)} skipped: ${err instanceof Error ? err.message : String(err)}`);
+        console.error(
+          `edge: certificate ${JSON.stringify(secretName)} skipped: ${err instanceof Error ? err.message : String(err)}`,
+        );
         contexts.delete(secretName);
       }
     },

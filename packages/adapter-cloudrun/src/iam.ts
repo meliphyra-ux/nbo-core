@@ -23,7 +23,13 @@ export async function defaultComputeServiceAccount(project: string, ctx?: ToolCo
 // (private) service — the app's own runtime identity calling its
 // function — port of GrantInvoker (iam.go lines 31-40). No existing
 // Go unit test; ships build-verified only.
-export async function grantInvoker(serviceName: string, project: string, region: string, memberServiceAccountEmail: string, ctx?: ToolContext): Promise<void> {
+export async function grantInvoker(
+  serviceName: string,
+  project: string,
+  region: string,
+  memberServiceAccountEmail: string,
+  ctx?: ToolContext,
+): Promise<void> {
   // The member may be a service account created seconds ago.
   await retryPropagation(ctx, () =>
     runWith(ctx, "gcloud", [
@@ -75,7 +81,16 @@ export async function ensureServiceIdentity(project: string, serviceName: string
     if (!/NOT_FOUND|not found|does not exist|Unknown service account/i.test(text)) throw err;
   }
   try {
-    await runWith(ctx, "gcloud", ["iam", "service-accounts", "create", id, "--project", project, "--display-name", `NBO ${serviceName}`]);
+    await runWith(ctx, "gcloud", [
+      "iam",
+      "service-accounts",
+      "create",
+      id,
+      "--project",
+      project,
+      "--display-name",
+      `NBO ${serviceName}`,
+    ]);
   } catch (err) {
     const text = err instanceof Error ? err.message : String(err);
     if (!alreadyExists.test(text)) throw err;

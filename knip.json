@@ -5,9 +5,9 @@
       "entry": ["src/adapter.js"]
     }
   },
-  "ignore": ["fixtures/**", "platform/**"],
-  "ignoreDependencies": ["@nbo/next-adapter", "canonicalize", "@nbo/spec"],
-  "ignoreBinaries": ["openssl"],
+  "ignore": ["fixtures/**", "platform/**", "packages/edge-rs/assets/web-vitals.iife.js", "scripts/ci/nbo-diff.mjs"],
+  "ignoreDependencies": ["@nbo/next-adapter", "canonicalize"],
+  "ignoreBinaries": ["openssl", "ssh-keygen", "glab"],
   "rules": {
     "types": "off"
   },

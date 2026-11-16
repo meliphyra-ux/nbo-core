@@ -8,16 +8,17 @@ Jump to a group: [NBO won't start](#nbo-wont-start), [Docker Compose](#docker-co
 
 ## Where to look first
 
-| Problem shows up in                            | Look at                                                                                                      |
-| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| A build                                        | `GET /builds/{id}`: its log. Every command is printed as `$ command`, followed by its output. `GET /projects/{id}/builds` lists the builds. |
-| Setup (`needs-setup`)                          | `GET /projects/{id}/summary`: the error is in `setupError`. Retry with `nbo-server project retry <id>`.      |
-| Connections ("not reachable", "not signed in") | `nbo-server status`, then run the same commands yourself (below).                                            |
-| The site itself                                | Browser network tab: the `x-nbo-edge-backend` response header says which cloud answered.                     |
-| The control-plane                              | `docker compose logs nbo` on the server. Lines start with `control-plane:`. Dev mode: its terminal output.   |
-| A Kubernetes app                               | `kubectl -n nbo-p-<id> get pods`, then `kubectl -n nbo-p-<id> logs deployment/<app>`. Dev mode: `kubectl --context kind-nbo-local get pods`. |
-| The edge                                       | `kubectl -n nbo-edge get pods`, then `kubectl -n nbo-edge logs deployment/nbo-edge`. Dev mode: the edge's terminal. |
-| A Cloud Run app                                | Google Cloud console → Cloud Run → the service → Logs.                                                       |
+| Problem shows up in                                      | Look at                                                                                                                                      |
+| -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| A build                                                  | `GET /builds/{id}`: its log. Every command is printed as `$ command`, followed by its output. `GET /projects/{id}/builds` lists the builds.  |
+| Setup (`needs-setup`)                                    | `GET /projects/{id}/summary`: the error is in `setupError`. Retry with `nbo-server project retry <id>`.                                      |
+| Setup (`waiting-for-key`)                                | A deploy key not yet added to the repository. NBO retries by itself; see below.                                                              |
+| Connections ("not reachable", "gcloud is not logged in") | `nbo-server status`, then run the same commands yourself (below).                                                                            |
+| The site itself                                          | Browser network tab: the `x-nbo-edge-backend` response header names the environment id (`env_…`) of the cloud that answered.                 |
+| The control-plane                                        | `docker compose logs nbo` on the server. Lines start with `control-plane:`. Dev mode: its terminal output.                                   |
+| A Kubernetes app                                         | `kubectl -n nbo-p-<id> get pods`, then `kubectl -n nbo-p-<id> logs deployment/<app>`. Dev mode: `kubectl --context kind-nbo-local get pods`. |
+| The edge                                                 | `kubectl -n nbo-edge get pods`, then `kubectl -n nbo-edge logs deployment/nbo-edge`. Dev mode: the edge's terminal.                          |
+| A Cloud Run app                                          | Google Cloud console → Cloud Run → the service → Logs.                                                                                       |
 
 ## NBO won't start
 
@@ -159,7 +160,7 @@ Dev mode only: `kubectl --context kind-nbo-local get nodes` failed or took more 
 - Dev mode: does the cluster exist? `kind get clusters` should list `nbo-local`. If not, run `./scripts/bootstrap-local-k8s.sh` (Dev mode).
 - After a reboot, start Docker and give the cluster a minute.
 
-### "not signed in" for Cloud Run
+### "gcloud is not logged in" for Cloud Run
 
 Dev mode only: `gcloud` on your computer isn't logged in or has no project. Run `gcloud auth login` and `gcloud config set project <id>`. The status refreshes within 15 seconds.
 
@@ -268,9 +269,9 @@ The edge doesn't know this domain:
 - The edge restarted and the control-plane hasn't re-sent yet (≤ 45 s).
 - Wrong domain: use `https://<name>.<base domain>` (or the custom domain you added). Dev mode: `http://<name>.127.0.0.1.sslip.io:9443`, port included.
 
-### "edge: …" 502
+### "edge: backend unreachable" (502)
 
-The edge picked a cloud that didn't answer. Check that cloud's app (pods running? Cloud Run service healthy?). Move traffic away (`PUT /projects/{id}/traffic`) while you fix it.
+The edge picked a cloud that didn't answer. The edge's log has the reason (`edge: backend env_… for <host> unreachable: …`). Other 502s from the edge start with `edge:` too. `relay: upstream unreachable` means the cluster's relay reached the cluster but not the app's Service; the relay's log (`kubectl -n nbo-edge logs deployment/nbo-relay` on that cluster) has the reason. Check that cloud's app (pods running? Cloud Run service healthy?). Move traffic away (`PUT /projects/{id}/traffic`) while you fix it.
 
 ### `502` without "edge:" in the body
 
@@ -342,7 +343,7 @@ Without an edge, a custom domain on Cloud Run goes through a Cloud Run domain ma
 
 ### The first look at a repository with a deploy key fails
 
-Expected for a new project with a deploy key: NBO made the key pair, but the repository doesn't know the public half yet, so the project waits in `needs-setup`. Read the key (`GET /projects/{id}/git`, `credential.publicKey`, or Terraform's `deploy_key_public`), add it to the repository as a read-only deploy key, then run `nbo-server project retry <id>`. A "Host key verification failed" error means the git server's key changed since NBO first saw it; check with the host before you remove its line from `known_hosts` next to the database.
+Expected for a new project with a deploy key: NBO made the key pair, but the repository doesn't know the public half yet, so the project waits in `waiting-for-key`. NBO tries again on every poll for an hour, then every 10 minutes for 7 days, and finishes setup (and builds the first commit) as soon as the key works; after 7 days it moves to `needs-setup`. Read the key (`GET /projects/{id}/git`, `credential.publicKey`, or Terraform's `deploy_key_public`), add it to the repository as a read-only deploy key, and wait, or run `nbo-server project retry <id>` to finish at once. A "Host key verification failed" error means the git server's key changed since NBO first saw it; check with the host before you remove its line from `known_hosts` next to the database.
 
 ### "the repository moved to another host: give its credential again"
 
@@ -354,7 +355,7 @@ Only for a project linked to an older NBO's own GitHub App: the app lost its acc
 
 ### Pushes arrive late or not at all
 
-NBO asks each repository for new commits about every 45 seconds, so a push can take that long. The per-project webhook (`POST /projects/{id}/webhooks/github`) is faster when GitHub can reach NBO's own address. If nothing arrives, check that polling is on for the project (`pollingEnabled`) and that its credential still works (the setup error or the build log names the git error).
+NBO asks each repository for new commits about every 45 seconds, so a push can take that long. The per-project webhook (`POST /projects/{id}/webhooks/github`) is faster when GitHub can reach NBO's own address. A delivery answered `ignored` with "NBO has already seen this commit, or a newer one" is a push the poller (or an earlier delivery) already built, or a redelivery; start a manual build to build it again. If nothing arrives, check that polling is on for the project (`pollingEnabled`) and that its credential still works (the setup error or the build log names the git error).
 
 A project linked to an older NBO's own GitHub App builds on the poll only: the app's deliveries to `POST /github/webhook` get `404` (GitHub lists them as failed) and its check runs stopped. That is expected since 2026-11-12. Give the project a credential of its own (`PUT /projects/{id}/git` with a `credential`) and the per-project webhook; see [Upgrading NBO](../production.md#upgrading-nbo).
 

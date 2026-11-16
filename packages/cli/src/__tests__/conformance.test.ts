@@ -64,7 +64,10 @@ describe("runConformance", () => {
     await new Promise<void>((resolve) => server!.listen(0, resolve));
     const { port } = server.address() as AddressInfo;
 
-    writeFileSync(join(dir, "a.json"), JSON.stringify({ method: "GET", path: "/", expectStatus: 200, expectBodyContains: "ok" }));
+    writeFileSync(
+      join(dir, "a.json"),
+      JSON.stringify({ method: "GET", path: "/", expectStatus: 200, expectBodyContains: "ok" }),
+    );
 
     expect(await runConformance([dir, `http://127.0.0.1:${port}`])).toBe(0);
   });

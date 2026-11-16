@@ -4,7 +4,15 @@
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { dirname } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { _internals, kubectlArgs, redact, withDockerLogin, withGoogleCredentials, withKubeconfig, type ToolContext } from "../credentials.js";
+import {
+  _internals,
+  kubectlArgs,
+  redact,
+  withDockerLogin,
+  withGoogleCredentials,
+  withKubeconfig,
+  type ToolContext,
+} from "../credentials.js";
 
 const posix = process.platform !== "win32";
 
@@ -99,7 +107,14 @@ describe("withKubeconfig", () => {
 
 describe("kubectlArgs", () => {
   it("prepends kubeconfig and namespace", () => {
-    expect(kubectlArgs({ kubeconfig: "/k", namespace: "n" }, ["get", "pods"])).toEqual(["--kubeconfig", "/k", "-n", "n", "get", "pods"]);
+    expect(kubectlArgs({ kubeconfig: "/k", namespace: "n" }, ["get", "pods"])).toEqual([
+      "--kubeconfig",
+      "/k",
+      "-n",
+      "n",
+      "get",
+      "pods",
+    ]);
   });
   it("passes args through without a context", () => {
     expect(kubectlArgs(undefined, ["get", "pods"])).toEqual(["get", "pods"]);
@@ -170,7 +185,14 @@ describe("withDockerLogin", () => {
       expect(existsSync(dockerConfig)).toBe(true);
       if (posix) expect(statSync(dockerConfig).mode & 0o777).toBe(0o700);
     });
-    expect(calls).toEqual([{ cmd: "docker", args: ["login", "ghcr.io", "--username", "bot", "--password-stdin"], env: { DOCKER_CONFIG: dockerConfig }, input: "hunter2" }]);
+    expect(calls).toEqual([
+      {
+        cmd: "docker",
+        args: ["login", "ghcr.io", "--username", "bot", "--password-stdin"],
+        env: { DOCKER_CONFIG: dockerConfig },
+        input: "hunter2",
+      },
+    ]);
     expect(existsSync(dockerConfig)).toBe(false);
   });
 

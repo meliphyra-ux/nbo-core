@@ -127,7 +127,11 @@ describe("validateFunction layout", () => {
   it("refuses a symlink under bundle/", (ctx) => {
     const manifestDigests = writeValidFunctionFixture(dir, "ssr");
     try {
-      symlinkSync(join(dir, "functions", "ssr", "bundle", "index.mjs"), join(dir, "functions", "ssr", "bundle", "link.mjs"), "file");
+      symlinkSync(
+        join(dir, "functions", "ssr", "bundle", "index.mjs"),
+        join(dir, "functions", "ssr", "bundle", "link.mjs"),
+        "file",
+      );
     } catch {
       ctx.skip(); // Windows without the symlink privilege
       return;
@@ -143,12 +147,18 @@ describe("validateFunction layout", () => {
     const fn = JSON.parse(readFileSync(fnPath, "utf8"));
     fn.name = "other";
     writeFileSync(fnPath, canonicalize(fn));
-    expect(validateFunction(dir, "ssr", { "functions/ssr/function.json": fileDigest(readFileSync(fnPath)) }).map((e) => e.message)).toEqual(['functions/ssr/function.json: name "other" does not match its folder']);
+    expect(
+      validateFunction(dir, "ssr", { "functions/ssr/function.json": fileDigest(readFileSync(fnPath)) }).map(
+        (e) => e.message,
+      ),
+    ).toEqual(['functions/ssr/function.json: name "other" does not match its folder']);
   });
 
   it("refuses a function.json that manifest.digests doesn't name", () => {
     writeValidFunctionFixture(dir, "ssr");
-    expect(validateFunction(dir, "ssr", {}).map((e) => e.message)).toEqual(["functions/ssr/function.json: manifest.json digests has no entry for it"]);
+    expect(validateFunction(dir, "ssr", {}).map((e) => e.message)).toEqual([
+      "functions/ssr/function.json: manifest.json digests has no entry for it",
+    ]);
   });
 
   it("refuses a non-canonical function.json and bundle.index.json", () => {
@@ -161,7 +171,11 @@ describe("validateFunction layout", () => {
     const fn = JSON.parse(readFileSync(fnPath, "utf8"));
     fn.artifact.digest = fileDigest(biRaw);
     writeFileSync(fnPath, JSON.stringify(fn, null, 1));
-    expect(validateFunction(dir, "ssr", { "functions/ssr/function.json": fileDigest(readFileSync(fnPath)) }).map((e) => e.message)).toEqual([
+    expect(
+      validateFunction(dir, "ssr", { "functions/ssr/function.json": fileDigest(readFileSync(fnPath)) }).map(
+        (e) => e.message,
+      ),
+    ).toEqual([
       "functions/ssr/function.json: not canonical JSON (RFC 8785)",
       "functions/ssr/bundle/bundle.index.json: not canonical JSON (RFC 8785)",
     ]);

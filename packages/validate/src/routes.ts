@@ -29,7 +29,8 @@ function hasJsOnlyEscape(pattern: string): boolean {
 
 // re2Problem returns why pattern doesn't compile as RE2, or undefined.
 function re2Problem(pattern: string): string | undefined {
-  if (hasJsOnlyEscape(pattern)) return "uses a JS-only escape (\\C, \\c, \\u or \\u{...}) other RE2 routers do not accept";
+  if (hasJsOnlyEscape(pattern))
+    return "uses a JS-only escape (\\C, \\c, \\u or \\u{...}) other RE2 routers do not accept";
   try {
     new RE2(pattern);
   } catch (err) {
@@ -50,7 +51,12 @@ export function checkRoutePatterns(routesDoc: unknown, prerenderDoc?: unknown): 
     for (const config of configs as ({ id?: unknown; match?: unknown } | null)[]) {
       if (!config || typeof config.match !== "string") continue;
       const problem = re2Problem(config.match);
-      if (problem) errs.push(new Error(`prerender.json: prerender "${String(config.id ?? "")}": match "${config.match}" does not compile as RE2: ${problem}`));
+      if (problem)
+        errs.push(
+          new Error(
+            `prerender.json: prerender "${String(config.id ?? "")}": match "${config.match}" does not compile as RE2: ${problem}`,
+          ),
+        );
     }
   }
   const routes = routesDoc as Record<string, RouteRule[] | undefined> | null;
@@ -65,7 +71,12 @@ export function checkRoutePatterns(routesDoc: unknown, prerenderDoc?: unknown): 
         const pattern = rule.match?.[field];
         if (typeof pattern !== "string") continue;
         const problem = re2Problem(pattern);
-        if (problem) errs.push(new Error(`routes.json: rule "${rule.id ?? ""}": ${field} "${pattern}" does not compile as RE2: ${problem}`));
+        if (problem)
+          errs.push(
+            new Error(
+              `routes.json: rule "${rule.id ?? ""}": ${field} "${pattern}" does not compile as RE2: ${problem}`,
+            ),
+          );
       }
     }
   }

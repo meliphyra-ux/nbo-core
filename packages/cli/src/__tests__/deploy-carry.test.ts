@@ -14,7 +14,12 @@ const { parseDeployArgs, runDeploy } = await import("../deploy.js");
 
 describe("nbo deploy --carry-from", () => {
   it("parses --carry-from and leaves it out when absent", () => {
-    expect(parseDeployArgs(["dir", "--app", "a", "--carry-from", "/prev"])).toEqual({ dir: "dir", appName: "a", target: "kubernetes", carryFrom: "/prev" });
+    expect(parseDeployArgs(["dir", "--app", "a", "--carry-from", "/prev"])).toEqual({
+      dir: "dir",
+      appName: "a",
+      target: "kubernetes",
+      carryFrom: "/prev",
+    });
     expect(parseDeployArgs(["dir", "--app", "a"])).not.toHaveProperty("carryFrom");
   });
 

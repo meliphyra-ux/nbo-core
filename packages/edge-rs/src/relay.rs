@@ -80,7 +80,7 @@ pub fn path_only(uri: &Uri) -> String {
 
 /// Handles one relayed request: 403 for a missing or wrong token, 400 for
 /// an upstream outside the pattern, else the upstream's answer (502
-/// starting `relay: ` when it can't be reached).
+/// `relay: upstream unreachable` when it can't be reached).
 pub async fn handle<B>(req: Request<B>, opts: &RelayOptions) -> Response<EdgeBody>
 where
     B: Body<Data = Bytes> + Send + 'static,
@@ -108,7 +108,7 @@ where
         .unwrap_or_default();
     let url = match Url::parse(&format!("http://{addr}{}{query}", incoming.path())) {
         Ok(u) => u,
-        Err(e) => return text(StatusCode::BAD_GATEWAY, format!("relay: {e}")),
+        Err(e) => return unreachable(&upstream, &e),
     };
 
     let (parts, body) = req.into_parts();
@@ -129,7 +129,7 @@ where
         .await
     {
         Ok(r) => r,
-        Err(e) => return text(StatusCode::BAD_GATEWAY, format!("relay: {e}")),
+        Err(e) => return unreachable(&upstream, &e),
     };
     let (parts, body) = response.into_parts();
     let mut res = Response::new(body.map_err(|e| -> BoxError { Box::new(e) }).boxed_unsync());
@@ -140,6 +140,13 @@ where
 
 /// Runs relay mode: HTTPS with the certificate in `NBO_RELAY_TLS_CERT` and
 /// `NBO_RELAY_TLS_KEY`, HTTP/1.1 only.
+/// The 502 for an upstream the relay can't reach. The answer reaches
+/// visitors through the edge, so the detail goes to the log only.
+fn unreachable(upstream: &str, err: &dyn std::fmt::Display) -> Response<EdgeBody> {
+    eprintln!("relay: upstream {upstream} unreachable: {err}");
+    text(StatusCode::BAD_GATEWAY, "relay: upstream unreachable")
+}
+
 pub async fn run(env: &Env, token: String) -> Result<(), String> {
     let cert_file = required(env, "NBO_RELAY_TLS_CERT")?;
     let key_file = required(env, "NBO_RELAY_TLS_KEY")?;

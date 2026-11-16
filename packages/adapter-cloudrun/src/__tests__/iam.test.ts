@@ -47,7 +47,9 @@ describe("ensureServiceIdentity", () => {
   });
 
   it("creates it with a display name and no roles when missing", async () => {
-    const { calls, ctx } = fake((_c, args) => (args[2] === "describe" ? new Error("NOT_FOUND: Unknown service account") : ""));
+    const { calls, ctx } = fake((_c, args) =>
+      args[2] === "describe" ? new Error("NOT_FOUND: Unknown service account") : "",
+    );
     await ensureServiceIdentity("acme", "svc", ctx);
     expect(calls).toHaveLength(2);
     const create = calls[1]!.args;
@@ -73,7 +75,9 @@ describe("ensureServiceIdentity", () => {
 
 describe("grantInvoker", () => {
   it("carries ctx env and retries propagation with 2/4/8s backoff", async () => {
-    const { calls, sleeps, ctx } = fake((_c, _a, n) => (n < 3 ? new Error("Service account nbo-x@acme.iam.gserviceaccount.com does not exist.") : ""));
+    const { calls, sleeps, ctx } = fake((_c, _a, n) =>
+      n < 3 ? new Error("Service account nbo-x@acme.iam.gserviceaccount.com does not exist.") : "",
+    );
     await grantInvoker("fn", "acme", "us-central1", "nbo-x@acme.iam.gserviceaccount.com", ctx);
     expect(calls).toHaveLength(3);
     expect(sleeps).toEqual([2000, 4000]);
@@ -82,7 +86,11 @@ describe("grantInvoker", () => {
 
   it("retries the actAs permission error that shows while a new account propagates", async () => {
     const { calls, sleeps, ctx } = fake((_c, _a, n) =>
-      n < 2 ? new Error("Permission 'iam.serviceaccounts.actAs' denied on service account nbo-x@p.iam.gserviceaccount.com (or it may not exist).") : "",
+      n < 2
+        ? new Error(
+            "Permission 'iam.serviceaccounts.actAs' denied on service account nbo-x@p.iam.gserviceaccount.com (or it may not exist).",
+          )
+        : "",
     );
     await grantInvoker("fn", "p", "r", "nbo-x@p.iam.gserviceaccount.com", ctx);
     expect(calls).toHaveLength(2);
@@ -98,7 +106,14 @@ describe("grantInvoker", () => {
 });
 
 describe("deploy with a service account", () => {
-  const spec = { serviceName: "svc", imageTag: "img", project: "acme", region: "r", contentID: "sha256:" + "a".repeat(64), allowUnauthenticated: false };
+  const spec = {
+    serviceName: "svc",
+    imageTag: "img",
+    project: "acme",
+    region: "r",
+    contentID: "sha256:" + "a".repeat(64),
+    allowUnauthenticated: false,
+  };
 
   it("adds --service-account and leaves other args untouched", () => {
     const base = buildDeployArgs(spec);
@@ -108,7 +123,9 @@ describe("deploy with a service account", () => {
   });
 
   it("runs gcloud through ctx and tolerates warning lines before the describe JSON", async () => {
-    const { calls, ctx } = fake((_c, args) => (args.includes("describe") ? `WARNING: x\n${JSON.stringify({ status: { url: "https://u" }, metadata: {} })}` : ""));
+    const { calls, ctx } = fake((_c, args) =>
+      args.includes("describe") ? `WARNING: x\n${JSON.stringify({ status: { url: "https://u" }, metadata: {} })}` : "",
+    );
     const url = await deploy(spec, ctx);
     expect(url).toBe("https://u");
     expect(calls.every((c) => c.env?.CLOUDSDK_CONFIG === "/tmp/g")).toBe(true);

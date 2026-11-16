@@ -28,7 +28,10 @@ describe("scanForSecrets", () => {
   it("flags a PEM private-key header planted in a function's function.json", () => {
     writeFileSync(join(dir, "manifest.json"), JSON.stringify({ functions: ["ssr"] }));
     mkdirSync(join(dir, "functions", "ssr"), { recursive: true });
-    writeFileSync(join(dir, "functions", "ssr", "function.json"), JSON.stringify({ name: "ssr", leaked: "-----BEGIN RSA PRIVATE KEY-----" }));
+    writeFileSync(
+      join(dir, "functions", "ssr", "function.json"),
+      JSON.stringify({ name: "ssr", leaked: "-----BEGIN RSA PRIVATE KEY-----" }),
+    );
     const errs = scanForSecrets(dir);
     const found = errs.some((e) => e.message.includes("function.json") && e.message.includes("BEGIN RSA PRIVATE KEY"));
     expect(found).toBe(true);

@@ -13,7 +13,10 @@ import type { FetchHandler } from "@nbo/funcproxy";
 // writes into dir (the .nbo/ directory); the sources live in a temp
 // directory removed afterwards, since write() empties dir first.
 
-async function withSources(files: Record<string, string>, build: (src: string) => Promise<{ contentId: string }>): Promise<{ contentId: string }> {
+async function withSources(
+  files: Record<string, string>,
+  build: (src: string) => Promise<{ contentId: string }>,
+): Promise<{ contentId: string }> {
   const src = mkdtempSync(join(tmpdir(), "nbo-spec-src-"));
   try {
     for (const [rel, body] of Object.entries(files)) {
@@ -89,7 +92,10 @@ export function buildFunctionApp(dir: string): Promise<{ contentId: string }> {
     async (src) => {
       const writer = new NboWriter({ outDir: dir, framework: { name: "static" } });
       writer.addStatic("/", join(src, "index.html"));
-      writer.addFunction("echo", { runtime: { kind: "node", version: ">=22" }, entryFilePath: join(src, "fn", "index.mjs") });
+      writer.addFunction("echo", {
+        runtime: { kind: "node", version: ">=22" },
+        entryFilePath: join(src, "fn", "index.mjs"),
+      });
       writer.setRoutes({
         version: 1,
         afterFiles: [{ id: "echo", match: { path: "^/echo(/.*)?$" }, action: { type: "rewrite", function: "echo" } }],
@@ -113,15 +119,24 @@ export function buildCarryApp(dir: string, which: "old" | "new"): Promise<{ cont
   return withSources(sources, async (src) => {
     const writer = new NboWriter({ outDir: dir, framework: { name: "vite" } });
     writer.addStatic("/", join(src, "index.html"));
-    for (const urlPath of Object.keys(assets)) writer.addStatic(urlPath, join(src, urlPath.slice(1)), { cache: "immutable" });
+    for (const urlPath of Object.keys(assets))
+      writer.addStatic(urlPath, join(src, urlPath.slice(1)), { cache: "immutable" });
     return writer.write();
   });
 }
 
 // writeCarry writes a carry directory in the format @nbo/deploy bakes into
 // an app image: <dir>/index.json plus each file under <dir>/static/.
-export async function writeCarry(dir: string, fromContentId: string, files: Record<string, { body: string; contentType: string }>): Promise<void> {
-  const index: { version: 1; contentId: string; files: Record<string, { file: string; contentType: string }> } = { version: 1, contentId: fromContentId, files: {} };
+export async function writeCarry(
+  dir: string,
+  fromContentId: string,
+  files: Record<string, { body: string; contentType: string }>,
+): Promise<void> {
+  const index: { version: 1; contentId: string; files: Record<string, { file: string; contentType: string }> } = {
+    version: 1,
+    contentId: fromContentId,
+    files: {},
+  };
   for (const [urlPath, f] of Object.entries(files)) {
     const rel = urlPath.replace(/^\/+/, "");
     await mkdir(dirname(join(dir, "static", rel)), { recursive: true });

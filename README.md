@@ -19,9 +19,15 @@ node packages/edge/dist/main.js &          # the local edge on :9443
 Then describe a site in `site.json` (any public repository with a static site works) and send it with `nbo-server`:
 
 ```json
-{ "name": "hello", "repo": "https://github.com/you/hello.git", "productionBranch": "main",
-  "framework": "static", "buildCommand": "npm ci && npm run build", "outputDir": "dist",
-  "clouds": [{ "target": "kubernetes" }] }
+{
+  "name": "hello",
+  "repo": "https://github.com/you/hello.git",
+  "productionBranch": "main",
+  "framework": "static",
+  "buildCommand": "npm ci && npm run build",
+  "outputDir": "dist",
+  "clouds": [{ "target": "kubernetes" }]
+}
 ```
 
 ```bash
@@ -33,16 +39,16 @@ When the build has deployed, the site answers at `http://hello.127.0.0.1.sslip.i
 
 ## Which document for what
 
-| You want to | Open |
-| --- | --- |
-| Launch NBO on a server for real sites | `docs/production.md` |
-| Learn how to use and run NBO, or how the code works | The manual in `docs/manual/`, starting with `docs/manual/README.md` |
-| See the architecture and the HTTP API | `docs/architecture/index.html` (open it in a browser) |
-| Read the exact `.nbo/` format | `docs/nbo-spec.md` |
-| Understand a design decision | `docs/context.md` and `docs/adr/` |
-| Set up your machine for development and clean up after it | `docs/local-dev.md` |
-| Read about the GitLab pipeline | `docs/ci.md` |
-| Know what is unfinished or rough | `docs/points-to-improve-or-fix.md` |
+| You want to                                               | Open                                                                |
+| --------------------------------------------------------- | ------------------------------------------------------------------- |
+| Launch NBO on a server for real sites                     | `docs/production.md`                                                |
+| Learn how to use and run NBO, or how the code works       | The manual in `docs/manual/`, starting with `docs/manual/README.md` |
+| See the architecture and the HTTP API                     | `docs/architecture/index.html` (open it in a browser)               |
+| Read the exact `.nbo/` format                             | `docs/nbo-spec.md`                                                  |
+| Understand a design decision                              | `docs/context.md` and `docs/adr/`                                   |
+| Set up your machine for development and clean up after it | `docs/local-dev.md`                                                 |
+| Read about the GitLab pipeline                            | `docs/ci.md`                                                        |
+| Know what is unfinished or rough                          | `docs/points-to-improve-or-fix.md`                                  |
 
 ## Commands
 
@@ -52,8 +58,10 @@ Run these at the repository root.
 pnpm install                     # install the workspace
 pnpm build                       # compile every package
 pnpm test                        # run every package's tests
-docker compose up -d --build     # run NBO from one image (API on 127.0.0.1:8081)
+docker compose up -d             # run NBO from the published image (API on 127.0.0.1:8081)
+docker compose -f compose.yaml -f compose.build.yaml up -d --build   # or build the image here
 pnpm docs:check                  # check the documentation against the code
+git config blame.ignoreRevsFile .git-blame-ignore-revs   # blame skips the format-only commits
 ```
 
 ## License

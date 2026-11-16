@@ -53,7 +53,9 @@ export function createAdminMux(registry: Registry, options: AdminOptions = {}): 
       try {
         body = await request.json();
       } catch (err) {
-        return new Response(`edge: invalid request body: ${err instanceof Error ? err.message : String(err)}`, { status: 400 });
+        return new Response(`edge: invalid request body: ${err instanceof Error ? err.message : String(err)}`, {
+          status: 400,
+        });
       }
       if (!isRecord(body) || !hasOnlyKeys(body, allowedBodyKeys) || !Array.isArray(body.backends)) {
         return new Response("edge: invalid request body", { status: 400 });

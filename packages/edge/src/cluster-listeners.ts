@@ -90,7 +90,9 @@ export async function startClusterListeners(
     },
     nodeToFetch(withChallenges(httpsProxy), { scheme: "https", clientIp: true }),
   );
-  const adminServer = createHttp(nodeToFetch(createAdminMux(registry, { insights, drainToken: deps.drainToken }), { scheme: "http" }));
+  const adminServer = createHttp(
+    nodeToFetch(createAdminMux(registry, { insights, drainToken: deps.drainToken }), { scheme: "http" }),
+  );
 
   const servers = [httpServer, httpsServer, adminServer];
   try {

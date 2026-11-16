@@ -8,7 +8,13 @@ import type { AddressInfo } from "node:net";
 import { webcrypto } from "node:crypto";
 import * as x509 from "@peculiar/x509";
 import { proxyRequest } from "@nbo/funcproxy";
-import { resolveClusterConfig, resolveEdgeMode, resolveRelayPort, resolveRelayUpstreamOverride, startClusterEdge } from "../main.js";
+import {
+  resolveClusterConfig,
+  resolveEdgeMode,
+  resolveRelayPort,
+  resolveRelayUpstreamOverride,
+  startClusterEdge,
+} from "../main.js";
 import { createRelayServer } from "../relay-server.js";
 
 x509.cryptoProvider.set(webcrypto as unknown as Crypto);
@@ -19,14 +25,20 @@ describe("resolveEdgeMode", () => {
   });
   it("cluster needs a drain token, namespace defaults to nbo-system", () => {
     expect(() => resolveEdgeMode({ NBO_EDGE_SOURCE: "kubernetes" })).toThrow(/NBO_EDGE_DRAIN_TOKEN/);
-    expect(() => resolveEdgeMode({ NBO_EDGE_SOURCE: "kubernetes", NBO_EDGE_DRAIN_TOKEN: "   " })).toThrow(/NBO_EDGE_DRAIN_TOKEN/);
-    expect(() => resolveEdgeMode({ NBO_EDGE_SOURCE: "kubernetes", NBO_EDGE_DRAIN_TOKEN: "" })).toThrow(/NBO_EDGE_DRAIN_TOKEN/);
+    expect(() => resolveEdgeMode({ NBO_EDGE_SOURCE: "kubernetes", NBO_EDGE_DRAIN_TOKEN: "   " })).toThrow(
+      /NBO_EDGE_DRAIN_TOKEN/,
+    );
+    expect(() => resolveEdgeMode({ NBO_EDGE_SOURCE: "kubernetes", NBO_EDGE_DRAIN_TOKEN: "" })).toThrow(
+      /NBO_EDGE_DRAIN_TOKEN/,
+    );
     expect(resolveEdgeMode({ NBO_EDGE_SOURCE: "kubernetes", NBO_EDGE_DRAIN_TOKEN: "d" })).toEqual({
       mode: "cluster",
       namespace: "nbo-system",
       drainToken: "d",
     });
-    expect(resolveEdgeMode({ NBO_EDGE_SOURCE: "kubernetes", NBO_EDGE_DRAIN_TOKEN: "d", NBO_EDGE_NAMESPACE: "x" })).toMatchObject({ namespace: "x" });
+    expect(
+      resolveEdgeMode({ NBO_EDGE_SOURCE: "kubernetes", NBO_EDGE_DRAIN_TOKEN: "d", NBO_EDGE_NAMESPACE: "x" }),
+    ).toMatchObject({ namespace: "x" });
   });
   it("relay needs a token", () => {
     expect(() => resolveEdgeMode({ NBO_EDGE_MODE: "relay" })).toThrow(/NBO_RELAY_TOKEN/);
@@ -47,7 +59,10 @@ async function selfSigned() {
     keys,
   });
   const pkcs8 = Buffer.from(await webcrypto.subtle.exportKey("pkcs8", keys.privateKey)).toString("base64");
-  return { cert: cert.toString("pem"), key: `-----BEGIN PRIVATE KEY-----\n${pkcs8.match(/.{1,64}/g)!.join("\n")}\n-----END PRIVATE KEY-----\n` };
+  return {
+    cert: cert.toString("pem"),
+    key: `-----BEGIN PRIVATE KEY-----\n${pkcs8.match(/.{1,64}/g)!.join("\n")}\n-----END PRIVATE KEY-----\n`,
+  };
 }
 
 const servers: Server[] = [];
@@ -178,7 +193,15 @@ describe("test-only overrides", () => {
         NBO_EDGE_KUBE_CA_FILE: "/c",
         NBO_EDGE_KUBE_POLL_MS: "100",
       }),
-    ).toEqual({ apiBase: "https://127.0.0.1:9", tokenFile: "/t", caFile: "/c", httpPort: 1, httpsPort: 2, adminPort: 3, intervalMs: 100 });
+    ).toEqual({
+      apiBase: "https://127.0.0.1:9",
+      tokenFile: "/t",
+      caFile: "/c",
+      httpPort: 1,
+      httpsPort: 2,
+      adminPort: 3,
+      intervalMs: 100,
+    });
     expect(resolveRelayPort({ NBO_EDGE_RELAY_PORT: "7" })).toBe(7);
     expect(() => resolveClusterConfig({ NBO_EDGE_CLUSTER_PORTS: "1,2" })).toThrow(/NBO_EDGE_CLUSTER_PORTS/);
     expect(resolveRelayUpstreamOverride({})).toBeUndefined();

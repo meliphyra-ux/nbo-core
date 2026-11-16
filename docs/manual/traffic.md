@@ -121,8 +121,8 @@ The old per-request `pick(target)` in `registry.ts` (random by weight) is still 
 1. Reads the `Host` header and looks it up. Unknown host → **404** "edge: no target registered for host …".
 2. `pick` a backend. Nothing pickable → **502**.
 3. Forwards the request with `proxyRequest` (from `@nbo/funcproxy`), adding `x-forwarded-host` (the original host, so the app knows its public name) and `x-forwarded-proto`.
-4. Backend unreachable or too slow to start answering → **502** "edge: …".
-5. Streams the backend's response back, adding `x-nbo-edge-backend: <backend url>`. Open your browser's network tab to see which cloud answered. The app server's `x-nbo-deployment-id` (the build's content id) stays on the response too.
+4. Backend unreachable or too slow to start answering → **502** "edge: backend unreachable". The reason (refused connection, timeout, certificate) goes to the edge's log, never to the visitor.
+5. Streams the backend's response back, adding `x-nbo-edge-backend: <backend id>`: the environment id (`env_…`) the control-plane sends with each backend, never the backend's URL. A backend without an id (a route table from an older control-plane) gets no header. Open your browser's network tab to see which cloud answered; `GET /projects/{id}/summary` lists each cloud's environment id. The app server's `x-nbo-deployment-id` (the build's content id) stays on the response too.
 
 ### Admin API
 
@@ -142,31 +142,31 @@ Everything above describes the edge as one program with an in-memory table and a
 
 The weights are stored in the database, on each cloud entry (`environments.traffic_weight`, a whole number 0 to 100; the table keeps the older name `environments` for what this manual calls a cloud). The edge just copies them.
 
-**File:** `packages/controlplane/src/edge-sync.ts` → `createEdgeSync`
+**File:** `packages/controlplane/src/edge/edge-sync.ts` → `createEdgeSync`
 
-| Method                         | What it does                                                                                                                                |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| `desiredTarget(projectId)`     | Builds the split from the database: for each cloud with a successful deployment, its latest URL and weight.                                 |
-| `push(projectId)`              | `PUT`s that split to the edge admin. Skipped if every weight is 0 (nothing to route yet).                                                   |
-| `onDeployed(projectId, envId)` | Called by the runner after every successful deploy. If no cloud has traffic yet (first deploy ever), gives this one 100. Then `push`.       |
-| `inSync(projectId)`            | Compares the edge's live split with the database. The traffic route answers `edgeInSync: true` when they match.                             |
-| `remove(host)`                 | `DELETE` when a project is deleted.                                                                                                         |
-| `reconcile()`                  | `push` for every project.                                                                                                                   |
+| Method                         | What it does                                                                                                                          |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `desiredTarget(projectId)`     | Builds the split from the database: for each cloud with a successful deployment, its latest URL and weight.                           |
+| `push(projectId)`              | `PUT`s that split to the edge admin. Skipped if every weight is 0 (nothing to route yet).                                             |
+| `onDeployed(projectId, envId)` | Called by the runner after every successful deploy. If no cloud has traffic yet (first deploy ever), gives this one 100. Then `push`. |
+| `inSync(projectId)`            | Compares the edge's live split with the database. The traffic route answers `edgeInSync: true` when they match.                       |
+| `remove(host)`                 | `DELETE` when a project is deleted.                                                                                                   |
+| `reconcile()`                  | `push` for every project.                                                                                                             |
 
 ### Keeping the edge in sync
 
-`reconcile()` runs on every poller tick (about every 45 seconds; `packages/controlplane/src/poller.ts`). So after the edge restarts, every project is routable again within a minute, without anyone doing anything. Failures are logged and retried next tick.
+`reconcile()` runs on every poller tick (about every 45 seconds; `packages/controlplane/src/git/poller.ts`). So after the edge restarts, every project is routable again within a minute, without anyone doing anything. Failures are logged and retried next tick.
 
 ### How a hand-made split is saved
 
 1. A client sends `PUT /projects/{id}/traffic` with `{ weights: { <cloud id>: 50, <cloud id>: 30, <cloud id>: 20 } }`.
-2. The route (`v2-routes.ts`) checks: no transfer is running (otherwise `409`), every cloud belongs to the project and isn't archived, each with a positive weight has ever had a successful deployment with a URL (`canTakeTraffic` in `v2-routes.ts`, also sent in the summary; a pending or failed redeploy after that doesn't matter), each weight is a whole number 0 to 100, and at least one is above 0. Weights are relative, so 1 and 3 means 25% / 75%; send them adding to 100 to keep them easy to read.
+2. The route (`http/v2-routes.ts`) checks: no transfer is running (otherwise `409`), every cloud belongs to the project and isn't archived, each with a positive weight has ever had a successful deployment with a URL (`canTakeTraffic` in `http/project-summary.ts`, also sent in the summary; a pending or failed redeploy after that doesn't matter), each weight is a whole number 0 to 100, and at least one is above 0. Weights are relative, so 1 and 3 means 25% / 75%; send them adding to 100 to keep them easy to read.
 3. `store.setTrafficWeights(...)` saves them; `edgeSync.push` sends them to the edge.
 4. The edge uses the new numbers from the very next request.
 
 ### How a transfer runs
 
-**Server:** `POST /projects/{id}/transfer` → `createTransfers().start(...)` in `packages/controlplane/src/transfer.ts`. The steps above map to the transfer's `status`: `provisioning` (`setup.addCloud(...)`), `building` (waits for `queue.idle`, then a promote of the live build), `shifting`, then `done`. In each shifting step the new side gets the step's weight and the rest is shared among every other cloud of the project in proportion to the weights they had when the transfer started (if none had traffic, the source cloud takes it all), so the weights always add up to 100. `POST /projects/{id}/transfer/cancel` sets `cancelled`; the loop checks this before every step. Any failure sets `failed` with the error. On restart, `recoverInterruptedWork` in `src/v2.ts` marks an interrupted transfer failed.
+**Server:** `POST /projects/{id}/transfer` → `createTransfers().start(...)` in `packages/controlplane/src/deploys/transfer.ts`. The steps above map to the transfer's `status`: `provisioning` (`setup.addCloud(...)`), `building` (waits for `queue.idle`, then a promote of the live build), `shifting`, then `done`. In each shifting step the new side gets the step's weight and the rest is shared among every other cloud of the project in proportion to the weights they had when the transfer started (if none had traffic, the source cloud takes it all), so the weights always add up to 100. `POST /projects/{id}/transfer/cancel` sets `cancelled`; the loop checks this before every step. Any failure sets `failed` with the error. On restart, `recoverInterruptedWork` in `src/v2.ts` marks an interrupted transfer failed.
 
 ### Proving it works
 

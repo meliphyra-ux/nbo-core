@@ -1,0 +1,11 @@
+# Build NBO from this folder instead of pulling the ready-made image:
+#
+#   docker compose -f compose.yaml -f compose.build.yaml up -d --build
+#
+# The first build takes 10 to 15 minutes on a small server (it compiles the
+# Terraform provider for five platforms) and needs a few GB of free disk. Use
+# the same two -f options in every later `docker compose` command.
+services:
+  nbo:
+    build: .
+    image: nbo:local

@@ -49,6 +49,21 @@
       }
     },
     "concurrency": { "type": "string", "const": "multi" },
-    "requires": { "type": "array", "items": { "type": "string", "enum": ["fn.streaming", "fn.edge", "fn.waitUntil", "fn.arm64", "prerender.isr", "prerender.onDemand", "images.optimize", "geo.headers"] } }
+    "requires": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "fn.streaming",
+          "fn.edge",
+          "fn.waitUntil",
+          "fn.arm64",
+          "prerender.isr",
+          "prerender.onDemand",
+          "images.optimize",
+          "geo.headers"
+        ]
+      }
+    }
   }
 }

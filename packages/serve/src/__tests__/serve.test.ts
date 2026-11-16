@@ -100,7 +100,9 @@ describe("createHandler", () => {
     const dir = await mkdtemp(join(tmpdir(), "serve-fixture-"));
     await mkdir(join(dir, "static"), { recursive: true });
     await writeFile(join(dir, "static", "old.html"), "old");
-    const files = { "/docs/v1/intro": { file: "old.html", contentType: "text/html; charset=utf-8", cache: "revalidate" } };
+    const files = {
+      "/docs/v1/intro": { file: "old.html", contentType: "text/html; charset=utf-8", cache: "revalidate" },
+    };
     await writeFile(join(dir, "static.index.json"), JSON.stringify({ files }));
     const routes = {
       version: 1,
@@ -149,7 +151,12 @@ describe("createHandler", () => {
     const routes = {
       version: 1,
       beforeFiles: [
-        { id: "security-headers", match: { path: "^/" }, action: { type: "headers", set: { "x-frame-options": "DENY" } }, continue: true },
+        {
+          id: "security-headers",
+          match: { path: "^/" },
+          action: { type: "headers", set: { "x-frame-options": "DENY" } },
+          continue: true,
+        },
         { id: "old-redirect", match: { path: "^/old$" }, action: { type: "redirect", location: "/new", status: 301 } },
       ],
     };
@@ -164,7 +171,10 @@ describe("createHandler", () => {
 
   it("a rewrite to a function dispatches to the resolver by name", async () => {
     const dir = await writeFixtureWithRoutesJSON(
-      JSON.stringify({ version: 1, afterFiles: [{ id: "ssr", match: { path: "^/$" }, action: { type: "rewrite", function: "ssr" } }] }),
+      JSON.stringify({
+        version: 1,
+        afterFiles: [{ id: "ssr", match: { path: "^/$" }, action: { type: "rewrite", function: "ssr" } }],
+      }),
     );
     const resolve = stubResolver(async () => new Response("ssr-response"));
     const handler = await createHandler(dir, resolve);
@@ -184,7 +194,10 @@ describe("createHandler", () => {
   // the function must never see values a client supplied.
   it("strips next-resume and x-matched-path from an incoming client request before it ever reaches a function", async () => {
     const dir = await writeFixtureWithRoutesJSON(
-      JSON.stringify({ version: 1, afterFiles: [{ id: "ssr", match: { path: "^/$" }, action: { type: "rewrite", function: "ssr" } }] }),
+      JSON.stringify({
+        version: 1,
+        afterFiles: [{ id: "ssr", match: { path: "^/$" }, action: { type: "rewrite", function: "ssr" } }],
+      }),
     );
     let gotHeaders: Headers | undefined;
     const resolve = stubResolver(async (request) => {
@@ -206,7 +219,10 @@ describe("createHandler", () => {
 
   it("strips every header Next treats as internal, matching its INTERNAL_HEADERS", async () => {
     const dir = await writeFixtureWithRoutesJSON(
-      JSON.stringify({ version: 1, afterFiles: [{ id: "ssr", match: { path: "^/$" }, action: { type: "rewrite", function: "ssr" } }] }),
+      JSON.stringify({
+        version: 1,
+        afterFiles: [{ id: "ssr", match: { path: "^/$" }, action: { type: "rewrite", function: "ssr" } }],
+      }),
     );
     let gotHeaders: Headers | undefined;
     const resolve = stubResolver(async (request) => {
@@ -233,7 +249,10 @@ describe("createHandler", () => {
 
   it("keeps the client's disconnect signal on a request it had to strip", async () => {
     const dir = await writeFixtureWithRoutesJSON(
-      JSON.stringify({ version: 1, afterFiles: [{ id: "ssr", match: { path: "^/$" }, action: { type: "rewrite", function: "ssr" } }] }),
+      JSON.stringify({
+        version: 1,
+        afterFiles: [{ id: "ssr", match: { path: "^/$" }, action: { type: "rewrite", function: "ssr" } }],
+      }),
     );
     let gotSignal: AbortSignal | undefined;
     const resolve = stubResolver(async (request) => {
@@ -249,7 +268,10 @@ describe("createHandler", () => {
   });
 
   describe("x-forwarded-host", () => {
-    const ssrRoutes = JSON.stringify({ version: 1, afterFiles: [{ id: "ssr", match: { path: "^/$" }, action: { type: "rewrite", function: "ssr" } }] });
+    const ssrRoutes = JSON.stringify({
+      version: 1,
+      afterFiles: [{ id: "ssr", match: { path: "^/$" }, action: { type: "rewrite", function: "ssr" } }],
+    });
 
     async function capture(request: Request): Promise<{ headers: Headers; body: string }> {
       const dir = await writeFixtureWithRoutesJSON(ssrRoutes);
@@ -271,13 +293,17 @@ describe("createHandler", () => {
     });
 
     it("keeps a POST's body when it has to be added", async () => {
-      const got = await capture(new Request("http://x/", { method: "POST", headers: { host: "site.test" }, body: "form-data" }));
+      const got = await capture(
+        new Request("http://x/", { method: "POST", headers: { host: "site.test" }, body: "form-data" }),
+      );
       expect(got.headers.get("x-forwarded-host")).toBe("site.test");
       expect(got.body).toBe("form-data");
     });
 
     it("is never overwritten when the edge sent one", async () => {
-      const got = await capture(new Request("http://x/", { headers: { host: "internal.svc", "x-forwarded-host": "public.test" } }));
+      const got = await capture(
+        new Request("http://x/", { headers: { host: "internal.svc", "x-forwarded-host": "public.test" } }),
+      );
       expect(got.headers.get("x-forwarded-host")).toBe("public.test");
     });
 
@@ -307,7 +333,10 @@ describe("createHandler", () => {
 
   it("a Function decision with no resolve configured is a clean 500", async () => {
     const dir = await writeFixtureWithRoutesJSON(
-      JSON.stringify({ version: 1, afterFiles: [{ id: "ssr", match: { path: "^/$" }, action: { type: "rewrite", function: "ssr" } }] }),
+      JSON.stringify({
+        version: 1,
+        afterFiles: [{ id: "ssr", match: { path: "^/$" }, action: { type: "rewrite", function: "ssr" } }],
+      }),
     );
     const handler = await createHandler(dir);
     const res = await handler(new Request("http://x/"));
@@ -319,7 +348,10 @@ describe("createHandler", () => {
   // every header via .set() loses every value but the last.
   it("a function response setting two Set-Cookie values keeps both", async () => {
     const dir = await writeFixtureWithRoutesJSON(
-      JSON.stringify({ version: 1, afterFiles: [{ id: "ssr", match: { path: "^/$" }, action: { type: "rewrite", function: "ssr" } }] }),
+      JSON.stringify({
+        version: 1,
+        afterFiles: [{ id: "ssr", match: { path: "^/$" }, action: { type: "rewrite", function: "ssr" } }],
+      }),
     );
     const resolve = stubResolver(async () => {
       const headers = new Headers();
@@ -337,7 +369,10 @@ describe("createHandler", () => {
   // contract every other resolver in this rewrite already follows.
   it("a function that rejects is a clean 502, not a propagated rejection", async () => {
     const dir = await writeFixtureWithRoutesJSON(
-      JSON.stringify({ version: 1, afterFiles: [{ id: "ssr", match: { path: "^/$" }, action: { type: "rewrite", function: "ssr" } }] }),
+      JSON.stringify({
+        version: 1,
+        afterFiles: [{ id: "ssr", match: { path: "^/$" }, action: { type: "rewrite", function: "ssr" } }],
+      }),
     );
     const resolve = stubResolver(async () => {
       throw new Error("boom");
@@ -352,11 +387,16 @@ describe("createHandler", () => {
   // client as-is.
   it("strips hop-by-hop headers from a function's own response", async () => {
     const dir = await writeFixtureWithRoutesJSON(
-      JSON.stringify({ version: 1, afterFiles: [{ id: "ssr", match: { path: "^/$" }, action: { type: "rewrite", function: "ssr" } }] }),
+      JSON.stringify({
+        version: 1,
+        afterFiles: [{ id: "ssr", match: { path: "^/$" }, action: { type: "rewrite", function: "ssr" } }],
+      }),
     );
     const resolve = stubResolver(
       async () =>
-        new Response("ok", { headers: { connection: "keep-alive", "transfer-encoding": "chunked", "x-real-header": "yes" } }),
+        new Response("ok", {
+          headers: { connection: "keep-alive", "transfer-encoding": "chunked", "x-real-header": "yes" },
+        }),
     );
     const handler = await createHandler(dir, resolve);
     const res = await handler(new Request("http://x/"));
@@ -391,7 +431,9 @@ describe("x-nbo-deployment-id", () => {
     await writeFile(join(dir, "static", "index.html"), "home");
     await writeFile(
       join(dir, "static.index.json"),
-      JSON.stringify({ files: { "/": { file: "index.html", contentType: "text/html; charset=utf-8", cache: "revalidate" } } }),
+      JSON.stringify({
+        files: { "/": { file: "index.html", contentType: "text/html; charset=utf-8", cache: "revalidate" } },
+      }),
     );
     await writeFile(
       join(dir, "routes.json"),

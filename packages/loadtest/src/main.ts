@@ -16,7 +16,11 @@ import { run, evaluate, type Config } from "./run.js";
 // variable name and default value (both preserved). Cost if wrong: an
 // operator migrating a Go-style "10s" override would need to rewrite
 // it as "10000"; the default itself is unaffected.
-export function parseLoadtestOptions(env: Record<string, string | undefined>): { requestsPerSec: number; phaseDurationMs: number; concurrency: number } {
+export function parseLoadtestOptions(env: Record<string, string | undefined>): {
+  requestsPerSec: number;
+  phaseDurationMs: number;
+  concurrency: number;
+} {
   const requestsPerSec = parseIntEnv(env, "NBO_LOADTEST_RPS", 50);
   const phaseDurationMs = parseIntEnv(env, "NBO_LOADTEST_PHASE_DURATION", 10_000);
   const concurrency = parseIntEnv(env, "NBO_LOADTEST_CONCURRENCY", 20);
@@ -33,7 +37,13 @@ function parseIntEnv(env: Record<string, string | undefined>, name: string, fall
   return n;
 }
 
-const requiredEnvVars = ["NBO_LOADTEST_PROXY_URL", "NBO_LOADTEST_HOST", "NBO_LOADTEST_ADMIN_URL", "NBO_LOADTEST_K8S_URL", "NBO_LOADTEST_CLOUDRUN_URL"] as const;
+const requiredEnvVars = [
+  "NBO_LOADTEST_PROXY_URL",
+  "NBO_LOADTEST_HOST",
+  "NBO_LOADTEST_ADMIN_URL",
+  "NBO_LOADTEST_K8S_URL",
+  "NBO_LOADTEST_CLOUDRUN_URL",
+] as const;
 
 // main — port of cmd/loadtest/main.go lines 13-92: the four hardcoded
 // phases are the exact sequence scripts/verify-slice3-edge.sh already
@@ -84,7 +94,9 @@ async function main(): Promise<void> {
   }
 
   for (const p of result.phases) {
-    console.log(`phase ${JSON.stringify(p.weights)}: total=${p.total} failures=${p.failures} k8s_hits=${p.k8sHits} cloudrun_hits=${p.cloudRunHits}`);
+    console.log(
+      `phase ${JSON.stringify(p.weights)}: total=${p.total} failures=${p.failures} k8s_hits=${p.k8sHits} cloudrun_hits=${p.cloudRunHits}`,
+    );
   }
 
   const problems = evaluate(result);

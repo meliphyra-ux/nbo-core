@@ -24,7 +24,21 @@ function createSelfSignedCert(): { key: string; cert: string } {
   const keyPath = join(dir, "key.pem");
   const certPath = join(dir, "cert.pem");
   try {
-    execFileSync("openssl", ["req", "-x509", "-newkey", "rsa:2048", "-keyout", keyPath, "-out", certPath, "-days", "1", "-nodes", "-subj", "/CN=localhost"]);
+    execFileSync("openssl", [
+      "req",
+      "-x509",
+      "-newkey",
+      "rsa:2048",
+      "-keyout",
+      keyPath,
+      "-out",
+      certPath,
+      "-days",
+      "1",
+      "-nodes",
+      "-subj",
+      "/CN=localhost",
+    ]);
     return { key: readFileSync(keyPath, "utf8"), cert: readFileSync(certPath, "utf8") };
   } finally {
     rmSync(dir, { recursive: true, force: true });
@@ -55,9 +69,12 @@ describe("run: expectHeaders", () => {
       res.setHeader("cache-control", "private, no-store");
       res.end("page");
     });
-    const check = (expectHeaders: Record<string, string>): Promise<string[]> => run(url, [{ method: "GET", path: "/", expectStatus: 200, expectBodyContains: "page", expectHeaders }], false);
+    const check = (expectHeaders: Record<string, string>): Promise<string[]> =>
+      run(url, [{ method: "GET", path: "/", expectStatus: 200, expectBodyContains: "page", expectHeaders }], false);
     expect(await check({ "Cache-Control": "private, no-store" })).toEqual([]);
-    expect(await check({ "cache-control": "no-cache" })).toEqual(['/: expected header cache-control "no-cache", got "private, no-store"']);
+    expect(await check({ "cache-control": "no-cache" })).toEqual([
+      '/: expected header cache-control "no-cache", got "private, no-store"',
+    ]);
     expect(await check({ "x-missing": "1" })).toEqual(['/: expected header x-missing "1", got null']);
   });
 });
@@ -75,7 +92,9 @@ function startBackend(handler: (req: IncomingMessage, res: ServerResponse) => vo
 describe("run", () => {
   it("passes when every transcript matches", async () => {
     const baseURL = await startBackend((_req, res) => res.writeHead(200).end("hello"));
-    const transcripts: Transcript[] = [{ method: "GET", path: "/", expectStatus: 200, expectBodySha256: sha256Digest("hello") }];
+    const transcripts: Transcript[] = [
+      { method: "GET", path: "/", expectStatus: 200, expectBodySha256: sha256Digest("hello") },
+    ];
 
     const errors = await run(baseURL, transcripts, false);
 
@@ -101,7 +120,9 @@ describe("run", () => {
 
   it("reports a body digest mismatch even when status matches", async () => {
     const baseURL = await startBackend((_req, res) => res.writeHead(200).end("actual"));
-    const transcripts: Transcript[] = [{ method: "GET", path: "/", expectStatus: 200, expectBodySha256: sha256Digest("expected") }];
+    const transcripts: Transcript[] = [
+      { method: "GET", path: "/", expectStatus: 200, expectBodySha256: sha256Digest("expected") },
+    ];
 
     const errors = await run(baseURL, transcripts, false);
 
@@ -154,7 +175,9 @@ describe("run", () => {
       gotHeader = req.headers["x-custom"] as string | undefined;
       res.writeHead(200).end();
     });
-    const transcripts: Transcript[] = [{ method: "GET", path: "/", headers: { "X-Custom": "value" }, expectStatus: 200 }];
+    const transcripts: Transcript[] = [
+      { method: "GET", path: "/", headers: { "X-Custom": "value" }, expectStatus: 200 },
+    ];
 
     await run(baseURL, transcripts, false);
 
@@ -182,7 +205,9 @@ describe.skipIf(!opensslAvailable)("run (TLS)", () => {
 
   it("insecure:true skips cert verification", async () => {
     const baseURL = startSelfSignedBackend((_req, res) => res.writeHead(200).end("ok"));
-    const transcripts: Transcript[] = [{ method: "GET", path: "/", expectStatus: 200, expectBodySha256: sha256Digest("ok") }];
+    const transcripts: Transcript[] = [
+      { method: "GET", path: "/", expectStatus: 200, expectBodySha256: sha256Digest("ok") },
+    ];
 
     const errors = await run(baseURL, transcripts, true);
 
@@ -196,7 +221,8 @@ describe("run: expectHeaderPatterns", () => {
       res.setHeader("x-nbo-deployment-id", "sha256:" + "b".repeat(64));
       res.end("page");
     });
-    const check = (expectHeaderPatterns: Record<string, string>): Promise<string[]> => run(url, [{ method: "GET", path: "/p", expectStatus: 200, expectHeaderPatterns }], false);
+    const check = (expectHeaderPatterns: Record<string, string>): Promise<string[]> =>
+      run(url, [{ method: "GET", path: "/p", expectStatus: 200, expectHeaderPatterns }], false);
     expect(await check({ "X-Nbo-Deployment-Id": "sha256:[0-9a-f]{64}" })).toEqual([]);
     expect(await check({ "x-nbo-deployment-id": "sha256:[0-9a-f]{10}" })).toHaveLength(1);
     const missing = await check({ "x-missing": ".*" });

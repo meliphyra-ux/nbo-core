@@ -8,7 +8,7 @@ A self-hosted hosting platform, a bit like Vercel, that deploys the same build t
 - `docs/context.md`: why things are the way they are, Next.js adapter API facts, the producer design.
 - `docs/manual/*.md`: the manual (index in `docs/manual/README.md`), written for readers who know only front-end basics. Update the matching chapter when you change how something works, and the table in `docs/manual/tried.md` when something is proven on real infrastructure.
 - `docs/production.md`: how to launch NBO for real sites. Keep it true when launch steps change.
-- `docs/architecture/index.html`: the architecture tour and the complete HTTP API reference. Open it in a browser; keep it in step with the code (`pnpm docs:check` compares its API table with `packages/controlplane/src/access.ts`).
+- `docs/architecture/index.html`: the architecture tour and the complete HTTP API reference. Open it in a browser; keep it in step with the code (`pnpm docs:check` compares its API table with `packages/controlplane/src/http/access.ts`).
 - `docs/adr/`: decision records.
 - `docs/points-to-improve-or-fix.md`: known rough edges.
 
@@ -31,7 +31,7 @@ Compiler model: framework producers write `.nbo/` (cloud-neutral, content-addres
 - `contentType` is mandatory for every static file.
 - Core schemas reject unknown fields; extensions use an `x-` prefix and a `critical` flag.
 - Every new behavior gets a conformance fixture with HTTP transcripts, run against `nbo serve` and, where the harness covers that suite, each adapter.
-- Every API route has exactly one row in `packages/controlplane/src/access.ts`: `public` (only `GET /healthz`), `webhook` (signature checked), `token` (an API token from anywhere, or no token from loopback) or `local` (loopback only, no token).
+- Every API route has exactly one row in `packages/controlplane/src/http/access.ts`: `public` (only `GET /healthz`), `webhook` (signature checked), `token` (an API token from anywhere, or no token from loopback) or `local` (loopback only, no token).
 - `nbo-server` never takes a secret value as a command-line argument: kubeconfigs, keys, tokens and request bodies come from files or stdin.
 - Git credentials (tokens, deploy keys' private halves) never appear in an API answer, a build log, an error message or a process list.
 - Wire names are fixed for all of 1.x: `.nbo/`, `nbo`, `x-nbo-*`, `/_nbo/`, `NBO_*`, the `nbo.dev/*` labels, the `nbo-*` namespaces and service accounts.

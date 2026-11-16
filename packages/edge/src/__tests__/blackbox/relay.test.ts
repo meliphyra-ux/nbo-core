@@ -6,7 +6,18 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { createTestCa, removeDir, send, startBackend, startEdge, tempDir, type FakeBackend, type RunningEdge, type TestCa } from "./harness.js";
+import {
+  createTestCa,
+  freePort,
+  removeDir,
+  send,
+  startBackend,
+  startEdge,
+  tempDir,
+  type FakeBackend,
+  type RunningEdge,
+  type TestCa,
+} from "./harness.js";
 
 const TOKEN = "relay-token-0123456789";
 const UPSTREAM = "web.nbo-p-abc123.svc.cluster.local:8080";
@@ -45,7 +56,8 @@ describe("black-box: relay mode", () => {
     if (dir) removeDir(dir);
   });
 
-  const relay = (headers: Record<string, string>, rawPath?: string) => send(`${edge.dataUrl}/x`, { ca: ca.cert, headers: { host: "relay.test", ...headers }, rawPath });
+  const relay = (headers: Record<string, string>, rawPath?: string) =>
+    send(`${edge.dataUrl}/x`, { ca: ca.cert, headers: { host: "relay.test", ...headers }, rawPath });
 
   it("serves TLS with its configured certificate", async () => {
     // The CA verifies the handshake; a request without a token is refused.
@@ -54,12 +66,40 @@ describe("black-box: relay mode", () => {
   });
 
   it("answers 403 to a missing, wrong or wrong-length token", async () => {
-    for (const headers of [{}, { "x-nbo-relay-token": "relay-token-0123456788" }, { "x-nbo-relay-token": "short" }, { "x-nbo-relay-token": `${TOKEN}x` }]) {
+    for (const headers of [
+      {},
+      { "x-nbo-relay-token": "relay-token-0123456788" },
+      { "x-nbo-relay-token": "short" },
+      { "x-nbo-relay-token": `${TOKEN}x` },
+    ]) {
       const r = await relay({ ...headers, "x-nbo-upstream": UPSTREAM });
       expect(r.status, JSON.stringify(headers)).toBe(403);
       expect(r.body).toBe("relay: forbidden");
     }
   });
+
+  it("answers 502 relay: upstream unreachable, naming nothing internal, when the upstream refuses", async () => {
+    const port = await freePort();
+    const down = await startEdge({
+      mode: "relay",
+      env: {
+        NBO_RELAY_TOKEN: TOKEN,
+        NBO_RELAY_TLS_CERT: join(dir, "relay.crt"),
+        NBO_RELAY_TLS_KEY: join(dir, "relay.key"),
+        NBO_EDGE_RELAY_UPSTREAM_OVERRIDE: `127.0.0.1:${port}`,
+      },
+    });
+    try {
+      const r = await send(`${down.dataUrl}/x`, {
+        ca: ca.cert,
+        headers: { host: "relay.test", "x-nbo-relay-token": TOKEN, "x-nbo-upstream": UPSTREAM },
+      });
+      expect(r.status).toBe(502);
+      expect(r.body).toBe("relay: upstream unreachable");
+    } finally {
+      await down.stop();
+    }
+  }, 30_000);
 
   it("answers 400 to an upstream outside the project-Service pattern", async () => {
     const port = new URL(decoy.url).port;
@@ -87,7 +127,14 @@ describe("black-box: relay mode", () => {
       servername: "relay.test",
       method: "POST",
       body: "payload",
-      headers: { host: "app.test", "x-nbo-relay-token": TOKEN, "x-nbo-upstream": UPSTREAM, "x-forwarded-host": "app.test", "x-forwarded-for": "203.0.113.7", "x-kept": "1" },
+      headers: {
+        host: "app.test",
+        "x-nbo-relay-token": TOKEN,
+        "x-nbo-upstream": UPSTREAM,
+        "x-forwarded-host": "app.test",
+        "x-forwarded-for": "203.0.113.7",
+        "x-kept": "1",
+      },
     });
     expect(r.status).toBe(200);
     expect(r.body).toBe("upstream");

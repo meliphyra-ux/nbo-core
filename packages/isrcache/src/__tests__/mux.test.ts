@@ -8,7 +8,12 @@ import { createMux } from "../mux.js";
 describe("createMux", () => {
   it("PUT then GET round-trips and reports state fresh", async () => {
     const mux = createMux(createStore());
-    const body = JSON.stringify({ body: Buffer.from("hello").toString("base64"), header: { "Content-Type": ["text/plain"] }, revalidateSec: 300, expireSec: 86400 });
+    const body = JSON.stringify({
+      body: Buffer.from("hello").toString("base64"),
+      header: { "Content-Type": ["text/plain"] },
+      revalidateSec: 300,
+      expireSec: 86400,
+    });
 
     const putResponse = await mux(new Request("http://isrcache/entries/k1", { method: "PUT", body }));
     expect(putResponse.status).toBe(204);
@@ -30,10 +35,17 @@ describe("createMux", () => {
 
   it("invalidate by tag removes a PUT entry", async () => {
     const mux = createMux(createStore());
-    const body = JSON.stringify({ body: Buffer.from("hello").toString("base64"), tags: ["blog"], revalidateSec: 300, expireSec: 86400 });
+    const body = JSON.stringify({
+      body: Buffer.from("hello").toString("base64"),
+      tags: ["blog"],
+      revalidateSec: 300,
+      expireSec: 86400,
+    });
     await mux(new Request("http://isrcache/entries/k1", { method: "PUT", body }));
 
-    const invResponse = await mux(new Request("http://isrcache/invalidate", { method: "POST", body: JSON.stringify({ tags: ["blog"] }) }));
+    const invResponse = await mux(
+      new Request("http://isrcache/invalidate", { method: "POST", body: JSON.stringify({ tags: ["blog"] }) }),
+    );
     expect(invResponse.status).toBe(204);
 
     const getResponse = await mux(new Request("http://isrcache/entries/k1"));
@@ -42,7 +54,12 @@ describe("createMux", () => {
 
   it("rejects a PUT body with an unknown field", async () => {
     const mux = createMux(createStore());
-    const body = JSON.stringify({ body: Buffer.from("hello").toString("base64"), unknownField: "x", revalidateSec: 300, expireSec: 86400 });
+    const body = JSON.stringify({
+      body: Buffer.from("hello").toString("base64"),
+      unknownField: "x",
+      revalidateSec: 300,
+      expireSec: 86400,
+    });
 
     const response = await mux(new Request("http://isrcache/entries/k1", { method: "PUT", body }));
 
@@ -79,7 +96,9 @@ describe("createMux request limits", () => {
         if (pulled > 5000) controller.close();
       },
     });
-    const res = await mux(new Request("http://isrcache/entries/k", { method: "PUT", body: stream, duplex: "half" } as RequestInit));
+    const res = await mux(
+      new Request("http://isrcache/entries/k", { method: "PUT", body: stream, duplex: "half" } as RequestInit),
+    );
     expect(res.status).toBe(413);
     expect(pulled).toBeLessThan(1000);
   });

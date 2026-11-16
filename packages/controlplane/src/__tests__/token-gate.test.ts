@@ -5,14 +5,15 @@ import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { createHmac } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
 import { startHarness, deployedProject, noCommands, bearer, type Harness } from "./v2-harness.js";
-import { parsePublicUrl } from "../public-url.js";
+import { parsePublicUrl } from "../http/public-url.js";
 
 // The token-only gate: sign-in, members and roles left core. No header on
 // loopback is allowed; a token is checked; webhooks check their signature;
 // the public address (NBO_PUBLIC_URL) lets only tokens and webhooks in.
 
 const PUBLIC = "nbo.example.com";
-const LOWER_ROLE = "this API token was made for a member below Admin while sign-in was on; make a new token with nbo-server token create";
+const LOWER_ROLE =
+  "this API token was made for a member below Admin while sign-in was on; make a new token with nbo-server token create";
 
 // ownedToken writes a token row as sign-in made it: an owner and a role.
 function ownedToken(h: Harness, name: string, role: string): string {
@@ -26,7 +27,8 @@ function ownedToken(h: Harness, name: string, role: string): string {
   return secret;
 }
 
-const sign = (secret: string, body: string): string => `sha256=${createHmac("sha256", secret).update(body).digest("hex")}`;
+const sign = (secret: string, body: string): string =>
+  `sha256=${createHmac("sha256", secret).update(body).digest("hex")}`;
 
 describe("the token-only gate", () => {
   let h: Harness;
@@ -64,7 +66,12 @@ describe("the token-only gate", () => {
     const before = h.store.listProjects().length;
     const list = await onPublic("GET", "/projects");
     expect(list.status).toBe(403);
-    const setup = await onPublic("POST", "/projects/setup", { "content-type": "application/json" }, JSON.stringify({ name: "sneaky" }));
+    const setup = await onPublic(
+      "POST",
+      "/projects/setup",
+      { "content-type": "application/json" },
+      JSON.stringify({ name: "sneaky" }),
+    );
     expect(setup.status).toBe(403);
     expect(h.store.listProjects()).toHaveLength(before);
     // Any spelling of the public name, and the routes that left core.
@@ -83,17 +90,23 @@ describe("the token-only gate", () => {
 
   it("a signed per-project webhook push through the public address answers as on loopback, and builds", async () => {
     const secret = h.store.ensureWebhookSecret(projectID);
-    const push = (sha: string) => JSON.stringify({ ref: "refs/heads/main", before: "0".repeat(40), after: sha });
+    const push = (sha: string, before = "0".repeat(40)) =>
+      JSON.stringify({ ref: "refs/heads/main", before, after: sha });
     const path = `/projects/${projectID}/webhooks/github`;
 
     const viaPublicSha = await h.commit("through the public address");
-    const body1 = push(viaPublicSha);
-    const viaPublic = await onPublic("POST", path, { "x-github-event": "push", "x-hub-signature-256": sign(secret, body1) }, body1);
+    const body1 = push(viaPublicSha, h.store.getProject(projectID).lastSeenSha);
+    const viaPublic = await onPublic(
+      "POST",
+      path,
+      { "x-github-event": "push", "x-hub-signature-256": sign(secret, body1) },
+      body1,
+    );
     const publicJson = (await viaPublic.json()) as Record<string, unknown>;
     await h.v2.queue.idle(projectID);
 
     const viaLoopbackSha = await h.commit("through the tunnel");
-    const body2 = push(viaLoopbackSha);
+    const body2 = push(viaLoopbackSha, viaPublicSha);
     const viaLoopback = await h.mux(
       new Request(`http://localhost:8081${path}`, {
         method: "POST",
@@ -131,9 +144,18 @@ describe("the token-only gate", () => {
   });
 
   it("/auth/session and /system/members are 404 on loopback", async () => {
-    for (const path of ["/auth/session", "/system/members", "/system/sign-in", "/system/audit", "/system/github", "/github/webhook"]) {
+    for (const path of [
+      "/auth/session",
+      "/system/members",
+      "/system/sign-in",
+      "/system/audit",
+      "/system/github",
+      "/github/webhook",
+    ]) {
       const method = path === "/github/webhook" ? "POST" : "GET";
-      const res = await h.mux(new Request(`http://localhost:8081${path}`, { method, headers: { host: "localhost:8081" } }));
+      const res = await h.mux(
+        new Request(`http://localhost:8081${path}`, { method, headers: { host: "localhost:8081" } }),
+      );
       expect(res.status, path).toBe(404);
     }
   });

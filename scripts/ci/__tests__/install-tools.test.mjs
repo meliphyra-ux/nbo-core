@@ -49,7 +49,8 @@ function run(args, opts) {
     });
     const envFile = join(tools, "env.sh");
     const env = existsSync(envFile) ? readFileSync(envFile, "utf8") : "";
-    const which = (name) => spawnSync("bash", ["-c", `. "${fwd(envFile)}" && command -v ${name}`], { encoding: "utf8" }).stdout.trim();
+    const which = (name) =>
+      spawnSync("bash", ["-c", `. "${fwd(envFile)}" && command -v ${name}`], { encoding: "utf8" }).stdout.trim();
     return { r, env, which, calls: fake.readLog(), tools };
   } finally {
     fake.cleanup();

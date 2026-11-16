@@ -54,7 +54,9 @@ describe("deploy env file cleanup", () => {
 
   it("does not fail a deploy that worked when the removal fails, and says so", async () => {
     state.rmError = Object.assign(new Error("EROFS: read-only file system"), { code: "EROFS" });
-    const run = vi.fn(async (_cmd: string, args: string[]) => (args.includes("describe") ? JSON.stringify({ status: { url: "https://svc.run.app" } }) : ""));
+    const run = vi.fn(async (_cmd: string, args: string[]) =>
+      args.includes("describe") ? JSON.stringify({ status: { url: "https://svc.run.app" } }) : "",
+    );
     await expect(deploy(spec, { run })).resolves.toBe("https://svc.run.app");
     expect(warn).toHaveBeenCalledWith(expect.stringContaining("could not remove"));
   });

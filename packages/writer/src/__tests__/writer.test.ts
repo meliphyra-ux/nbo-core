@@ -2,7 +2,17 @@
 // Copyright 2026 Nikita Dovhich
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { mkdtempSync, rmSync, readFileSync, writeFileSync, mkdirSync, existsSync, symlinkSync, lstatSync, readdirSync } from "node:fs";
+import {
+  mkdtempSync,
+  rmSync,
+  readFileSync,
+  writeFileSync,
+  mkdirSync,
+  existsSync,
+  symlinkSync,
+  lstatSync,
+  readdirSync,
+} from "node:fs";
 import { createHash } from "node:crypto";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
@@ -36,7 +46,9 @@ describe("NboWriter", () => {
     await writer.write();
 
     const manifest = JSON.parse(readFileSync(join(outDir, "manifest.json"), "utf8"));
-    const specVersionFile = JSON.parse(readFileSync(createRequire(import.meta.url).resolve("@nbo/spec/version.json"), "utf8"));
+    const specVersionFile = JSON.parse(
+      readFileSync(createRequire(import.meta.url).resolve("@nbo/spec/version.json"), "utf8"),
+    );
     expect(manifest.specVersion).toBe(specVersionFile.specVersion);
     expect(manifest.functions).toEqual([]);
     expect(Object.keys(manifest.digests).sort()).toEqual(["routes.json", "static.index.json"]);
@@ -173,8 +185,14 @@ describe("NboWriter", () => {
     expect(fnJson.artifact.type).toBe("bundle");
     expect(fnJson.concurrency).toBe("multi");
 
-    const bundleIndex = JSON.parse(readFileSync(join(outDir, "functions", "ssr", "bundle", "bundle.index.json"), "utf8"));
-    expect(Object.keys(bundleIndex.files).sort()).toEqual(["dispatch.json", "index.mjs", "node_modules/left-pad/index.js"]);
+    const bundleIndex = JSON.parse(
+      readFileSync(join(outDir, "functions", "ssr", "bundle", "bundle.index.json"), "utf8"),
+    );
+    expect(Object.keys(bundleIndex.files).sort()).toEqual([
+      "dispatch.json",
+      "index.mjs",
+      "node_modules/left-pad/index.js",
+    ]);
     expect(existsSync(join(outDir, "functions", "ssr", "bundle", "node_modules", "left-pad", "index.js"))).toBe(true);
 
     const manifest = JSON.parse(readFileSync(join(outDir, "manifest.json"), "utf8"));
@@ -191,15 +209,27 @@ describe("NboWriter", () => {
     writeFileSync(join(srcDir, "helpers", "nested", "b.js"), "b");
 
     const writer = new NboWriter({ outDir, framework: { name: "nextjs" } });
-    const fn = writer.addFunction("ssr", { runtime: { kind: "node" }, entryFilePath: join(srcDir, "entry", "index.mjs") });
+    const fn = writer.addFunction("ssr", {
+      runtime: { kind: "node" },
+      entryFilePath: join(srcDir, "entry", "index.mjs"),
+    });
     fn.addFiles({ "node_modules/helpers": join(srcDir, "helpers") });
     await writer.write();
 
     expect(existsSync(join(outDir, "functions", "ssr", "bundle", "node_modules", "helpers", "a.js"))).toBe(true);
-    expect(existsSync(join(outDir, "functions", "ssr", "bundle", "node_modules", "helpers", "nested", "b.js"))).toBe(true);
+    expect(existsSync(join(outDir, "functions", "ssr", "bundle", "node_modules", "helpers", "nested", "b.js"))).toBe(
+      true,
+    );
 
-    const bundleIndex = JSON.parse(readFileSync(join(outDir, "functions", "ssr", "bundle", "bundle.index.json"), "utf8"));
-    expect(Object.keys(bundleIndex.files).sort()).toEqual(["dispatch.json", "index.mjs", "node_modules/helpers/a.js", "node_modules/helpers/nested/b.js"]);
+    const bundleIndex = JSON.parse(
+      readFileSync(join(outDir, "functions", "ssr", "bundle", "bundle.index.json"), "utf8"),
+    );
+    expect(Object.keys(bundleIndex.files).sort()).toEqual([
+      "dispatch.json",
+      "index.mjs",
+      "node_modules/helpers/a.js",
+      "node_modules/helpers/nested/b.js",
+    ]);
   });
 
   it("dereferences a symlinked directory asset instead of recreating the symlink (pnpm's node_modules layout, no symlinks allowed in NBO output)", async () => {
@@ -214,7 +244,10 @@ describe("NboWriter", () => {
     symlinkSync(realDir, join(srcDir, "linked-helpers"), "junction");
 
     const writer = new NboWriter({ outDir, framework: { name: "nextjs" } });
-    const fn = writer.addFunction("ssr", { runtime: { kind: "node" }, entryFilePath: join(srcDir, "entry", "index.mjs") });
+    const fn = writer.addFunction("ssr", {
+      runtime: { kind: "node" },
+      entryFilePath: join(srcDir, "entry", "index.mjs"),
+    });
     fn.addFiles({ "node_modules/helpers": join(srcDir, "linked-helpers") });
     await writer.write();
 
@@ -230,7 +263,10 @@ describe("NboWriter", () => {
     writeFileSync(join(srcDir, "store", "@swc", "helpers", "index.js"), "module.exports = {};");
 
     const writer = new NboWriter({ outDir, framework: { name: "nextjs" } });
-    const fn = writer.addFunction("ssr", { runtime: { kind: "node" }, entryFilePath: join(srcDir, "entry", "index.mjs") });
+    const fn = writer.addFunction("ssr", {
+      runtime: { kind: "node" },
+      entryFilePath: join(srcDir, "entry", "index.mjs"),
+    });
     fn.addFiles({
       "node_modules/.pnpm/next@16.4.2/node_modules/@swc/helpers": join(srcDir, "store", "@swc", "helpers"),
     });
@@ -256,7 +292,10 @@ describe("NboWriter", () => {
     writeFileSync(join(srcDir, "other-real-helpers", "index.js"), "other");
 
     const writer = new NboWriter({ outDir, framework: { name: "nextjs" } });
-    const fn = writer.addFunction("ssr", { runtime: { kind: "node" }, entryFilePath: join(srcDir, "entry", "index.mjs") });
+    const fn = writer.addFunction("ssr", {
+      runtime: { kind: "node" },
+      entryFilePath: join(srcDir, "entry", "index.mjs"),
+    });
     fn.addFiles({
       "node_modules/.pnpm/pkg-a/node_modules/helpers": join(srcDir, "real-helpers"),
       "node_modules/.pnpm/node_modules/helpers": join(srcDir, "other-real-helpers"),
@@ -285,7 +324,10 @@ describe("NboWriter", () => {
     symlinkSync(join(srcDir, "real-package"), join(srcDir, "linked-package"), "junction");
 
     const writer = new NboWriter({ outDir, framework: { name: "nextjs" } });
-    const fn = writer.addFunction("ssr", { runtime: { kind: "node" }, entryFilePath: join(srcDir, "entry", "index.mjs") });
+    const fn = writer.addFunction("ssr", {
+      runtime: { kind: "node" },
+      entryFilePath: join(srcDir, "entry", "index.mjs"),
+    });
     fn.addFiles({
       "node_modules/next/package-file-a.js": join(srcDir, "package-file-a.js"),
       "node_modules/next": join(srcDir, "linked-package"),
@@ -302,14 +344,19 @@ describe("NboWriter", () => {
     writeFileSync(join(srcDir, "entry", "index.mjs"), "export default { fetch() {} };");
 
     const writer = new NboWriter({ outDir, framework: { name: "nextjs" } });
-    const fn = writer.addFunction("ssr", { runtime: { kind: "node" }, entryFilePath: join(srcDir, "entry", "index.mjs") });
+    const fn = writer.addFunction("ssr", {
+      runtime: { kind: "node" },
+      entryFilePath: join(srcDir, "entry", "index.mjs"),
+    });
     fn.addFile("next-dispatch.json", JSON.stringify({ home: "routes/home.js" }));
     await writer.write();
 
     const written = readFileSync(join(outDir, "functions", "ssr", "bundle", "next-dispatch.json"), "utf8");
     expect(JSON.parse(written)).toEqual({ home: "routes/home.js" });
 
-    const bundleIndex = JSON.parse(readFileSync(join(outDir, "functions", "ssr", "bundle", "bundle.index.json"), "utf8"));
+    const bundleIndex = JSON.parse(
+      readFileSync(join(outDir, "functions", "ssr", "bundle", "bundle.index.json"), "utf8"),
+    );
     expect(Object.keys(bundleIndex.files).sort()).toEqual(["dispatch.json", "index.mjs", "next-dispatch.json"]);
   });
 
@@ -540,7 +587,10 @@ describe("NboWriter", () => {
     mkdirSync(join(srcDir, "entry"));
     writeFileSync(join(srcDir, "entry", "index.mjs"), "export default { fetch() {} };");
     const writer = new NboWriter({ outDir, framework: { name: "nextjs" } });
-    const fn = writer.addFunction("ssr", { runtime: { kind: "node" }, entryFilePath: join(srcDir, "entry", "index.mjs") });
+    const fn = writer.addFunction("ssr", {
+      runtime: { kind: "node" },
+      entryFilePath: join(srcDir, "entry", "index.mjs"),
+    });
     fn.addRoute("app-page-/", "/", join(srcDir, "entry", "index.mjs"));
     await writer.write();
 
@@ -634,7 +684,11 @@ describe("NboWriter", () => {
       writeFileSync(join(srcDir, "node_modules", "left-pad", "index.js"), "module.exports = {};");
       await replay((w) => {
         w.addStatic("/", join(srcDir, "index.html"), { cache: "revalidate" });
-        const fn = w.addFunction("ssr", { runtime: { kind: "node", version: ">=22" }, entryFilePath: join(srcDir, "entry", "index.mjs"), capabilities: ["fn.streaming"] });
+        const fn = w.addFunction("ssr", {
+          runtime: { kind: "node", version: ">=22" },
+          entryFilePath: join(srcDir, "entry", "index.mjs"),
+          capabilities: ["fn.streaming"],
+        });
         fn.addRoute("app-page-/about", "/about", join(srcDir, "entry", "index.mjs"));
         fn.addRoute("app-page-/blog", "/blog", join(srcDir, "entry", "index.mjs"));
         fn.addFiles({ "node_modules/left-pad/index.js": join(srcDir, "node_modules", "left-pad", "index.js") });

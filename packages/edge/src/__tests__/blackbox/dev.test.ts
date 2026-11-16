@@ -12,11 +12,24 @@ import { request as httpRequest } from "node:http";
 import { connect as netConnect } from "node:net";
 import { pickSticky } from "../../sticky.js";
 import type { Backend, Target } from "../../registry.js";
-import { adminPut, createTestCa, freePort, send, sendRaw, startBackend, startEdge, type FakeBackend, type RunningEdge } from "./harness.js";
+import {
+  adminPut,
+  createTestCa,
+  freePort,
+  send,
+  sendRaw,
+  startBackend,
+  startEdge,
+  type FakeBackend,
+  type RunningEdge,
+} from "./harness.js";
 
 const HEADER_TIMEOUT_MS = 1000;
 // The conformance transcript both edges must pass (packages/conformance).
-const TRANSCRIPT = resolve(dirname(fileURLToPath(import.meta.url)), "../../../../conformance/transcripts/platform/edge/01-revalidate-fanout.json");
+const TRANSCRIPT = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  "../../../../conformance/transcripts/platform/edge/01-revalidate-fanout.json",
+);
 const COOKIE_RE = /^nbo_v=([0-9a-f]{32}); Path=\/; Max-Age=604800; HttpOnly; SameSite=Lax$/;
 const SECURE_COOKIE_RE = /^nbo_v=([0-9a-f]{32}); Path=\/; Max-Age=604800; HttpOnly; SameSite=Lax; Secure$/;
 
@@ -37,7 +50,8 @@ describe("black-box: dev mode data plane", () => {
     await Promise.all([a?.close(), b?.close(), c?.close()]);
   });
 
-  const get = (host: string, path = "/", headers: Record<string, string> = {}) => send(`${edge.dataUrl}${path}`, { headers: { host, ...headers } });
+  const get = (host: string, path = "/", headers: Record<string, string> = {}) =>
+    send(`${edge.dataUrl}${path}`, { headers: { host, ...headers } });
 
   it("closes an idle keep-alive connection about 5 s after its response (Node's keepAliveTimeout)", async () => {
     const socket = netConnect({ host: "127.0.0.1", port: edge.ports.data });
@@ -74,21 +88,20 @@ describe("black-box: dev mode data plane", () => {
     }
   });
 
-  it("honours a weighted split, never picks weight 0, and names the backend in x-nbo-edge-backend", async () => {
+  it("honours a weighted split, never picks weight 0, and names the backend's id (never its URL) in x-nbo-edge-backend", async () => {
     await adminPut(edge.adminUrl, "split.test", {
       backends: [
-        { url: a.url, weight: 1 },
-        { url: b.url, weight: 3 },
-        { url: c.url, weight: 0 },
+        { id: "env_a", url: a.url, weight: 1 },
+        { id: "env_b", url: b.url, weight: 3 },
+        { id: "env_c", url: c.url, weight: 0 },
       ],
     });
     const counts: Record<string, number> = { a: 0, b: 0, c: 0 };
-    const byName: Record<string, string> = { a: a.url, b: b.url, c: c.url };
     for (let i = 0; i < 400; i++) {
       const r = await get("split.test", "/asset.js");
       expect(r.status).toBe(200);
       counts[r.body]!++;
-      expect(r.headers["x-nbo-edge-backend"]).toBe(byName[r.body]);
+      expect(r.headers["x-nbo-edge-backend"]).toBe(`env_${r.body}`);
       expect(r.headers["x-backend"]).toBe(r.body);
     }
     expect(counts.c).toBe(0);
@@ -122,15 +135,18 @@ describe("black-box: dev mode data plane", () => {
         ],
       },
     ];
+    const nameOf: Record<string, string> = { [a.url]: "a", [b.url]: "b", [c.url]: "c" };
     for (const cfg of configs) {
       expect((await adminPut(edge.adminUrl, cfg.host, { backends: cfg.backends })).status).toBe(204);
       const target: Target = { host: cfg.host, backends: cfg.backends };
       for (let i = 0; i < 40; i++) {
         const id = visitorId();
-        const expected = pickSticky(target, id).url;
+        const expected = pickSticky(target, id);
         for (let n = 0; n < 2; n++) {
           const r = await get(cfg.host, "/", { cookie: `nbo_v=${id}` });
-          expect(r.headers["x-nbo-edge-backend"], `${cfg.host} ${id}`).toBe(expected);
+          expect(r.body, `${cfg.host} ${id}`).toBe(nameOf[expected.url]);
+          // A backend without an id (an older route table) gets no header, never its URL.
+          expect(r.headers["x-nbo-edge-backend"], `${cfg.host} ${id}`).toBe(expected.id);
           expect(r.headers["set-cookie"]).toBeUndefined();
         }
       }
@@ -152,24 +168,37 @@ describe("black-box: dev mode data plane", () => {
       ],
     };
 
-    for (const headers of [{ "sec-fetch-dest": "document" }, { accept: "text/html,application/xhtml+xml;q=0.9" }, { "sec-fetch-dest": " Document " }]) {
+    for (const headers of [
+      { "sec-fetch-dest": "document" },
+      { accept: "text/html,application/xhtml+xml;q=0.9" },
+      { "sec-fetch-dest": " Document " },
+    ]) {
       const r = await get("cookie.test", "/", headers);
       const cookies = r.headers["set-cookie"] ?? [];
       expect(cookies, JSON.stringify(headers)).toHaveLength(1);
       const m = COOKIE_RE.exec(cookies[0]!);
       expect(m, cookies[0]).not.toBeNull();
       // The new visitor is served by the backend their new id picks.
-      expect(r.headers["x-nbo-edge-backend"]).toBe(pickSticky(target, m![1]!).url);
+      expect(r.headers["x-nbo-edge-backend"]).toBe(pickSticky(target, m![1]!).id);
     }
 
-    for (const headers of [{}, { "sec-fetch-dest": "image", accept: "text/html" }, { accept: "application/json" }, { "sec-fetch-dest": "empty" }]) {
+    for (const headers of [
+      {},
+      { "sec-fetch-dest": "image", accept: "text/html" },
+      { accept: "application/json" },
+      { "sec-fetch-dest": "empty" },
+    ]) {
       const r = await get("cookie.test", "/", headers);
       expect(r.status).toBe(200);
       expect(r.headers["set-cookie"], JSON.stringify(headers)).toBeUndefined();
     }
 
     // A valid cookie is kept; a malformed one is replaced on a navigation.
-    expect((await get("cookie.test", "/", { "sec-fetch-dest": "document", cookie: `nbo_v=${visitorId()}` })).headers["set-cookie"]).toBeUndefined();
+    expect(
+      (await get("cookie.test", "/", { "sec-fetch-dest": "document", cookie: `nbo_v=${visitorId()}` })).headers[
+        "set-cookie"
+      ],
+    ).toBeUndefined();
     const bad = await get("cookie.test", "/", { "sec-fetch-dest": "document", cookie: "nbo_v=NOTHEX" });
     expect(bad.headers["set-cookie"]?.[0]).toMatch(COOKIE_RE);
   });
@@ -241,7 +270,17 @@ describe("black-box: dev mode data plane", () => {
     expect(answer.startsWith("HTTP/1.1 200")).toBe(true);
     const seen = b.seen.at(-1)!;
     expect(seen.url).toBe("/hop");
-    for (const h of ["x-secret", "x-other-secret", "keep-alive", "proxy-connection", "te", "trailer", "upgrade", "x-nbo-relay-token", "x-nbo-upstream"]) {
+    for (const h of [
+      "x-secret",
+      "x-other-secret",
+      "keep-alive",
+      "proxy-connection",
+      "te",
+      "trailer",
+      "upgrade",
+      "x-nbo-relay-token",
+      "x-nbo-upstream",
+    ]) {
       expect(seen.headers[h], h).toBeUndefined();
     }
     expect(String(seen.headers.connection ?? "")).not.toMatch(/secret/i);
@@ -280,16 +319,20 @@ describe("black-box: dev mode data plane", () => {
   });
 
   it("streams a request body to the backend and copies the backend's status and headers back", async () => {
-    await adminPut(edge.adminUrl, "post.test", { backends: [{ url: c.url, weight: 1 }] });
+    await adminPut(edge.adminUrl, "post.test", { backends: [{ id: "env_c", url: c.url, weight: 1 }] });
     c.setHandler((req, res, body) => {
       res.writeHead(201, { "content-type": "application/json", "x-custom": "kept" });
       res.end(JSON.stringify({ method: req.method, body: body.toString("utf8") }));
     });
     try {
-      const r = await send(`${edge.dataUrl}/submit`, { method: "POST", headers: { host: "post.test", "content-type": "text/plain" }, body: "hello edge" });
+      const r = await send(`${edge.dataUrl}/submit`, {
+        method: "POST",
+        headers: { host: "post.test", "content-type": "text/plain" },
+        body: "hello edge",
+      });
       expect(r.status).toBe(201);
       expect(r.headers["x-custom"]).toBe("kept");
-      expect(r.headers["x-nbo-edge-backend"]).toBe(c.url);
+      expect(r.headers["x-nbo-edge-backend"]).toBe("env_c");
       expect(JSON.parse(r.body)).toEqual({ method: "POST", body: "hello edge" });
     } finally {
       c.setHandler((_req, res) => {
@@ -306,11 +349,19 @@ describe("black-box: dev mode data plane", () => {
       res.end(`sign in first (${body.toString("utf8")})`);
     });
     try {
-      const r = await send(`${edge.dataUrl}/api/login`, { method: "POST", headers: { host: "post401.test", "content-type": "text/plain" }, body: "name=a" });
+      const r = await send(`${edge.dataUrl}/api/login`, {
+        method: "POST",
+        headers: { host: "post401.test", "content-type": "text/plain" },
+        body: "name=a",
+      });
       expect(r.status).toBe(401);
       expect(r.headers["www-authenticate"]).toBe('Bearer realm="app"');
       expect(r.body).toBe("sign in first (name=a)");
-      const put = await send(`${edge.dataUrl}/api/login`, { method: "PUT", headers: { host: "post401.test", "content-type": "text/plain" }, body: "name=b" });
+      const put = await send(`${edge.dataUrl}/api/login`, {
+        method: "PUT",
+        headers: { host: "post401.test", "content-type": "text/plain" },
+        body: "name=b",
+      });
       expect(put.status).toBe(401);
       expect(put.body).toBe("sign in first (name=b)");
     } finally {
@@ -335,7 +386,14 @@ describe("black-box: dev mode data plane", () => {
       const got = await new Promise<{ status: number; body: string }>((resolve, reject) => {
         const port = new URL(edge.dataUrl).port;
         const req = httpRequest(
-          { host: "127.0.0.1", port, method: "POST", path: "/upload", headers: { host: "upload.test", "content-type": "application/octet-stream" }, agent: false },
+          {
+            host: "127.0.0.1",
+            port,
+            method: "POST",
+            path: "/upload",
+            headers: { host: "upload.test", "content-type": "application/octet-stream" },
+            agent: false,
+          },
           (res) => {
             let text = "";
             res.on("data", (c: Buffer) => (text += c.toString("utf8")));
@@ -383,12 +441,15 @@ describe("black-box: dev mode data plane", () => {
       await adminPut(edge.adminUrl, "stream.test", { backends: [{ url: slow.url, weight: 1 }] });
       const got = await new Promise<{ status: number; chunks: { at: number; text: string }[] }>((resolve, reject) => {
         const port = new URL(edge.dataUrl).port;
-        const req = httpRequest({ host: "127.0.0.1", port, path: "/", headers: { host: "stream.test" }, agent: false }, (res) => {
-          const chunks: { at: number; text: string }[] = [];
-          res.on("data", (c: Buffer) => chunks.push({ at: Date.now(), text: c.toString("utf8") }));
-          res.on("end", () => resolve({ status: res.statusCode!, chunks }));
-          res.on("error", reject);
-        });
+        const req = httpRequest(
+          { host: "127.0.0.1", port, path: "/", headers: { host: "stream.test" }, agent: false },
+          (res) => {
+            const chunks: { at: number; text: string }[] = [];
+            res.on("data", (c: Buffer) => chunks.push({ at: Date.now(), text: c.toString("utf8") }));
+            res.on("end", () => resolve({ status: res.statusCode!, chunks }));
+            res.on("error", reject);
+          },
+        );
         req.on("error", reject);
         req.end();
       });
@@ -406,14 +467,18 @@ describe("black-box: dev mode data plane", () => {
     // A certificate from a CA the edge has never heard of.
     const ca = await createTestCa();
     const leaf = await ca.leaf({ ip: ["127.0.0.1"] });
-    const tlsBackend = await startBackend("tls", (listener) => createHttps({ cert: leaf.cert, key: leaf.key }, listener));
+    const tlsBackend = await startBackend("tls", (listener) =>
+      createHttps({ cert: leaf.cert, key: leaf.key }, listener),
+    );
     try {
       await adminPut(edge.adminUrl, "strict.test", { backends: [{ url: tlsBackend.url, weight: 1 }] });
       const strict = await get("strict.test", "/strict");
       expect(strict.status).toBe(502);
-      expect(strict.body.startsWith("edge: ")).toBe(true);
+      expect(strict.body).toBe("edge: backend unreachable");
       expect(tlsBackend.seen).toHaveLength(0);
-      await adminPut(edge.adminUrl, "insecure.test", { backends: [{ url: tlsBackend.url, weight: 1, insecureSkipVerify: true }] });
+      await adminPut(edge.adminUrl, "insecure.test", {
+        backends: [{ url: tlsBackend.url, weight: 1, insecureSkipVerify: true }],
+      });
       const insecure = await get("insecure.test", "/insecure");
       expect(insecure.status).toBe(200);
       expect(insecure.body).toBe("tls");
@@ -454,7 +519,7 @@ describe("black-box: dev mode data plane", () => {
       const r = await get("silent.test");
       const elapsed = Date.now() - started;
       expect(r.status).toBe(502);
-      expect(r.body.startsWith("edge: ")).toBe(true);
+      expect(r.body).toBe("edge: backend unreachable");
       expect(elapsed).toBeGreaterThanOrEqual(HEADER_TIMEOUT_MS - 100);
       expect(elapsed).toBeLessThan(HEADER_TIMEOUT_MS + 4000);
     } finally {
@@ -462,12 +527,15 @@ describe("black-box: dev mode data plane", () => {
     }
   });
 
-  it("answers 502 starting with edge: when the backend refuses the connection", async () => {
+  it("answers 502 edge: backend unreachable, naming nothing internal, when the backend refuses the connection", async () => {
     const port = await freePort();
-    await adminPut(edge.adminUrl, "down.test", { backends: [{ url: `http://127.0.0.1:${port}`, weight: 1 }] });
+    await adminPut(edge.adminUrl, "down.test", {
+      backends: [{ id: "env_down", url: `http://127.0.0.1:${port}`, weight: 1 }],
+    });
     const r = await get("down.test");
     expect(r.status).toBe(502);
-    expect(r.body.startsWith("edge: ")).toBe(true);
+    expect(r.body).toBe("edge: backend unreachable");
+    expect(r.headers["x-nbo-edge-backend"]).toBeUndefined();
   });
 
   it("sends the Speed Insights paths to the app on a host without Speed Insights", async () => {
@@ -499,7 +567,10 @@ describe("black-box: dev mode data plane", () => {
 
   it("answers 431 when a visitor's request headers add up to more than 16 KB", async () => {
     const big = "a".repeat(6000);
-    const answer = await sendRaw(edge.ports.data, `GET / HTTP/1.1\r\nHost: big.test\r\nX-A: ${big}\r\nX-B: ${big}\r\nX-C: ${big}\r\n\r\n`);
+    const answer = await sendRaw(
+      edge.ports.data,
+      `GET / HTTP/1.1\r\nHost: big.test\r\nX-A: ${big}\r\nX-B: ${big}\r\nX-C: ${big}\r\n\r\n`,
+    );
     expect(answer).toMatch(/^HTTP\/1\.1 431/);
   });
 });
@@ -535,7 +606,11 @@ describe("black-box: revalidation fan-out", () => {
   });
 
   const revalidate = (host: string, body: string | Buffer, headers: Record<string, string> = {}) =>
-    send(`${edge.dataUrl}/_nbo/revalidate`, { method: "POST", body, headers: { host, "content-type": "application/json", authorization: SECRET, ...headers } });
+    send(`${edge.dataUrl}/_nbo/revalidate`, {
+      method: "POST",
+      body,
+      headers: { host, "content-type": "application/json", authorization: SECRET, ...headers },
+    });
 
   async function register(host: string, backends: unknown[]): Promise<void> {
     expect((await adminPut(edge.adminUrl, host, { backends })).status).toBe(204);
@@ -586,6 +661,23 @@ describe("black-box: revalidation fan-out", () => {
     });
   });
 
+  it("lists a backend without an id as null in the 502, never by its URL, and an unreachable one with status 0", async () => {
+    const port = await freePort();
+    await register("fan-noid.test", [
+      { id: "env_p", url: p.url, weight: 1 },
+      { url: `http://127.0.0.1:${port}`, weight: 1 },
+    ]);
+    const res = await revalidate("fan-noid.test", '{"tags":["a"]}');
+    expect(res.status).toBe(502);
+    expect(JSON.parse(res.body)).toEqual({
+      backends: [
+        { id: "env_p", status: 204 },
+        { id: null, status: 0 },
+      ],
+    });
+    expect(res.body).not.toContain("127.0.0.1");
+  });
+
   it("a host can't be registered with no backends, so a revalidation for it is an unknown host's 404", async () => {
     expect((await adminPut(edge.adminUrl, "fan-empty.test", { backends: [] })).status).toBe(400);
     const res = await revalidate("fan-empty.test", '{"tags":["a"]}');
@@ -604,22 +696,6 @@ describe("black-box: revalidation fan-out", () => {
     expect(res.headers["x-nbo-edge-fanout"]).toBe("2");
     expect(p.seen).toHaveLength(1);
     expect(q.seen).toHaveLength(1);
-  });
-
-  it("names a backend without an id by its URL, and an unreachable one with status 0", async () => {
-    const downUrl = `http://127.0.0.1:${await freePort()}`;
-    await register("fan-down.test", [
-      { url: p.url, weight: 1 },
-      { url: downUrl, weight: 1 },
-    ]);
-    const res = await revalidate("fan-down.test", '{"paths":["/"]}');
-    expect(res.status).toBe(502);
-    expect(JSON.parse(res.body)).toEqual({
-      backends: [
-        { id: p.url, status: 204 },
-        { id: downUrl, status: 0 },
-      ],
-    });
   });
 
   it("gives a backend that never answers status 0 once its limit passes, without waiting on it", async () => {
@@ -690,7 +766,11 @@ describe("black-box: revalidation fan-out", () => {
       expectStatus: number;
       expectHeaderPatterns?: Record<string, string>;
     };
-    const res = await send(`${edge.dataUrl}${tr.path}`, { method: tr.method, body: tr.body, headers: { host: "fan-transcript.test", ...(tr.headers ?? {}) } });
+    const res = await send(`${edge.dataUrl}${tr.path}`, {
+      method: tr.method,
+      body: tr.body,
+      headers: { host: "fan-transcript.test", ...(tr.headers ?? {}) },
+    });
     expect(res.status).toBe(tr.expectStatus);
     for (const [name, pattern] of Object.entries(tr.expectHeaderPatterns ?? {})) {
       expect(String(res.headers[name.toLowerCase()] ?? ""), name).toMatch(new RegExp(`^(?:${pattern})$`));

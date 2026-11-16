@@ -5,7 +5,7 @@ import { describe, it, expect, afterEach } from "vitest";
 import { createServer, type Server, type IncomingMessage, type ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
 import { run, evaluate, type Config, type Result } from "../run.js";
-import type { PhaseResult } from "../generator.js";
+import { K8S_BACKEND_ID, CLOUDRUN_BACKEND_ID, type PhaseResult } from "../generator.js";
 
 let adminServer: Server | undefined;
 let proxyServer: Server | undefined;
@@ -30,7 +30,10 @@ function startServer(handler: (req: IncomingMessage, res: ServerResponse) => voi
   });
 }
 
-const baseConfig: Omit<Config, "proxyURL" | "host" | "adminURL" | "k8sBackendURL" | "cloudRunBackendURL" | "phases" | "phaseDurationMs"> = {
+const baseConfig: Omit<
+  Config,
+  "proxyURL" | "host" | "adminURL" | "k8sBackendURL" | "cloudRunBackendURL" | "phases" | "phaseDurationMs"
+> = {
   requestsPerSec: 20,
   concurrency: 5,
 };
@@ -47,7 +50,7 @@ describe("run", () => {
       });
     });
     const proxyURL = await startServer((_req, res) => {
-      res.setHeader("x-nbo-edge-backend", "https://k8s");
+      res.setHeader("x-nbo-edge-backend", K8S_BACKEND_ID);
       res.end();
     });
 
@@ -84,7 +87,7 @@ describe("run", () => {
       });
     });
     const proxyURL = await startServer((_req, res) => {
-      res.setHeader("x-nbo-edge-backend", "https://k8s");
+      res.setHeader("x-nbo-edge-backend", K8S_BACKEND_ID);
       res.end();
     });
     const cfg: Config = {
@@ -99,9 +102,18 @@ describe("run", () => {
     };
     await run(new AbortController().signal, cfg);
     await run(new AbortController().signal, { ...cfg, cloudRunInsecureSkipVerify: true });
-    const second = (body: string) => (JSON.parse(body) as { backends: { url: string; insecureSkipVerify?: boolean }[] }).backends[1]!;
+    const second = (body: string) =>
+      (JSON.parse(body) as { backends: { url: string; insecureSkipVerify?: boolean }[] }).backends[1]!;
     expect(second(putBodies[0]!).insecureSkipVerify).toBeUndefined();
-    expect(second(putBodies[1]!)).toEqual({ url: "https://k8s-b", weight: 50, insecureSkipVerify: true });
+    expect(second(putBodies[1]!)).toEqual({
+      id: CLOUDRUN_BACKEND_ID,
+      url: "https://k8s-b",
+      weight: 50,
+      insecureSkipVerify: true,
+    });
+    // The edge names a backend by its id, never its URL, so both carry one.
+    const first = (JSON.parse(putBodies[0]!) as { backends: { id?: string }[] }).backends[0]!;
+    expect(first.id).toBe(K8S_BACKEND_ID);
   });
 
   it("aborts on a weight-setting failure, firing no load at all after it", async () => {
@@ -137,7 +149,7 @@ describe("run", () => {
     });
     const proxyURL = await startServer((_req, res) => {
       setTimeout(() => {
-        res.setHeader("x-nbo-edge-backend", "https://k8s");
+        res.setHeader("x-nbo-edge-backend", K8S_BACKEND_ID);
         res.end();
       }, 200);
     });
@@ -177,7 +189,7 @@ describe("run", () => {
     const adminURL = await startServer((_req, res) => res.writeHead(204).end());
     const proxyURL = await startServer((_req, res) => {
       setTimeout(() => {
-        res.setHeader("x-nbo-edge-backend", "https://k8s");
+        res.setHeader("x-nbo-edge-backend", K8S_BACKEND_ID);
         res.end();
       }, 300);
     });
@@ -242,12 +254,24 @@ describe("evaluate", () => {
   });
 
   it("flags a weight-0 backend that still got hits", () => {
-    const phase: PhaseResult = { weights: { k8sWeight: 0, cloudRunWeight: 100 }, total: 100, failures: 0, k8sHits: 3, cloudRunHits: 97 };
+    const phase: PhaseResult = {
+      weights: { k8sWeight: 0, cloudRunWeight: 100 },
+      total: 100,
+      failures: 0,
+      k8sHits: 3,
+      cloudRunHits: 97,
+    };
     expect(evaluate({ phases: [phase] }).length).toBeGreaterThan(0);
   });
 
   it("flags a phase with zero requests instead of silently passing it", () => {
-    const phase: PhaseResult = { weights: { k8sWeight: 99, cloudRunWeight: 1 }, total: 0, failures: 0, k8sHits: 0, cloudRunHits: 0 };
+    const phase: PhaseResult = {
+      weights: { k8sWeight: 99, cloudRunWeight: 1 },
+      total: 0,
+      failures: 0,
+      k8sHits: 0,
+      cloudRunHits: 0,
+    };
     expect(evaluate({ phases: [phase] }).length).toBeGreaterThan(0);
   });
 });

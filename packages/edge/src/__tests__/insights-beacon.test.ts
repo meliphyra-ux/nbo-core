@@ -7,7 +7,8 @@ import { createAggregator } from "../insights/aggregator.js";
 import type { Target } from "../registry.js";
 import { pickSticky, VISITOR_COOKIE } from "../sticky.js";
 
-const CHROME = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36";
+const CHROME =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36";
 
 const target: Target = {
   host: "app.test",
@@ -26,7 +27,14 @@ function beacon(body: unknown, headers: Record<string, string> = {}, method = "P
   });
 }
 
-const good = { metric: "LCP", value: 1234.5, route: "/users/42", device: "mobile", environmentId: "env_a", contentId: "sha256:abc" };
+const good = {
+  metric: "LCP",
+  value: 1234.5,
+  route: "/users/42",
+  device: "mobile",
+  environmentId: "env_a",
+  contentId: "sha256:abc",
+};
 
 describe("handleBeacon", () => {
   it("refuses a beacon over the host's rate before reading its body", async () => {
@@ -41,7 +49,12 @@ describe("handleBeacon", () => {
         c.close();
       },
     });
-    const over = new Request("http://app.test/_nbo/insights/v1/vitals", { method: "POST", headers: { "user-agent": CHROME }, body, duplex: "half" } as RequestInit);
+    const over = new Request("http://app.test/_nbo/insights/v1/vitals", {
+      method: "POST",
+      headers: { "user-agent": CHROME },
+      body,
+      duplex: "half",
+    } as RequestInit);
     expect((await handleBeacon(over, target, agg)).status).toBe(204);
     expect(read).toBe(false);
     expect(agg.stats().dropped).toBe(1);
@@ -56,13 +69,29 @@ describe("handleBeacon", () => {
     const res = await handleBeacon(beacon(good), target, agg);
     expect(res.status).toBe(204);
     const [b] = agg.drain().batches;
-    expect(b).toMatchObject({ host: "app.test", environmentId: "env_a", contentId: "sha256:abc", route: "/users/[id]", metric: "LCP", device: "mobile", count: 1 });
+    expect(b).toMatchObject({
+      host: "app.test",
+      environmentId: "env_a",
+      contentId: "sha256:abc",
+      route: "/users/[id]",
+      metric: "LCP",
+      device: "mobile",
+      count: 1,
+    });
   });
 
   it("is 404 when the host has insights off", async () => {
     const agg = createAggregator();
     expect((await handleBeacon(beacon(good), { ...target, insights: undefined }, agg)).status).toBe(404);
-    expect((await handleBeacon(beacon(good), { ...target, insights: { enabled: false, inject: true, sampleRate: 100 } }, agg)).status).toBe(404);
+    expect(
+      (
+        await handleBeacon(
+          beacon(good),
+          { ...target, insights: { enabled: false, inject: true, sampleRate: 100 } },
+          agg,
+        )
+      ).status,
+    ).toBe(404);
   });
 
   it("is 405 for anything but POST", async () => {
@@ -95,14 +124,17 @@ describe("handleBeacon", () => {
     expect(agg.drain().batches).toHaveLength(0);
   });
 
-  it.each(["Googlebot/2.1", "Mozilla/5.0 (X11) HeadlessChrome/130.0", "Mozilla/5.0 Chrome-Lighthouse", "", "Mozilla/5.0 (compatible; bingbot/2.0)"])(
-    "drops bot user-agent %j with 204",
-    async (ua) => {
-      const agg = createAggregator();
-      expect((await handleBeacon(beacon(good, { "user-agent": ua }), target, agg)).status).toBe(204);
-      expect(agg.drain().batches).toHaveLength(0);
-    },
-  );
+  it.each([
+    "Googlebot/2.1",
+    "Mozilla/5.0 (X11) HeadlessChrome/130.0",
+    "Mozilla/5.0 Chrome-Lighthouse",
+    "",
+    "Mozilla/5.0 (compatible; bingbot/2.0)",
+  ])("drops bot user-agent %j with 204", async (ua) => {
+    const agg = createAggregator();
+    expect((await handleBeacon(beacon(good, { "user-agent": ua }), target, agg)).status).toBe(204);
+    expect(agg.drain().batches).toHaveLength(0);
+  });
 
   it("without an environment, uses the visitor's sticky backend; without a cookie, drops", async () => {
     const id = "0123456789abcdef0123456789abcdef";

@@ -32,7 +32,13 @@ function lastHashLine(out: string): string | undefined {
 // HMAC of the value the caller computes; never the value) is kept as the
 // secret's nbo-value-hash label, and a version is added only when the
 // label differs. Without valueHash a version is always added.
-export async function ensureSecretVersion(project: string, id: string, value: string, valueHash: string | undefined, ctx?: ToolContext): Promise<boolean> {
+export async function ensureSecretVersion(
+  project: string,
+  id: string,
+  value: string,
+  valueHash: string | undefined,
+  ctx?: ToolContext,
+): Promise<boolean> {
   try {
     await runWith(ctx, "gcloud", ["secrets", "create", id, "--replication-policy=automatic", "--project", project]);
   } catch (err) {
@@ -41,7 +47,16 @@ export async function ensureSecretVersion(project: string, id: string, value: st
   if (valueHash !== undefined) {
     let live: string | undefined;
     try {
-      live = lastHashLine(await runWith(ctx, "gcloud", ["secrets", "describe", id, "--format=value(labels.nbo-value-hash)", "--project", project]));
+      live = lastHashLine(
+        await runWith(ctx, "gcloud", [
+          "secrets",
+          "describe",
+          id,
+          "--format=value(labels.nbo-value-hash)",
+          "--project",
+          project,
+        ]),
+      );
     } catch {
       live = undefined; // unreadable: add a version
     }
@@ -50,7 +65,15 @@ export async function ensureSecretVersion(project: string, id: string, value: st
   // Version first, then the label: a failure in between leaves a label
   // that does not match, so the next deploy adds the version again.
   await runWith(ctx, "gcloud", ["secrets", "versions", "add", id, "--data-file=-", "--project", project], value);
-  if (valueHash !== undefined) await runWith(ctx, "gcloud", ["secrets", "update", id, `--update-labels=nbo-value-hash=${valueHash}`, "--project", project]);
+  if (valueHash !== undefined)
+    await runWith(ctx, "gcloud", [
+      "secrets",
+      "update",
+      id,
+      `--update-labels=nbo-value-hash=${valueHash}`,
+      "--project",
+      project,
+    ]);
   return true;
 }
 
@@ -61,7 +84,12 @@ const accountNotYetVisible = /service account[^\n]*does not exist|does not exist
 
 // grantSecretAccessor lets one runtime account read one secret — per
 // secret, never project-wide.
-export async function grantSecretAccessor(project: string, id: string, accountEmail: string, ctx?: ToolContext): Promise<void> {
+export async function grantSecretAccessor(
+  project: string,
+  id: string,
+  accountEmail: string,
+  ctx?: ToolContext,
+): Promise<void> {
   await retryWhile(
     ctx,
     () =>
@@ -86,7 +114,8 @@ export async function grantSecretAccessor(project: string, id: string, accountEm
 // error also says PERMISSION_DENIED), "denied" when the caller lacks the
 // permission, undefined otherwise.
 export function secretManagerAccessError(text: string): "disabled" | "denied" | undefined {
-  if (/SERVICE_DISABLED|secretmanager\.googleapis\.com\] not enabled|API has not been used in project/.test(text)) return "disabled";
+  if (/SERVICE_DISABLED|secretmanager\.googleapis\.com\] not enabled|API has not been used in project/.test(text))
+    return "disabled";
   if (/PERMISSION_DENIED|does not have permission/.test(text)) return "denied";
   return undefined;
 }
@@ -106,10 +135,29 @@ function versionNumbers(out: string): number[] {
 // except the newest one (the one ":latest" mounts), so replaced values
 // neither linger nor keep being billed.
 export async function destroySupersededVersions(project: string, id: string, ctx?: ToolContext): Promise<void> {
-  const out = await runWith(ctx, "gcloud", ["secrets", "versions", "list", id, "--filter=state:ENABLED", "--format=value(name)", "--project", project]);
+  const out = await runWith(ctx, "gcloud", [
+    "secrets",
+    "versions",
+    "list",
+    id,
+    "--filter=state:ENABLED",
+    "--format=value(name)",
+    "--project",
+    project,
+  ]);
   const nums = versionNumbers(out).sort((a, b) => b - a);
   for (const v of nums.slice(1)) {
-    await runWith(ctx, "gcloud", ["secrets", "versions", "destroy", String(v), "--secret", id, "--project", project, "--quiet"]);
+    await runWith(ctx, "gcloud", [
+      "secrets",
+      "versions",
+      "destroy",
+      String(v),
+      "--secret",
+      id,
+      "--project",
+      project,
+      "--quiet",
+    ]);
   }
 }
 
@@ -119,7 +167,14 @@ export async function destroySupersededVersions(project: string, id: string, ctx
 export async function deleteAppSecrets(project: string, app: string, ctx?: ToolContext): Promise<void> {
   let out: string;
   try {
-    out = await runWith(ctx, "gcloud", ["secrets", "list", `--filter=name~nbo-${app}-`, "--format=value(name)", "--project", project]);
+    out = await runWith(ctx, "gcloud", [
+      "secrets",
+      "list",
+      `--filter=name~nbo-${app}-`,
+      "--format=value(name)",
+      "--project",
+      project,
+    ]);
   } catch (err) {
     if (secretManagerAccessError(err instanceof Error ? err.message : String(err))) return;
     throw err;

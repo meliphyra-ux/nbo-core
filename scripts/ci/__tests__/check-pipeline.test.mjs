@@ -40,7 +40,9 @@ test("the real .gitlab-ci.yml passes", () => {
 test("the real file's structure: stages, jobs, timeouts", () => {
   const doc = load();
   assert.deepEqual(doc.stages, ["check", "determinism", "targets"]);
-  const jobs = Object.keys(doc).filter((k) => !k.startsWith(".") && doc[k] && typeof doc[k] === "object" && doc[k].stage);
+  const jobs = Object.keys(doc).filter(
+    (k) => !k.startsWith(".") && doc[k] && typeof doc[k] === "object" && doc[k].stage,
+  );
   for (const name of [
     "node-checks",
     "lint",
@@ -58,12 +60,10 @@ test("the real file's structure: stages, jobs, timeouts", () => {
   }
 });
 
-test("lint is allowed to fail, with a comment explaining why; determinism-next is strict", () => {
+test("lint blocks the pipeline like every other job; determinism-next is strict", () => {
   const doc = load();
-  assert.equal(doc.lint.allow_failure, true);
+  assert.equal(doc.lint.allow_failure, undefined);
   assert.equal(doc["determinism-next"].allow_failure, undefined);
-  const text = readFileSync(ymlPath, "utf8");
-  assert.match(text, /points-to-improve-or-fix\.md/);
 });
 
 test("no secrets in plain variables of the real file", () => {
@@ -223,10 +223,10 @@ test("a job in the wrong stage is named", () => {
   }, "kubernetes: stage must be targets");
 });
 
-test("lint loses allow_failure: named", () => {
+test("lint with allow_failure is refused: named", () => {
   expectFailure((doc) => {
-    delete doc.lint.allow_failure;
-  }, "lint: allow_failure must be true (points-to-improve-or-fix.md)");
+    doc.lint.allow_failure = true;
+  }, "lint: allow_failure is not allowed on a job");
 });
 
 test("cache pnpm: not keyed on pnpm-lock.yaml", () => {
@@ -298,7 +298,10 @@ test("CLI: --print-job kubernetes prints before_script then script, one line eac
   assert.equal(r.status, 0, r.stderr);
   const doc = load();
   const expected = [...(doc.kubernetes.before_script ?? []), ...doc.kubernetes.script];
-  assert.deepEqual(r.stdout.split("\n").filter((l) => l !== ""), expected);
+  assert.deepEqual(
+    r.stdout.split("\n").filter((l) => l !== ""),
+    expected,
+  );
   // dind-forward runs before and after bootstrap-local-k8s.sh
   const forward = expected.map((l, i) => (/dind-forward\.sh/.test(l) ? i : -1)).filter((i) => i >= 0);
   const bootstrap = expected.findIndex((l) => /bootstrap-local-k8s\.sh/.test(l));
@@ -338,7 +341,10 @@ test("an extra running rule on a key-holding job is refused", () => {
   const errs = check((doc) => {
     doc.cloudrun.rules.push({ if: '$CI_COMMIT_BRANCH == "main"' });
   });
-  assert.ok(errs.some((e) => e.startsWith("cloudrun: running rules must be exactly")), JSON.stringify(errs));
+  assert.ok(
+    errs.some((e) => e.startsWith("cloudrun: running rules must be exactly")),
+    JSON.stringify(errs),
+  );
 });
 
 test("key-holding jobs must not use a cache", () => {
@@ -351,11 +357,20 @@ test("key-holding jobs must not use a cache", () => {
   }, `cloudrun-janitor: ${reason}`);
 });
 
-test("allow_failure is refused on every job but lint", () => {
-  for (const job of ["node-checks", "determinism-static", "determinism-next", "terraform-provider", "rust", "kubernetes", "cloudrun"]) {
+test("allow_failure is refused on every job", () => {
+  for (const job of [
+    "lint",
+    "node-checks",
+    "determinism-static",
+    "determinism-next",
+    "terraform-provider",
+    "rust",
+    "kubernetes",
+    "cloudrun",
+  ]) {
     expectFailure((doc) => {
       doc[job].allow_failure = true;
-    }, `${job}: allow_failure is only allowed on lint`);
+    }, `${job}: allow_failure is not allowed on a job`);
   }
   assert.ok(
     check((doc) => {
@@ -412,7 +427,10 @@ test("the checker fails when kind-config.yaml does not pin the node image", () =
     mkdirSync(join(dir, "scripts", "ci"), { recursive: true });
     writeFileSync(join(dir, "scripts", "ci", "kind-config.yaml"), "kind: Cluster\n");
     const errors = checkPipeline(load(), dir);
-    assert.ok(errors.includes("kubernetes: scripts/ci/kind-config.yaml does not pin kindest/node:v1.31.4"), JSON.stringify(errors));
+    assert.ok(
+      errors.includes("kubernetes: scripts/ci/kind-config.yaml does not pin kindest/node:v1.31.4"),
+      JSON.stringify(errors),
+    );
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -440,7 +458,10 @@ test("determinism jobs build what they need in a fresh clone, @nbo/writer includ
 test("a build step after the script does not count", () => {
   expectFailure((doc) => {
     const s = doc["determinism-next"].script;
-    doc["determinism-next"].script = [...s.filter((l) => /scripts\//.test(l)), ...s.filter((l) => !/scripts\//.test(l))];
+    doc["determinism-next"].script = [
+      ...s.filter((l) => /scripts\//.test(l)),
+      ...s.filter((l) => !/scripts\//.test(l)),
+    ];
   }, "determinism-next: no build step covering @nbo/writer before its scripts");
 });
 
@@ -494,4 +515,29 @@ test("verify-step0.sh builds @nbo/writer itself, so it works in a fresh clone ou
   assert.ok(builtBy('pnpm --filter "@nbo/producer-static..." build', deps).has("@nbo/writer"));
   assert.ok(!builtBy('pnpm --filter "@nbo/producer-static" build', deps).has("@nbo/writer"));
   assert.equal(builtBy("pnpm test", deps), null);
+});
+
+test("the optional include is checked when its file exists; other includes are refused", () => {
+  const msg = "include: only one optional local include (local: X, rules: exists: [X], X relative) is allowed";
+  for (const inc of [
+    [{ local: "../x.yml", rules: [{ exists: ["../x.yml"] }] }],
+    [{ local: "a.yml", rules: [{ exists: ["b.yml"] }] }],
+    [{ remote: "https://example.com/x.yml" }],
+  ]) {
+    expectFailure((d) => {
+      d.include = inc;
+    }, msg);
+  }
+  const dir = mkdtempSync(join(tmpdir(), "nbo-include-"));
+  try {
+    mkdirSync(join(dir, "extra"));
+    writeFileSync(join(dir, "extra", "ci.yml"), YAML.stringify({ "extra-job": { stage: "check", script: ["true"] } }));
+    const doc = load();
+    doc.include = [{ local: "extra/ci.yml", rules: [{ exists: ["extra/ci.yml"] }] }];
+    assert.ok(checkPipeline(doc, dir).includes("extra-job: no timeout"));
+    rmSync(join(dir, "extra", "ci.yml"));
+    assert.ok(!checkPipeline(doc, dir).includes("extra-job: no timeout"));
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });

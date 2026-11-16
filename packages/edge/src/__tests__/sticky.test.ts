@@ -2,11 +2,21 @@
 // Copyright 2026 Nikita Dovhich
 
 import { describe, it, expect } from "vitest";
-import { pickSticky, newVisitorId, readVisitorId, visitorCookie, stripVisitorCookie, VISITOR_COOKIE } from "../sticky.js";
+import {
+  pickSticky,
+  newVisitorId,
+  readVisitorId,
+  visitorCookie,
+  stripVisitorCookie,
+  VISITOR_COOKIE,
+} from "../sticky.js";
 import type { Backend, Target } from "../registry.js";
 
 function target(...backends: [string, number][]): Target {
-  return { host: "app.example", backends: backends.map(([id, weight]) => ({ id, url: `http://${id}.internal`, weight, insecureSkipVerify: false })) };
+  return {
+    host: "app.example",
+    backends: backends.map(([id, weight]) => ({ id, url: `http://${id}.internal`, weight, insecureSkipVerify: false })),
+  };
 }
 
 function ids(n: number): string[] {
@@ -107,7 +117,10 @@ describe("pickSticky", () => {
   it("falls back to the url as the key when a backend has no id", () => {
     const t: Target = {
       host: "h",
-      backends: [{ url: "http://one", weight: 1, insecureSkipVerify: false } as Backend, { url: "http://two", weight: 1, insecureSkipVerify: false } as Backend],
+      backends: [
+        { url: "http://one", weight: 1, insecureSkipVerify: false } as Backend,
+        { url: "http://two", weight: 1, insecureSkipVerify: false } as Backend,
+      ],
     };
     const v = newVisitorId();
     expect(pickSticky(t, v).url).toBe(pickSticky(t, v).url);

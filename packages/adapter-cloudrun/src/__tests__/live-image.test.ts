@@ -17,7 +17,16 @@ function recorder(answer: () => string | Error) {
   return { calls, run };
 }
 
-function describeJSON(o: { image?: string; url?: string; labels?: Record<string, string>; ready?: string; latestReady?: string; latestCreated?: string } = {}) {
+function describeJSON(
+  o: {
+    image?: string;
+    url?: string;
+    labels?: Record<string, string>;
+    ready?: string;
+    latestReady?: string;
+    latestCreated?: string;
+  } = {},
+) {
   return JSON.stringify({
     metadata: { labels: o.labels ?? { "nbo-fn-config": "cfg" } },
     spec: { template: { spec: { containers: [{ image: o.image ?? "repo/img:1" }] } } },
@@ -37,9 +46,26 @@ describe("liveServiceState", () => {
   it("reads image, URL, config label and readiness in one describe call, with the context's env", async () => {
     const { calls, run } = recorder(() => describeJSON());
     const got = await liveServiceState("s", "proj", "us-central1", { env: { CLOUDSDK_CONFIG: "/tmp/g" }, run });
-    expect(got).toEqual({ image: "repo/img:1", url: "https://s.run.app", config: "cfg", fingerprint: "", secretEnvNames: [], ready: true });
+    expect(got).toEqual({
+      image: "repo/img:1",
+      url: "https://s.run.app",
+      config: "cfg",
+      fingerprint: "",
+      secretEnvNames: [],
+      ready: true,
+    });
     expect(calls).toHaveLength(1);
-    expect(calls[0]!.args).toEqual(["run", "services", "describe", "s", "--project", "proj", "--region", "us-central1", "--format=json"]);
+    expect(calls[0]!.args).toEqual([
+      "run",
+      "services",
+      "describe",
+      "s",
+      "--project",
+      "proj",
+      "--region",
+      "us-central1",
+      "--format=json",
+    ]);
     expect(calls[0]!.env).toEqual({ CLOUDSDK_CONFIG: "/tmp/g" });
   });
 
@@ -64,8 +90,14 @@ describe("liveServiceState", () => {
   });
 
   it("is undefined for a missing service, a failed describe, or unparsable output", async () => {
-    await expect(liveServiceState("s", "p", "r", { run: recorder(() => new Error("ERROR: (gcloud.run.services.describe) Cannot find service [s]")).run })).resolves.toBeUndefined();
-    await expect(liveServiceState("s", "p", "r", { run: recorder(() => new Error("permission denied")).run })).resolves.toBeUndefined();
+    await expect(
+      liveServiceState("s", "p", "r", {
+        run: recorder(() => new Error("ERROR: (gcloud.run.services.describe) Cannot find service [s]")).run,
+      }),
+    ).resolves.toBeUndefined();
+    await expect(
+      liveServiceState("s", "p", "r", { run: recorder(() => new Error("permission denied")).run }),
+    ).resolves.toBeUndefined();
     await expect(liveServiceState("s", "p", "r", { run: recorder(() => "WARNING: x\n").run })).resolves.toBeUndefined();
   });
 });
@@ -90,8 +122,15 @@ describe("function deploy config", () => {
     const h = functionDeployConfigHash(spec, "app@p.iam.gserviceaccount.com");
     expect(functionDeployConfigHash({ ...spec, memoryMB: 1024 }, "app@p.iam.gserviceaccount.com")).not.toBe(h);
     expect(functionDeployConfigHash({ ...spec, maxDurationSec: 60 }, "app@p.iam.gserviceaccount.com")).not.toBe(h);
-    expect(functionDeployConfigHash({ ...spec, serviceAccount: "fn@p.iam.gserviceaccount.com" }, "app@p.iam.gserviceaccount.com")).not.toBe(h);
-    expect(functionDeployConfigHash({ ...spec, imageTag: "repo/nbo-fn-a-ssr:9999" }, "app@p.iam.gserviceaccount.com")).not.toBe(h);
+    expect(
+      functionDeployConfigHash(
+        { ...spec, serviceAccount: "fn@p.iam.gserviceaccount.com" },
+        "app@p.iam.gserviceaccount.com",
+      ),
+    ).not.toBe(h);
+    expect(
+      functionDeployConfigHash({ ...spec, imageTag: "repo/nbo-fn-a-ssr:9999" }, "app@p.iam.gserviceaccount.com"),
+    ).not.toBe(h);
     expect(functionDeployConfigHash(spec, "123-compute@developer.gserviceaccount.com")).not.toBe(h);
   });
 
@@ -103,7 +142,9 @@ describe("function deploy config", () => {
   });
 
   it("serviceIdentityEmail is the account ensureServiceIdentity creates", () => {
-    expect(serviceIdentityEmail("acme", "a-fn-ssr")).toBe(`${serviceIdentityId("a-fn-ssr")}@acme.iam.gserviceaccount.com`);
+    expect(serviceIdentityEmail("acme", "a-fn-ssr")).toBe(
+      `${serviceIdentityId("a-fn-ssr")}@acme.iam.gserviceaccount.com`,
+    );
   });
 });
 

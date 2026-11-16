@@ -14,6 +14,9 @@ describe("resolveEdgeAddrs", () => {
   });
 
   it("NBO_EDGE_ADMIN_ADDR overrides the admin host and port independently", () => {
-    expect(resolveEdgeAddrs({ NBO_EDGE_ADMIN_ADDR: "0.0.0.0:2222" })).toMatchObject({ adminHost: "0.0.0.0", adminPort: 2222 });
+    expect(resolveEdgeAddrs({ NBO_EDGE_ADMIN_ADDR: "0.0.0.0:2222" })).toMatchObject({
+      adminHost: "0.0.0.0",
+      adminPort: 2222,
+    });
   });
 });

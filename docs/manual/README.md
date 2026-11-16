@@ -15,6 +15,7 @@ Every chapter of the manual for NBO, in reading order. NBO has no web interface:
 - [Creating a Kubernetes cluster](./clusters.md): create a Kubernetes cluster for NBO at GKE, Hetzner, DigitalOcean or anywhere else, and connect it.
 - [Server settings](./server-settings.md): every setting the programs read, `nbo-server`, the Compose .env file, ports, files and volumes, and what NBO prints when it refuses to start.
 - [What has been tried for real](./tried.md): what has run on real infrastructure and what has only run against fakes, feature by feature.
+- [Linking to a hosted dashboard](./link.md): what the link lets a hosted dashboard do to your server, member keys and approval, the journal, unlinking and what keeps working without it.
 - [Troubleshooting](./troubleshooting.md): errors you may see, what they mean and how to fix them.
 
 ## How NBO works

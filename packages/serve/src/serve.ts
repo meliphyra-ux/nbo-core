@@ -10,6 +10,7 @@ import { createMiddlewareInvoker, framingHeaders } from "./middleware.js";
 import { loadPrerenderDoc, handlePrerender, handleRevalidate } from "./prerender.js";
 import { loadImagesConfig, handleImage } from "./image.js";
 import { loadCarry, CARRIED_FROM_HEADER, type CarryIndex } from "./carry.js";
+import type { RemoteImageDeps } from "./remote-image.js";
 
 export type { StaticEntry } from "./loader.js";
 
@@ -84,7 +85,13 @@ function prepareIncoming(request: Request, deploymentId?: string): Request {
   // a streamed body (undici throws without it) — @types/node's
   // RequestInit doesn't know about it yet, same gap entry-shim.mjs's
   // own identical fetch() call already works around being plain JS.
-  const init = { method: request.method, headers, body: hasBody ? request.body : undefined, duplex: hasBody ? "half" : undefined, signal: request.signal } as RequestInit;
+  const init = {
+    method: request.method,
+    headers,
+    body: hasBody ? request.body : undefined,
+    duplex: hasBody ? "half" : undefined,
+    signal: request.signal,
+  } as RequestInit;
   return new Request(request.url, init);
 }
 
@@ -145,6 +152,9 @@ export interface ServeState {
   resolveCache?: Resolver;
   prerenders: PrerenderConfig[];
   images?: ImagesConfig;
+  // remoteImage replaces DNS (and, in tests, the dialled address) for remote
+  // image sources; undefined in production.
+  remoteImage?: RemoteImageDeps;
   // deploymentId is the build's content id: the prefix of every ISR cache
   // key, so an old and a new build sharing one cache never read each other's
   // pages. Undefined (unscoped keys) when the build has no manifest.json.
@@ -224,7 +234,13 @@ export async function readStaticFile(state: ServeState, entry: StaticEntry): Pro
 // rejection or a missing file) instead of writing anything, leaving
 // the caller to fall back to its own error path — port of
 // serveStaticEntry (serve.go lines 304-317).
-export async function serveStaticEntry(state: ServeState, entry: StaticEntry, status: number, cache: string, headerOps: HeaderOp[]): Promise<Response | null> {
+export async function serveStaticEntry(
+  state: ServeState,
+  entry: StaticEntry,
+  status: number,
+  cache: string,
+  headerOps: HeaderOp[],
+): Promise<Response | null> {
   const raw = await readStaticFile(state, entry);
   if (!raw) return null;
   const headers = new Headers();
@@ -385,7 +401,12 @@ async function serveCarried(carry: { dir: string; index: CarryIndex }, request: 
 
 async function dispatchRoute(state: ServeState, request: Request): Promise<Response> {
   const path = new URL(request.url).pathname;
-  const decision = await state.router.route(path, request.method, (p) => state.index.has(decodeFullyURI(p)), createMiddlewareInvoker(state.resolve, request));
+  const decision = await state.router.route(
+    path,
+    request.method,
+    (p) => state.index.has(decodeFullyURI(p)),
+    createMiddlewareInvoker(state.resolve, request),
+  );
   switch (decision.kind) {
     case "serve":
       return handleServe(state, decision);
@@ -406,7 +427,11 @@ async function dispatchRoute(state: ServeState, request: Request): Promise<Respo
   }
 }
 
-async function dispatch(state: ServeState, request: Request, carry: { dir: string; index: CarryIndex } | null): Promise<Response> {
+async function dispatch(
+  state: ServeState,
+  request: Request,
+  carry: { dir: string; index: CarryIndex } | null,
+): Promise<Response> {
   const res = await dispatchRoute(state, request);
   if (res.status !== 404 || !carry || (request.method !== "GET" && request.method !== "HEAD")) return res;
   const carried = await serveCarried(carry, request);
@@ -419,7 +444,12 @@ async function dispatch(state: ServeState, request: Request, carry: { dir: strin
 // Handler (serve.go lines 449-490), as a plain function returning a
 // Fetch-style handler rather than an http.Handler object, matching
 // this rewrite's own established function convention.
-export async function createHandler(nboDir: string, resolve?: Resolver, resolveCache?: Resolver, options: HandlerOptions = {}): Promise<FetchHandler> {
+export async function createHandler(
+  nboDir: string,
+  resolve?: Resolver,
+  resolveCache?: Resolver,
+  options: HandlerOptions = {},
+): Promise<FetchHandler> {
   const index = await loadStaticIndex(nboDir);
   const routes = await loadRoutesDoc(nboDir);
   const trailingSlash = await loadTrailingSlashPolicy(nboDir);

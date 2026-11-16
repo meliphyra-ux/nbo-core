@@ -36,7 +36,17 @@ const reservedResponseHeaders = new Set(["x-nbo-next", "x-nbo-rewrite", "x-nbo-r
 // proxied function response, which would otherwise carry a stale
 // Content-Length or a bare Connection/Transfer-Encoding straight onto
 // the client) — port of framingHeaders (middleware.go lines 55-65).
-export const framingHeaders = new Set(["content-length", "transfer-encoding", "connection", "keep-alive", "proxy-authenticate", "proxy-authorization", "te", "trailer", "upgrade"]);
+export const framingHeaders = new Set([
+  "content-length",
+  "transfer-encoding",
+  "connection",
+  "keep-alive",
+  "proxy-authenticate",
+  "proxy-authorization",
+  "te",
+  "trailer",
+  "upgrade",
+]);
 
 function cleanFailure(status: number): MiddlewareOutcome {
   return { continue: false, response: { kind: "middlewareHandled", middlewareStatus: status } };
@@ -139,8 +149,15 @@ async function interpretMiddlewareResponse(response: Response, request: Request)
   // A null-body status (204, 304, …) gets no body: Node's Response
   // constructor throws on any body for them, even an empty one (a CORS
   // preflight answered with 204 is the common case).
-  const middlewareBody = NULL_BODY_STATUSES.has(response.status) ? undefined : Buffer.from(await response.arrayBuffer());
-  const decision: Decision = { kind: "middlewareHandled", middlewareStatus: response.status, middlewareHeaders, middlewareBody };
+  const middlewareBody = NULL_BODY_STATUSES.has(response.status)
+    ? undefined
+    : Buffer.from(await response.arrayBuffer());
+  const decision: Decision = {
+    kind: "middlewareHandled",
+    middlewareStatus: response.status,
+    middlewareHeaders,
+    middlewareBody,
+  };
   return { continue: false, response: decision };
 }
 
@@ -184,7 +201,11 @@ async function readCapped(body: ReadableStream<Uint8Array> | null, cap: number):
 // middlewareBudget) — port of
 // newMiddlewareInvoker/newMiddlewareInvokerWithBudget (middleware.go
 // lines 67-180).
-export function createMiddlewareInvoker(resolve: Resolver | undefined, request: Request, budgetMs: number = middlewareBudgetMs): MiddlewareInvoker {
+export function createMiddlewareInvoker(
+  resolve: Resolver | undefined,
+  request: Request,
+  budgetMs: number = middlewareBudgetMs,
+): MiddlewareInvoker {
   // invoked tracks which function names this invoker has already run
   // this request — Next's own overlapping matchers can legitimately
   // dispatch the same middleware function more than once for one

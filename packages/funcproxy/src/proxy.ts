@@ -82,7 +82,16 @@ function mergeQuery(targetQuery: string, requestQuery: string): string {
 // several of these ("invalid transfer-encoding header") rather than
 // silently ignoring them, so forwarding them unfiltered doesn't just
 // mismatch Go's behavior, it breaks the request entirely.
-const HOP_BY_HOP_HEADERS = new Set(["connection", "keep-alive", "proxy-connection", "te", "trailer", "transfer-encoding", "upgrade", "expect"]);
+const HOP_BY_HOP_HEADERS = new Set([
+  "connection",
+  "keep-alive",
+  "proxy-connection",
+  "te",
+  "trailer",
+  "transfer-encoding",
+  "upgrade",
+  "expect",
+]);
 
 // The codings Node's built-in fetch() (undici) decodes itself. A probe test
 // pins this against the running Node, so an upgrade that changes it fails a
@@ -99,7 +108,12 @@ export function fetchDecoded(method: string, status: number, contentEncoding: st
   return contentEncoding.split(",").every((coding) => FETCH_DECODED_CODINGS.has(coding.trim().toLowerCase()));
 }
 
-export async function proxyRequest(request: Request, target: URL, extraHeaders?: Record<string, string>, options?: ProxyRequestOptions): Promise<Response> {
+export async function proxyRequest(
+  request: Request,
+  target: URL,
+  extraHeaders?: Record<string, string>,
+  options?: ProxyRequestOptions,
+): Promise<Response> {
   const incoming = new URL(request.url);
   const outgoingURL = new URL(target.toString());
   outgoingURL.pathname = joinPath(target.pathname, incoming.pathname);
@@ -182,7 +196,11 @@ export async function proxyRequest(request: Request, target: URL, extraHeaders?:
 // and local-spawner use this; createCloudRunURLs calls proxyRequest
 // directly instead, since its own retry loop needs to observe a
 // thrown error (vs. an ordinary response) to decide whether to retry.
-export async function proxyRequestOrFail(request: Request, target: URL, extraHeaders?: Record<string, string>): Promise<Response> {
+export async function proxyRequestOrFail(
+  request: Request,
+  target: URL,
+  extraHeaders?: Record<string, string>,
+): Promise<Response> {
   try {
     return await proxyRequest(request, target, extraHeaders);
   } catch (err) {

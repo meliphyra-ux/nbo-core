@@ -11,16 +11,28 @@ const prerenderWith = (key: string) => ({
 
 describe("checkExtensionKeys", () => {
   it("refuses an undeclared x-nbo-pp on a prerender config, naming prerender.json and the key", () => {
-    const errs = checkExtensionKeys([{ rel: "prerender.json", doc: prerenderWith("x-nbo-pp") }], new Set(["x-nbo-ppr"]));
-    expect(errs.map((e) => e.message)).toEqual(['prerender.json: prerenders[0]: extension key "x-nbo-pp" is not declared in requires.extensions']);
+    const errs = checkExtensionKeys(
+      [{ rel: "prerender.json", doc: prerenderWith("x-nbo-pp") }],
+      new Set(["x-nbo-ppr"]),
+    );
+    expect(errs.map((e) => e.message)).toEqual([
+      'prerender.json: prerenders[0]: extension key "x-nbo-pp" is not declared in requires.extensions',
+    ]);
   });
 
   it("accepts a declared x-nbo-ppr", () => {
-    expect(checkExtensionKeys([{ rel: "prerender.json", doc: prerenderWith("x-nbo-ppr") }], new Set(["x-nbo-ppr"]))).toEqual([]);
+    expect(
+      checkExtensionKeys([{ rel: "prerender.json", doc: prerenderWith("x-nbo-ppr") }], new Set(["x-nbo-ppr"])),
+    ).toEqual([]);
   });
 
   it("accepts a declared non-critical x-acme-tag on a route rule", () => {
-    const routes = { version: 1, afterFiles: [{ id: "r", match: { path: "^/" }, action: { type: "rewrite", function: "ssr" }, "x-acme-tag": "blue" }] };
+    const routes = {
+      version: 1,
+      afterFiles: [
+        { id: "r", match: { path: "^/" }, action: { type: "rewrite", function: "ssr" }, "x-acme-tag": "blue" },
+      ],
+    };
     expect(checkExtensionKeys([{ rel: "routes.json", doc: routes }], new Set(["x-acme-tag"]))).toEqual([]);
   });
 

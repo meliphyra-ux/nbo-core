@@ -1,10 +1,20 @@
 // SPDX-License-Identifier: FSL-1.1-ALv2
 // Copyright 2026 Nikita Dovhich
 
-import { fireOne, aggregate, adminClientTimeoutMs, type Phase, type PhaseResult, type LoadResponse } from "./generator.js";
+import {
+  fireOne,
+  aggregate,
+  adminClientTimeoutMs,
+  K8S_BACKEND_ID,
+  CLOUDRUN_BACKEND_ID,
+  type Phase,
+  type PhaseResult,
+  type LoadResponse,
+} from "./generator.js";
 
 // Config names a full load-test run: which proxy/admin endpoints to
-// drive, which backend URLs to attribute responses to, and the phase
+// drive, which backend URLs to register (each under a fixed id the
+// responses are attributed by), and the phase
 // sequence plus rate/concurrency to apply — port of Config (run.go
 // lines 13-26).
 export interface Config {
@@ -53,14 +63,23 @@ function validateConfig(cfg: Config): void {
 async function setWeights(cfg: Config, phase: Phase): Promise<void> {
   const body = JSON.stringify({
     backends: [
-      { url: cfg.k8sBackendURL, weight: phase.k8sWeight, insecureSkipVerify: true },
-      { url: cfg.cloudRunBackendURL, weight: phase.cloudRunWeight, ...(cfg.cloudRunInsecureSkipVerify ? { insecureSkipVerify: true } : {}) },
+      { id: K8S_BACKEND_ID, url: cfg.k8sBackendURL, weight: phase.k8sWeight, insecureSkipVerify: true },
+      {
+        id: CLOUDRUN_BACKEND_ID,
+        url: cfg.cloudRunBackendURL,
+        weight: phase.cloudRunWeight,
+        ...(cfg.cloudRunInsecureSkipVerify ? { insecureSkipVerify: true } : {}),
+      },
     ],
   });
   // Final-review finding I2(c): matches Go's own adminClientTimeout
   // (run.go line 35) — a hung admin API must fail the run, not block
   // it forever.
-  const response = await fetch(`${cfg.adminURL}/targets/${cfg.host}`, { method: "PUT", body, signal: AbortSignal.timeout(adminClientTimeoutMs) });
+  const response = await fetch(`${cfg.adminURL}/targets/${cfg.host}`, {
+    method: "PUT",
+    body,
+    signal: AbortSignal.timeout(adminClientTimeoutMs),
+  });
   if (response.status !== 204) {
     throw new Error(`admin API returned ${response.status}, want 204`);
   }
@@ -91,7 +110,11 @@ function sleep(ms: number): Promise<void> {
 // until a later phase had already started; once a saturated tick is
 // simply dropped instead of queued, there is no more gap between
 // "ticked" and "sent" for currentPhase.value to diverge across.
-function runContinuousLoad(signal: AbortSignal, cfg: Config, currentPhase: { value: number }): Promise<LoadResponse[][]> {
+function runContinuousLoad(
+  signal: AbortSignal,
+  cfg: Config,
+  currentPhase: { value: number },
+): Promise<LoadResponse[][]> {
   return new Promise((resolveAll) => {
     const totalDurationMs = cfg.phaseDurationMs * cfg.phases.length;
     const deadline = Date.now() + totalDurationMs;
@@ -141,12 +164,17 @@ export async function run(signal: AbortSignal, cfg: Config): Promise<Result> {
       await setWeights(cfg, cfg.phases[i]!);
     } catch (err) {
       await loadPromise; // let load already in flight finish before returning
-      throw new Error(`loadtest: setting weights for phase ${JSON.stringify(cfg.phases[i])}: ${err instanceof Error ? err.message : String(err)}`, { cause: err });
+      throw new Error(
+        `loadtest: setting weights for phase ${JSON.stringify(cfg.phases[i])}: ${err instanceof Error ? err.message : String(err)}`,
+        { cause: err },
+      );
     }
   }
 
   const perPhase = await loadPromise;
-  return { phases: cfg.phases.map((phase, i) => aggregate(phase, perPhase[i]!, cfg.k8sBackendURL, cfg.cloudRunBackendURL)) };
+  return {
+    phases: cfg.phases.map((phase, i) => aggregate(phase, perPhase[i]!)),
+  };
 }
 
 // evaluate checks a Result against the run's pass/fail gate, returning
@@ -170,10 +198,14 @@ export function evaluate(result: Result): string[] {
       problems.push(`phase ${JSON.stringify(p.weights)}: cloud run at weight 0 got ${p.cloudRunHits} hits`);
     }
     if (p.weights.k8sWeight >= 90 && p.k8sHits * 100 < p.total * 80) {
-      problems.push(`phase ${JSON.stringify(p.weights)}: expected >=80% of ${p.total} requests to kubernetes, got ${p.k8sHits}`);
+      problems.push(
+        `phase ${JSON.stringify(p.weights)}: expected >=80% of ${p.total} requests to kubernetes, got ${p.k8sHits}`,
+      );
     }
     if (p.weights.cloudRunWeight >= 90 && p.cloudRunHits * 100 < p.total * 80) {
-      problems.push(`phase ${JSON.stringify(p.weights)}: expected >=80% of ${p.total} requests to cloud run, got ${p.cloudRunHits}`);
+      problems.push(
+        `phase ${JSON.stringify(p.weights)}: expected >=80% of ${p.total} requests to cloud run, got ${p.cloudRunHits}`,
+      );
     }
   }
   return problems;

@@ -746,13 +746,27 @@ where
     .await
     {
         Ok(r) => r,
-        Err(e) => return text(StatusCode::BAD_GATEWAY, format!("edge: {e}")),
+        Err(e) => {
+            // The detail (it can name the backend's URL) goes to the log only.
+            eprintln!(
+                "edge: backend {} for {host} unreachable: {e}",
+                backend.id.as_deref().unwrap_or("(no id)")
+            );
+            return text(StatusCode::BAD_GATEWAY, "edge: backend unreachable");
+        }
     };
 
-    // Lets operators (and tests) see which backend actually answered.
+    // Lets operators (and tests) see which backend answered: its stable id
+    // (the environment id), never its URL. A backend without an id (an older
+    // route table) gets no header.
     let (parts, body) = response.into_parts();
     let mut out_headers = response_headers(&parts.headers);
-    set_header(&mut out_headers, "x-nbo-edge-backend", &backend.url);
+    match &backend.id {
+        Some(id) => set_header(&mut out_headers, "x-nbo-edge-backend", id),
+        None => {
+            out_headers.remove("x-nbo-edge-backend");
+        }
+    }
     if known_id.is_none()
         && navigation
         && let Ok(v) = HeaderValue::from_str(&visitor_cookie(&visitor_id, scheme == "https"))
@@ -851,7 +865,9 @@ fn fanout_headers(mut res: Response<EdgeBody>, count: usize) -> Response<EdgeBod
 /// answered 2xx; the shared status when all answered the same non-2xx;
 /// else `502` listing each backend's id and status (`0`: unreachable or
 /// timed out).
-pub fn fanout_answer(results: &[(String, u16)]) -> Response<EdgeBody> {
+/// A backend without an id (an older route table) is listed with a null id,
+/// never by its URL.
+pub fn fanout_answer(results: &[(Option<String>, u16)]) -> Response<EdgeBody> {
     let count = results.len();
     let first = results.first().map_or(0, |r| r.1);
     let shared = StatusCode::from_u16(first)
@@ -950,10 +966,10 @@ where
             statuses[index] = status;
         }
     }
-    let results: Vec<(String, u16)> = backends
+    let results: Vec<(Option<String>, u16)> = backends
         .iter()
         .zip(statuses)
-        .map(|(b, status)| (b.id.clone().unwrap_or_else(|| b.url.clone()), status))
+        .map(|(b, status)| (b.id.clone(), status))
         .collect();
     fanout_answer(&results)
 }
@@ -983,8 +999,11 @@ mod tests {
         String::from_utf8(bytes.to_vec()).unwrap()
     }
 
-    fn results(pairs: &[(&str, u16)]) -> Vec<(String, u16)> {
-        pairs.iter().map(|(i, s)| (i.to_string(), *s)).collect()
+    fn results(pairs: &[(&str, u16)]) -> Vec<(Option<String>, u16)> {
+        pairs
+            .iter()
+            .map(|(i, s)| ((!i.is_empty()).then(|| i.to_string()), *s))
+            .collect()
     }
 
     #[tokio::test]
@@ -1003,12 +1022,13 @@ mod tests {
         let shared = fanout_answer(&results(&[("a", 401), ("b", 401)]));
         assert_eq!(shared.status(), StatusCode::UNAUTHORIZED);
 
-        let mixed = fanout_answer(&results(&[("env_a", 204), ("http://b", 401)]));
+        // "" stands for a backend without an id: listed as null, never its URL.
+        let mixed = fanout_answer(&results(&[("env_a", 204), ("", 401)]));
         assert_eq!(mixed.status(), StatusCode::BAD_GATEWAY);
         assert_eq!(header_of(&mixed, "x-nbo-edge-fanout").as_deref(), Some("2"));
         assert_eq!(
             body_text(mixed).await,
-            r#"{"backends":[{"id":"env_a","status":204},{"id":"http://b","status":401}]}"#
+            r#"{"backends":[{"id":"env_a","status":204},{"id":null,"status":401}]}"#
         );
 
         // Nobody answered: no shared status, the list.
@@ -1438,6 +1458,48 @@ mod tests {
         assert_eq!(res.headers()["content-encoding"], "identity");
         let (res, _) = e.get("HEAD", "/", &[NAV]).await;
         assert_eq!(res.headers()["etag"], "\"abc\"");
+    }
+
+    #[tokio::test]
+    async fn names_the_backend_by_its_id_never_its_url() {
+        let e = edge(html("identity", PAGE.to_vec()), false).await;
+        let (res, _) = e.get("GET", "/", &[]).await;
+        assert_eq!(res.status(), 200);
+        assert_eq!(res.headers()["x-nbo-edge-backend"], "env_a");
+
+        // A backend without an id (an older route table) gets no header.
+        let target = e.registry.get("si.test").unwrap();
+        let mut old = target.backends[0].clone();
+        old.id = None;
+        e.registry.set("si.test", vec![old], None).unwrap();
+        let (res, _) = e.get("GET", "/", &[]).await;
+        assert_eq!(res.status(), 200);
+        assert!(res.headers().get("x-nbo-edge-backend").is_none());
+    }
+
+    #[tokio::test]
+    async fn an_unreachable_backend_is_a_502_that_names_nothing_internal() {
+        let e = edge(html("identity", PAGE.to_vec()), false).await;
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let port = listener.local_addr().unwrap().port();
+        drop(listener);
+        e.registry
+            .set(
+                "si.test",
+                vec![Backend {
+                    id: Some("env_down".into()),
+                    url: format!("http://127.0.0.1:{port}"),
+                    weight: 1,
+                    insecure_skip_verify: false,
+                    via: None,
+                }],
+                None,
+            )
+            .unwrap();
+        let (res, body) = e.get("GET", "/", &[]).await;
+        assert_eq!(res.status(), 502);
+        assert_eq!(body, b"edge: backend unreachable");
+        assert!(res.headers().get("x-nbo-edge-backend").is_none());
     }
 
     #[tokio::test]

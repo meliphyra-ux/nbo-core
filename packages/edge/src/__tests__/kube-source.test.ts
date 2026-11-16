@@ -43,7 +43,9 @@ async function fakeApi(state: State): Promise<string> {
     if (url === `/api/v1/namespaces/${NS}/configmaps/nbo-edge-routes`) {
       if (state.configmap === undefined) return void res.writeHead(404).end("{}");
       res.writeHead(200, { "content-type": "application/json" });
-      return void res.end(JSON.stringify({ metadata: { name: "nbo-edge-routes" }, data: { "routes.json": state.configmap } }));
+      return void res.end(
+        JSON.stringify({ metadata: { name: "nbo-edge-routes" }, data: { "routes.json": state.configmap } }),
+      );
     }
     if (url === `/api/v1/namespaces/${NS}/secrets?labelSelector=nbo.dev%2Fedge-cert%3Dtrue`) {
       res.writeHead(200, { "content-type": "application/json" });
@@ -51,7 +53,10 @@ async function fakeApi(state: State): Promise<string> {
         JSON.stringify({
           items: state.secrets.map((s) => ({
             metadata: { name: s.name },
-            data: { "tls.crt": Buffer.from(s.crt).toString("base64"), "tls.key": Buffer.from(s.key).toString("base64") },
+            data: {
+              "tls.crt": Buffer.from(s.crt).toString("base64"),
+              "tls.key": Buffer.from(s.key).toString("base64"),
+            },
           })),
         }),
       );
@@ -65,7 +70,9 @@ async function fakeApi(state: State): Promise<string> {
 function table(host: string, tls?: string): string {
   return JSON.stringify({
     version: 1,
-    targets: { [host]: { ...(tls ? { tls } : {}), backends: [{ id: "env_a", url: "http://127.0.0.1:1", weight: 100 }] } },
+    targets: {
+      [host]: { ...(tls ? { tls } : {}), backends: [{ id: "env_a", url: "http://127.0.0.1:1", weight: 100 }] },
+    },
     challenges: {},
   });
 }
@@ -90,7 +97,10 @@ async function selfSigned() {
     keys,
   });
   const pkcs8 = Buffer.from(await webcrypto.subtle.exportKey("pkcs8", keys.privateKey)).toString("base64");
-  return { crt: cert.toString("pem"), key: `-----BEGIN PRIVATE KEY-----\n${pkcs8.match(/.{1,64}/g)!.join("\n")}\n-----END PRIVATE KEY-----\n` };
+  return {
+    crt: cert.toString("pem"),
+    key: `-----BEGIN PRIVATE KEY-----\n${pkcs8.match(/.{1,64}/g)!.join("\n")}\n-----END PRIVATE KEY-----\n`,
+  };
 }
 
 describe("startKubeSource", () => {
@@ -150,7 +160,16 @@ describe("startKubeSource", () => {
     const apiBase = await fakeApi(state);
     const registry = createRegistry();
     const certs = createCertStore();
-    source = startKubeSource({ apiBase, token: () => "t", namespace: NS, intervalMs: 30, registry, certs, challenges: createChallengeStore(), log: () => {} });
+    source = startKubeSource({
+      apiBase,
+      token: () => "t",
+      namespace: NS,
+      intervalMs: 30,
+      registry,
+      certs,
+      challenges: createChallengeStore(),
+      log: () => {},
+    });
     await source.ready;
     expect(certs.contextFor("app.test", registry)).toBeUndefined();
     state.secrets = [{ name: "cert-app", crt: pair.crt, key: pair.key }];

@@ -38,7 +38,10 @@ describe("checkCrons", () => {
 });
 
 describe("checkCrons schedule grammar", () => {
-  const withSchedule = (schedule: string) => ({ functions: ["ssr"], crons: [{ id: "c", schedule, target: { function: "ssr" } }] });
+  const withSchedule = (schedule: string) => ({
+    functions: ["ssr"],
+    crons: [{ id: "c", schedule, target: { function: "ssr" } }],
+  });
 
   for (const ok of ["0 3 * * *", "*/5 * * * *", "0,15,30,45 0 1 1,12 0,6", "59 23 31 12 6", " 0 3 * * * "]) {
     it(`accepts "${ok}"`, () => {
@@ -46,7 +49,21 @@ describe("checkCrons schedule grammar", () => {
     });
   }
 
-  for (const bad of ["0-5 * * * *", "60 * * * *", "* * *", "* * * * * *", "*/0 * * * *", "* * 0 * *", "* * * 13 *", "* * * * 7", "+5 * * * *", "1e1 * * * *", ", * * * *", "*/x * * * *", "*/05x * * * *"]) {
+  for (const bad of [
+    "0-5 * * * *",
+    "60 * * * *",
+    "* * *",
+    "* * * * * *",
+    "*/0 * * * *",
+    "* * 0 * *",
+    "* * * 13 *",
+    "* * * * 7",
+    "+5 * * * *",
+    "1e1 * * * *",
+    ", * * * *",
+    "*/x * * * *",
+    "*/05x * * * *",
+  ]) {
     it(`refuses "${bad}", naming the cron`, () => {
       const errs = checkCrons(withSchedule(bad));
       expect(errs).toHaveLength(1);

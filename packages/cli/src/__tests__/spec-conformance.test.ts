@@ -11,14 +11,30 @@ import { createHandler } from "@nbo/serve";
 import { serveFetch } from "@nbo/nodehost";
 import { run, type Transcript } from "@nbo/conformance";
 import { loadTranscripts } from "../conformance.js";
-import { buildStaticApp, buildSpaApp, buildFunctionApp, buildCarryApp, carryFiles, writeCarry, echoFunction } from "./spec-apps.js";
+import {
+  buildStaticApp,
+  buildSpaApp,
+  buildFunctionApp,
+  buildCarryApp,
+  carryFiles,
+  writeCarry,
+  echoFunction,
+} from "./spec-apps.js";
 
 // The spec 1.0 conformance suite: small apps built with @nbo/writer, served
 // in-process by @nbo/serve's createHandler (with a deployment id, a carry
 // directory and an in-process function) behind a real HTTP listener, and
 // checked with the transcripts in packages/conformance/transcripts/spec-1.0.
 
-const transcriptsRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "conformance", "transcripts", "spec-1.0");
+const transcriptsRoot = join(
+  dirname(fileURLToPath(import.meta.url)),
+  "..",
+  "..",
+  "..",
+  "conformance",
+  "transcripts",
+  "spec-1.0",
+);
 
 type App = "static" | "spa" | "function" | "carry";
 const minimumCounts: Record<App, number> = { static: 8, spa: 2, function: 3, carry: 2 };
@@ -48,7 +64,8 @@ function substitute(transcripts: Transcript[], vars: Record<string, string>): Tr
     if (out.includes("{{")) throw new Error(`unknown placeholder in ${JSON.stringify(s)}`);
     return out;
   };
-  const fillMap = (m?: Record<string, string>) => (m === undefined ? undefined : Object.fromEntries(Object.entries(m).map(([k, v]) => [k, fill(v)])));
+  const fillMap = (m?: Record<string, string>) =>
+    m === undefined ? undefined : Object.fromEntries(Object.entries(m).map(([k, v]) => [k, fill(v)]));
   return transcripts.map((tr) => ({
     ...tr,
     expectHeaders: fillMap(tr.expectHeaders),
@@ -79,10 +96,15 @@ beforeAll(async () => {
   // Build A, then B; B is served with A's immutable files carried.
   const a = await buildCarryApp(join(tmp, "carry-a"), "old");
   const b = await buildCarryApp(join(tmp, "carry-b"), "new");
-  const carried = Object.fromEntries(Object.entries(carryFiles.old).map(([p, body]) => [p, { body, contentType: "text/javascript; charset=utf-8" }]));
+  const carried = Object.fromEntries(
+    Object.entries(carryFiles.old).map(([p, body]) => [p, { body, contentType: "text/javascript; charset=utf-8" }]),
+  );
   await writeCarry(join(tmp, "carry-dir"), a.contentId, carried);
   const cHost = await start(join(tmp, "carry-b"), b.contentId, join(tmp, "carry-dir"));
-  running.carry = { baseURL: `http://${cHost}`, vars: { contentId: b.contentId, host: cHost, carriedFrom: a.contentId } };
+  running.carry = {
+    baseURL: `http://${cHost}`,
+    vars: { contentId: b.contentId, host: cHost, carriedFrom: a.contentId },
+  };
 }, 60_000);
 
 afterAll(async () => {
@@ -114,7 +136,11 @@ describe("spec 1.0 conformance against nbo serve", () => {
     for (const app of ["static", "function", "carry"] as const) {
       const withId = (await load(app)).filter((tr) => JSON.stringify(tr.expectHeaders ?? {}).includes("{{contentId}}"));
       expect(withId.length).toBeGreaterThan(0);
-      const errors = await run(running[app].baseURL, substitute(withId, { ...running[app].vars, contentId: wrong }), false);
+      const errors = await run(
+        running[app].baseURL,
+        substitute(withId, { ...running[app].vars, contentId: wrong }),
+        false,
+      );
       // One error per transcript at least: each names its own path.
       expect(new Set(errors.map((e) => e.split(":")[0])).size).toBe(new Set(withId.map((tr) => tr.path)).size);
     }

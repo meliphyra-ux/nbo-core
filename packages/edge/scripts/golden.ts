@@ -111,8 +111,10 @@ function sticky(): StickyCase[] {
     const backends: StickyCase["backends"] = [];
     for (let k = 0; k < n; k++) {
       const weight = int(5) === 0 ? int(1001) : pickOne(weights);
-      const url = int(2) === 0 ? `http://10.0.${int(4)}.${k + 1}:8080` : `https://b${k}.example${int(3) === 0 ? "/base" : ""}`;
-      const b = int(5) < 3 ? { id: int(2) === 0 ? `env_${k}` : `e${bytes(4).toString("hex")}`, url, weight } : { url, weight };
+      const url =
+        int(2) === 0 ? `http://10.0.${int(4)}.${k + 1}:8080` : `https://b${k}.example${int(3) === 0 ? "/base" : ""}`;
+      const b =
+        int(5) < 3 ? { id: int(2) === 0 ? `env_${k}` : `e${bytes(4).toString("hex")}`, url, weight } : { url, weight };
       backends.push(b);
     }
     if (backends.every((b) => b.weight === 0)) backends[int(n)]!.weight = 1 + int(100);
@@ -127,7 +129,10 @@ function histogram(): { metric: string; value: number; index: number }[] {
   const out: { metric: string; value: number; index: number }[] = [];
   for (const metric of METRICS) {
     const scale = metric === "CLS" ? 1000 : 1;
-    const values: number[] = [0, -0, -1, -0.001, -120000, 1e-12, 5e-324, 0.5, 0.999999, 1, 1.0000001, 1.05, 1.025, 2, 10, 100, 1000, 120000, 1e9];
+    const values: number[] = [
+      0, -0, -1, -0.001, -120000, 1e-12, 5e-324, 0.5, 0.999999, 1, 1.0000001, 1.05, 1.025, 2, 10, 100, 1000, 120000,
+      1e9,
+    ];
     if (metric === "CLS") values.push(0.0001, 0.001, 0.00105, 0.01, 0.05, 0.1, 0.1000001, 0.25, 1, 9.999, 10);
     // Bucket edges: 1.05^k exactly as JS computes it, and its neighbours.
     for (let k = 0; k <= 130; k++) {
@@ -266,7 +271,12 @@ async function inject(): Promise<{ name: string; tag: string; chunks: string[]; 
   const page = "<html><head><title>t</title></head><body>b</body></html>";
   const at = page.indexOf("</head>");
   // </head> split at every position.
-  for (let k = 0; k <= 7; k++) cases.push({ name: `</head> split after ${k} bytes`, tag: tagA, chunks: [page.slice(0, at + k), page.slice(at + k)] });
+  for (let k = 0; k <= 7; k++)
+    cases.push({
+      name: `</head> split after ${k} bytes`,
+      tag: tagA,
+      chunks: [page.slice(0, at + k), page.slice(at + k)],
+    });
   cases.push(
     { name: "one chunk", tag: tagA, chunks: [page] },
     { name: "upper case", tag: tagA, chunks: ["<HTML><HEAD></HEAD><BODY></BODY>"] },
@@ -281,7 +291,11 @@ async function inject(): Promise<{ name: string; tag: string; chunks: string[]; 
     { name: "empty chunks around", tag: tagA, chunks: ["", "<head>", "", "</head>", ""] },
     { name: "no chunks", tag: tagA, chunks: [] },
     { name: "large chunk after held tail, tag in the joint", tag: tagA, chunks: [`${big}</h`, `ead>${big}`] },
-    { name: "large chunk after held tail, tag later in the chunk", tag: tagA, chunks: [`${big}</h`, `xx${big}</head>${big}`] },
+    {
+      name: "large chunk after held tail, tag later in the chunk",
+      tag: tagA,
+      chunks: [`${big}</h`, `xx${big}</head>${big}`],
+    },
     { name: "small chunks then large", tag: tagA, chunks: ["<", "/", "h", `ead>${big}`] },
     { name: "held tail is not a tag", tag: tagA, chunks: ["<p></b", `r>${big}</body>`] },
     { name: "chunks after insertion pass through", tag: tagA, chunks: ["<head></head>", "</head>", big] },

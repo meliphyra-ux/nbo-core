@@ -59,7 +59,9 @@ describe("readSpecVersion", () => {
   });
 
   it("fails loudly on a malformed file instead of accepting everything", () => {
-    expect(() => readSpecVersion('{"specVersion":"1"}')).toThrow('@nbo/spec/version.json: specVersion must be "<major>.<minor>", got "1"');
+    expect(() => readSpecVersion('{"specVersion":"1"}')).toThrow(
+      '@nbo/spec/version.json: specVersion must be "<major>.<minor>", got "1"',
+    );
     expect(() => readSpecVersion("{}")).toThrow("@nbo/spec/version.json");
     expect(() => readSpecVersion("{not json")).toThrow("@nbo/spec/version.json");
   });

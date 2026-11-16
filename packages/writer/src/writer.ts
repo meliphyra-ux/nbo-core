@@ -1,17 +1,40 @@
 // SPDX-License-Identifier: FSL-1.1-ALv2
 // Copyright 2026 Nikita Dovhich
 
-import { mkdirSync, rmSync, copyFileSync, cpSync, writeFileSync, statSync, readFileSync, readdirSync, realpathSync } from "node:fs";
+import {
+  mkdirSync,
+  rmSync,
+  copyFileSync,
+  cpSync,
+  writeFileSync,
+  statSync,
+  readFileSync,
+  readdirSync,
+  realpathSync,
+} from "node:fs";
 import { readFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { dirname, extname, join, relative, sep } from "node:path";
 import { canonicalize, contentId, sha256Hex } from "@nbo/digest";
 import { contentTypeFor } from "./content-type.js";
-import type { Manifest, StaticIndex, Routes, PrerenderConfig, Images, Env, Binding, Cron, Extension, Capability } from "@nbo/spec";
+import type {
+  Manifest,
+  StaticIndex,
+  Routes,
+  PrerenderConfig,
+  Images,
+  Env,
+  Binding,
+  Cron,
+  Extension,
+  Capability,
+} from "@nbo/spec";
 
 // The spec version every manifest says, from its one source.
 const SPEC_VERSION: string = (
-  JSON.parse(readFileSync(createRequire(import.meta.url).resolve("@nbo/spec/version.json"), "utf8")) as { specVersion: string }
+  JSON.parse(readFileSync(createRequire(import.meta.url).resolve("@nbo/spec/version.json"), "utf8")) as {
+    specVersion: string;
+  }
 ).specVersion;
 
 interface StaticEntry {
@@ -109,7 +132,13 @@ function packageNameFromTracedPath(relPath: string): string | undefined {
 // file inside the bundle before walking past its root, so a flat copy
 // there is a reliable fallback regardless of whether the nested
 // virtual-store path otherwise resolves.
-function hoistTracedPackage(relPath: string, resolvedSourcePath: string, dest: string, bundleDir: string, hoistedPackages: Set<string>): void {
+function hoistTracedPackage(
+  relPath: string,
+  resolvedSourcePath: string,
+  dest: string,
+  bundleDir: string,
+  hoistedPackages: Set<string>,
+): void {
   const pkgName = packageNameFromTracedPath(relPath);
   if (!pkgName || hoistedPackages.has(pkgName)) return;
   const hoistDest = join(bundleDir, "node_modules", pkgName);
@@ -204,7 +233,12 @@ function buildFunctionManifest(fn: FunctionEntry, bundleIndexCanonical: string):
     name: fn.name,
     runtime: fn.runtime,
     handler: { style: "fetch", entry: "index.mjs", export: "default" },
-    artifact: { type: "bundle", path: "bundle/", digest: `sha256:${sha256Hex(bundleIndexCanonical)}`, files: "bundle.index.json" },
+    artifact: {
+      type: "bundle",
+      path: "bundle/",
+      digest: `sha256:${sha256Hex(bundleIndexCanonical)}`,
+      files: "bundle.index.json",
+    },
     concurrency: "multi",
   };
   const canonical = canonicalize(functionJson);
@@ -283,24 +317,34 @@ export class NboWriter {
     this.framework = opts.framework;
   }
 
-  addStatic(urlPath: string, sourceFilePath: string, opts: { cache?: "immutable" | "revalidate" | "no-store" } = {}): void {
+  addStatic(
+    urlPath: string,
+    sourceFilePath: string,
+    opts: { cache?: "immutable" | "revalidate" | "no-store" } = {},
+  ): void {
     // Paths are UTF-8 NFC. Normalize here too, so callers that bypass the
     // producer's classifier still get one key per logical name; relativeFile
     // is derived from the normalized urlPath so the two stay consistent.
     urlPath = urlPath.normalize("NFC");
     const sourceExt = extname(sourceFilePath);
     const urlExt = extname(urlPath);
-    const relativeFile = urlPath === "/" ? `index${sourceExt}` : urlExt === sourceExt ? urlPath.slice(1) : urlPath.slice(1) + sourceExt;
+    const relativeFile =
+      urlPath === "/" ? `index${sourceExt}` : urlExt === sourceExt ? urlPath.slice(1) : urlPath.slice(1) + sourceExt;
     // Two sources mapping to the same URL path (e.g. foo.html and
     // foo/index.html both -> /foo) or the same output file must fail loudly:
     // otherwise whichever is added last wins, which depends on the
     // filesystem's directory-read order.
     for (const existing of this.staticEntries) {
       const key =
-        existing.urlPath === urlPath ? { name: "urlPath", value: urlPath } : existing.relativeFile === relativeFile ? { name: "relativeFile", value: relativeFile } : undefined;
+        existing.urlPath === urlPath
+          ? { name: "urlPath", value: urlPath }
+          : existing.relativeFile === relativeFile
+            ? { name: "relativeFile", value: relativeFile }
+            : undefined;
       if (key) {
         throw new Error(
-          `static path collision on ${key.name} ${JSON.stringify(key.value)}: ` + `${JSON.stringify(sourceFilePath)} conflicts with ${JSON.stringify(existing.sourceFilePath)}`,
+          `static path collision on ${key.name} ${JSON.stringify(key.value)}: ` +
+            `${JSON.stringify(sourceFilePath)} conflicts with ${JSON.stringify(existing.sourceFilePath)}`,
         );
       }
     }
@@ -316,7 +360,10 @@ export class NboWriter {
     this.fallbackToRoot = true;
   }
 
-  addFunction(name: string, opts: { runtime: { kind: "node"; version?: string }; entryFilePath: string; capabilities?: Capability[] }): FunctionBuilder {
+  addFunction(
+    name: string,
+    opts: { runtime: { kind: "node"; version?: string }; entryFilePath: string; capabilities?: Capability[] },
+  ): FunctionBuilder {
     const entry: FunctionEntry = {
       name,
       runtime: opts.runtime,
@@ -454,7 +501,9 @@ export class NboWriter {
       capabilities = [...capabilities, "images.optimize"];
     }
 
-    const extensions: Extension[] = this.prerenderConfigs.some((c) => c["x-nbo-ppr"]) ? [{ id: "x-nbo-ppr", version: "1", critical: true }] : [];
+    const extensions: Extension[] = this.prerenderConfigs.some((c) => c["x-nbo-ppr"])
+      ? [{ id: "x-nbo-ppr", version: "1", critical: true }]
+      : [];
 
     const manifest = buildManifest({
       framework: this.framework,

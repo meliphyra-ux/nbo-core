@@ -1,0 +1,11 @@
+# Format-only commits, one id per line (git config blame.ignoreRevsFile .git-blame-ignore-revs).
+# style: prettier at 120 columns for core
+762c6f0da6980d14878a14afef12fe706df15ee9
+# style: prettier for the platform
+17ce4b82adee1884713580382e5cda62417e08a8
+# style: prettier for two core tests missed in the sweep
+33b47e41ab038707ba7f47743b7a80922b127f7b
+# style: prettier for docs
+3a085176c7ac42d4b582b0462022bf649a368cdc
+# style: prettier after the controlplane and dashboard moves
+a0ec4bad353dad4e4549b848c7f2b9fa4e953d6f

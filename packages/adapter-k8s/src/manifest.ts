@@ -100,7 +100,8 @@ const isrcacheMaxBytes = 100663296;
 export function renderIsrcacheManifests(spec: IsrcacheDeploySpec): string {
   const name = isrcacheObjectName(spec.appName);
   const ns = namespaceLine(spec.namespace);
-  const labels = (indent: string) => `${indent}app: ${name}\n${indent}nbo.dev/role: isrcache\n${indent}nbo.dev/app: ${spec.appName}`;
+  const labels = (indent: string) =>
+    `${indent}app: ${name}\n${indent}nbo.dev/role: isrcache\n${indent}nbo.dev/app: ${spec.appName}`;
   return `apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -287,9 +288,13 @@ spec:
 export function renderFunctionManifests(spec: FunctionDeploySpec): string {
   const name = functionObjectName(spec.appName, spec.functionName);
   const ns = namespaceLine(spec.namespace);
-  const annotations = (spec.configHash ? `\n    nbo.dev/fn-config: "${spec.configHash}"` : "") + fingerprintLine(spec.envFingerprint, "    ");
+  const annotations =
+    (spec.configHash ? `\n    nbo.dev/fn-config: "${spec.configHash}"` : "") +
+    fingerprintLine(spec.envFingerprint, "    ");
   const annotation = annotations ? `\n  annotations:${annotations}` : "";
-  const podAnnotation = spec.envFingerprint ? `\n      annotations:${fingerprintLine(spec.envFingerprint, "        ")}` : "";
+  const podAnnotation = spec.envFingerprint
+    ? `\n      annotations:${fingerprintLine(spec.envFingerprint, "        ")}`
+    : "";
   return `apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -403,7 +408,13 @@ spec:
 // renderPullSecret renders a kubernetes.io/dockerconfigjson Secret.
 // The credential only ever travels inside this YAML, which callers
 // apply over stdin — never as a command-line argument.
-export function renderPullSecret(namespace: string, name: string, server: string, username: string, password: string): string {
+export function renderPullSecret(
+  namespace: string,
+  name: string,
+  server: string,
+  username: string,
+  password: string,
+): string {
   const auth = Buffer.from(`${username}:${password}`).toString("base64");
   const config = JSON.stringify({ auths: { [server]: { username, password, auth } } });
   return `apiVersion: v1
@@ -424,7 +435,9 @@ data:
 export function renderEnvSecret(name: string, vars: Record<string, string>, namespace?: string): string {
   // Keys are quoted: YAML 1.1 reads bare YES/NO/ON/OFF/NULL/Y/N as
   // booleans or null, not as the variable's name.
-  const entries = Object.entries(vars).map(([k, v]) => `  ${JSON.stringify(k)}: ${Buffer.from(v, "utf8").toString("base64")}\n`);
+  const entries = Object.entries(vars).map(
+    ([k, v]) => `  ${JSON.stringify(k)}: ${Buffer.from(v, "utf8").toString("base64")}\n`,
+  );
   const data = entries.length > 0 ? `data:\n${entries.join("")}` : "data: {}\n";
   return `apiVersion: v1
 kind: Secret
@@ -475,7 +488,11 @@ const isrcacheOwnerJSONPath =
 // exact name count. A failing read throws.
 export async function isrcacheNameTaken(appName: string, ctx?: ToolContext): Promise<string | undefined> {
   const name = isrcacheObjectName(appName);
-  const out = await runWith(ctx, "kubectl", kubectlArgs(ctx, ["get", "deployment,service", name, "--ignore-not-found", "-o", isrcacheOwnerJSONPath]));
+  const out = await runWith(
+    ctx,
+    "kubectl",
+    kubectlArgs(ctx, ["get", "deployment,service", name, "--ignore-not-found", "-o", isrcacheOwnerJSONPath]),
+  );
   for (const raw of out.split("\n")) {
     const [kind, objName, role = "", app = ""] = raw.replace(/\r$/, "").split("\t");
     if (!kind || objName !== name) continue;
@@ -531,17 +548,32 @@ const fnStateJSONPath = [
 // any failure means "not known to be live" — the normal deploy then
 // runs and reports real errors itself. Runners merge stderr into the
 // output: only a line of exactly seven tab-separated fields counts.
-export async function liveFunctionState(deploymentName: string, ctx?: ToolContext): Promise<LiveFunctionState | undefined> {
+export async function liveFunctionState(
+  deploymentName: string,
+  ctx?: ToolContext,
+): Promise<LiveFunctionState | undefined> {
   let out: string;
   try {
-    out = await runWith(ctx, "kubectl", kubectlArgs(ctx, ["get", "deployment", deploymentName, "-o", `jsonpath=${fnStateJSONPath}`]));
+    out = await runWith(
+      ctx,
+      "kubectl",
+      kubectlArgs(ctx, ["get", "deployment", deploymentName, "-o", `jsonpath=${fnStateJSONPath}`]),
+    );
   } catch {
     return undefined;
   }
   for (const raw of out.split("\n").reverse()) {
     const f = raw.replace(/\r$/, "").split("\t");
     if (f.length !== 7 || !/^\S+$/.test(f[0]!)) continue;
-    const [image, config, generation, observed, replicas, updated, available] = f as [string, string, string, string, string, string, string];
+    const [image, config, generation, observed, replicas, updated, available] = f as [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ];
     const n = (s: string) => (/^\d+$/.test(s) ? Number(s) : NaN);
     const want = n(replicas);
     const healthy = n(observed) >= n(generation) && want > 0 && n(updated) === want && n(available) === want;
@@ -561,9 +593,13 @@ const contentIDLine = /^sha256:[0-9a-f]+$/;
 // sha256 form counts as the id. The same call reads the
 // nbo.dev/env-fingerprint annotation, tab-separated after the id;
 // fingerprint is omitted when that annotation is absent.
-export async function liveContentID(appName: string, ctx?: ToolContext): Promise<{ id: string; ok: boolean; fingerprint?: string }> {
+export async function liveContentID(
+  appName: string,
+  ctx?: ToolContext,
+): Promise<{ id: string; ok: boolean; fingerprint?: string }> {
   try {
-    const jsonpath = 'jsonpath={.metadata.annotations.nbo\\.dev/content-id}{"\\t"}{.metadata.annotations.nbo\\.dev/env-fingerprint}';
+    const jsonpath =
+      'jsonpath={.metadata.annotations.nbo\\.dev/content-id}{"\\t"}{.metadata.annotations.nbo\\.dev/env-fingerprint}';
     const out = await runWith(ctx, "kubectl", kubectlArgs(ctx, ["get", "deployment", appName, "-o", jsonpath]));
     const line = out
       .split(/\r?\n/)

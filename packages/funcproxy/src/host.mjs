@@ -45,7 +45,16 @@ const fetchFn = mod[fnJson.handler.export].fetch;
 // (`InvalidArgumentError: invalid transfer-encoding header`), since
 // fetch() manages that header itself from the body it's given and
 // refuses to let a caller set it manually.
-const hopByHopHeaders = new Set(["connection", "keep-alive", "proxy-connection", "te", "trailer", "transfer-encoding", "upgrade", "expect"]);
+const hopByHopHeaders = new Set([
+  "connection",
+  "keep-alive",
+  "proxy-connection",
+  "te",
+  "trailer",
+  "transfer-encoding",
+  "upgrade",
+  "expect",
+]);
 
 const requestedPort = Number(process.env.PORT ?? 8080);
 const server = createServer(async (req, res) => {
@@ -57,7 +66,9 @@ const server = createServer(async (req, res) => {
   });
   const url = `http://${req.headers.host ?? "localhost"}${req.url}`;
   const hasBody = req.method !== "GET" && req.method !== "HEAD";
-  const headers = new Headers(Object.entries(req.headers).filter(([k, v]) => v !== undefined && !hopByHopHeaders.has(k.toLowerCase())));
+  const headers = new Headers(
+    Object.entries(req.headers).filter(([k, v]) => v !== undefined && !hopByHopHeaders.has(k.toLowerCase())),
+  );
   // createCloudRunURLs (funcproxy/cloudrun.ts) overwrites the client's
   // own Authorization header with a Google identity token Cloud Run's
   // IAM layer requires to let the request through at all, and stashes
@@ -83,7 +94,8 @@ const server = createServer(async (req, res) => {
     response = await fetchFn(request);
   } catch (err) {
     // A caller hanging up is the abort doing its job, not a fault.
-    if (!disconnected.signal.aborted) console.error(JSON.stringify({ level: "error", msg: "function threw", error: String(err) }));
+    if (!disconnected.signal.aborted)
+      console.error(JSON.stringify({ level: "error", msg: "function threw", error: String(err) }));
     res.writeHead(500).end();
     return;
   }
@@ -106,7 +118,8 @@ const server = createServer(async (req, res) => {
   } catch (err) {
     // The status is already sent, so all that's left is to reset the
     // connection. Uncaught, this rejection would end the whole host.
-    if (!disconnected.signal.aborted) console.error(JSON.stringify({ level: "error", msg: "function body failed", error: String(err) }));
+    if (!disconnected.signal.aborted)
+      console.error(JSON.stringify({ level: "error", msg: "function body failed", error: String(err) }));
     res.destroy();
   }
 });

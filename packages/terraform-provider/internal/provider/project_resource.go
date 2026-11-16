@@ -431,11 +431,11 @@ func (r *projectResource) Create(ctx context.Context, req resource.CreateRequest
 	}
 
 	final, err := waitForSetup(ctx, r.client, summary.Project.ID, setupTimeout, pollInterval)
-	if err != nil && plan.GitCredential.ValueString() == credentialDeployKey && final != nil && final.Project.SetupStatus == client.SetupNeedsSetup {
+	if err != nil && plan.GitCredential.ValueString() == credentialDeployKey && final != nil && (final.Project.SetupStatus == client.SetupWaitingForKey || final.Project.SetupStatus == client.SetupNeedsSetup) {
 		// Expected: NBO can't read the repository until the key is added.
 		resp.Diagnostics.AddWarning(
 			"Add the deploy key to the repository",
-			fmt.Sprintf("Project %s is waiting for its deploy key: %s\n\nAdd deploy_key_public to the repository as a read-only deploy key, then run `nbo-server project retry %s` on the NBO server, or apply an nbo_deployment for the project (a build also finishes the setup).", summary.Project.ID, final.Project.SetupError, summary.Project.ID),
+			fmt.Sprintf("Project %s is waiting for its deploy key: %s\n\nAdd deploy_key_public to the repository as a read-only deploy key. NBO finds the key by itself (it checks on every poll for an hour, then every 10 minutes for 7 days), or run `nbo-server project retry %s` on the NBO server to finish at once.", summary.Project.ID, final.Project.SetupError, summary.Project.ID),
 		)
 		err = nil
 	}

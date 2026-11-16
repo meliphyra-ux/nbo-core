@@ -28,13 +28,17 @@ const CH = "docs/manual/server-settings.md";
 test("links: an in-app /docs target and a bad relative link are reported", async () => {
   const root = tree({
     "docs/ci.md": "# CI\n",
-    "docs/production.md": "See [env](/docs/environments) and [ci](./ci.md) and [gone](./gone.md) and [web](https://x.dev/a).\n",
+    "docs/production.md":
+      "See [env](/docs/environments) and [ci](./ci.md) and [gone](./gone.md) and [web](https://x.dev/a).\n",
   });
   try {
     const f = await checkLinks(root);
     assert.equal(f.length, 2, JSON.stringify(f));
     assert.ok(f.every((x) => x.check === "links" && x.file === "docs/production.md" && x.line === 1));
-    assert.ok(f.some((x) => /\/docs\/environments/.test(x.problem) && /relative/.test(x.problem)), JSON.stringify(f));
+    assert.ok(
+      f.some((x) => /\/docs\/environments/.test(x.problem) && /relative/.test(x.problem)),
+      JSON.stringify(f),
+    );
     assert.ok(f.some((x) => /gone\.md/.test(x.problem)));
   } finally {
     rmSync(root, { recursive: true, force: true });
@@ -44,12 +48,17 @@ test("links: an in-app /docs target and a bad relative link are reported", async
 test("links: the core manual in docs/manual is scanned, chapter to chapter and to production.md", async () => {
   const root = tree({
     "docs/production.md": "[s](./manual/server-settings.md#ports)\n",
-    "docs/manual/server-settings.md": "## Ports\n[c](./cache.md#cache) [p](../production.md) [gone](./gone.md) [old](/docs/cache)\n",
+    "docs/manual/server-settings.md":
+      "## Ports\n[c](./cache.md#cache) [p](../production.md) [gone](./gone.md) [old](/docs/cache)\n",
     "docs/manual/cache.md": "# Cache\n",
   });
   try {
     const f = await checkLinks(root);
-    assert.deepEqual(f.map((x) => x.file), ["docs/manual/server-settings.md", "docs/manual/server-settings.md"], JSON.stringify(f));
+    assert.deepEqual(
+      f.map((x) => x.file),
+      ["docs/manual/server-settings.md", "docs/manual/server-settings.md"],
+      JSON.stringify(f),
+    );
     assert.ok(f.some((x) => /gone\.md/.test(x.problem)));
     assert.ok(f.some((x) => /\/docs\/cache/.test(x.problem)));
   } finally {
@@ -63,7 +72,10 @@ test("links: links in code fences and inline code are ignored; CRLF lines count 
   });
   try {
     const f = await checkLinks(root);
-    assert.deepEqual(f.map((x) => [x.line, /nope3/.test(x.problem)]), [[6, true]]);
+    assert.deepEqual(
+      f.map((x) => [x.line, /nope3/.test(x.problem)]),
+      [[6, true]],
+    );
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
@@ -71,7 +83,8 @@ test("links: links in code fences and inline code are ignored; CRLF lines count 
 
 test("links: html href=#nope and a missing relative file are reported, real ones pass", async () => {
   const root = tree({
-    "docs/architecture/index.html": '<h2 id="ok">a</h2><a href="#ok">1</a>\n<a href="#nope">2</a> <a href="../ci.md">3</a> <a href="../gone.md">4</a> <a href="https://x.dev">5</a>',
+    "docs/architecture/index.html":
+      '<h2 id="ok">a</h2><a href="#ok">1</a>\n<a href="#nope">2</a> <a href="../ci.md">3</a> <a href="../gone.md">4</a> <a href="https://x.dev">5</a>',
     "docs/ci.md": "x",
   });
   try {
@@ -87,7 +100,8 @@ test("links: html href=#nope and a missing relative file are reported, real ones
 test("paths: a missing repo path is reported; placeholders, globs and existing paths are not", async () => {
   const root = tree({
     "packages/real/x.ts": "",
-    "docs/context.md": "Real `packages/real/x.ts`, bad `packages/nope/x.ts`, template `packages/<name>/x`, glob `docs/*.md`, line `packages/real/x.ts:12`, dir `packages/real/`.\n",
+    "docs/context.md":
+      "Real `packages/real/x.ts`, bad `packages/nope/x.ts`, template `packages/<name>/x`, glob `docs/*.md`, line `packages/real/x.ts:12`, dir `packages/real/`.\n",
   });
   try {
     const f = await checkPaths(root);
@@ -101,7 +115,8 @@ test("paths: a missing repo path is reported; placeholders, globs and existing p
 
 test("env: TS, Rust, compose and dynamic names; tests ignored; allowlist and chapter count as documented", async () => {
   const root = tree({
-    "packages/controlplane/src/a.ts": 'const a = process.env.NBO_DOCUMENTED;\nconst b = process.env.NBO_HIDDEN_TS;\n// see NBO_GOOGLE_* in docs\nconst c = `NBO_${x}`;\n',
+    "packages/controlplane/src/a.ts":
+      "const a = process.env.NBO_DOCUMENTED;\nconst b = process.env.NBO_HIDDEN_TS;\n// see NBO_GOOGLE_* in docs\nconst c = `NBO_${x}`;\n",
     "packages/controlplane/src/__tests__/a.test.ts": "process.env.NBO_ONLY_IN_TEST;\n",
     "packages/edge/src/b.ts": "process.env.NBO_ALLOWED;\n",
     "packages/edge-rs/src/c.rs": 'let v = std::env::var("NBO_EDGE_HTTP2");\n',
@@ -147,14 +162,14 @@ const ACCESS = `export const routeAccess = {
 
 test("api: a route missing from the page is reported; {projectID} matches {id}; ?query is stripped", async () => {
   const root = tree({
-    "packages/controlplane/src/access.ts": ACCESS,
+    "packages/controlplane/src/http/access.ts": ACCESS,
     "docs/architecture/index.html": '["GET", "/projects/{id}"], ["POST", "/projects/{id}/builds?stage=x"]',
   });
   try {
     const f = await checkApi(root);
     assert.equal(f.length, 1, JSON.stringify(f));
     assert.match(f[0].problem, /GET \/things/);
-    assert.equal(f[0].file, "packages/controlplane/src/access.ts");
+    assert.equal(f[0].file, "packages/controlplane/src/http/access.ts");
     assert.equal(f[0].line, 4);
   } finally {
     rmSync(root, { recursive: true, force: true });
@@ -169,9 +184,10 @@ const CORE_ACCESS = `export const routeAccess = {
 `;
 
 test("api: a row's access cell must match access.ts; local passes, a role such as admin is reported", async () => {
-  const row = (m, p, access, service = "control-plane") => `["${m}","${p}","Does \\"a\\" thing.","${service}","${access}","Group"],`;
+  const row = (m, p, access, service = "control-plane") =>
+    `["${m}","${p}","Does \\"a\\" thing.","${service}","${access}","Group"],`;
   const root = tree({
-    "packages/controlplane/src/access.ts": CORE_ACCESS,
+    "packages/controlplane/src/http/access.ts": CORE_ACCESS,
     "docs/architecture/index.html": [
       row("GET", "/healthz", "public"),
       row("GET", "/projects/{id}", "token"),
@@ -191,8 +207,12 @@ test("api: a row's access cell must match access.ts; local passes, a role such a
     rmSync(root, { recursive: true, force: true });
   }
   const ok = tree({
-    "packages/controlplane/src/access.ts": CORE_ACCESS,
-    "docs/architecture/index.html": [row("GET", "/healthz", "public"), row("GET", "/projects/{id}", "token"), row("GET", "/system/connections", "local")].join("\n"),
+    "packages/controlplane/src/http/access.ts": CORE_ACCESS,
+    "docs/architecture/index.html": [
+      row("GET", "/healthz", "public"),
+      row("GET", "/projects/{id}", "token"),
+      row("GET", "/system/connections", "local"),
+    ].join("\n"),
   });
   try {
     assert.deepEqual(await checkApi(ok), []);
@@ -203,7 +223,7 @@ test("api: a row's access cell must match access.ts; local passes, a role such a
 
 test("api: a control-plane row for a route access.ts no longer has is reported", async () => {
   const root = tree({
-    "packages/controlplane/src/access.ts": CORE_ACCESS,
+    "packages/controlplane/src/http/access.ts": CORE_ACCESS,
     "docs/architecture/index.html": [
       '["GET","/healthz","x","control-plane","public","G"],',
       '["GET","/projects/{id}","x","control-plane","token","G"],',
@@ -223,13 +243,18 @@ test("api: a control-plane row for a route access.ts no longer has is reported",
 
 test("links: a markdown anchor must match a heading by GitHub's rule", async () => {
   const root = tree({
-    "docs/manual/a.md": "# A\n\n## Don't store variable values\n\n## Step 1: `nbo-server` setup\n\n[same](#dont-store-variable-values) [bad](#don-t-store-variable-values)\n",
-    "docs/manual/b.md": "[ok](./a.md#step-1-nbo-server-setup) [old](./a.md#don-t-store-variable-values) [top](./a.md)\n",
+    "docs/manual/a.md":
+      "# A\n\n## Don't store variable values\n\n## Step 1: `nbo-server` setup\n\n[same](#dont-store-variable-values) [bad](#don-t-store-variable-values)\n",
+    "docs/manual/b.md":
+      "[ok](./a.md#step-1-nbo-server-setup) [old](./a.md#don-t-store-variable-values) [top](./a.md)\n",
   });
   try {
     const f = await checkLinks(root);
     assert.equal(f.length, 2, JSON.stringify(f));
-    assert.ok(f.every((x) => /anchor not found/.test(x.problem) && /don-t-store/.test(x.problem)), JSON.stringify(f));
+    assert.ok(
+      f.every((x) => /anchor not found/.test(x.problem) && /don-t-store/.test(x.problem)),
+      JSON.stringify(f),
+    );
     assert.deepEqual(f.map((x) => x.file).sort(), ["docs/manual/a.md", "docs/manual/b.md"]);
   } finally {
     rmSync(root, { recursive: true, force: true });
@@ -245,7 +270,10 @@ async function runWith(root, args, pendingFiles, pendingChecks) {
   console.log = (...a) => out.push(a.join(" "));
   console.error = (...a) => err.push(a.join(" "));
   try {
-    const status = await main(["--root", root, ...args], pendingChecks ? { pendingFiles, pendingChecks } : { pendingFiles });
+    const status = await main(
+      ["--root", root, ...args],
+      pendingChecks ? { pendingFiles, pendingChecks } : { pendingFiles },
+    );
     return { status, stdout: out.join("\n"), stderr: err.join("\n") };
   } finally {
     console.log = log;
@@ -314,7 +342,7 @@ test("cli: a pending file with no findings fails the default run", async () => {
 test("cli: a pending check that is clean fails the default run", async () => {
   // No pending files and no other findings: only the clean pending checks can fail the run.
   const root = tree({
-    "packages/controlplane/src/access.ts": '  "GET /a": "viewer",\n',
+    "packages/controlplane/src/http/access.ts": '  "GET /a": "viewer",\n',
     "docs/architecture/index.html": '["GET", "/a"]',
     [CH]: "x",
   });
@@ -354,7 +382,9 @@ test("links: a malformed percent escape is a finding, not a crash", async () => 
 });
 
 test("paths: <code> in the platform page is checked", async () => {
-  const root = tree({ "docs/architecture/index.html": "<p><code>packages/nope/y.ts</code> <code>docs/architecture/index.html</code></p>" });
+  const root = tree({
+    "docs/architecture/index.html": "<p><code>packages/nope/y.ts</code> <code>docs/architecture/index.html</code></p>",
+  });
   try {
     const f = await checkPaths(root);
     assert.equal(f.length, 1, JSON.stringify(f));

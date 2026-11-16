@@ -99,9 +99,9 @@ cleanup() {
   stop_pid "$EDGE_PID"
   if [ "$code" -ne 0 ]; then
     echo "--- control-plane log (tail) ---" >&2
-    tail -n 40 "$WORK/cp.log" 2>/dev/null >&2 || true
+    tail -n 40 "$WORK/cp.log" >&2 2>/dev/null || true
     echo "--- edge log (tail) ---" >&2
-    tail -n 10 "$WORK/edge.log" 2>/dev/null >&2 || true
+    tail -n 10 "$WORK/edge.log" >&2 2>/dev/null || true
   fi
   rm -rf "$WORK"
   exit "$code"

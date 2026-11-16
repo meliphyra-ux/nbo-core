@@ -2,6 +2,7 @@
 // Copyright 2026 Nikita Dovhich
 
 import spawn from "cross-spawn";
+import { childEnv } from "@nbo/adapter-cloudrun";
 
 // cross-spawn, not node:child_process's own spawn directly: confirmed
 // directly that plain spawn("pnpm", ...) fails with ENOENT on Windows
@@ -27,24 +28,11 @@ import spawn from "cross-spawn";
 // must set GOOS/GOARCH/CGO_ENABLED for one `go build` call only
 // (Go's own buildCmd.Env = append(os.Environ(), ...)), not globally
 // via process.env, which would leak into unrelated concurrent work.
-// childEnv builds a child's environment from the host's plus overrides.
-// A connected call (one that brings its own CLOUDSDK_CONFIG) must not
-// inherit the host's gcloud overrides (CLOUDSDK_* properties or
-// GOOGLE_APPLICATION_CREDENTIALS), which would beat the connection's own
-// credentials or project. Calls without overrides inherit as before.
-export function childEnv(base: NodeJS.ProcessEnv, overrides: Record<string, string> | undefined): NodeJS.ProcessEnv | undefined {
-  if (!overrides) return undefined;
-  const env: NodeJS.ProcessEnv = { ...base };
-  if (overrides.CLOUDSDK_CONFIG !== undefined) {
-    for (const k of Object.keys(env)) {
-      const upper = k.toUpperCase();
-      if (upper.startsWith("CLOUDSDK_") || upper === "GOOGLE_APPLICATION_CREDENTIALS") delete env[k];
-    }
-  }
-  return { ...env, ...overrides };
-}
-
-export function run(cmd: string, args: string[], options?: { input?: string; env?: Record<string, string> }): Promise<string> {
+export function run(
+  cmd: string,
+  args: string[],
+  options?: { input?: string; env?: Record<string, string> },
+): Promise<string> {
   return new Promise((resolve, reject) => {
     const env = childEnv(process.env, options?.env);
     const child = spawn(cmd, args, env ? { env } : undefined);

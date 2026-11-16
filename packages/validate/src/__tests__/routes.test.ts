@@ -6,12 +6,18 @@ import { checkRoutePatterns } from "../routes.js";
 
 describe("checkRoutePatterns", () => {
   it("accepts an ordinary anchored pattern", () => {
-    const routes = { version: 1, fallback: [{ id: "ok", match: { path: "^/blog/" }, action: { type: "rewrite", path: "/blog" } }] };
+    const routes = {
+      version: 1,
+      fallback: [{ id: "ok", match: { path: "^/blog/" }, action: { type: "rewrite", path: "/blog" } }],
+    };
     expect(checkRoutePatterns(routes)).toHaveLength(0);
   });
 
   it("rejects a lookahead as not valid RE2, naming the pattern", () => {
-    const routes = { version: 1, fallback: [{ id: "bad", match: { path: "^/(?=admin)" }, action: { type: "rewrite", path: "/" } }] };
+    const routes = {
+      version: 1,
+      fallback: [{ id: "bad", match: { path: "^/(?=admin)" }, action: { type: "rewrite", path: "/" } }],
+    };
     const errs = checkRoutePatterns(routes);
     expect(errs).toHaveLength(1);
     expect(errs[0]!.message).toContain("^/(?=admin)");
@@ -19,14 +25,20 @@ describe("checkRoutePatterns", () => {
 
   it("rejects \\C, \\c and \\u escapes that re2 accepts but Go's regexp.Compile does not", () => {
     for (const pattern of ["\\C", "\\cA", "\\u0041"]) {
-      const routes = { version: 1, fallback: [{ id: "bad", match: { path: pattern }, action: { type: "rewrite", path: "/" } }] };
+      const routes = {
+        version: 1,
+        fallback: [{ id: "bad", match: { path: pattern }, action: { type: "rewrite", path: "/" } }],
+      };
       const errs = checkRoutePatterns(routes);
       expect(errs.length, `expected ${pattern} to be rejected`).toBeGreaterThan(0);
     }
   });
 
   it("names RE2 routers, not Go, in the JS-only escape message", () => {
-    const routes = { version: 1, fallback: [{ id: "bad", match: { path: "\\C" }, action: { type: "rewrite", path: "/" } }] };
+    const routes = {
+      version: 1,
+      fallback: [{ id: "bad", match: { path: "\\C" }, action: { type: "rewrite", path: "/" } }],
+    };
     const msg = checkRoutePatterns(routes)[0]!.message;
     expect(msg).toContain("other RE2 routers do not accept");
     expect(msg).not.toContain("Go");
@@ -34,7 +46,10 @@ describe("checkRoutePatterns", () => {
 
   it("rejects \\u{...} escapes, as the router does", () => {
     for (const pattern of ["\\u{41}", "^/a\\u{1F600}$"]) {
-      const routes = { version: 1, fallback: [{ id: "bad", match: { path: pattern }, action: { type: "rewrite", path: "/" } }] };
+      const routes = {
+        version: 1,
+        fallback: [{ id: "bad", match: { path: pattern }, action: { type: "rewrite", path: "/" } }],
+      };
       const errs = checkRoutePatterns(routes);
       expect(errs.length, `expected ${pattern} to be rejected`).toBeGreaterThan(0);
       expect(errs[0]!.message).toContain(pattern);
@@ -43,7 +58,10 @@ describe("checkRoutePatterns", () => {
 
   it("accepts an escaped backslash before C, c, u (the router accepts them)", () => {
     for (const pattern of ["\\\\C", "\\\\cA", "\\\\u0041", "\\\\u{41}"]) {
-      const routes = { version: 1, fallback: [{ id: "ok", match: { path: pattern }, action: { type: "rewrite", path: "/" } }] };
+      const routes = {
+        version: 1,
+        fallback: [{ id: "ok", match: { path: pattern }, action: { type: "rewrite", path: "/" } }],
+      };
       expect(checkRoutePatterns(routes), pattern).toEqual([]);
     }
   });
@@ -54,7 +72,10 @@ describe("checkRoutePatterns", () => {
   });
 
   it("checks pathNot the same way it checks path", () => {
-    const routes = { version: 1, fallback: [{ id: "bad", match: { path: "^/", pathNot: "(?!x)" }, action: { type: "rewrite", path: "/" } }] };
+    const routes = {
+      version: 1,
+      fallback: [{ id: "bad", match: { path: "^/", pathNot: "(?!x)" }, action: { type: "rewrite", path: "/" } }],
+    };
     expect(checkRoutePatterns(routes)).toHaveLength(1);
   });
 });
@@ -68,6 +89,8 @@ describe("checkRoutePatterns on prerender.json", () => {
   });
 
   it("accepts an ordinary prerender match and tolerates junk", () => {
-    expect(checkRoutePatterns({ version: 1 }, { version: 1, prerenders: [{ id: "/p", match: "^/p$" }, null] })).toEqual([]);
+    expect(checkRoutePatterns({ version: 1 }, { version: 1, prerenders: [{ id: "/p", match: "^/p$" }, null] })).toEqual(
+      [],
+    );
   });
 });

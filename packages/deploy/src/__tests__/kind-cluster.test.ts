@@ -33,7 +33,10 @@ const ID = "sha256:4b66654e468e0ed5a8fb3146fff2ca53131bafe78366b02e753b059ea5fca
 async function nboWithFunction(): Promise<string> {
   const dir = await mkdtemp(join(tmpdir(), "k8s-kind-cluster-"));
   await mkdir(join(dir, "functions", "ssr", "bundle"), { recursive: true });
-  await writeFile(join(dir, "functions", "ssr", "function.json"), JSON.stringify({ handler: { entry: "index.mjs", export: "default" } }));
+  await writeFile(
+    join(dir, "functions", "ssr", "function.json"),
+    JSON.stringify({ handler: { entry: "index.mjs", export: "default" } }),
+  );
   await writeFile(join(dir, "manifest.json"), JSON.stringify({ specVersion: "1.0" }));
   return dir;
 }

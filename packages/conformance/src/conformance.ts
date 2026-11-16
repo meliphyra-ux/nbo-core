@@ -75,19 +75,24 @@ export async function run(baseURL: string, transcripts: Transcript[], insecure: 
 
       for (const [name, want] of Object.entries(tr.expectHeaders ?? {})) {
         const got = response.headers.get(name);
-        if (got !== want) errors.push(`${tr.path}: expected header ${name} ${JSON.stringify(want)}, got ${JSON.stringify(got)}`);
+        if (got !== want)
+          errors.push(`${tr.path}: expected header ${name} ${JSON.stringify(want)}, got ${JSON.stringify(got)}`);
       }
 
       for (const [name, pattern] of Object.entries(tr.expectHeaderPatterns ?? {})) {
         const got = response.headers.get(name);
         if (got === null || !new RegExp(`^(?:${pattern})$`).test(got)) {
-          errors.push(`${tr.path}: expected header ${name} to match ${JSON.stringify(pattern)}, got ${JSON.stringify(got)}`);
+          errors.push(
+            `${tr.path}: expected header ${name} to match ${JSON.stringify(pattern)}, got ${JSON.stringify(got)}`,
+          );
         }
       }
 
       if (tr.expectBodyContains !== undefined) {
         if (!body.includes(tr.expectBodyContains)) {
-          errors.push(`${tr.path}: expected body to contain ${JSON.stringify(tr.expectBodyContains)}, got ${JSON.stringify(body)}`);
+          errors.push(
+            `${tr.path}: expected body to contain ${JSON.stringify(tr.expectBodyContains)}, got ${JSON.stringify(body)}`,
+          );
         }
         continue;
       }

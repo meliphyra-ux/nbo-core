@@ -19,7 +19,11 @@ export function isHashedAsset(urlPath: string): boolean {
 // used to run inline — extracted so a caller already in the same
 // process (the control plane's own build runner) can call it directly
 // instead of shelling out to this package's CLI.
-export async function produce(buildDir: string, outDir: string, opts?: { spa?: boolean }): Promise<{ contentId: string }> {
+export async function produce(
+  buildDir: string,
+  outDir: string,
+  opts?: { spa?: boolean },
+): Promise<{ contentId: string }> {
   const writer = new NboWriter({ outDir, framework: { name: "static" } });
   // Never ingest our own output, even when outDir points inside buildDir.
   for (const file of classifyBuildDir(buildDir, [resolve(outDir)])) {

@@ -10,7 +10,12 @@ import { writeCarry } from "../carry.js";
 
 type Entry = { file: string; contentType: string; cache: string };
 
-async function nbo(name: string, files: Record<string, Entry>, bytes: Record<string, string>, manifest: Record<string, unknown> | null = { specVersion: "1.0", name }): Promise<string> {
+async function nbo(
+  name: string,
+  files: Record<string, Entry>,
+  bytes: Record<string, string>,
+  manifest: Record<string, unknown> | null = { specVersion: "1.0", name },
+): Promise<string> {
   const dir = await mkdtemp(join(tmpdir(), `carry-${name}-`));
   await mkdir(join(dir, "static"), { recursive: true });
   for (const [f, body] of Object.entries(bytes)) {
@@ -35,7 +40,12 @@ async function fixtures() {
     },
     { "index.html": "home-a", "assets/old.js": "old-bytes", "assets/same.js": "same-a", "assets/page.css": "css" },
   );
-  const b = await nbo("b", { "/assets/same.js": imm("assets/same.js") }, { "assets/same.js": "same-b" }, { specVersion: "1.0", name: "b" });
+  const b = await nbo(
+    "b",
+    { "/assets/same.js": imm("assets/same.js") },
+    { "assets/same.js": "same-b" },
+    { specVersion: "1.0", name: "b" },
+  );
   const out = await mkdtemp(join(tmpdir(), "carry-out-"));
   return { a, b, out };
 }
@@ -63,7 +73,11 @@ describe("writeCarry", () => {
     const s = await writeCarry(join(out, "nope"), b, out);
     expect(s).toMatchObject({ files: 0, bytes: 0, hash: "" });
     expect(s.skipped).toMatch(/^previous build's files not kept: /);
-    expect(JSON.parse(await readFile(join(out, "index.json"), "utf8"))).toEqual({ version: 1, contentId: "", files: {} });
+    expect(JSON.parse(await readFile(join(out, "index.json"), "utf8"))).toEqual({
+      version: 1,
+      contentId: "",
+      files: {},
+    });
 
     const bad = await nbo("bad", {}, {});
     await writeFile(join(bad, "static.index.json"), "{not json");

@@ -4,7 +4,15 @@
 import { describe, it, expect, afterEach } from "vitest";
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
-import { fireOne, generateLoad, aggregate, type Phase, type LoadResponse } from "../generator.js";
+import {
+  fireOne,
+  generateLoad,
+  aggregate,
+  K8S_BACKEND_ID,
+  CLOUDRUN_BACKEND_ID,
+  type Phase,
+  type LoadResponse,
+} from "../generator.js";
 
 let server: Server | undefined;
 
@@ -15,7 +23,9 @@ afterEach(async () => {
   }
 });
 
-function startBackend(handler: (req: import("node:http").IncomingMessage, res: import("node:http").ServerResponse) => void): Promise<string> {
+function startBackend(
+  handler: (req: import("node:http").IncomingMessage, res: import("node:http").ServerResponse) => void,
+): Promise<string> {
   return new Promise((resolve) => {
     server = createServer(handler);
     server.listen(0, () => {
@@ -151,14 +161,15 @@ describe("aggregate", () => {
   it("counts attributed hits and failures correctly", () => {
     const weights: Phase = { k8sWeight: 50, cloudRunWeight: 50 };
     const responses: LoadResponse[] = [
+      { statusCode: 200, backend: K8S_BACKEND_ID },
+      { statusCode: 200, backend: CLOUDRUN_BACKEND_ID },
+      { statusCode: 502, backend: K8S_BACKEND_ID },
       { statusCode: 200, backend: "https://k8s" },
-      { statusCode: 200, backend: "https://cloudrun" },
-      { statusCode: 502, backend: "https://k8s" },
       { err: new Error("dial error") },
     ];
 
-    const result = aggregate(weights, responses, "https://k8s", "https://cloudrun");
+    const result = aggregate(weights, responses);
 
-    expect(result).toEqual({ weights, total: 4, failures: 2, k8sHits: 1, cloudRunHits: 1 });
+    expect(result).toEqual({ weights, total: 5, failures: 2, k8sHits: 1, cloudRunHits: 1 });
   });
 });

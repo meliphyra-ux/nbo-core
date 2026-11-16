@@ -60,23 +60,31 @@ describe("edge keeps a visitor on one cloud", () => {
     const seen: Seen[] = [];
     const { registry, handler } = await twoBackends(seen);
 
-    const res = await handler(new Request("http://edge/", { headers: { host: "app.test", "sec-fetch-dest": "document" } }));
+    const res = await handler(
+      new Request("http://edge/", { headers: { host: "app.test", "sec-fetch-dest": "document" } }),
+    );
 
     const id = cookieValue(res.headers.getSetCookie());
     expect(id).toBeDefined();
     const expected = pickSticky(registry.get("app.test")!, id!);
-    expect(res.headers.get("x-nbo-edge-backend")).toBe(expected.url);
+    expect(res.headers.get("x-nbo-edge-backend")).toBe(expected.id);
   });
 
   it("a returning visitor always reaches the same backend, gets no new cookie, and the app never sees the edge cookie", async () => {
     const seen: Seen[] = [];
     const { handler } = await twoBackends(seen);
-    const first = await handler(new Request("http://edge/", { headers: { host: "app.test", "sec-fetch-dest": "document" } }));
+    const first = await handler(
+      new Request("http://edge/", { headers: { host: "app.test", "sec-fetch-dest": "document" } }),
+    );
     const id = cookieValue(first.headers.getSetCookie())!;
     const firstBackend = first.headers.get("x-nbo-edge-backend");
 
     for (let i = 0; i < 30; i++) {
-      const res = await handler(new Request("http://edge/page", { headers: { host: "app.test", cookie: `theme=dark; ${VISITOR_COOKIE}=${id}` } }));
+      const res = await handler(
+        new Request("http://edge/page", {
+          headers: { host: "app.test", cookie: `theme=dark; ${VISITOR_COOKIE}=${id}` },
+        }),
+      );
       expect(res.headers.get("x-nbo-edge-backend")).toBe(firstBackend);
       expect(cookieValue(res.headers.getSetCookie())).toBeUndefined();
       await res.arrayBuffer();
@@ -88,7 +96,13 @@ describe("edge keeps a visitor on one cloud", () => {
     const seen: Seen[] = [];
     const { handler } = await twoBackends(seen);
     const id = "0123456789abcdef0123456789abcdef";
-    const res = await handler(new Request("http://edge/api", { method: "POST", body: "hello", headers: { host: "app.test", cookie: `${VISITOR_COOKIE}=${id}` } }));
+    const res = await handler(
+      new Request("http://edge/api", {
+        method: "POST",
+        body: "hello",
+        headers: { host: "app.test", cookie: `${VISITOR_COOKIE}=${id}` },
+      }),
+    );
     await res.arrayBuffer();
     expect(seen[0]?.body).toBe("hello");
     expect(seen[0]?.cookie).toBeUndefined();
@@ -100,7 +114,9 @@ describe("edge keeps a visitor on one cloud", () => {
       res.setHeader("set-cookie", ["session=abc; Path=/"]);
       res.end("ok");
     });
-    const res = await handler(new Request("http://edge/", { headers: { host: "app.test", "sec-fetch-dest": "document" } }));
+    const res = await handler(
+      new Request("http://edge/", { headers: { host: "app.test", "sec-fetch-dest": "document" } }),
+    );
     const cookies = res.headers.getSetCookie();
     expect(cookies).toContain("session=abc; Path=/");
     expect(cookieValue(cookies)).toBeDefined();
@@ -120,21 +136,37 @@ describe("edge keeps a visitor on one cloud", () => {
   it("marks the cookie Secure when the visitor came over https", async () => {
     const seen: Seen[] = [];
     const { handler } = await twoBackends(seen);
-    const res = await handler(new Request("http://edge/", { headers: { host: "app.test", "sec-fetch-dest": "document", "x-forwarded-proto": "https" } }));
+    const res = await handler(
+      new Request("http://edge/", {
+        headers: { host: "app.test", "sec-fetch-dest": "document", "x-forwarded-proto": "https" },
+      }),
+    );
     expect(res.headers.getSetCookie().find((c) => c.startsWith(`${VISITOR_COOKIE}=`))).toContain("Secure");
   });
 
   it("sets the visitor cookie only on document navigations", async () => {
     const seen: Seen[] = [];
     const { handler } = await twoBackends(seen);
-    const asset = await handler(new Request("http://edge/app.js", { headers: { host: "app.test", "sec-fetch-dest": "script", accept: "*/*" } }));
+    const asset = await handler(
+      new Request("http://edge/app.js", { headers: { host: "app.test", "sec-fetch-dest": "script", accept: "*/*" } }),
+    );
     expect(asset.status).toBe(200);
     expect(asset.headers.getSetCookie()).toEqual([]);
-    const fetched = await handler(new Request("http://edge/page", { headers: { host: "app.test", "sec-fetch-dest": "empty", accept: "text/html" } }));
+    const fetched = await handler(
+      new Request("http://edge/page", {
+        headers: { host: "app.test", "sec-fetch-dest": "empty", accept: "text/html" },
+      }),
+    );
     expect(fetched.headers.getSetCookie()).toEqual([]);
-    const noFetchMeta = await handler(new Request("http://edge/logo.png", { headers: { host: "app.test", accept: "image/*" } }));
+    const noFetchMeta = await handler(
+      new Request("http://edge/logo.png", { headers: { host: "app.test", accept: "image/*" } }),
+    );
     expect(noFetchMeta.headers.getSetCookie()).toEqual([]);
-    const legacyNav = await handler(new Request("http://edge/", { headers: { host: "app.test", accept: "text/html,application/xhtml+xml,*/*;q=0.8" } }));
+    const legacyNav = await handler(
+      new Request("http://edge/", {
+        headers: { host: "app.test", accept: "text/html,application/xhtml+xml,*/*;q=0.8" },
+      }),
+    );
     expect(cookieValue(legacyNav.headers.getSetCookie())).toBeDefined();
   });
 
@@ -151,7 +183,9 @@ describe("edge keeps a visitor on one cloud", () => {
     });
     const registry = createRegistry();
     registry.set("app.test", [{ url, weight: 1, insecureSkipVerify: false }]);
-    await (await createProxyHandler(registry)(new Request("http://edge/", { headers: { host: "app.test", ...extra } }))).arrayBuffer();
+    await (
+      await createProxyHandler(registry)(new Request("http://edge/", { headers: { host: "app.test", ...extra } }))
+    ).arrayBuffer();
     expect(got).toBe(want);
   });
 });

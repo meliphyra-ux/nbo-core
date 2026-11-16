@@ -21,7 +21,13 @@ function writeNboDir(dir: string): void {
 
   const staticIndex = {
     files: {
-      "/": { file: "index.html", digest: fileDigest(Buffer.from(indexHtml)), size: indexHtml.length, contentType: "text/html; charset=utf-8", cache: "revalidate" },
+      "/": {
+        file: "index.html",
+        digest: fileDigest(Buffer.from(indexHtml)),
+        size: indexHtml.length,
+        contentType: "text/html; charset=utf-8",
+        cache: "revalidate",
+      },
     },
   };
   const staticIndexBytes = Buffer.from(canonicalize(staticIndex));
@@ -75,7 +81,13 @@ describe("runValidate warnings", () => {
   function addNboKey(dir: string): void {
     // Rewrite static.index.json with an extra /_nbo/ key and fix its digest.
     const indexHtml = "<h1>hi</h1>";
-    const entry = { file: "index.html", digest: fileDigest(Buffer.from(indexHtml)), size: indexHtml.length, contentType: "text/html; charset=utf-8", cache: "revalidate" };
+    const entry = {
+      file: "index.html",
+      digest: fileDigest(Buffer.from(indexHtml)),
+      size: indexHtml.length,
+      contentType: "text/html; charset=utf-8",
+      cache: "revalidate",
+    };
     const staticIndexBytes = Buffer.from(canonicalize({ files: { "/": entry, "/_nbo/x": entry } }));
     writeFileSync(join(dir, "static.index.json"), staticIndexBytes);
     const routesBytes = Buffer.from(canonicalize({ version: 1 }));
@@ -96,10 +108,14 @@ describe("runValidate warnings", () => {
     const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
     try {
       expect(await runValidate([dir])).toBe(0);
-      expect(errorSpy.mock.calls.flat()).toContain('warning: static.index.json: "/_nbo/x": paths under /_nbo/ are reserved for the platform');
+      expect(errorSpy.mock.calls.flat()).toContain(
+        'warning: static.index.json: "/_nbo/x": paths under /_nbo/ are reserved for the platform',
+      );
       errorSpy.mockClear();
       expect(await runValidate(["--strict", dir])).toBe(1);
-      expect(errorSpy.mock.calls.flat()).toContain('static.index.json: "/_nbo/x": paths under /_nbo/ are reserved for the platform');
+      expect(errorSpy.mock.calls.flat()).toContain(
+        'static.index.json: "/_nbo/x": paths under /_nbo/ are reserved for the platform',
+      );
     } finally {
       errorSpy.mockRestore();
       logSpy.mockRestore();

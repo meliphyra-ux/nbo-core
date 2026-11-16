@@ -23,7 +23,9 @@ function bytewise(s: string): string[] {
 
 describe("createInsertionStream", () => {
   it("inserts before </head>", async () => {
-    expect(await run(["<html><head><title>x</title></head><body>hi</body></html>"])).toBe(`<html><head><title>x</title>${TAG}</head><body>hi</body></html>`);
+    expect(await run(["<html><head><title>x</title></head><body>hi</body></html>"])).toBe(
+      `<html><head><title>x</title>${TAG}</head><body>hi</body></html>`,
+    );
   });
 
   it("matches </HEAD> case-insensitively", async () => {
@@ -53,7 +55,9 @@ describe("createInsertionStream", () => {
   });
 
   it("inserts only once", async () => {
-    expect(await run(["<head></head><body></body><head></head>"])).toBe(`<head>${TAG}</head><body></body><head></head>`);
+    expect(await run(["<head></head><body></body><head></head>"])).toBe(
+      `<head>${TAG}</head><body></body><head></head>`,
+    );
   });
 
   it("leaves a document with neither tag unchanged", async () => {
@@ -90,8 +94,10 @@ describe("insightsTag", () => {
 });
 
 describe("shouldInsert", () => {
-  const html = (init: ResponseInit = {}) => new Response("<head></head>", { status: 200, headers: { "content-type": "text/html; charset=utf-8" }, ...init });
-  const nav = (method = "GET", headers: Record<string, string> = { "sec-fetch-dest": "document" }) => new Request("http://app.test/", { method, headers });
+  const html = (init: ResponseInit = {}) =>
+    new Response("<head></head>", { status: 200, headers: { "content-type": "text/html; charset=utf-8" }, ...init });
+  const nav = (method = "GET", headers: Record<string, string> = { "sec-fetch-dest": "document" }) =>
+    new Request("http://app.test/", { method, headers });
 
   it("is true only for a GET document navigation answered 200 with text/html", () => {
     expect(shouldInsert(nav(), html())).toBe(true);
@@ -110,8 +116,12 @@ describe("shouldInsert", () => {
   });
 
   it("respects cache-control: no-transform and a still-encoded body", () => {
-    expect(shouldInsert(nav(), html({ headers: { "content-type": "text/html", "cache-control": "public, no-transform" } }))).toBe(false);
-    expect(shouldInsert(nav(), html({ headers: { "content-type": "text/html", "content-encoding": "zstd" } }))).toBe(false);
+    expect(
+      shouldInsert(nav(), html({ headers: { "content-type": "text/html", "cache-control": "public, no-transform" } })),
+    ).toBe(false);
+    expect(shouldInsert(nav(), html({ headers: { "content-type": "text/html", "content-encoding": "zstd" } }))).toBe(
+      false,
+    );
   });
 
   it("inserts only into ASCII-compatible charsets (or none named)", () => {
@@ -128,7 +138,13 @@ describe("shouldInsert", () => {
     ]) {
       expect(shouldInsert(nav(), typed(ok)), ok).toBe(true);
     }
-    for (const no of ["text/html; charset=utf-16", "text/html; charset=UTF-16LE", "text/html; charset=utf-32", "text/html; charset=shift_jis", "text/html; charset=x-unknown"]) {
+    for (const no of [
+      "text/html; charset=utf-16",
+      "text/html; charset=UTF-16LE",
+      "text/html; charset=utf-32",
+      "text/html; charset=shift_jis",
+      "text/html; charset=x-unknown",
+    ]) {
       expect(shouldInsert(nav(), typed(no)), no).toBe(false);
     }
   });

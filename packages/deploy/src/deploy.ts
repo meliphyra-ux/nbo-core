@@ -86,7 +86,12 @@ function urlFor(d: Deployer, appName: string): string {
   return d.urlFor ? d.urlFor(appName) : "";
 }
 
-export async function deploy(d: Deployer, nboDir: string, appName: string, progress?: ProgressOptions): Promise<DeployResult> {
+export async function deploy(
+  d: Deployer,
+  nboDir: string,
+  appName: string,
+  progress?: ProgressOptions,
+): Promise<DeployResult> {
   const p = createProgress(progress);
   await p.timed("build validated", "build validation", async () => {
     const errs = validate(nboDir);

@@ -5,6 +5,8 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
+export { kubectlArgs } from "@nbo/adapter-k8s";
+
 export interface ToolContext {
   env?: Record<string, string>;
   kubeconfig?: string;
@@ -13,7 +15,11 @@ export interface ToolContext {
 
 // timeoutMs asks the runner for a longer (or shorter) per-command timeout
 // than its default; runners without one ignore it.
-export type CommandRunner = (cmd: string, args: string[], opts?: { env?: Record<string, string>; input?: string; timeoutMs?: number }) => Promise<string>;
+export type CommandRunner = (
+  cmd: string,
+  args: string[],
+  opts?: { env?: Record<string, string>; input?: string; timeoutMs?: number },
+) => Promise<string>;
 
 // Test seam for simulating cleanup failures.
 export const _internals = { rm };
@@ -34,7 +40,12 @@ async function privateDir(prefix: string): Promise<string> {
 
 // Materialises a service-account key in a private temp dir, points
 // gcloud/docker at it for the duration of fn, and always removes it.
-export async function withGoogleCredentials<T>(keyJson: string, region: string, run: CommandRunner, fn: (ctx: ToolContext) => Promise<T>): Promise<T> {
+export async function withGoogleCredentials<T>(
+  keyJson: string,
+  region: string,
+  run: CommandRunner,
+  fn: (ctx: ToolContext) => Promise<T>,
+): Promise<T> {
   const dir = await privateDir("nbo-gcp-");
   try {
     const keyFile = join(dir, "key.json");
@@ -54,7 +65,11 @@ export async function withGoogleCredentials<T>(keyJson: string, region: string, 
   }
 }
 
-export async function withKubeconfig<T>(kubeconfig: string, namespace: string | undefined, fn: (ctx: ToolContext) => Promise<T>): Promise<T> {
+export async function withKubeconfig<T>(
+  kubeconfig: string,
+  namespace: string | undefined,
+  fn: (ctx: ToolContext) => Promise<T>,
+): Promise<T> {
   const dir = await privateDir("nbo-kube-");
   try {
     const path = join(dir, "kubeconfig");
@@ -68,7 +83,13 @@ export async function withKubeconfig<T>(kubeconfig: string, namespace: string | 
 // Logs docker in to a registry under a private, temporary DOCKER_CONFIG
 // (the password goes over stdin, never argv) for the duration of fn, and
 // always removes it. ctx.env carries that DOCKER_CONFIG for pushes.
-export async function withDockerLogin<T>(server: string, username: string, password: string, run: CommandRunner, fn: (ctx: ToolContext) => Promise<T>): Promise<T> {
+export async function withDockerLogin<T>(
+  server: string,
+  username: string,
+  password: string,
+  run: CommandRunner,
+  fn: (ctx: ToolContext) => Promise<T>,
+): Promise<T> {
   const dir = await privateDir("nbo-docker-");
   try {
     const env = { DOCKER_CONFIG: dir };
@@ -83,13 +104,6 @@ export async function withDockerLogin<T>(server: string, username: string, passw
   } finally {
     await removeDir(dir);
   }
-}
-
-export function kubectlArgs(ctx: ToolContext | undefined, args: string[]): string[] {
-  const pre: string[] = [];
-  if (ctx?.kubeconfig) pre.push("--kubeconfig", ctx.kubeconfig);
-  if (ctx?.namespace) pre.push("-n", ctx.namespace);
-  return [...pre, ...args];
 }
 
 // redact replaces every occurrence of each secret (raw and base64) in

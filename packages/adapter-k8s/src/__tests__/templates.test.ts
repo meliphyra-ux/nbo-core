@@ -19,7 +19,9 @@ describe("appDockerfile layer order", () => {
   it("copies the CLI and rebuilds re2 before any per-deploy COPY", () => {
     const cli = lineIndex(appDockerfile, /^COPY cli /);
     const re2 = lineIndex(appDockerfile, /^RUN re2_pkg=/);
-    const perDeploy = [/^COPY app /, /^COPY functions\.json /, /^COPY env\.json /].map((p) => lineIndex(appDockerfile, p));
+    const perDeploy = [/^COPY app /, /^COPY functions\.json /, /^COPY env\.json /].map((p) =>
+      lineIndex(appDockerfile, p),
+    );
     expect(cli).toBeLessThan(re2);
     for (const i of perDeploy) expect(re2).toBeLessThan(i);
   });
@@ -46,6 +48,7 @@ describe("appDockerfile layer order", () => {
 describe("functionDockerfile layer order", () => {
   it("copies the shared host before the function's own files", () => {
     const host = lineIndex(functionDockerfile, /^COPY host\.mjs /);
-    for (const p of [/^COPY bundle /, /^COPY function\.json /, /^COPY env\.json /]) expect(host).toBeLessThan(lineIndex(functionDockerfile, p));
+    for (const p of [/^COPY bundle /, /^COPY function\.json /, /^COPY env\.json /])
+      expect(host).toBeLessThan(lineIndex(functionDockerfile, p));
   });
 });

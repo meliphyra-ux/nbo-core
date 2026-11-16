@@ -11,7 +11,11 @@ import { join } from "node:path";
 // stay real.
 vi.mock("@nbo/adapter-k8s", async (importOriginal) => ({
   // Every CLI-spawning export throws unless stubbed below.
-  ...(await import("./cli-guard.js")).guardCLI(await importOriginal<typeof import("@nbo/adapter-k8s")>(), "adapter-k8s", (await import("./cli-guard.js")).K8S_CLI_EXPORTS),
+  ...(await import("./cli-guard.js")).guardCLI(
+    await importOriginal<typeof import("@nbo/adapter-k8s")>(),
+    "adapter-k8s",
+    (await import("./cli-guard.js")).K8S_CLI_EXPORTS,
+  ),
   buildImage: vi.fn().mockResolvedValue(undefined),
   buildFunctionImage: vi.fn().mockResolvedValue(undefined),
   loadImageIntoKind: vi.fn().mockResolvedValue(undefined),
@@ -50,12 +54,19 @@ async function fixture(manifest: Record<string, unknown> = {}): Promise<string> 
   const dir = await mkdtemp(join(tmpdir(), "user-env-targets-"));
   await mkdir(join(dir, "functions", "ssr", "bundle"), { recursive: true });
   await writeFile(join(dir, "functions", "ssr", "bundle", "index.mjs"), `export default () => "ssr";`);
-  await writeFile(join(dir, "functions", "ssr", "function.json"), JSON.stringify({ handler: { entry: "index.mjs", export: "default" } }));
+  await writeFile(
+    join(dir, "functions", "ssr", "function.json"),
+    JSON.stringify({ handler: { entry: "index.mjs", export: "default" } }),
+  );
   await writeFile(join(dir, "manifest.json"), JSON.stringify({ specVersion: "1.0", ...manifest }));
   return dir;
 }
 
-const userEnv = (fingerprint: string | null) => ({ vars: fingerprint ? { USER_A: "user-value" } : {}, secretNames: [], fingerprint });
+const userEnv = (fingerprint: string | null) => ({
+  vars: fingerprint ? { USER_A: "user-value" } : {},
+  secretNames: [],
+  fingerprint,
+});
 
 let dirs: string[] = [];
 beforeEach(() => {
@@ -128,7 +139,11 @@ describe("kubernetes target with user variables", () => {
 
   it("passes the stored fingerprint through liveContentID", async () => {
     vi.mocked(k8s.liveContentID).mockResolvedValueOnce({ id, ok: true, fingerprint: "fp1" });
-    await expect(createKubernetesTarget("myapp").deployer.liveContentID("myapp")).resolves.toEqual({ id, ok: true, fingerprint: "fp1" });
+    await expect(createKubernetesTarget("myapp").deployer.liveContentID("myapp")).resolves.toEqual({
+      id,
+      ok: true,
+      fingerprint: "fp1",
+    });
   });
 });
 
@@ -165,12 +180,19 @@ describe("cloud run target with user variables", () => {
     const dir = await fixture();
     dirs.push(dir);
     const target = createCloudRunTarget("proj", "us-central1", "repo");
-    target.userEnv = { vars: { PLAIN: "p", TOKEN: "dev-secret-value" }, secretNames: ["TOKEN"], fingerprint: "e".repeat(32), secretHashes: { TOKEN: "h".repeat(32) } };
+    target.userEnv = {
+      vars: { PLAIN: "p", TOKEN: "dev-secret-value" },
+      secretNames: ["TOKEN"],
+      fingerprint: "e".repeat(32),
+      secretHashes: { TOKEN: "h".repeat(32) },
+    };
     await target.deployer.deployFunctions!(dir, "myapp", ["ssr"]);
     await target.deployer.buildAndDeploy(dir, "myapp", id);
     const sid = cr.secretId("myapp", "TOKEN");
     expect(vi.mocked(cr.ensureSecretVersion).mock.calls).toEqual([["proj", sid, "dev-secret-value", "h".repeat(32)]]);
-    expect(vi.mocked(cr.grantSecretAccessor).mock.calls).toEqual([["proj", sid, "123-compute@developer.gserviceaccount.com"]]);
+    expect(vi.mocked(cr.grantSecretAccessor).mock.calls).toEqual([
+      ["proj", sid, "123-compute@developer.gserviceaccount.com"],
+    ]);
     for (const [spec] of vi.mocked(cr.deploy).mock.calls) {
       expect(spec.secretEnv).toEqual({ TOKEN: sid });
       expect(spec.plainEnv).toEqual({ PLAIN: "p" });
@@ -180,19 +202,27 @@ describe("cloud run target with user variables", () => {
   it("dev: a disabled Secret Manager API asks to enable it", async () => {
     const dir = await fixture();
     dirs.push(dir);
-    vi.mocked(cr.ensureSecretVersion).mockRejectedValueOnce(new Error("PERMISSION_DENIED: Secret Manager API has not been used in project 1. SERVICE_DISABLED"));
+    vi.mocked(cr.ensureSecretVersion).mockRejectedValueOnce(
+      new Error("PERMISSION_DENIED: Secret Manager API has not been used in project 1. SERVICE_DISABLED"),
+    );
     const target = createCloudRunTarget("proj", "us-central1", "repo");
     target.userEnv = { vars: { TOKEN: "dev-secret-value" }, secretNames: ["TOKEN"], fingerprint: "e".repeat(32) };
-    await expect(target.deployer.buildAndDeploy(dir, "myapp", id)).rejects.toThrow(/^enable the Secret Manager API in your Google Cloud project$/);
+    await expect(target.deployer.buildAndDeploy(dir, "myapp", id)).rejects.toThrow(
+      /^enable the Secret Manager API in your Google Cloud project$/,
+    );
   }, 30000);
 
   it("dev: a denied Secret Manager permission names the role the gcloud account needs", async () => {
     const dir = await fixture();
     dirs.push(dir);
-    vi.mocked(cr.ensureSecretVersion).mockRejectedValueOnce(new Error("ERROR: (gcloud.secrets.create) PERMISSION_DENIED: Permission 'secretmanager.secrets.create' denied"));
+    vi.mocked(cr.ensureSecretVersion).mockRejectedValueOnce(
+      new Error("ERROR: (gcloud.secrets.create) PERMISSION_DENIED: Permission 'secretmanager.secrets.create' denied"),
+    );
     const target = createCloudRunTarget("proj", "us-central1", "repo");
     target.userEnv = { vars: { TOKEN: "dev-secret-value" }, secretNames: ["TOKEN"], fingerprint: "e".repeat(32) };
-    await expect(target.deployer.buildAndDeploy(dir, "myapp", id)).rejects.toThrow(/^your gcloud account needs roles\/secretmanager\.admin$/);
+    await expect(target.deployer.buildAndDeploy(dir, "myapp", id)).rejects.toThrow(
+      /^your gcloud account needs roles\/secretmanager\.admin$/,
+    );
   }, 30000);
 
   it("dev: superseded versions are destroyed after the deploy", async () => {

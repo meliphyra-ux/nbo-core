@@ -26,7 +26,12 @@ describe("createAdminMux", () => {
 
   it("DELETE removes a target, and deleting an unknown host is still 204", async () => {
     const mux = createAdminMux(createRegistry());
-    await mux(new Request("http://admin/targets/app.test", { method: "PUT", body: JSON.stringify({ backends: [{ url: "https://a", weight: 100 }] }) }));
+    await mux(
+      new Request("http://admin/targets/app.test", {
+        method: "PUT",
+        body: JSON.stringify({ backends: [{ url: "https://a", weight: 100 }] }),
+      }),
+    );
 
     expect((await mux(new Request("http://admin/targets/app.test", { method: "DELETE" }))).status).toBe(204);
     expect((await mux(new Request("http://admin/targets/app.test"))).status).toBe(404);
@@ -102,7 +107,9 @@ describe("createAdminMux", () => {
 
 describe("createAdminMux route-table-only fields", () => {
   const put = (body: unknown) =>
-    createAdminMux(createRegistry())(new Request("http://admin/targets/app.test", { method: "PUT", body: JSON.stringify(body) }));
+    createAdminMux(createRegistry())(
+      new Request("http://admin/targets/app.test", { method: "PUT", body: JSON.stringify(body) }),
+    );
   const backend = { url: "https://a", weight: 100 };
 
   it("rejects a backend with via", async () => {

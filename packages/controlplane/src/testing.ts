@@ -9,16 +9,23 @@ import { mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { execFileSync } from "node:child_process";
-import type { Store, Deployment } from "./store.js";
-import type { DeploymentTrigger } from "./handlers.js";
-import type { ResolvedEnv } from "./env-vars.js";
-import type { CloudSetup, Preflight } from "./cloud-setup.js";
-import type { CloudTeardown, TeardownTarget } from "./cloud-teardown.js";
-import type { GoogleConnect } from "./google-connect.js";
-import type { KubeConnect, KubeConnectRequest } from "./kube-connect.js";
+import type { Store, Deployment } from "./store/store.js";
+import type { DeploymentTrigger } from "./http/handlers.js";
+import type { ResolvedEnv } from "./variables/env-vars.js";
+import type { CloudSetup, Preflight } from "./clouds/cloud-setup.js";
+import type { CloudTeardown, TeardownTarget } from "./clouds/cloud-teardown.js";
+import type { GoogleConnect } from "./clouds/google-connect.js";
+import type { KubeConnect, KubeConnectRequest } from "./clouds/kube-connect.js";
 
 export const readyPreflight: Preflight = {
-  gcloud: { installed: true, account: "me@example.com", project: "my-proj", region: "europe-north1", ready: true, reason: null },
+  gcloud: {
+    installed: true,
+    account: "me@example.com",
+    project: "my-proj",
+    region: "europe-north1",
+    ready: true,
+    reason: null,
+  },
   docker: { installed: true, running: true, ready: true, reason: null },
   kubernetes: { reachable: true, context: "kind-nbo-local", ready: true, reason: null },
 };
@@ -67,7 +74,11 @@ export function fakeDeploymentTrigger(store: Store): FakeDeploymentTrigger {
     dirs: [],
     options: [],
     delayMs: 0,
-    async triggerDeploy(environmentId: string, nboDir: string, opts?: { buildId?: string; carryFrom?: string; env?: ResolvedEnv; redact?: string[] }): Promise<Deployment> {
+    async triggerDeploy(
+      environmentId: string,
+      nboDir: string,
+      opts?: { buildId?: string; carryFrom?: string; env?: ResolvedEnv; redact?: string[] },
+    ): Promise<Deployment> {
       if (fake.delayMs > 0) await new Promise((r) => setTimeout(r, fake.delayMs));
       const env = store.getEnvironment(environmentId);
       const dep = store.createDeployment(environmentId, { buildId: opts?.buildId });
@@ -78,7 +89,8 @@ export function fakeDeploymentTrigger(store: Store): FakeDeploymentTrigger {
         store.failDeployment(dep.id, `${env.target} deploy failed: docker push denied`);
       } else {
         const app = `p${env.projectId.slice(-8)}-${env.name}`;
-        const url = env.target === "cloudrun" ? `https://${app}-abc123-uc.a.run.app` : `https://${app}.127.0.0.1.sslip.io`;
+        const url =
+          env.target === "cloudrun" ? `https://${app}-abc123-uc.a.run.app` : `https://${app}.127.0.0.1.sslip.io`;
         store.completeDeployment(dep.id, "sha256:fake", url);
       }
       return store.getDeployment(dep.id);
@@ -89,7 +101,11 @@ export function fakeDeploymentTrigger(store: Store): FakeDeploymentTrigger {
 
 // makeLocalRepo creates a real git repo with a static-site-friendly
 // first commit and returns its path and head sha.
-export async function makeLocalRepo(): Promise<{ repoPath: string; head: string; commit(message: string): Promise<string> }> {
+export async function makeLocalRepo(): Promise<{
+  repoPath: string;
+  head: string;
+  commit(message: string): Promise<string>;
+}> {
   const repoPath = await mkdtemp(join(tmpdir(), "nbo-testing-repo-"));
   const git = (...args: string[]) => execFileSync("git", args, { cwd: repoPath, stdio: "pipe" }).toString().trim();
   git("init", "-q", "-b", "main");
@@ -220,7 +236,9 @@ export function fakeKubeConnect(store: Store): FakeKubeConnect {
       fake.requests.push(req);
       if (fake.failWith) throw fake.failWith;
       const c = { name: req.name, server: "https://k8s.example:6443", registry: req.registry };
-      return store.saveKubernetesConnection(req.id === undefined ? c : { ...c, id: req.id }, { kubeconfig: "KUBECONFIG-SECRET" });
+      return store.saveKubernetesConnection(req.id === undefined ? c : { ...c, id: req.id }, {
+        kubeconfig: "KUBECONFIG-SECRET",
+      });
     },
     async test(id) {
       if (!store.getKubernetesConnection(id)) throw new Error("that Kubernetes cluster is not connected");

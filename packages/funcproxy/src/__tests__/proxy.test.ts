@@ -29,7 +29,21 @@ function createSelfSignedCert(): { key: string; cert: string } {
   const keyPath = join(dir, "key.pem");
   const certPath = join(dir, "cert.pem");
   try {
-    execFileSync("openssl", ["req", "-x509", "-newkey", "rsa:2048", "-keyout", keyPath, "-out", certPath, "-days", "1", "-nodes", "-subj", "/CN=localhost"]);
+    execFileSync("openssl", [
+      "req",
+      "-x509",
+      "-newkey",
+      "rsa:2048",
+      "-keyout",
+      keyPath,
+      "-out",
+      certPath,
+      "-days",
+      "1",
+      "-nodes",
+      "-subj",
+      "/CN=localhost",
+    ]);
     return { key: readFileSync(keyPath, "utf8"), cert: readFileSync(certPath, "utf8") };
   } finally {
     rmSync(dir, { recursive: true, force: true });
@@ -191,7 +205,9 @@ describe.skipIf(!opensslAvailable)("proxyRequest's dispatcher option", () => {
     const backendURL = startSelfSignedBackend();
     const dispatcher = new Agent({ connect: { rejectUnauthorized: false } });
 
-    const response = await proxyRequest(new Request("http://example.com/"), new URL(backendURL), undefined, { dispatcher });
+    const response = await proxyRequest(new Request("http://example.com/"), new URL(backendURL), undefined, {
+      dispatcher,
+    });
 
     expect(response.status).toBe(200);
     expect(await response.text()).toBe("secure response");
