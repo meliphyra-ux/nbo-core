@@ -30,7 +30,7 @@ describe("withGoogleCredentials", () => {
     const { calls, run } = fakeRunner();
     let seen: ToolContext | undefined;
     let keyPath = "";
-    await withGoogleCredentials('{"k":1}', "europe-west1", run, async (ctx) => {
+    await withGoogleCredentials({ kind: "key", keyJson: '{"k":1}' }, "europe-west1", run, async (ctx) => {
       seen = ctx;
       const cfg = ctx.env!.CLOUDSDK_CONFIG!;
       keyPath = calls[0]!.args[calls[0]!.args.indexOf("--key-file") + 1]!;
@@ -56,7 +56,7 @@ describe("withGoogleCredentials", () => {
   it("removes the dir and propagates the error when fn throws", async () => {
     const { calls, run } = fakeRunner();
     await expect(
-      withGoogleCredentials("{}", "us-central1", run, async () => {
+      withGoogleCredentials({ kind: "key", keyJson: "{}" }, "us-central1", run, async () => {
         throw new Error("boom");
       }),
     ).rejects.toThrow("boom");
@@ -70,8 +70,142 @@ describe("withGoogleCredentials", () => {
       dir = dirname(args[args.indexOf("--key-file") + 1]!);
       throw new Error("gcloud failed");
     };
-    await expect(withGoogleCredentials("{}", "r", run, async () => 1)).rejects.toThrow("gcloud failed");
+    await expect(withGoogleCredentials({ kind: "key", keyJson: "{}" }, "r", run, async () => 1)).rejects.toThrow(
+      "gcloud failed",
+    );
     expect(existsSync(dir)).toBe(false);
+  });
+});
+
+describe("withGoogleCredentials wif", () => {
+  const sa = "nbo-id@proj.iam.gserviceaccount.com";
+  const aud = "//iam.googleapis.com/projects/1/locations/global/workloadIdentityPools/p/providers/q";
+  const wif = (signToken: () => string) => ({ kind: "wif" as const, audience: aud, serviceAccount: sa, signToken });
+
+  it("writes an external_account config and a token file, then logs in and configures docker", async () => {
+    const { calls, run } = fakeRunner();
+    let tokenFile = "";
+    let dir = "";
+    await withGoogleCredentials(
+      wif(() => "TOKEN-1"),
+      "europe-west1",
+      run,
+      async (ctx) => {
+        const login = calls[0]!;
+        expect(login.cmd).toBe("gcloud");
+        expect(login.args.slice(0, 2)).toEqual(["auth", "login"]);
+        const cfgPath = login.args.find((a) => a.startsWith("--cred-file="))!.slice("--cred-file=".length);
+        dir = dirname(cfgPath);
+        const cfg = JSON.parse(readFileSync(cfgPath, "utf8"));
+        tokenFile = cfg.credential_source.file;
+        expect(cfg).toEqual({
+          type: "external_account",
+          audience: aud,
+          subject_token_type: "urn:ietf:params:oauth:token-type:jwt",
+          token_url: "https://sts.googleapis.com/v1/token",
+          credential_source: { file: tokenFile },
+          service_account_impersonation_url: `https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/${sa}:generateAccessToken`,
+        });
+        expect(readFileSync(tokenFile, "utf8")).toBe("TOKEN-1");
+        expect(login.args).toContain("--quiet");
+        expect(calls[1]!.args).toEqual(["auth", "configure-docker", "europe-west1-docker.pkg.dev", "--quiet"]);
+        expect(ctx.env!.CLOUDSDK_CONFIG).toBeTruthy();
+        expect(JSON.stringify(calls)).not.toContain("TOKEN-1");
+      },
+    );
+    expect(existsSync(dir)).toBe(false);
+  });
+
+  it("rewrites the token file every refreshMs while fn runs and stops after", async () => {
+    const { run } = fakeRunner();
+    let tokenPath = "";
+    let n = 0;
+    const signToken = () => `T${++n}`;
+    let tick: (() => void) | undefined;
+    let cleared = false;
+    const fakeSet = ((f: () => void) => {
+      tick = f;
+      return 1 as unknown as ReturnType<typeof setInterval>;
+    }) as unknown as typeof setInterval;
+    const fakeClear = (() => {
+      cleared = true;
+    }) as unknown as typeof clearInterval;
+    await withGoogleCredentials(
+      wif(signToken),
+      "r",
+      async (c, a, o) => {
+        if (a[1] === "login") {
+          const cfg = JSON.parse(readFileSync(a.find((x) => x.startsWith("--cred-file="))!.slice(12), "utf8"));
+          tokenPath = cfg.credential_source.file;
+        }
+        return run(c, a, o);
+      },
+      async () => {
+        for (let i = 0; i < 3; i++) tick!();
+        await new Promise((r) => setTimeout(r, 50));
+        expect(readFileSync(tokenPath, "utf8")).toBe("T4");
+      },
+      { refreshMs: 5, setInterval: fakeSet, clearInterval: fakeClear },
+    );
+    expect(n).toBe(4);
+    expect(cleared).toBe(true);
+  });
+
+  it("removes the temp dir when fn throws", async () => {
+    const { calls, run } = fakeRunner();
+    await expect(
+      withGoogleCredentials(
+        wif(() => "T"),
+        "r",
+        run,
+        async () => {
+          throw new Error("boom");
+        },
+      ),
+    ).rejects.toThrow("boom");
+    const cfgPath = calls[0]!.args.find((a) => a.startsWith("--cred-file="))!.slice(12);
+    expect(existsSync(dirname(cfgPath))).toBe(false);
+  });
+
+  it("redacts every subject token written, the current one too, from errors thrown inside fn", async () => {
+    const { run } = fakeRunner();
+    let n = 0;
+    let tick: (() => void) | undefined;
+    const fakeSet = ((f: () => void) => {
+      tick = f;
+      return 1 as unknown as ReturnType<typeof setInterval>;
+    }) as unknown as typeof setInterval;
+    class Marked extends Error {}
+    const err = await withGoogleCredentials(
+      wif(() => `SUBJECT-TOKEN-${++n}`),
+      "r",
+      run,
+      async () => {
+        tick!();
+        await new Promise((r) => setTimeout(r, 20));
+        throw new Marked("gcloud said: SUBJECT-TOKEN-1 and SUBJECT-TOKEN-2 were refused");
+      },
+      { setInterval: fakeSet, clearInterval: (() => undefined) as unknown as typeof clearInterval },
+    ).catch((e: unknown) => e);
+    expect(n).toBe(2);
+    expect(err).toBeInstanceOf(Marked);
+    expect((err as Error).message).toBe("gcloud said: [redacted] and [redacted] were refused");
+    expect((err as Error).stack ?? "").not.toContain("SUBJECT-TOKEN");
+  });
+
+  it("reports a signer error without token material", async () => {
+    const { run } = fakeRunner();
+    const err = await withGoogleCredentials(
+      wif(() => {
+        throw new Error("sign failed for SECRETKEYBITS");
+      }),
+      "r",
+      run,
+      async () => 1,
+    ).catch((e: Error) => e);
+    expect(err).toBeInstanceOf(Error);
+    expect((err as Error).message).toMatch(/sign/i);
+    expect((err as Error).message).not.toContain("SECRETKEYBITS");
   });
 });
 
@@ -158,7 +292,7 @@ describe("cleanup failures and redaction", () => {
       throw new Error("EPERM");
     };
     const { run } = fakeRunner();
-    await expect(withGoogleCredentials("{}", "r", run, async () => 7)).resolves.toBe(7);
+    await expect(withGoogleCredentials({ kind: "key", keyJson: "{}" }, "r", run, async () => 7)).resolves.toBe(7);
   });
 
   it("redacts key material from gcloud errors", async () => {
@@ -166,7 +300,9 @@ describe("cleanup failures and redaction", () => {
     const run = async () => {
       throw new Error("failed: -----BEGIN PRIVATE KEY-----\nABCDEF\n-----END PRIVATE KEY-----\n");
     };
-    const err = await withGoogleCredentials(key, "r", run, async () => 1).catch((e: Error) => e);
+    const err = await withGoogleCredentials({ kind: "key", keyJson: key }, "r", run, async () => 1).catch(
+      (e: Error) => e,
+    );
     expect((err as Error).message).toContain("[redacted]");
     expect((err as Error).message).not.toContain("ABCDEF");
   });

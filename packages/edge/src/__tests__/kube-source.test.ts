@@ -221,10 +221,12 @@ describe("startKubeSource", () => {
       challenges: createChallengeStore(),
       log: () => {},
     });
-    await until(() => requests >= 60);
+    // 60 answers of 3 MB each: give a busy CI runner 15 s (3 s timed out on GitLab, 2026-11-16). A leak shows in maxOpen,
+    // not in how long it takes.
+    await until(() => requests >= 60, 15_000);
     // cancelling a body closes its socket (a few may still be closing); a leak reached ~40
     expect(maxOpen).toBeLessThanOrEqual(5);
-  });
+  }, 20_000);
 });
 
 describe("startKubeSource cloudflare ranges", () => {

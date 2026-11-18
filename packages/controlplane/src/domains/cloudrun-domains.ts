@@ -3,6 +3,7 @@
 
 import { redact, withGoogleCredentials, type CommandRunner } from "@nbo/deploy";
 import type { Store } from "../store/store.js";
+import { googleCredential } from "../clouds/google-wif.js";
 import type { MappingRecord } from "./domains.js";
 import { deployAppName, googleSecrets } from "../deploys/deploy.js";
 
@@ -111,7 +112,7 @@ export function createCloudRunDomains(deps: { store: Store; run: CommandRunner }
   async function gcloud(target: MappingTarget, args: string[]): Promise<string> {
     const keys = store.getGoogleSecrets();
     try {
-      return await withGoogleCredentials(keys.deployerKey, target.region, run, async (ctx) => {
+      return await withGoogleCredentials(googleCredential(store), target.region, run, async (ctx) => {
         try {
           return await run("gcloud", args, { env: ctx.env, timeoutMs: commandTimeoutMs });
         } catch (err) {

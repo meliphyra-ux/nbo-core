@@ -30,12 +30,22 @@ export async function runSetupCommand(
           {
             "key-file": fileFlag,
             "from-machine": { type: "boolean" },
+            code: { type: "string" },
             project: { type: "string" },
             region: { type: "string" },
           },
           0,
         );
         const region = need(values, "region");
+        if (values.code !== undefined) {
+          // Keyless: the connection code the setup command printed.
+          if (values["key-file"] !== undefined || values["from-machine"] !== undefined || values.project !== undefined)
+            throw new UsageError("--code goes alone with --region: the code names its own project");
+          print(
+            await call("POST", "/system/connections/google", { source: "wif", code: need(values, "code"), region }),
+          );
+          return 0;
+        }
         if (values["from-machine"] === true) {
           if (values["key-file"] !== undefined) throw new UsageError("use --key-file or --from-machine, not both");
           print(

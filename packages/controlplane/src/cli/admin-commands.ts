@@ -6,6 +6,8 @@ import { Failed, UsageError, isRecord, need, parse, segment, str } from "./args.
 import type { CliContext } from "./context.js";
 import { isKeyFingerprint } from "../link/enroll.js";
 
+const GOOGLE_CLEAN = "Google trusts only this core's key, and nothing else can act as nbo-deployer.";
+
 const KEYS_RESET_USAGE =
   "keys reset needs the key it is for: nbo-server keys reset --key sha256:<fingerprint> (the fingerprint the dashboard shows for the new key)";
 
@@ -67,6 +69,37 @@ export async function runAdminCommand(
       const answer = await call("POST", "/system/link/enroll", { url, code, ownerKeyFingerprint });
       print(answer);
       io.out("Linked. The link connects in the background; check it with: nbo-server link status");
+      return 0;
+    }
+
+    case "google": {
+      if (sub === "check") {
+        // The core's own self-check of its keyless connection, run as the
+        // deployer straight against Google: the step that proves the setup
+        // command did only what it said.
+        parse(rest, {}, 0);
+        const answer = await call("POST", "/system/connections/google/test", {});
+        const conn = isRecord(answer) ? answer : {};
+        if (conn.auth !== "wif") {
+          io.out("This core's Google connection uses a key, not keyless: there is no keyless check to run.");
+          return 1;
+        }
+        const list = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x) => typeof x === "string") : []);
+        const warnings = list(conn.checkWarnings);
+        const others = list(conn.otherCores);
+        if (warnings.length === 0 && others.length === 0) {
+          io.out(GOOGLE_CLEAN);
+          return 0;
+        }
+        for (const w of warnings) io.out(w);
+        for (const o of others) io.out(`Other core this project trusts: ${o}`);
+        return warnings.length === 0 ? 0 : 1;
+      }
+      if (sub !== "identity") throw new UsageError("google needs identity or check");
+      parse(rest, {}, 0);
+      const answer = await call("GET", "/system/connections/google/identity");
+      const { issuer, subject, provider, keyId } = isRecord(answer) ? answer : ({} as Record<string, unknown>);
+      print({ issuer, subject, provider, keyId });
       return 0;
     }
 

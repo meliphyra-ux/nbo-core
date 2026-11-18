@@ -19,7 +19,11 @@ try {
   opensslAvailable = false;
 }
 
+// One certificate for every TLS test, made on first use. EC P-256, not RSA: an RSA key searches for primes, which
+// took over 5 s on a busy GitLab runner (2026-11-16) and timed the test out; an EC key takes milliseconds.
+let selfSigned: { key: string; cert: string } | undefined;
 function createSelfSignedCert(): { key: string; cert: string } {
+  if (selfSigned) return selfSigned;
   const dir = mkdtempSync(join(tmpdir(), "conformance-tls-"));
   const keyPath = join(dir, "key.pem");
   const certPath = join(dir, "cert.pem");
@@ -28,7 +32,9 @@ function createSelfSignedCert(): { key: string; cert: string } {
       "req",
       "-x509",
       "-newkey",
-      "rsa:2048",
+      "ec",
+      "-pkeyopt",
+      "ec_paramgen_curve:prime256v1",
       "-keyout",
       keyPath,
       "-out",
@@ -39,7 +45,8 @@ function createSelfSignedCert(): { key: string; cert: string } {
       "-subj",
       "/CN=localhost",
     ]);
-    return { key: readFileSync(keyPath, "utf8"), cert: readFileSync(certPath, "utf8") };
+    selfSigned = { key: readFileSync(keyPath, "utf8"), cert: readFileSync(certPath, "utf8") };
+    return selfSigned;
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

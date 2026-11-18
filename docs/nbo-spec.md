@@ -170,15 +170,21 @@ Because 1.0 final moved `dispatch.json` inside `bundle.index.json`, a build with
 
 ## Determinism
 
-Producers are deterministic: the same build input always gives the same `.nbo/` and content id. The input is the source tree, the producer's settings, the build's environment (for Next.js, `NBO_BUILD_ID` and `.next/cache`, which holds the draft mode and server action keys) and the Node major that ran the build (`runtime.version` is `>=<that major>`). Different `NEXT_PUBLIC_*` values give a different content id on purpose (`inlinedEnvDigest`).
+Producers are deterministic: the same build input always gives the same `.nbo/` and content id. The input is the source tree, the producer's settings, the build's environment (for Next.js, `NBO_BUILD_ID`, `.next/cache` and `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY`, the server-actions key, which salts every server action id: inside a container Next makes a new one on every build, so builds match only when it is supplied) and the Node major that ran the build (`runtime.version` is `>=<that major>`). Different `NEXT_PUBLIC_*` values give a different content id on purpose (`inlinedEnvDigest`).
 
-One exception is allowed: pages the app itself renders at build time. A Next.js page that prints the clock is rendered again on every build, and Next writes the wall-clock time of each `"use cache"` entry into the PPR resume state, which it reads back when resuming. So two builds of the same commit may differ in exactly these places, and in nothing else:
+Two exceptions are allowed: pages the app itself renders at build time, and Next.js's draft-mode keys. A Next.js page that prints the clock is rendered again on every build, and Next writes the wall-clock time of each `"use cache"` entry into the PPR resume state, which it reads back when resuming. So two builds of the same commit may differ in exactly these places, and in nothing else:
 
 - In `static.index.json`, an entry whose key is a `seeds` file of a prerender entry may differ in `digest` and `size` (and its file's bytes). Same keys, every other field equal.
 - In `prerender.json`, an entry's `x-nbo-ppr.postponedState`. Entries are compared by `id`, so their order may differ; each id appears once in each build, the same ids appear in both, every top-level field is equal, and each entry is equal once its `postponedState` is blanked (a `postponedState` present in one build and missing in the other is a difference).
 - In `manifest.json`, the `digests` of those two files (and `build`, which the content id leaves out anyway).
 
-`routes.json`, every `function.json` and every `bundle.index.json` must be byte-equal. CI builds each fixture twice from the same commit: static and SPA fixtures must give the same content id; Next.js fixtures must give the same content id or differ only as above (`scripts/ci/nbo-diff.mjs --classify`, run by `scripts/ci/determinism-next.sh`, which names every differing path). Each fresh build must also pass `nbo validate --strict`.
+Next.js's draft-mode keys (`previewModeId`, `previewModeSigningKey`, `previewModeEncryptionKey`) are kept in `.next/cache` only outside a container; inside one Next makes new ones on every build and offers no way to supply them. So a function's bundle may also differ in exactly these places:
+
+- `.next/server/preview-props.json`, equal once those three keys are blanked.
+- `.next/prerender-manifest.json`, equal once those three keys of its `preview` object are blanked.
+- What they move: that function's `bundle.index.json` (only those entries' `digest` and `size`), its `function.json` (only `artifact.digest`), and its digest in `manifest.json`.
+
+`routes.json`, every `function.json` and every `bundle.index.json` must otherwise be byte-equal. CI builds each fixture twice from the same commit: static and SPA fixtures must give the same content id; Next.js fixtures must give the same content id or differ only as above (`scripts/ci/nbo-diff.mjs --classify`, run by `scripts/ci/determinism-next.sh`, which names every differing path). Each fresh build must also pass `nbo validate --strict`.
 
 The content id still covers seeds and `postponedState`, so two builds that rendered different pages are two deployments. The "already live" check, carried files and Speed Insights attribution rely on that.
 

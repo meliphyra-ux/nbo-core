@@ -82,6 +82,13 @@ describe("link tiers", () => {
     expect(sealedFieldInClear("POST /projects/{projectID}/builds", { values: { A: "1" } })).toBe("values");
     expect(sealedFieldInClear("POST /projects/setup", { credential: { token: null } })).toBeNull();
     expect(sealedFieldInClear("GET /projects", { value: "x" })).toBeNull();
+    // A keyless Google connect carries nothing secret; a key connect's keyJson stays sealed.
+    expect(
+      sealedFieldInClear("POST /system/connections/google", { source: "wif", code: "nbo-gcp1.x", region: "r" }),
+    ).toBeNull();
+    expect(sealedFieldInClear("POST /system/connections/google", { source: "key", keyJson: "{}", region: "r" })).toBe(
+      "keyJson",
+    );
   });
   it("the tables are frozen, nested arrays and objects included", () => {
     expect(Object.isFrozen(LINK_ROUTE_TIERS)).toBe(true);

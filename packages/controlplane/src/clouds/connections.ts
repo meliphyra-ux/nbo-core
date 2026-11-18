@@ -17,11 +17,36 @@ export interface GoogleConnection {
   arRepo: string;
   deployer: string;
   puller: string;
+  // "key": a service-account key is stored (deployerKey). "wif": keyless; the
+  // core signs its own tokens and Google trusts its public key through the
+  // workload identity pool provider below (deployerKey is empty).
+  auth: "key" | "wif";
+  projectNumber?: string;
+  pool?: string;
+  provider?: string;
+  // Notes from connecting, then the latest self-check's findings.
+  warnings: string[];
+  // The latest self-check's findings alone (keyless only), without the
+  // connect notes: what `nbo-server google check` reports.
+  checkWarnings?: string[];
+  // Other cores the deployer also trusts (nbo-cores pool subjects), listed by
+  // the self-check without a warning.
+  otherCores?: string[];
   status: ConnectionStatus;
   lastChecked: string;
   lastError: string;
   createdAt: string;
 }
+
+// What a connect saves: warnings here are the connect notes; the self-check
+// adds its own with recordGoogleSelfCheck.
+export type GoogleConnectionInput = Omit<
+  GoogleConnection,
+  Meta | "auth" | "warnings" | "checkWarnings" | "otherCores"
+> & {
+  auth?: "key" | "wif";
+  warnings?: string[];
+};
 
 // One connected Kubernetes cluster. NBO keeps any number of them; each
 // environment of target kubernetes names its cluster by id (config.clusterId).
@@ -244,9 +269,15 @@ export function attachConnectionMethods(db: DatabaseSync, store: Store, initialK
   const toGoogle = (): GoogleConnection | null => {
     const r = getGoogleRow();
     if (!r) return null;
+    const { notes, checkWarnings, otherCores, auth, ...cfg } = JSON.parse(r.config) as StoredGoogleConfig;
     return {
       kind: "google",
-      ...JSON.parse(r.config),
+      ...cfg,
+      // Rows saved before keyless connections are key connections.
+      auth: auth ?? "key",
+      warnings: [...(notes ?? []), ...(checkWarnings ?? [])],
+      ...(checkWarnings ? { checkWarnings } : {}),
+      ...(otherCores ? { otherCores } : {}),
       status: r.status,
       lastChecked: r.last_checked,
       lastError: r.last_error,
@@ -327,7 +358,17 @@ export function attachConnectionMethods(db: DatabaseSync, store: Store, initialK
       if (!r) throw new ErrNotFound("google connection");
       return JSON.parse(open(needKey(), r.secret)) as GoogleSecrets;
     },
-    saveGoogleConnection(c: Omit<GoogleConnection, Meta>, s: GoogleSecrets): GoogleConnection {
+    // recordGoogleSelfCheck replaces the previous self-check's findings,
+    // keeping the connect notes.
+    recordGoogleSelfCheck(warnings: string[], otherCores: string[]): void {
+      const r = getGoogleRow();
+      if (!r) return;
+      const cfg = JSON.parse(r.config) as StoredGoogleConfig;
+      db.prepare("UPDATE connections SET config = ? WHERE kind = 'google'").run(
+        JSON.stringify({ ...cfg, checkWarnings: warnings, otherCores }),
+      );
+    },
+    saveGoogleConnection(c: GoogleConnectionInput, s: GoogleSecrets): GoogleConnection {
       const sealed = seal(needKey(), JSON.stringify(s));
       db.prepare(
         `INSERT INTO connections (kind, config, secret, status, last_checked, last_error, created_at) VALUES ('google', ?, ?, 'connected', '', '', ?)
@@ -421,6 +462,25 @@ export function environmentClusterId(config: string): string | undefined {
   return clusterIdOf(config);
 }
 
-function pickGoogle(c: Omit<GoogleConnection, Meta>) {
-  return { project: c.project, region: c.region, arRepo: c.arRepo, deployer: c.deployer, puller: c.puller };
+// The config column of the Google row (plaintext: nothing here is secret).
+interface StoredGoogleConfig {
+  project: string;
+  region: string;
+  arRepo: string;
+  deployer: string;
+  puller: string;
+  auth?: "key" | "wif";
+  projectNumber?: string;
+  pool?: string;
+  provider?: string;
+  notes?: string[];
+  checkWarnings?: string[];
+  otherCores?: string[];
+}
+
+function pickGoogle(c: GoogleConnectionInput): StoredGoogleConfig {
+  const base = { project: c.project, region: c.region, arRepo: c.arRepo, deployer: c.deployer, puller: c.puller };
+  const notes = c.warnings ?? [];
+  if (c.auth !== "wif") return { ...base, auth: "key", notes };
+  return { ...base, auth: "wif", projectNumber: c.projectNumber, pool: c.pool, provider: c.provider, notes };
 }

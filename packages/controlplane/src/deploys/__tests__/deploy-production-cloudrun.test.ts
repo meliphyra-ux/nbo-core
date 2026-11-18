@@ -38,6 +38,7 @@ const { createCloudTeardown } = await import("../../clouds/cloud-teardown.js");
 const { serviceIdentityId } = await import("@nbo/deploy");
 import type { Store } from "../../store/store.js";
 import type { CommandRunner } from "@nbo/deploy";
+import { saveWifConnection } from "../../clouds/__tests__/google-wif-fixture.js";
 
 type Call = { cmd: string; args: string[]; env?: Record<string, string> };
 
@@ -423,5 +424,38 @@ describe("recorded deploy errors redact the snapshot's secret values", () => {
     expect(dep.error).not.toContain("tok-secret-value");
     expect(dep.error).not.toContain("plain-value");
     expect(dep.error).toContain("prod");
+  });
+});
+
+describe("a keyless (wif) connection: deploy and teardown use googleCredential", () => {
+  const signedIn = (calls: Call[]) => ({
+    credFile: calls.some((c) => c.args[0] === "auth" && c.args[1] === "login" && c.args[2]!.startsWith("--cred-file=")),
+    activate: calls.some((c) => c.args.includes("activate-service-account")),
+  });
+  async function wifStore(): Promise<Store> {
+    const s = await openStore();
+    saveWifConnection(s, "acme", "europe-west1");
+    return s;
+  }
+
+  it("deploy signs in with the token exchange, never a key", async () => {
+    const s = await wifStore();
+    const env = cloudRunEnv(s, "europe-west1");
+    const run = recorder();
+    const dep = await triggerDeploy({ store: s, mode: "production", run }, env.id, await nboDir());
+    expect(dep.status).toBe("succeeded");
+    expect(signedIn(run.calls)).toEqual({ credFile: true, activate: false });
+  });
+
+  it("teardown signs in with the token exchange, never a key", async () => {
+    const s = await wifStore();
+    const run = recorder();
+    await createCloudTeardown(run, { mode: "production", store: s }).remove({
+      target: "cloudrun",
+      appName: "pabc-cloudrun",
+      projectId: "proj_abc",
+      config: { project: "acme", region: "us-central1" },
+    });
+    expect(signedIn(run.calls)).toEqual({ credFile: true, activate: false });
   });
 });

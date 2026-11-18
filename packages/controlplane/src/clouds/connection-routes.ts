@@ -8,6 +8,8 @@ import type { Router } from "../http/router.js";
 import type { Store } from "../store/store.js";
 import type { V2 } from "../v2.js";
 import { isRecord, writeJSON, writeError, errorMessage } from "../http/handlers.js";
+import { googleIdentity } from "./google-identity.js";
+import { googleCredential } from "./google-wif.js";
 import { domainMappingRegions, listCloudRunRegions } from "./regions.js";
 
 // An ErrInvalid, so other routes reusing these parsers answer 400 too.
@@ -140,6 +142,11 @@ export function registerConnectionRoutes(router: Router, store: Store, v2: V2): 
     );
   });
 
+  router.handle("GET", "/system/connections/google/identity", async () => {
+    const { issuer, subject, provider, keyId, jwks } = googleIdentity(store);
+    return writeJSON({ issuer, subject, provider, keyId, jwks }, 200);
+  });
+
   router.handle("GET", "/system/connections/detect", async () => {
     try {
       const [google, kubernetes] = await Promise.all([v2.googleConnect.detect(), v2.kubeConnect.detect()]);
@@ -177,7 +184,9 @@ export function registerConnectionRoutes(router: Router, store: Store, v2: V2): 
         return writeJSON(await v2.googleConnect.connectFromMachine({ project: str(body, "project"), region }), 201);
       if (body.source === "key")
         return writeJSON(await v2.googleConnect.connectWithKey({ keyJson: str(body, "keyJson"), region }), 201);
-      throw new BadRequest('source must be "machine" or "key"');
+      if (body.source === "wif")
+        return writeJSON(await v2.googleConnect.connectWithWif({ code: str(body, "code"), region }), 201);
+      throw new BadRequest('source must be "machine", "key" or "wif"');
     } catch (err) {
       return fail(err, secrets);
     }
@@ -298,8 +307,7 @@ export function registerConnectionRoutes(router: Router, store: Store, v2: V2): 
     const conn = store.getGoogleConnection();
     if (!conn) return writeError(409, "Cloud Run is not connected");
     try {
-      const secrets = store.getGoogleSecrets();
-      const regions = await withGoogleCredentials(secrets.deployerKey, conn.region, v2.run, (ctx) =>
+      const regions = await withGoogleCredentials(googleCredential(store), conn.region, v2.run, (ctx) =>
         listCloudRunRegions(v2.run, ctx, conn.project),
       );
       return writeJSON(regions, 200);

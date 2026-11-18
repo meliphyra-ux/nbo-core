@@ -23,6 +23,7 @@ import { run } from "../builds/run.js";
 import type { Mode } from "../mode.js";
 import type { ResolvedEnv } from "../variables/env-vars.js";
 import { environmentClusterId } from "../clouds/connections.js";
+import { PULLER_NOTE, googleCredential } from "../clouds/google-wif.js";
 import { variableStage } from "../stages/stages.js";
 import { withRevalidateToken } from "../variables/revalidate-tokens.js";
 
@@ -114,13 +115,15 @@ function clusterConnection(store: Store, clusterId: string): ConnectedKubernetes
         "the Kubernetes connection pushes to Artifact Registry — connect Google Cloud first",
       );
     const gs = store.getGoogleSecrets();
+    // A keyless connection whose project refused the puller key.
+    if (!gs.pullerKey) throw new ErrInvalidEnvironmentConfig(PULLER_NOTE);
     const server = google.arRepo.split("/")[0]!;
     const region = server.replace(/-docker\.pkg\.dev$/, "");
     return {
       kubeconfig: ks.kubeconfig,
       secrets: [...kubeSecrets, ...googleSecrets(gs)],
       withRegistry: (run, fn) =>
-        withGoogleCredentials(gs.deployerKey, region, run, (ctx) =>
+        withGoogleCredentials(googleCredential(store), region, run, (ctx) =>
           fn({
             prefix: google.arRepo,
             env: ctx.env ?? {},
@@ -406,7 +409,7 @@ export async function triggerDeploy(
         let current: { appURL: string } | undefined;
         appURLOf = () => current?.appURL ?? "";
         runDeploy = () =>
-          withGoogleCredentials(gs.deployerKey, region, cmd, async (ctx) => {
+          withGoogleCredentials(googleCredential(o.store), region, cmd, async (ctx) => {
             // The connection created the nbo repository only in its own
             // region; a project deployed elsewhere creates it on first use.
             if (region !== google.region) {

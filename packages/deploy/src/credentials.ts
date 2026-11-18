@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: FSL-1.1-ALv2
 // Copyright 2026 Nikita Dovhich
 
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, rename, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -38,29 +38,106 @@ async function privateDir(prefix: string): Promise<string> {
   return dir;
 }
 
-// Materialises a service-account key in a private temp dir, points
-// gcloud/docker at it for the duration of fn, and always removes it.
+export type GoogleCredential =
+  { kind: "key"; keyJson: string } | { kind: "wif"; audience: string; serviceAccount: string; signToken: () => string };
+
+export interface GoogleCredentialOptions {
+  refreshMs?: number;
+  setInterval?: typeof setInterval;
+  clearInterval?: typeof clearInterval;
+}
+
+const DEFAULT_REFRESH_MS = 30 * 60 * 1000;
+
+// Materialises Google credentials in a private temp dir, points gcloud/docker
+// at them for the duration of fn, and always removes them. A "key" credential
+// is a service-account key file; a "wif" credential is an external_account
+// config whose subject token file is rewritten while fn runs.
 export async function withGoogleCredentials<T>(
-  keyJson: string,
+  cred: GoogleCredential,
   region: string,
   run: CommandRunner,
   fn: (ctx: ToolContext) => Promise<T>,
+  opts: GoogleCredentialOptions = {},
 ): Promise<T> {
   const dir = await privateDir("nbo-gcp-");
+  let timer: ReturnType<typeof setInterval> | undefined;
+  let stopped = false;
+  let warned = false;
+  const clear = opts.clearInterval ?? clearInterval;
   try {
-    const keyFile = join(dir, "key.json");
-    await writeFile(keyFile, keyJson, { mode: 0o600 });
     const env = { CLOUDSDK_CONFIG: join(dir, "gcloud"), DOCKER_CONFIG: join(dir, "docker") };
+    const secrets: string[] = [];
     try {
-      await run("gcloud", ["auth", "activate-service-account", "--key-file", keyFile], { env });
+      if (cred.kind === "key") {
+        secrets.push(cred.keyJson, privateKeyOf(cred.keyJson));
+        const keyFile = join(dir, "key.json");
+        await writeFile(keyFile, cred.keyJson, { mode: 0o600 });
+        await run("gcloud", ["auth", "activate-service-account", "--key-file", keyFile], { env });
+      } else {
+        const tokenFile = join(dir, "subject-token");
+        // Written beside the token file and renamed over it, so gcloud never
+        // reads an empty or partial token while it re-exchanges.
+        const writeToken = async () => {
+          if (stopped) return;
+          let token: string;
+          try {
+            token = cred.signToken();
+          } catch {
+            // The signer's own message is dropped: it could carry key material.
+            throw new Error("could not sign the Google subject token");
+          }
+          // Every token written is redacted, not only the first: an error
+          // from fn may quote the one gcloud read last.
+          secrets.push(token);
+          const tmp = `${tokenFile}.tmp`;
+          await writeFile(tmp, token, { mode: 0o600 });
+          if (stopped) return;
+          await rename(tmp, tokenFile);
+        };
+        await writeToken();
+        const configFile = join(dir, "external-account.json");
+        const config = {
+          type: "external_account",
+          audience: cred.audience,
+          subject_token_type: "urn:ietf:params:oauth:token-type:jwt",
+          token_url: "https://sts.googleapis.com/v1/token",
+          credential_source: { file: tokenFile },
+          service_account_impersonation_url: `https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/${cred.serviceAccount}:generateAccessToken`,
+        };
+        await writeFile(configFile, JSON.stringify(config), { mode: 0o600 });
+        await run("gcloud", ["auth", "login", `--cred-file=${configFile}`, "--quiet"], { env });
+        timer = (opts.setInterval ?? setInterval)(() => {
+          // A failed refresh leaves the previous token; the next tick tries again.
+          void writeToken().catch(() => {
+            if (warned) return;
+            warned = true;
+            console.warn("nbo: could not refresh the Google subject token");
+          });
+        }, opts.refreshMs ?? DEFAULT_REFRESH_MS);
+        (timer as { unref?: () => void }).unref?.();
+      }
       await run("gcloud", ["auth", "configure-docker", `${region}-docker.pkg.dev`, "--quiet"], { env });
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      // eslint-disable-next-line preserve-caught-error -- the original error may carry key material
-      throw new Error(redact(msg, [keyJson, privateKeyOf(keyJson)]));
+      // eslint-disable-next-line preserve-caught-error -- the original error may carry key or token material
+      throw new Error(redact(msg, secrets));
     }
-    return await fn({ env });
+    if (cred.kind === "key") return await fn({ env });
+    try {
+      return await fn({ env });
+    } catch (err) {
+      // The error keeps its class (callers tell errors apart by it); only its
+      // text loses any subject token.
+      if (err instanceof Error) {
+        err.message = redact(err.message, secrets);
+        if (err.stack) err.stack = redact(err.stack, secrets);
+      }
+      throw err;
+    }
   } finally {
+    stopped = true;
+    if (timer !== undefined) clear(timer);
     await removeDir(dir);
   }
 }

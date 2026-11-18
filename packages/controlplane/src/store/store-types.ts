@@ -6,6 +6,7 @@ import type { CronRow } from "../deploys/cron.js";
 import type { GitConfig, Build, BuildDetailsPatch } from "../git/git.js";
 import type {
   GoogleConnection,
+  GoogleConnectionInput,
   KubernetesConnection,
   KubernetesConnectionInput,
   GoogleSecrets,
@@ -201,10 +202,8 @@ export interface Store extends GitHeadsStore, GitCredentialsStore, EphemeralCert
   verifySecretKey(): void;
   getGoogleConnection(): GoogleConnection | null;
   getGoogleSecrets(): GoogleSecrets;
-  saveGoogleConnection(
-    c: Omit<GoogleConnection, "kind" | "createdAt" | "status" | "lastChecked" | "lastError">,
-    s: GoogleSecrets,
-  ): GoogleConnection;
+  saveGoogleConnection(c: GoogleConnectionInput, s: GoogleSecrets): GoogleConnection;
+  recordGoogleSelfCheck(warnings: string[], otherCores: string[]): void;
   // Kubernetes: any number of named clusters, keyed by id (kc_...).
   listKubernetesConnections(): KubernetesConnection[];
   getKubernetesConnection(id: string): KubernetesConnection | null;
@@ -228,6 +227,8 @@ export interface Store extends GitHeadsStore, GitCredentialsStore, EphemeralCert
   getServerSettings(): ServerSettings;
   updateServerSettings(patch: Partial<ServerSettings>): ServerSettings;
   getServerSecret(name: ServerSecretName): string | undefined;
+  getGoogleIdentityId(): string | undefined;
+  setGoogleIdentityId(id: string): void;
   // The latest edge job per key ("edge", "relay:<clusterId>").
   getEdgeJob(key: string): EdgeJob | undefined;
   setEdgeJob(key: string, job: EdgeJob): void;

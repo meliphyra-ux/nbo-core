@@ -210,6 +210,24 @@ export function fakeGoogleConnect(store: Store): FakeGoogleConnect {
       if (fake.failWith) throw fake.failWith;
       return save("key-proj", req.region);
     },
+    async connectWithWif(req) {
+      fake.calls.push(`wif ${req.code} ${req.region}`);
+      if (fake.failWith) throw fake.failWith;
+      return store.saveGoogleConnection(
+        {
+          project: "wif-proj",
+          region: req.region,
+          arRepo: `${req.region}-docker.pkg.dev/wif-proj/nbo`,
+          deployer: "nbo-deployer@wif-proj.iam.gserviceaccount.com",
+          puller: "nbo-puller@wif-proj.iam.gserviceaccount.com",
+          auth: "wif",
+          projectNumber: "123456789012",
+          pool: "nbo-cores",
+          provider: "core-0123456789abcdef",
+        },
+        { deployerKey: "", pullerKey: "{}" },
+      );
+    },
     async test() {
       fake.calls.push("test");
       store.recordConnectionCheck("google", null);

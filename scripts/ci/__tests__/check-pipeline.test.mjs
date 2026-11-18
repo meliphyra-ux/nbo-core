@@ -375,7 +375,9 @@ test("allow_failure is refused on every job", () => {
   assert.ok(
     check((doc) => {
       doc["node-checks"].rules = [{ when: "always", allow_failure: true }];
-    }).includes("node-checks: a rule sets allow_failure; only the manual rule of kubernetes and cloudrun may"),
+    }).includes(
+      "node-checks: a rule sets allow_failure; only the manual rule of kubernetes, cloudrun and edge-rust-blackbox may",
+    ),
   );
 });
 
@@ -540,4 +542,92 @@ test("the optional include is checked when its file exists; other includes are r
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
+});
+
+// --- when each job runs (CI/CD plan Task 1, 2026-11-16) ---
+// The contexts GitLab gives a job: a merge request, a push to main, the nightly schedule, a push to another branch.
+import { fires } from "../check-pipeline.mjs";
+const CTX = {
+  mr: { CI_PIPELINE_SOURCE: "merge_request_event", CI_DEFAULT_BRANCH: "main", CI_COMMIT_REF_PROTECTED: "false" },
+  main: {
+    CI_PIPELINE_SOURCE: "push",
+    CI_COMMIT_BRANCH: "main",
+    CI_DEFAULT_BRANCH: "main",
+    CI_COMMIT_REF_PROTECTED: "true",
+    NBO_CI_GCP_KEY: "set",
+  },
+  schedule: {
+    CI_PIPELINE_SOURCE: "schedule",
+    CI_COMMIT_BRANCH: "main",
+    CI_DEFAULT_BRANCH: "main",
+    CI_COMMIT_REF_PROTECTED: "true",
+    NBO_CI_GCP_KEY: "set",
+  },
+  feature: {
+    CI_PIPELINE_SOURCE: "push",
+    CI_COMMIT_BRANCH: "feat/x",
+    CI_DEFAULT_BRANCH: "main",
+    CI_COMMIT_REF_PROTECTED: "false",
+  },
+};
+const when = (job) => Object.fromEntries(Object.entries(CTX).map(([k, c]) => [k, fires(load()[job].rules, c)]));
+
+test("fires() reads GitLab rules: first match wins, no match is never, no rules is always", () => {
+  assert.equal(fires(undefined, CTX.mr), "on_success");
+  assert.equal(fires([{ if: '$CI_PIPELINE_SOURCE == "schedule"' }], CTX.mr), "never");
+  assert.equal(fires([{ if: '$CI_PIPELINE_SOURCE == "schedule"' }], CTX.schedule), "on_success");
+  assert.equal(
+    fires(
+      [{ if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_COMMIT_REF_PROTECTED == "true"', when: "manual" }],
+      CTX.main,
+    ),
+    "manual",
+  );
+  assert.equal(fires([{ if: '$NBO_CI_GCP_KEY == null || $NBO_CI_GCP_KEY == ""', when: "never" }, {}], CTX.mr), "never");
+  assert.equal(
+    fires([{ if: '$NBO_CI_GCP_KEY == null || $NBO_CI_GCP_KEY == ""', when: "never" }, {}], CTX.main),
+    "on_success",
+  );
+});
+
+test("kubernetes runs from the schedule or by hand on main, never on a merge request or another branch", () => {
+  assert.deepEqual(when("kubernetes"), { mr: "never", main: "manual", schedule: "on_success", feature: "never" });
+});
+
+test("edge-rust-blackbox runs from the schedule or by hand on main", () => {
+  assert.deepEqual(when("edge-rust-blackbox"), {
+    mr: "never",
+    main: "manual",
+    schedule: "on_success",
+    feature: "never",
+  });
+});
+
+test("cloudrun runs from the schedule or by hand on protected main", () => {
+  assert.deepEqual(when("cloudrun"), { mr: "never", main: "manual", schedule: "on_success", feature: "never" });
+});
+
+test("determinism-next skips merge requests and other branches, and runs on main and the schedule", () => {
+  assert.deepEqual(when("determinism-next"), {
+    mr: "never",
+    main: "on_success",
+    schedule: "on_success",
+    feature: "never",
+  });
+});
+
+test("the checker refuses a kubernetes job that runs on merge requests", () => {
+  expectFailure((doc) => {
+    doc.kubernetes.rules = [{ if: '$CI_PIPELINE_SOURCE == "merge_request_event"' }];
+  }, "kubernetes: runs on merge requests");
+});
+
+test("every script line is a string: a bare `: ` turns a line into a map, which GitLab refuses", () => {
+  const line = load()["node-checks"].script.length + 1;
+  expectFailure(
+    (doc) => {
+      doc["node-checks"].script.push({ 'grep -qx "split': 'boundary holds" split-check.log' });
+    },
+    "node-checks: script line " + line + " is not a string (quote it: a bare `: ` makes YAML read a map)",
+  );
 });

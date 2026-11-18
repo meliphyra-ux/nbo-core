@@ -209,6 +209,45 @@ ssh -N -L 8081:127.0.0.1:8081 root@YOUR_IP
 
 It prints nothing, which is normal. Then `http://localhost:8081` reaches NBO. It's important that the address is `localhost` or `127.0.0.1`: NBO refuses anything else without a token.
 
+### Connect Google Cloud without a key (keyless)
+
+This is the way to prefer. No deployer key exists: you run one setup command in Google's Cloud Shell, it makes Google trust this core's own public key, and the core signs a short-lived token each time it talks to Google. Use a project just for NBO (see the warning in the next section; the deployer account has the same roles).
+
+First read the core's own Google identity. On the server, in the folder with `compose.yaml`:
+
+```bash
+docker compose exec nbo nbo-server google identity
+```
+
+It prints the issuer, the subject, the provider id and the key id (`keyId`). The setup command carries this core's issuer, provider and public key. It is shown, in full, by the hosted dashboard you manage this core with (pick Google Cloud, keyless); this repository carries no copy of it. If you manage the core only through the API, use a key instead (below). Run it in Cloud Shell, signed in as a project owner. It enables the APIs, makes the `nbo-deployer` and `nbo-puller` accounts, grants the deployer its six roles, makes the `nbo-cores` pool and this core's provider, and prints:
+
+- one `Google trusts key: <key id> (provider <provider id>)` line for every provider in the pool, and
+- a `Connection code: nbo-gcp1.…`.
+
+Besides the six roles it deploys with, the deployer gets two read-only roles so the core can check the project's trust setup itself: `roles/iam.workloadIdentityPoolViewer` (to read the pool's providers and this core's provider keys) and `roles/iam.securityReviewer` (to read IAM policies; it can read every IAM policy in the project, which is why the project should be NBO's alone).
+
+**The key lines are the command's own.** The line for this core's provider should show the same `keyId` that `nbo-server google identity` printed, and any other line should be a core of yours. These lines are printed by the command itself, so they only help if the command's last lines are unchanged: they catch mistakes, not a changed command. The real check is the core's own, after connecting (below). The command runs as you, a project owner, so read it before running it.
+
+Then connect with the code and the region your sites should run in:
+
+```bash
+docker compose exec nbo nbo-server connect google --code nbo-gcp1.… --region europe-west1
+```
+
+The core checks that the code is for this core (a code wrapped over several lines is read as one), tries the connection (Google can take about half a minute to accept the new trust; it retries for five minutes) and reads the project's trust setup. `--code` can't be combined with `--key-file` or `--from-machine`. Where the organization forbids service-account keys, the core makes no image puller key, so a cluster can't pull from Artifact Registry and needs another registry; sites on Cloud Run are not affected.
+
+**Check from the core.** This is the step that holds even if the command was changed on its way to you:
+
+```bash
+docker compose exec nbo nbo-server google check
+```
+
+The core reads its provider, every provider in the `nbo-cores` pool and the IAM policies of the project and of `nbo-deployer` from Google itself, as the deployer. When nothing but this core can act as `nbo-deployer`, it prints `Google trusts only this core's key, and nothing else can act as nbo-deployer.` and exits 0. Otherwise it prints each warning on its own line and each other core as `Other core this project trusts: <provider>`; it exits 1 when there is any warning. An other core is fine only if it is one of yours. If it reports anything you didn't set up, remove it in Google now: not connecting is not enough, because the setup command already made its changes. To remove a provider and its grant, see [Disconnecting and removing NBO](./manual/clusters.md#disconnecting-and-removing-nbo); remove any other binding it names in the console's IAM page. The same check runs on every connection test, and its findings are listed as warnings on the connection.
+
+**Switching from a key.** Connecting keyless over a key connection replaces it, but switching from a key leaves the old key valid in Google: the keyless deployer can't delete keys. The connection shows "Delete the old <account> key <key id> in the Google console" until you connect again; delete that key (`gcloud iam service-accounts keys delete <key id> --iam-account <account>@PROJECT.iam.gserviceaccount.com`). Image pulls keep working only when you switch within the same project, because the old puller key is kept; in a new project the core makes a new one, or none where keys are forbidden.
+
+> **Not tried for real yet.** A 2026-11-17 spike proved the token exchange, impersonation, `gcloud` with the credential file and reading the provider back. A real connect and deploy, `nbo-server google check` against a real project, Docker pushes on Linux and a project with no organization have not run.
+
 ### Connect Google Cloud with your own account
 
 You need a Google Cloud project with billing linked, and a Google account that owns it. **Use a project just for NBO.** An existing project works, but NBO's `nbo-deployer` account gets project-wide admin roles there: `roles/run.admin`, `roles/iam.serviceAccountUser`, `roles/iam.serviceAccountAdmin` and `roles/secretmanager.admin`, plus Artifact Registry and service usage admin. Builds run inside NBO and can read the key that unlocks that account (see [Read this first](#read-this-first)). So in a shared project, NBO, any member with the Developer role or a compromised repository could change every Cloud Run service, read every Secret Manager secret and act as any service account in it, including ones your other systems use. Make a new project for NBO, or use one where nothing else matters. You sign in once, NBO creates its own `nbo-deployer` and `nbo-puller` accounts with only the roles they need, and it saves their keys. It doesn't use your login for deploys.

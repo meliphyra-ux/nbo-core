@@ -24,6 +24,6 @@ export {
   parseServiceLabels,
   isIsrcacheServiceOf,
 } from "@nbo/adapter-cloudrun";
-export type { ToolContext, CommandRunner } from "./credentials.js";
+export type { ToolContext, CommandRunner, GoogleCredential } from "./credentials.js";
 export { withGoogleCredentials, withKubeconfig, withDockerLogin, kubectlArgs, redact } from "./credentials.js";
 export { ISR_CACHE_KEY, hasPrerenderRoutes, type IsrOptions } from "./isr.js";

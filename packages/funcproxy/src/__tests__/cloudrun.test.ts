@@ -165,8 +165,10 @@ describe("createCloudRunURLs", () => {
         expect(await response.text()).toBe("resumed");
       }));
 
+    // The resume limits here are 500 ms, not tens: on a busy CI runner (GitLab, 2026-11-16) a 30 ms limit could expire
+    // before the retry even reached the test server, so the server counted one request instead of two.
     it("is retried once, with its body, when no bytes came back", () =>
-      withConfig({ authRetryBackoffMs: [1, 1, 1], resumeHeaderTimeoutMs: 50 }, async () => {
+      withConfig({ authRetryBackoffMs: [1, 1, 1], resumeHeaderTimeoutMs: 500 }, async () => {
         const bodies: string[] = [];
         const backendURL = await startBackend((req, res) => {
           let body = "";
@@ -184,7 +186,7 @@ describe("createCloudRunURLs", () => {
       }));
 
     it("gives up after that one retry", () =>
-      withConfig({ authRetryBackoffMs: [1, 1, 1], resumeHeaderTimeoutMs: 30 }, async () => {
+      withConfig({ authRetryBackoffMs: [1, 1, 1], resumeHeaderTimeoutMs: 500 }, async () => {
         let calls = 0;
         const backendURL = await startBackend(() => {
           calls++;
@@ -212,7 +214,7 @@ describe("createCloudRunURLs", () => {
       }));
 
     it("an ordinary POST is still never retried on a timeout", () =>
-      withConfig({ authRetryBackoffMs: [1, 1, 1], responseHeaderTimeoutMs: 30 }, async () => {
+      withConfig({ authRetryBackoffMs: [1, 1, 1], responseHeaderTimeoutMs: 500 }, async () => {
         let calls = 0;
         const backendURL = await startBackend(() => {
           calls++;
@@ -357,7 +359,7 @@ describe("createCloudRunURLs", () => {
     const origBackoff = cloudRunConfig.authRetryBackoffMs;
     const origTimeout = cloudRunConfig.responseHeaderTimeoutMs;
     cloudRunConfig.authRetryBackoffMs = [1, 1];
-    cloudRunConfig.responseHeaderTimeoutMs = 50;
+    cloudRunConfig.responseHeaderTimeoutMs = 500; // wide enough that the request reaches the server first, even on a busy CI runner
     try {
       let calls = 0;
       const backendURL = await startBackend((_req, _res) => {

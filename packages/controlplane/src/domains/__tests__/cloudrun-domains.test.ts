@@ -12,6 +12,7 @@ import type { CommandRunner } from "@nbo/deploy";
 import { createStore, type Store } from "../../store/store.js";
 import { createCloudRunDomains, mappingMissing, parseMapping, MappingNotVerifiedError } from "../cloudrun-domains.js";
 import { deployAppName } from "../../deploys/deploy.js";
+import { saveWifConnection } from "../../clouds/__tests__/google-wif-fixture.js";
 
 const KEY = JSON.stringify({
   type: "service_account",
@@ -379,5 +380,16 @@ describe("targetFor", () => {
       JSON.stringify({ project: "gp", region: "europe-west1", arRepo: "x" }),
     );
     expect(s.mk().targetFor(s.project)).toEqual({ project: "gp", region: "europe-west1", service: deployAppName(env) });
+  });
+});
+
+describe("a keyless (wif) connection", () => {
+  it("signs in with googleCredential's token exchange, never a key", async () => {
+    const t = await setup();
+    saveWifConnection(t.store, "p", "r");
+    await t.mk().create(target, "a.example.com");
+    const auth = t.calls.filter((c) => c[1] === "auth").map((c) => c.slice(1).join(" "));
+    expect(auth.some((a) => a.startsWith("auth login --cred-file="))).toBe(true);
+    expect(auth.some((a) => a.includes("activate-service-account"))).toBe(false);
   });
 });

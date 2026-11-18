@@ -21,7 +21,10 @@ export const usage = `Usage: nbo-server <command>
   token create <name> | list | revoke <id> API tokens
   connect google --key-file <path|-> --region <r>
   connect google --from-machine --project <p> --region <r>
+  connect google --code <code> --region <r> keyless, with the setup command's code
   connect kubernetes --name <n> --kubeconfig-file <path|-> --registry-file <path|-> [--context <c>]
+  google identity                          the core's Google identity (for the keyless setup command)
+  google check                             the core's own check of its keyless Google connection
   disconnect google | disconnect kubernetes <id>
   cluster test <id>
   cluster update-setup <id> --admin-kubeconfig-file <path|->

@@ -77,7 +77,14 @@ node-checks:
         - .turbo/cache
       policy: pull-push
   script:
-    - pnpm build
+    # --force: workspace packages are injected copies that pnpm re-syncs only after a build script runs
+    # (syncInjectedDepsAfterScripts); a turbo cache hit runs no script, and the Next fixtures then load an adapter
+    # copy with no @nbo/writer dist/ (GitLab, 2026-11-16).
+    - pnpm build --force
+    # validate's real-fixture tests refuse to skip on CI: produce the two static fixtures' .nbo/ (as verify-step0.sh
+    # does). pnpm build already made react-spa/dist and next-app's .nbo/.
+    - pnpm --filter @nbo/producer-static exec node dist/cli.js ../../fixtures/static-site --out ../../fixtures/static-site/.nbo
+    - pnpm --filter @nbo/producer-static exec node dist/cli.js ../../fixtures/react-spa/dist --out ../../fixtures/react-spa/.nbo --spa
     - pnpm check-types
     - pnpm exec turbo run test -- --maxWorkers=3
     - pnpm test:ci
@@ -148,6 +155,12 @@ edge-rust-blackbox:
   needs:
     - job: rust
       artifacts: true
+  # Slow: the nightly schedule, or by hand on protected main (CI/CD plan Task 1).
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_COMMIT_REF_PROTECTED == "true"
+      when: manual
+      allow_failure: true
   variables:
     NBO_EDGE_IMPL: rust
   script:
@@ -181,6 +194,10 @@ determinism-next:
   extends: .node
   stage: determinism
   timeout: 30m
+  # Builds both Next.js fixtures twice: main and the nightly schedule, not every merge request (CI/CD plan Task 1).
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   variables:
     NBO_BUILD_ID: $CI_COMMIT_SHA
   cache:
@@ -246,11 +263,11 @@ kubernetes:
       paths:
         - fixtures/next-app/.next/cache
         - fixtures/ppr-app/.next/cache
+  # Slow: the nightly schedule, or by hand on protected main (CI/CD plan Task 1).
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
     - if: $CI_PIPELINE_SOURCE == "schedule"
-    - when: manual
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_COMMIT_REF_PROTECTED == "true"
+      when: manual
       allow_failure: true
   before_script:
     - npm install -g pnpm@11.25.0

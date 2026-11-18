@@ -12,6 +12,7 @@ import { createStore, type Store } from "../../store/store.js";
 import { wireV2 } from "../../v2.js";
 import { parseMode, type Mode } from "../../mode.js";
 import { createCloudSetup } from "../cloud-setup.js";
+import { FIXTURE_CODE, saveWifConnection } from "./google-wif-fixture.js";
 import { fakeCloudSetup, fakeDeploymentTrigger, fakeGoogleConnect, fakeKubeConnect } from "../../testing.js";
 
 const cleanups: (() => Promise<void> | void)[] = [];
@@ -162,10 +163,32 @@ describe("POST /system/connections/google", () => {
     expect(res.json.error).toContain("activate failed");
   });
 
+  it("connects keyless with a connection code (201)", async () => {
+    const t = await setup("production");
+    const res = await t.call("POST", "/system/connections/google", {
+      source: "wif",
+      code: FIXTURE_CODE,
+      region: "europe-west1",
+    });
+    expect(res.status).toBe(201);
+    expect(res.json).toMatchObject({ kind: "google", auth: "wif" });
+    expect(t.google.calls).toEqual([`wif ${FIXTURE_CODE} europe-west1`]);
+  });
+
+  it("answers a refused code with 400 and its sentence", async () => {
+    const t = await setup("production");
+    t.google.failWith = new Error("This connection code was made for another core.");
+    const res = await t.call("POST", "/system/connections/google", { source: "wif", code: "x", region: "r" });
+    expect(res.status).toBe(400);
+    expect(res.json.error).toBe("This connection code was made for another core.");
+  });
+
   it("rejects missing or invalid fields with 400", async () => {
     const t = await setup("production");
     for (const body of [
       { source: "oauth", region: "r" },
+      { source: "wif", region: "r" },
+      { source: "wif", code: "c" },
       { source: "key", region: "r" },
       { source: "machine", region: "r" },
       { source: "machine", project: "p" },
@@ -498,6 +521,22 @@ describe("GET /system/regions", () => {
     expect(list.args).toContain("--project");
     expect(list.args[list.args.indexOf("--project") + 1]).toBe("p");
     expect(calls.some((c) => c.args.join(" ").startsWith("auth activate-service-account"))).toBe(true);
+  });
+});
+
+describe("GET /system/regions with a keyless connection", () => {
+  it("signs in with googleCredential's token exchange, never a key", async () => {
+    const calls: { args: string[] }[] = [];
+    const run: CommandRunner = async (_cmd, args) => {
+      calls.push({ args });
+      return args[0] === "run" ? "us-central1\n" : "";
+    };
+    const t = await setup("production", run);
+    saveWifConnection(t.store, "p", "us-central1");
+    expect((await t.call("GET", "/system/regions")).status).toBe(200);
+    const lines = calls.map((c) => c.args.join(" "));
+    expect(lines.some((l) => l.startsWith("auth login --cred-file="))).toBe(true);
+    expect(lines.some((l) => l.includes("activate-service-account"))).toBe(false);
   });
 });
 

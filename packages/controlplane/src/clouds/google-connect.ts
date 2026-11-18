@@ -5,6 +5,18 @@ import { redact, withGoogleCredentials, type CommandRunner } from "@nbo/deploy";
 import type { GoogleConnection } from "./connections.js";
 import type { Store } from "../store/store.js";
 import { connectTimeoutMs, partialConnectNote } from "./cloud-setup.js";
+import { googleIdentity } from "./google-identity.js";
+import {
+  NOT_TRUSTED,
+  OTHER_CORE,
+  PULLER_NOTE,
+  googleCredential,
+  googleWords,
+  oldKeyNote,
+  parseConnectionCode,
+  selfCheck,
+  wifCredential,
+} from "./google-wif.js";
 
 export interface GoogleDetection {
   found: boolean;
@@ -17,6 +29,8 @@ export interface GoogleConnect {
   detect(): Promise<GoogleDetection>;
   connectFromMachine(req: { project: string; region: string }): Promise<GoogleConnection>;
   connectWithKey(req: { keyJson: string; region: string }): Promise<GoogleConnection>;
+  // connectWithWif: keyless, from the code the setup command prints.
+  connectWithWif(req: { code: string; region: string }): Promise<GoogleConnection>;
   test(): Promise<GoogleConnection>;
   plan(req: { source: "machine" | "key"; project: string; region: string }): string[];
 }
@@ -92,6 +106,15 @@ function permissionOf(text: string): string | null {
 const defaultSleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
 const bindDelays = [2000, 4000, 8000, 16000];
 const testDelays = [5000, 10000, 15000, 20000, 40000]; // 90s total
+// Google takes a while to trust a new provider and grant: the first token
+// exchange of a keyless connect retries for up to 5 minutes.
+const exchangeWindowMs = 5 * 60_000;
+const exchangeDelay = (i: number): number => Math.min(5000 * 2 ** i, 30_000);
+const propagating = /invalid_grant|iam\.serviceAccounts\.getAccessToken|NOT_FOUND/i;
+// Google's refusal of the puller key under the Workspace key policy.
+const keyPolicy = /disableServiceAccountKeyCreation/;
+const repoNotYet =
+  /Service account .*does not exist|does not exist.*service account|PERMISSION_DENIED.*artifactregistry\.repositories\.create/i;
 
 // gcloud runners return stdout and stderr merged, so pull the JSON object out
 // from between any progress lines.
@@ -136,13 +159,18 @@ function cleanKey(output: string, email: string): string {
   return text;
 }
 
+// Thrown inside a keyless sign-in when Google refuses the token exchange.
+class ExchangeError extends Error {}
+
 export function createGoogleConnect(deps: {
   store: Store;
   run: CommandRunner;
   sleep?: (ms: number) => Promise<void>;
+  now?: () => number;
 }): GoogleConnect {
   const { store, run } = deps;
   const sleep = deps.sleep ?? defaultSleep;
+  const now = deps.now ?? Date.now;
 
   async function retryOn<T>(pattern: RegExp, delays: number[], fn: () => Promise<T>): Promise<T> {
     for (let i = 0; ; i++) {
@@ -189,6 +217,13 @@ export function createGoogleConnect(deps: {
     deployer: string;
     bindRoles: boolean;
     secrets: string[];
+    // Keyless: the setup command already enabled the APIs, and a puller key
+    // refused by the project's key policy leaves pullerKey empty.
+    enableApis?: boolean;
+    pullerKeyOptional?: boolean;
+    // Keyless: the deployer's new roles may still be propagating when the
+    // repository is created, so a denial of that one permission is retried.
+    retryRepoDenied?: boolean;
   }): Promise<{ deployerKey?: string; pullerKey: string }> {
     const { project, region, env, deployer, secrets } = opts;
     const puller = saEmail(PULLER, project);
@@ -201,12 +236,15 @@ export function createGoogleConnect(deps: {
     const keysCreate = (email: string): Promise<string> =>
       retryOn(notYet, bindDelays, () => gc(["iam", "service-accounts", "keys", "create", "-", "--iam-account", email]));
 
-    await step("enabling the Run, Artifact Registry, IAM and Secret Manager APIs", secrets, () =>
-      gc(["services", "enable", ...apis]),
-    );
+    if (opts.enableApis !== false)
+      await step("enabling the Run, Artifact Registry, IAM and Secret Manager APIs", secrets, () =>
+        gc(["services", "enable", ...apis]),
+      );
     await step(`creating the ${REPO} Artifact Registry repository`, secrets, () =>
-      tolerateExists(() =>
-        gc(["artifacts", "repositories", "create", REPO, "--repository-format", "docker", "--location", region]),
+      retryOn(opts.retryRepoDenied ? repoNotYet : notYet, bindDelays, () =>
+        tolerateExists(() =>
+          gc(["artifacts", "repositories", "create", REPO, "--repository-format", "docker", "--location", region]),
+        ),
       ),
     );
     if (opts.createDeployer) {
@@ -262,6 +300,7 @@ export function createGoogleConnect(deps: {
         cleanKey(await keysCreate(puller), puller),
       );
     } catch (err) {
+      if (opts.pullerKeyOptional && keyPolicy.test(errText(err))) return result;
       // Nothing will store the deployer key just made; don't leave it valid.
       if (result.deployerKey) await deleteKeys(project, env, [keyRef(result.deployerKey)]);
       throw err;
@@ -277,7 +316,8 @@ export function createGoogleConnect(deps: {
     project: string,
     env: Record<string, string> | undefined,
     refs: (KeyRef | null)[],
-  ): Promise<void> {
+  ): Promise<boolean> {
+    let ok = true;
     for (const k of refs) {
       if (!k) continue;
       try {
@@ -297,10 +337,12 @@ export function createGoogleConnect(deps: {
           ],
           env ? { env, timeoutMs: connectTimeoutMs } : { timeoutMs: connectTimeoutMs },
         );
-      } catch {
+      } catch (err) {
         // see above
+        if (!/NOT_FOUND|not found/i.test(errText(err))) ok = false;
       }
     }
+    return ok;
   }
 
   // The stored key that a reconnect may delete: the nbo-deployer key NBO's
@@ -330,7 +372,7 @@ export function createGoogleConnect(deps: {
     created: string[];
     kept: string[];
     previous: KeyRef[];
-  }): Promise<void> {
+  }): Promise<boolean> {
     try {
       opts.save();
     } catch (err) {
@@ -339,7 +381,7 @@ export function createGoogleConnect(deps: {
       throw new StepError(`NBO could not save the connection: ${errText(err)}`);
     }
     const keep = new Set(opts.kept.map((k) => keyRef(k)?.id));
-    await deleteKeys(
+    return deleteKeys(
       opts.project,
       opts.env,
       opts.previous.filter((k) => !keep.has(k.id)),
@@ -431,7 +473,7 @@ export function createGoogleConnect(deps: {
       const previous = storedPrunableKeys(project);
       // Save and prune inside the credentials scope, so the pasted identity
       // is the one that deletes (a key path stores no NBO-made deployer key).
-      await withGoogleCredentials(keyJson, region, run, async (ctx) => {
+      await withGoogleCredentials({ kind: "key", keyJson }, region, run, async (ctx) => {
         const keys = await provision({
           project,
           region,
@@ -464,13 +506,100 @@ export function createGoogleConnect(deps: {
       return settle();
     },
 
+    async connectWithWif({ code, region }) {
+      // Everything about the code is checked before any call to Google.
+      const parsed = parseConnectionCode(code);
+      const identity = googleIdentity(store);
+      if (parsed.issuer !== identity.issuer || parsed.provider !== identity.provider) throw new Error(OTHER_CORE);
+      const { project, projectNumber, provider, serviceAccount } = parsed;
+      const cred = wifCredential(store, { projectNumber, provider, serviceAccount });
+      const old = store.getGoogleConnection()?.project === project ? store.getGoogleSecrets() : null;
+      const secrets: string[] = old ? [...secretForms(old.deployerKey), ...secretForms(old.pullerKey)] : [];
+      const start = now();
+      for (let attempt = 0; ; attempt++) {
+        let signedIn = false;
+        try {
+          await withGoogleCredentials(cred, region, run, async (ctx) => {
+            signedIn = true;
+            // gcloud only exchanges the token when it needs one: ask for one.
+            try {
+              await run("gcloud", ["auth", "print-access-token", "--quiet"], {
+                env: ctx.env,
+                timeoutMs: connectTimeoutMs,
+              });
+            } catch (err) {
+              throw new ExchangeError(errText(err));
+            }
+            const keys = await provision({
+              project,
+              region,
+              env: ctx.env,
+              createDeployer: false,
+              deployer: serviceAccount,
+              bindRoles: false,
+              secrets,
+              enableApis: false,
+              pullerKeyOptional: true,
+              retryRepoDenied: true,
+            });
+            const notes: string[] = [];
+            // No new puller key: keep the one clusters already pull with.
+            let pullerKey = keys.pullerKey;
+            if (!pullerKey && old?.pullerKey) pullerKey = old.pullerKey;
+            if (!pullerKey) notes.push(PULLER_NOTE);
+            // The previous deployer key (NBO-made or pasted) stays valid in
+            // Google: the keyless deployer can't delete keys, so say so.
+            const previousKey = old ? keyRef(old.deployerKey) : null;
+            if (previousKey) notes.push(oldKeyNote(previousKey.id, previousKey.email));
+            await saveAndPrune({
+              project,
+              env: ctx.env,
+              save: () =>
+                store.saveGoogleConnection(
+                  {
+                    ...connection(project, region, serviceAccount),
+                    auth: "wif",
+                    projectNumber,
+                    pool: parsed.pool,
+                    provider,
+                    warnings: notes,
+                  },
+                  { deployerKey: "", pullerKey },
+                ),
+              created: keys.pullerKey ? [keys.pullerKey] : [],
+              kept: [pullerKey],
+              previous: [],
+            });
+            const check = await selfCheck(run, ctx, store, { project, projectNumber, provider, serviceAccount });
+            store.recordGoogleSelfCheck(check.warnings, check.otherCores);
+          });
+          return store.getGoogleConnection()!;
+        } catch (err) {
+          if (err instanceof StepError) withNote(err);
+          if (!(err instanceof ExchangeError) && signedIn) throw err;
+          const text = errText(err);
+          const wait = exchangeDelay(attempt);
+          if (propagating.test(text) && now() + wait - start <= exchangeWindowMs) {
+            await sleep(wait);
+            continue;
+          }
+          const said = redact(googleWords(err), secrets);
+          if (err instanceof ExchangeError || propagating.test(text) || /unauthorized_client|invalid_/i.test(text))
+            throw new StepError(`Google Cloud refused this core: ${NOT_TRUSTED}. Google said: ${said}`);
+          throw new StepError(`Google Cloud failed while signing in with this core's token: ${said}`);
+        }
+      }
+    },
+
     async test() {
       const conn = store.getGoogleConnection();
       if (!conn) throw new Error("Google Cloud is not connected.");
       const { deployerKey, pullerKey } = store.getGoogleSecrets();
       const secrets = [...secretForms(deployerKey), ...secretForms(pullerKey)];
+      const signingIn =
+        conn.auth === "wif" ? "signing in with this core's token" : "activating the service-account key";
       try {
-        await withGoogleCredentials(deployerKey, conn.region, run, async (ctx) => {
+        await withGoogleCredentials(googleCredential(store), conn.region, run, async (ctx) => {
           const gc = (args: string[]): Promise<string> => run("gcloud", args, { env: ctx.env });
           await step("listing Cloud Run services", secrets, () =>
             gc(["run", "services", "list", "--project", conn.project, "--region", conn.region, "--limit", "1"]),
@@ -478,12 +607,21 @@ export function createGoogleConnect(deps: {
           await step(`reading the ${REPO} Artifact Registry repository`, secrets, () =>
             gc(["artifacts", "repositories", "describe", REPO, "--location", conn.region, "--project", conn.project]),
           );
+          if (conn.auth === "wif" && conn.projectNumber && conn.provider) {
+            const check = await selfCheck(run, ctx, store, {
+              project: conn.project,
+              projectNumber: conn.projectNumber,
+              provider: conn.provider,
+              serviceAccount: conn.deployer,
+            });
+            store.recordGoogleSelfCheck(check.warnings, check.otherCores);
+          }
         });
       } catch (err) {
         const message =
           err instanceof StepError
             ? err.message
-            : `Google Cloud failed while activating the service-account key: ${redact(errText(err), secrets)}`;
+            : `Google Cloud failed while ${signingIn}: ${redact(errText(err), secrets)}`;
         store.recordConnectionCheck("google", message);
         // eslint-disable-next-line preserve-caught-error -- the original error may carry unredacted key material
         throw new Error(message);

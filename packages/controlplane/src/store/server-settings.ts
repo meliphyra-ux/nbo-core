@@ -71,7 +71,8 @@ export type ServerSecretName =
   | "google_client_secret"
   | "github_private_key"
   | "github_client_secret"
-  | "github_webhook_secret";
+  | "github_webhook_secret"
+  | "google_identity_key";
 export const secretNames: readonly ServerSecretName[] = [
   "acme_account_key",
   "edge_drain_token",
@@ -79,6 +80,7 @@ export const secretNames: readonly ServerSecretName[] = [
   "github_private_key",
   "github_client_secret",
   "github_webhook_secret",
+  "google_identity_key",
 ];
 
 const settingKeys: Record<keyof ServerSettings, string> = {
@@ -171,6 +173,13 @@ export function attachServerSettingsMethods(db: DatabaseSync, store: Store, init
     },
     setEdgeJob(key: string, job: EdgeJob): void {
       put(`job:${key}`, JSON.stringify(job));
+    },
+    // The Google identity id is public (it appears in the issuer), so it is a plain row.
+    getGoogleIdentityId(): string | undefined {
+      return get("google_identity_id");
+    },
+    setGoogleIdentityId(id: string): void {
+      put("google_identity_id", id);
     },
     getServerSecret(name: ServerSecretName): string | undefined {
       const v = get(name);

@@ -219,6 +219,29 @@ describe("nbo-server connect and disconnect", () => {
     expect(body(r.sent[0]!)).toEqual({ source: "key", keyJson: GOOGLE_KEY, region: "europe-west1" });
   });
 
+  it("connect google with a connection code sends the body and prints the connection", async () => {
+    const r = await run(["connect", "google", "--code", "nbo-gcp1.abc", "--region", "europe-west1"], {
+      answers: [{ status: 201, body: { kind: "google", auth: "wif", project: "acme" } }],
+    });
+    expect(r.code).toBe(0);
+    expect(req(r.sent[0]!)).toEqual([
+      "POST",
+      `${B}/system/connections/google`,
+      { source: "wif", code: "nbo-gcp1.abc", region: "europe-west1" },
+    ]);
+    expect(r.out.join("\n")).toContain('"auth": "wif"');
+  });
+
+  it("connect google refuses --code with a key file or --from-machine", async () => {
+    for (const extra of [["--key-file", "/k.json"], ["--from-machine"]]) {
+      const r = await run(["connect", "google", "--code", "nbo-gcp1.abc", "--region", "r", ...extra], {
+        files: { "/k.json": GOOGLE_KEY },
+      });
+      expect(r.code).not.toBe(0);
+      expect(r.sent).toEqual([]);
+    }
+  });
+
   it("connect google from this machine", async () => {
     const r = await run(["connect", "google", "--from-machine", "--project", "my-proj", "--region", "us-central1"], {
       answers: [{ status: 201, body: {} }],

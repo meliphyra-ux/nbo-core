@@ -108,38 +108,45 @@ after(() => {
 
 // fakePnpm copies FAKE_BUILD_<n> (n = 1, 2, ... per call) to
 // $NBO_FIXTURES_DIR/<fixture>/.nbo, as `pnpm --filter <fixture> build` would,
-// and records NBO_BUILD_ID and whether .next/cache survived the cleanup.
+// and records NBO_BUILD_ID, NEXT_SERVER_ACTIONS_ENCRYPTION_KEY and whether .next/cache survived the cleanup.
 const fakePnpm = [
   'count="$FAKE_STATE/count"',
   'n=$(cat "$count" 2>/dev/null || echo 0); n=$((n+1)); echo "$n" > "$count"',
   'fx="$2"',
   'echo "call=$n fixture=$fx id=$NBO_BUILD_ID" >> "$FAKE_STATE/env.log"',
+  'echo "key$n=${NEXT_SERVER_ACTIONS_ENCRYPTION_KEY:-}" >> "$FAKE_STATE/env.log"',
   'if [ -e "$NBO_FIXTURES_DIR/$fx/.next/stale" ]; then echo "stale-left" >> "$FAKE_STATE/env.log"; fi',
   'if [ -e "$NBO_FIXTURES_DIR/$fx/.next/cache/keep" ]; then echo "cache-kept" >> "$FAKE_STATE/env.log"; fi',
   'v="FAKE_BUILD_$n"; src="${!v}"',
   'rm -rf "$NBO_FIXTURES_DIR/$fx/.nbo"',
   'cp -r "$src" "$NBO_FIXTURES_DIR/$fx/.nbo"',
-  'mkdir -p "$NBO_FIXTURES_DIR/$fx/.next"; touch "$NBO_FIXTURES_DIR/$fx/.next/stale"',
+  'mkdir -p "$NBO_FIXTURES_DIR/$fx/.next/cache"; touch "$NBO_FIXTURES_DIR/$fx/.next/stale"',
   "exit 0",
 ].join("\n");
 
-function run(build1, build2, extraTools = {}, env = {}) {
+function run(build1, build2, extraTools = {}, env = {}, { noCache = false, build3 } = {}) {
   const t = withFakeTools(["pnpm", ...Object.keys(extraTools)], { pnpm: fakePnpm, ...extraTools });
   const fixtures = join(work, "fixtures-" + Math.random().toString(36).slice(2));
   const state = join(work, "state-" + Math.random().toString(36).slice(2));
-  mkdirSync(join(fixtures, "next-app", ".next", "cache"), { recursive: true });
-  writeFileSync(join(fixtures, "next-app", ".next", "cache", "keep"), "");
-  writeFileSync(join(fixtures, "next-app", ".next", "stale"), "");
+  if (noCache) {
+    mkdirSync(join(fixtures, "next-app"), { recursive: true });
+  } else {
+    mkdirSync(join(fixtures, "next-app", ".next", "cache"), { recursive: true });
+    writeFileSync(join(fixtures, "next-app", ".next", "cache", "keep"), "");
+    writeFileSync(join(fixtures, "next-app", ".next", "stale"), "");
+  }
   mkdirSync(state, { recursive: true });
   try {
     const r = runBash("scripts/ci/determinism-next.sh", ["next-app"], {
       PATH: pathWith(t.binDir),
       NBO_FIXTURES_DIR: fwd(fixtures),
       NBO_BUILD_ID: "",
+      NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: "",
       TMPDIR: fwd(work),
       FAKE_STATE: fwd(state),
       FAKE_BUILD_1: fwd(build1),
       FAKE_BUILD_2: fwd(build2),
+      ...(build3 ? { FAKE_BUILD_3: fwd(build3) } : {}),
       ...env,
     });
     const envLog = existsSync(join(state, "env.log")) ? readFileSync(join(state, "env.log"), "utf8") : "";
@@ -250,7 +257,7 @@ const nboDiffUrl = () => pathToFileURL(join(repoRoot, "scripts", "ci", "nbo-diff
 test("classify: identical trees are same", async () => {
   const { classify } = await import(nboDiffUrl());
   const c = classify(templates["next-base"], templates["next-baseAgain"]);
-  assert.deepEqual(c, { verdict: "same", renderPaths: [], otherPaths: [] });
+  assert.deepEqual(c, { verdict: "same", renderPaths: [], otherPaths: [], draftKeyPaths: [] });
 });
 
 test("classify: seed bytes only are render-only and name the seed key", async () => {
@@ -430,4 +437,194 @@ test("classify: a top-level prerender.json field next to a postponedState change
   const c = classify(templates["next-base"], b);
   assert.equal(c.verdict, "different", JSON.stringify(c));
   assert.ok(c.otherPaths.includes("prerender.json: version"), JSON.stringify(c));
+});
+
+// -- bundleDetail: which bundle entries differ, so a CI log says why ----------
+
+function writeBundle(dir, files) {
+  mkdirSync(join(dir, "functions", "ssr", "bundle"), { recursive: true });
+  writeFileSync(join(dir, "functions", "ssr", "function.json"), JSON.stringify({ files: Object.keys(files).length }));
+  writeFileSync(join(dir, "functions", "ssr", "bundle", "bundle.index.json"), JSON.stringify({ files }));
+}
+
+test("bundleDetail names entries only in one build and entries whose contents differ", async () => {
+  const { bundleDetail } = await import(nboDiffUrl());
+  const a = mkdtempSync(join(work, "bd-a-"));
+  const b = mkdtempSync(join(work, "bd-b-"));
+  writeBundle(a, { "x.js": { digest: "sha256:1" }, "y.js": { digest: "sha256:2" }, "gone.js": { digest: "sha256:5" } });
+  writeBundle(b, { "x.js": { digest: "sha256:1" }, "y.js": { digest: "sha256:3" }, "z.js": { digest: "sha256:4" } });
+  assert.deepEqual(bundleDetail(a, b), [
+    "functions/ssr/bundle: gone.js (only in build 1)",
+    "functions/ssr/bundle: y.js (contents differ)",
+    "functions/ssr/bundle: z.js (only in build 2)",
+  ]);
+});
+
+test("bundleDetail stops after the limit and says how many more", async () => {
+  const { bundleDetail } = await import(nboDiffUrl());
+  const a = mkdtempSync(join(work, "bd-a-"));
+  const b = mkdtempSync(join(work, "bd-b-"));
+  writeBundle(a, {});
+  writeBundle(b, Object.fromEntries(Array.from({ length: 5 }, (_, i) => [`f${i}.js`, { digest: `sha256:${i}` }])));
+  const lines = bundleDetail(a, b, 2);
+  assert.equal(lines.length, 3);
+  assert.equal(lines[2], "functions/ssr/bundle: ... and 3 more");
+});
+
+test("--classify prints the differing bundle entries under the differences", async () => {
+  const a = mkdtempSync(join(work, "bd-a-"));
+  const b = mkdtempSync(join(work, "bd-b-"));
+  writeBundle(a, { "x.js": { digest: "sha256:1" } });
+  writeBundle(b, { "x.js": { digest: "sha256:1" }, ".next/cache/z": { digest: "sha256:9" } });
+  const r = spawnSync(process.execPath, [join(repoRoot, "scripts", "ci", "nbo-diff.mjs"), "--classify", a, b], {
+    encoding: "utf8",
+  });
+  assert.equal(r.status, 1);
+  assert.match(
+    r.stdout,
+    /bundle entries that differ:\n {2}functions\/ssr\/bundle: \.next\/cache\/z \(only in build 2\)/,
+  );
+});
+
+// On a fresh machine Next makes its draft-mode and server-action keys on the first build; with no .next/cache the
+// two compared builds would start from different caches (GitLab, 2026-11-16). A warm-up build comes first then.
+test("with no .next/cache yet, a warm-up build runs first and builds 1 and 2 are compared", () => {
+  const { r, log } = run(templates["next-fn"], templates.one, {}, {}, { noCache: true, build3: templates.oneAgain });
+  assert.equal(r.code, 0, r.stdout + r.stderr);
+  assert.ok(r.stdout.includes("next-app: warm-up build (no .next/cache yet)"), r.stdout);
+  assert.equal(log.filter((a) => a.join(" ") === "--filter next-app build").length, 3);
+  assert.match(r.stdout, /deterministic: next-app -> sha256:[0-9a-f]{64}/);
+});
+
+// -- server-actions key and Next draft-mode keys (GitLab, 2026-11-16) ---------
+
+// Inside a container Next keeps no key cache, so each build would get a new server-actions key (it salts every action
+// id). The script pins one random key per run, the AES-256-GCM key Next imports: base64 of 32 bytes.
+test("every build of a run gets the same NEXT_SERVER_ACTIONS_ENCRYPTION_KEY, base64 of 32 bytes", () => {
+  const { r, envLog } = run(templates.one, templates.oneAgain);
+  assert.equal(r.code, 0, r.stdout + r.stderr);
+  const k1 = envLog.match(/^key1=(.*)$/m)?.[1];
+  const k2 = envLog.match(/^key2=(.*)$/m)?.[1];
+  assert.ok(k1, envLog);
+  assert.equal(k2, k1, "the same key on every build of the run");
+  assert.equal(Buffer.from(k1, "base64").length, 32);
+  const again = run(templates.one, templates.oneAgain).envLog.match(/^key1=(.*)$/m)?.[1];
+  assert.notEqual(again, k1, "a new random key per run");
+});
+
+test("a NEXT_SERVER_ACTIONS_ENCRYPTION_KEY set by the caller wins", () => {
+  const key = Buffer.alloc(32, 7).toString("base64");
+  const { r, envLog } = run(templates.one, templates.oneAgain, {}, { NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: key });
+  assert.equal(r.code, 0, r.stdout + r.stderr);
+  const lines = envLog.split("\n");
+  assert.ok(lines.includes(`key1=${key}`), envLog);
+  assert.ok(lines.includes(`key2=${key}`), envLog);
+});
+
+const previewKeys = (n) => ({
+  previewModeId: `id-${n}`,
+  previewModeSigningKey: `sign-${n}`,
+  previewModeEncryptionKey: `enc-${n}`,
+});
+const draftFiles = (n, o = {}) => ({
+  ".next/server/preview-props.json": JSON.stringify({ ...previewKeys(n), ...o.props }),
+  ".next/prerender-manifest.json": JSON.stringify({
+    version: 4,
+    routes: o.routes ?? {},
+    dynamicRoutes: {},
+    notFoundRoutes: [],
+    preview: previewKeys(n),
+  }),
+  ".next/server/server-reference-manifest.json": o.serverRefs ?? '{"node":{},"edge":{}}',
+});
+
+// craftBundle copies the base Next tree and adds files to the ssr function's bundle, rewriting bundle.index.json,
+// function.json's artifact digest and manifest.json's function.json digest the way the writer would.
+async function craftBundle(name, files) {
+  const { createHash } = await import("node:crypto");
+  const sha = (x) => "sha256:" + createHash("sha256").update(x).digest("hex");
+  const out = join(work, `bundle-${name}`);
+  rmSync(out, { recursive: true, force: true });
+  cpSync(templates["next-base"], out, { recursive: true });
+  const fn = join(out, "functions", "ssr");
+  const idxPath = join(fn, "bundle", "bundle.index.json");
+  const idx = JSON.parse(readFileSync(idxPath, "utf8"));
+  for (const [rel, body] of Object.entries(files)) {
+    mkdirSync(join(fn, "bundle", rel, ".."), { recursive: true });
+    writeFileSync(join(fn, "bundle", rel), body);
+    idx.files[rel] = { digest: sha(body), size: Buffer.byteLength(body) };
+  }
+  idx.files = Object.fromEntries(Object.entries(idx.files).sort(([x], [y]) => (x < y ? -1 : x > y ? 1 : 0)));
+  const rawIdx = JSON.stringify(idx);
+  writeFileSync(idxPath, rawIdx);
+  const fj = JSON.parse(readFileSync(join(fn, "function.json"), "utf8"));
+  fj.artifact.digest = sha(rawIdx);
+  const rawFj = JSON.stringify(fj);
+  writeFileSync(join(fn, "function.json"), rawFj);
+  const mp = join(out, "manifest.json");
+  const m = JSON.parse(readFileSync(mp, "utf8"));
+  m.digests["functions/ssr/function.json"] = sha(rawFj);
+  writeFileSync(mp, JSON.stringify(m));
+  return out;
+}
+
+test("classify: only Next draft-mode keys differing is allowed and names the files", async () => {
+  const { classify } = await import(nboDiffUrl());
+  const a = await craftBundle("draft-a", draftFiles(1));
+  const b = await craftBundle("draft-b", draftFiles(2));
+  const c = classify(a, b);
+  assert.equal(c.verdict, "render-only", JSON.stringify(c));
+  assert.deepEqual(c.otherPaths, []);
+  assert.ok(c.draftKeyPaths.includes("functions/ssr/bundle/.next/server/preview-props.json"), JSON.stringify(c));
+  assert.ok(c.draftKeyPaths.includes("functions/ssr/bundle/.next/prerender-manifest.json"), JSON.stringify(c));
+  assert.ok(c.draftKeyPaths.some((p) => p.startsWith("manifest.json digests: functions/ssr/function.json")));
+  const same = classify(a, await craftBundle("draft-a2", draftFiles(1)));
+  assert.equal(same.verdict, "same", JSON.stringify(same));
+});
+
+test("classify: draft-mode keys plus another preview-props field is different", async () => {
+  const { classify } = await import(nboDiffUrl());
+  const a = await craftBundle("props-a", draftFiles(1));
+  const b = await craftBundle("props-b", draftFiles(2, { props: { other: "x" } }));
+  const c = classify(a, b);
+  assert.equal(c.verdict, "different", JSON.stringify(c));
+  assert.ok(c.otherPaths.includes("functions/ssr/function.json"), JSON.stringify(c));
+  assert.ok(c.otherPaths.includes("functions/ssr/bundle/bundle.index.json"), JSON.stringify(c));
+  assert.ok(c.otherPaths.includes("manifest.json digests: functions/ssr/function.json"), JSON.stringify(c));
+});
+
+test("classify: a prerender-manifest.json change outside preview is different", async () => {
+  const { classify } = await import(nboDiffUrl());
+  const a = await craftBundle("pm-a", draftFiles(1));
+  const b = await craftBundle("pm-b", draftFiles(2, { routes: { "/x": {} } }));
+  assert.equal(classify(a, b).verdict, "different");
+});
+
+test("classify: a differing server-reference-manifest.json is different, even next to draft-mode keys", async () => {
+  const { classify } = await import(nboDiffUrl());
+  const a = await craftBundle("srm-a", draftFiles(1));
+  const b = await craftBundle("srm-b", draftFiles(2, { serverRefs: '{"node":{"abc":{}},"edge":{}}' }));
+  const c = classify(a, b);
+  assert.equal(c.verdict, "different", JSON.stringify(c));
+  assert.ok(c.otherPaths.includes("functions/ssr/function.json"), JSON.stringify(c));
+});
+
+test("--classify prints Next draft-mode keys under their own heading and exits 0", async () => {
+  const a = await craftBundle("cli-a", draftFiles(1));
+  const b = await craftBundle("cli-b", draftFiles(2));
+  const r = spawnSync(process.execPath, [join(repoRoot, "scripts", "ci", "nbo-diff.mjs"), "--classify", a, b], {
+    encoding: "utf8",
+  });
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.match(r.stdout, /Next draft-mode keys \(allowed\):\n {2}functions\/ssr\/bundle\//);
+  assert.match(r.stdout, /preview-props\.json/);
+});
+
+test("determinism-next.sh passes builds differing only in Next draft-mode keys", async () => {
+  const a = await craftBundle("sh-a", draftFiles(1));
+  const b = await craftBundle("sh-b", draftFiles(2));
+  const { r } = run(a, b);
+  assert.equal(r.code, 0, r.stdout + r.stderr);
+  assert.match(r.stdout, /Next draft-mode keys \(allowed\):/);
+  assert.doesNotMatch(r.stdout, /NON-DETERMINISTIC/);
 });

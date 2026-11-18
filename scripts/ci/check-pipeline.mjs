@@ -109,6 +109,84 @@ const RUNNING = {
   "cloudrun-janitor": [{ if: '$CI_PIPELINE_SOURCE == "schedule"' }],
 };
 
+// fires evaluates a job's GitLab `rules` for one pipeline context (variable name -> value) the way GitLab does:
+// the first rule whose `if` matches decides (`when`, default on_success); no match is never; no rules is always.
+// It reads the expressions this pipeline uses: `$A == "x"`, `$A != "x"`, `$A == $B`, `$A == null`, `&&`, `||`.
+export function fires(rules, ctx) {
+  if (rules === undefined) return "on_success";
+  const value = (tok) => {
+    tok = tok.trim();
+    if (tok === "null") return null;
+    if (tok.startsWith("$")) return ctx[tok.slice(1)] ?? null;
+    return tok.replace(/^"|"$/g, "");
+  };
+  const atom = (a) => {
+    const m = /^(.+?)\s*(==|!=)\s*(.+)$/.exec(a.trim());
+    if (!m) throw new Error(`fires: can't read "${a}"`);
+    const [l, r] = [value(m[1]), value(m[3])];
+    return m[2] === "==" ? l === r : l !== r;
+  };
+  const matches = (expr) => expr.split("||").some((alt) => alt.split("&&").every(atom));
+  for (const r of asList(rules)) {
+    if (!isObj(r)) continue;
+    if (r.if === undefined || matches(String(r.if))) return r.when ?? "on_success";
+  }
+  return "never";
+}
+
+// When each job may run, per pipeline: a merge request, a push to main, the nightly schedule, a push to another
+// branch. Jobs not listed run on every pipeline the workflow allows. CI/CD plan Task 1 (2026-11-16).
+const TIMING_CTX = {
+  "merge requests": {
+    CI_PIPELINE_SOURCE: "merge_request_event",
+    CI_DEFAULT_BRANCH: "main",
+    CI_COMMIT_REF_PROTECTED: "false",
+  },
+  "pushes to main": {
+    CI_PIPELINE_SOURCE: "push",
+    CI_COMMIT_BRANCH: "main",
+    CI_DEFAULT_BRANCH: "main",
+    CI_COMMIT_REF_PROTECTED: "true",
+    NBO_CI_GCP_KEY: "set",
+  },
+  "the schedule": {
+    CI_PIPELINE_SOURCE: "schedule",
+    CI_COMMIT_BRANCH: "main",
+    CI_DEFAULT_BRANCH: "main",
+    CI_COMMIT_REF_PROTECTED: "true",
+    NBO_CI_GCP_KEY: "set",
+  },
+  "pushes to other branches": {
+    CI_PIPELINE_SOURCE: "push",
+    CI_COMMIT_BRANCH: "feat/x",
+    CI_DEFAULT_BRANCH: "main",
+    CI_COMMIT_REF_PROTECTED: "false",
+  },
+};
+const SLOW = {
+  "merge requests": "never",
+  "pushes to main": "manual",
+  "the schedule": "on_success",
+  "pushes to other branches": "never",
+};
+const TIMING = {
+  kubernetes: SLOW,
+  "edge-rust-blackbox": SLOW,
+  cloudrun: SLOW,
+  "cloudrun-janitor": {
+    "merge requests": "never",
+    "pushes to main": "never",
+    "the schedule": "on_success",
+    "pushes to other branches": "never",
+  },
+  "determinism-next": {
+    "merge requests": "never",
+    "pushes to main": "on_success",
+    "the schedule": "on_success",
+    "pushes to other branches": "never",
+  },
+};
+
 // workspaceDeps maps each package under packages/ to its workspace dependencies.
 function workspaceDeps(repoRoot) {
   const out = {};
@@ -235,9 +313,12 @@ export function checkPipeline(inputDoc, repoRoot = repoRootDefault) {
       if (
         isObj(r) &&
         r.allow_failure !== undefined &&
-        !(["kubernetes", "cloudrun"].includes(name) && r.when === "manual")
+        !(["kubernetes", "cloudrun", "edge-rust-blackbox"].includes(name) && r.when === "manual")
       ) {
-        fail(name, "a rule sets allow_failure; only the manual rule of kubernetes and cloudrun may");
+        fail(
+          name,
+          "a rule sets allow_failure; only the manual rule of kubernetes, cloudrun and edge-rust-blackbox may",
+        );
       }
     }
     if ((name === "kubernetes" || name === "cloudrun") && isObj(job.artifacts)) {
@@ -275,6 +356,28 @@ export function checkPipeline(inputDoc, repoRoot = repoRootDefault) {
         ["NBO_AR_REPO", "$NBO_CI_AR_REPO"],
       ]) {
         if (vars[v] !== want) fail(name, `${v} must be ${want}`);
+      }
+    }
+
+    // GitLab refuses the whole pipeline when a script line isn't text: an unquoted line with `: ` in it parses as a map.
+    for (const field of ["before_script", "script", "after_script"]) {
+      asList(job[field]).forEach((l, i) => {
+        if (typeof l !== "string" && !Array.isArray(l)) {
+          fail(
+            name,
+            `${field.replace("_", " ")} line ${i + 1} is not a string (quote it: a bare \`: \` makes YAML read a map)`,
+          );
+        }
+      });
+    }
+
+    if (TIMING[name]) {
+      for (const [label, ctx] of Object.entries(TIMING_CTX)) {
+        const got = fires(job.rules, ctx);
+        const want = TIMING[name][label];
+        if (got === want) continue;
+        if (label === "merge requests") fail(name, "runs on merge requests");
+        else fail(name, `on ${label} it is ${got}, want ${want}`);
       }
     }
 

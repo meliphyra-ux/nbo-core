@@ -7,6 +7,7 @@ import { mkdtemp, writeFile } from "node:fs/promises";
 import { randomBytes } from "node:crypto";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
+import { saveWifConnection } from "../../clouds/__tests__/google-wif-fixture.js";
 
 // Everything in @nbo/deploy stays real (credential sessions, kubectl
 // argument building) except the target itself and deploy(): those
@@ -177,6 +178,40 @@ describe("triggerDeploy in production (Kubernetes)", () => {
       pullSecret: { server: "us-east1-docker.pkg.dev", username: "_json_key", password: pullerKey },
     });
     expect(existsSync(keyFile)).toBe(false);
+  });
+
+  it("Artifact Registry on a keyless connection: pushes as the deployer by token, pulls with the kept puller key (Review Focus 5)", async () => {
+    const s = await openStore();
+    saveWifConnection(s, "my-proj", "us-east1", pullerKey);
+    const cid = s.saveKubernetesConnection(
+      { name: "prod", server: "https://k8s.example:6443", registry: { kind: "artifact-registry" } },
+      { kubeconfig },
+    ).id;
+    const p = s.createProject("acme");
+    const env = s.createEnvironment(p.id, "production", "kubernetes", JSON.stringify({ clusterId: cid }));
+    const run = recorder();
+    await triggerDeploy({ store: s, mode: "production", run }, env.id, await nboDir());
+    const lines = run.calls.map((c) => c.args.join(" "));
+    expect(lines.some((l) => l.startsWith("auth login --cred-file="))).toBe(true);
+    expect(lines.some((l) => l.includes("activate-service-account"))).toBe(false);
+    const [, opts] = targetCalls[0]! as [string, Record<string, unknown>];
+    expect(opts).toMatchObject({
+      pullSecret: { server: "us-east1-docker.pkg.dev", username: "_json_key", password: pullerKey },
+    });
+  });
+
+  it("Artifact Registry on a keyless connection without a puller key is refused with the cluster note", async () => {
+    const s = await openStore();
+    saveWifConnection(s, "my-proj", "us-east1", "");
+    const cid = s.saveKubernetesConnection(
+      { name: "prod", server: "https://k8s.example:6443", registry: { kind: "artifact-registry" } },
+      { kubeconfig },
+    ).id;
+    const p = s.createProject("acme");
+    const env = s.createEnvironment(p.id, "production", "kubernetes", JSON.stringify({ clusterId: cid }));
+    await expect(
+      triggerDeploy({ store: s, mode: "production", run: recorder() }, env.id, await nboDir()),
+    ).rejects.toThrow("Clusters can't pull from Artifact Registry under this project's key policy");
   });
 
   it("refuses without a Kubernetes connection, before creating a deployment", async () => {

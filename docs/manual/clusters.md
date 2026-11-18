@@ -212,7 +212,7 @@ Each project you deploy later gets its own namespace, `nbo-p-<id>`.
 
 ## Disconnecting and removing NBO
 
-**Disconnecting** (`nbo-server disconnect kubernetes kc_...` or `nbo-server disconnect google`) only makes NBO forget the credentials it stored. It revokes nothing: the `nbo-controller` token keeps working in the cluster, and the Google service-account keys stay valid, until you delete them. Sites already running in `nbo-p-*` namespaces, or on Cloud Run, keep running.
+**Disconnecting** (`nbo-server disconnect kubernetes kc_...` or `nbo-server disconnect google`) only makes NBO forget the credentials it stored. It revokes nothing: the `nbo-controller` token keeps working in the cluster, the Google service-account keys stay valid, and under a keyless Google connection Google keeps trusting the core's key, until you delete them (see below). Sites already running in `nbo-p-*` namespaces, or on Cloud Run, keep running.
 
 NBO refuses to disconnect a cloud while projects still run on it. Archiving those clouds does not stop their sites either. To take a site down, delete its project with `DELETE /projects/{id}?resources=true` while the cloud is still connected.
 
@@ -234,4 +234,13 @@ gcloud iam service-accounts keys list --iam-account nbo-deployer@PROJECT.iam.gse
 gcloud iam service-accounts keys delete KEY_ID --iam-account nbo-deployer@PROJECT.iam.gserviceaccount.com
 ```
 
-Or delete the accounts themselves with `gcloud iam service-accounts delete nbo-deployer@PROJECT.iam.gserviceaccount.com` (and `nbo-puller@…`). If you connected with a pasted key, NBO created only `nbo-puller`; revoke your own key the way you normally would. The `nbo` Artifact Registry repository holds your images: delete it with `gcloud artifacts repositories delete nbo --location REGION` once you no longer need them.
+Or delete the accounts themselves with `gcloud iam service-accounts delete nbo-deployer@PROJECT.iam.gserviceaccount.com` (and `nbo-puller@…`). If you connected with a pasted key, NBO created only `nbo-puller`; revoke your own key the way you normally would.
+
+A keyless connection has no deployer key: Google trusts the core's own public key instead, through a provider named `core-<id>` in the pool `nbo-cores` (`nbo-server google identity` prints the provider id). Disconnecting doesn't change that. To stop Google trusting the core, delete its provider and remove its `workloadIdentityUser` binding on `nbo-deployer` (replace `PROJECT`, `PROJECT_NUMBER` from `gcloud projects describe PROJECT --format='value(projectNumber)'`, and `core-<id>`):
+
+```bash
+gcloud iam workload-identity-pools providers delete core-<id> --workload-identity-pool nbo-cores --location global --project PROJECT
+gcloud iam service-accounts remove-iam-policy-binding nbo-deployer@PROJECT.iam.gserviceaccount.com --project PROJECT --role roles/iam.workloadIdentityUser --member "principal://iam.googleapis.com/projects/PROJECT_NUMBER/locations/global/workloadIdentityPools/nbo-cores/subject/core-<id>"
+```
+
+The `nbo-puller` key, if the core made one, is revoked as above. The `nbo` Artifact Registry repository holds your images: delete it with `gcloud artifacts repositories delete nbo --location REGION` once you no longer need them.

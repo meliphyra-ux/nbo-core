@@ -21,6 +21,7 @@ import {
 } from "./kube-bootstrap.js";
 import type { Store } from "../store/store.js";
 import { connectTimeoutMs, partialConnectNote } from "./cloud-setup.js";
+import { PULLER_NOTE } from "./google-wif.js";
 
 export interface KubeDetection {
   contexts: { name: string; server: string }[];
@@ -126,6 +127,8 @@ function rebuildRegistry(
 ): { registry: RegistryConfig; registryPassword?: string } {
   if (registry?.kind === "artifact-registry") {
     if (!store.getGoogleConnection()) throw new Error("connect Google Cloud first or name a registry");
+    // A keyless connection whose project refused the puller key.
+    if (!store.getGoogleSecrets().pullerKey) throw new Error(PULLER_NOTE);
     return { registry: { kind: "artifact-registry" } };
   }
   if (registry?.kind === "custom") {

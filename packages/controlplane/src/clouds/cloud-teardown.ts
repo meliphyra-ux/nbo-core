@@ -19,6 +19,7 @@ import { kubeconfigSecrets, projectNamespace, googleSecrets } from "../deploys/d
 import { listMappingsArgs, mappingCommand, mappingMissing } from "../domains/cloudrun-domains.js";
 import type { Mode } from "../mode.js";
 import type { Store } from "../store/store.js";
+import { googleCredential } from "./google-wif.js";
 
 export const defaultRunner: CommandRunner = (cmd, args, opts) => run(cmd, args, { timeoutMs: 120_000, env: opts?.env });
 
@@ -276,7 +277,7 @@ export function createCloudTeardown(
         const secrets = googleSecrets(keys);
         const where = ["--project", project, "--region", region];
         try {
-          await withGoogleCredentials(keys.deployerKey, region, runCmd, async ({ env }) => {
+          await withGoogleCredentials(googleCredential(options.store), region, runCmd, async ({ env }) => {
             // Domain mappings go before the services they point at. A mapping
             // Google no longer has counts as removed; any other failure stops
             // the teardown and leaves the row visible. One app (a custom

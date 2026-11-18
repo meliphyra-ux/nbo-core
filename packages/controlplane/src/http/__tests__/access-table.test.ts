@@ -26,7 +26,7 @@ const split = (key: string): [string, string] => {
 };
 
 // The /system routes a linked platform may use, exactly as the allowlist
-// lists them: 8 reads, 2 tests, 11 setup changes.
+// lists them: 9 reads, 2 tests, 11 setup changes.
 const LINK_SYSTEM_ROUTES = [
   "GET /system/preflight",
   "GET /system/connections",
@@ -36,6 +36,7 @@ const LINK_SYSTEM_ROUTES = [
   "GET /system/clusters/{id}/relay",
   "GET /system/connections/detect",
   "GET /system/connections/plan",
+  "GET /system/connections/google/identity",
   "POST /system/connections/{kind}/test",
   "POST /system/connections/kubernetes/{id}/test",
   "POST /system/connections/google",
@@ -66,14 +67,14 @@ describe("the link tier column", () => {
     const allowed = Object.entries(routeLinkTier)
       .filter(([r, t]) => split(r)[1].startsWith("/system") && t !== null)
       .map(([r]) => r);
-    expect(LINK_SYSTEM_ROUTES).toHaveLength(21);
+    expect(LINK_SYSTEM_ROUTES).toHaveLength(22);
     expect(allowed.sort()).toEqual([...LINK_SYSTEM_ROUTES].sort());
   });
 
   it("gives the /system reads tier 0, the tests tier 1 and the setup changes tier 2", () => {
-    for (const r of LINK_SYSTEM_ROUTES.slice(0, 8)) expect(routeLinkTier[r], r).toBe(0);
-    for (const r of LINK_SYSTEM_ROUTES.slice(8, 10)) expect(routeLinkTier[r], r).toBe(1);
-    for (const r of LINK_SYSTEM_ROUTES.slice(10)) expect(routeLinkTier[r], r).toBe(2);
+    for (const r of LINK_SYSTEM_ROUTES.slice(0, 9)) expect(routeLinkTier[r], r).toBe(0);
+    for (const r of LINK_SYSTEM_ROUTES.slice(9, 11)) expect(routeLinkTier[r], r).toBe(1);
+    for (const r of LINK_SYSTEM_ROUTES.slice(11)) expect(routeLinkTier[r], r).toBe(2);
   });
 
   it("refuses every local row except those", () => {

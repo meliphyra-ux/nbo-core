@@ -140,6 +140,7 @@ export const LINK_ROUTE_TIERS: Readonly<Record<string, TierRule>> = deepFreeze({
   "GET /system/terraform-provider/{platform}": null,
   "GET /system/connections/detect": 0,
   "GET /system/connections/plan": 0,
+  "GET /system/connections/google/identity": 0,
   "POST /system/connections/google": 2,
   "POST /system/connections/kubernetes": 2,
   "PUT /system/connections/kubernetes/{id}": 2,
