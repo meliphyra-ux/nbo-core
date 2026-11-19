@@ -5,7 +5,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { validate } from "@nbo/validate";
 import { contentId } from "@nbo/digest";
-import { createHandler, ISR_CACHE_KEY } from "@nbo/serve";
+import { createHandler, ISR_CACHE_KEY, parseProtectionHash, type HandlerOptions } from "@nbo/serve";
 import {
   createStaticURLs,
   createLocalSpawner,
@@ -177,6 +177,16 @@ export function resolveISRCache(functionURLs: Record<string, string>): Resolver 
   return createStaticURLs(urls);
 }
 
+// protectionFromEnv: deployment protection from the deploy's variables. NBO_PROTECTION (a hash core
+// sets for a protected environment; empty or unset is off) and the cron signing secret signed cron
+// calls pass with. A malformed hash throws naming the variable, never its value.
+export function protectionFromEnv(env: NodeJS.ProcessEnv = process.env): HandlerOptions["protection"] {
+  const hash = env.NBO_PROTECTION;
+  if (!hash) return undefined;
+  parseProtectionHash(hash);
+  return env.NBO_CRON_SIGNING_SECRET ? { hash, cronSecret: env.NBO_CRON_SIGNING_SECRET } : { hash };
+}
+
 // installShutdownHook kills every function stop spawned on Ctrl+C or
 // SIGTERM, so a local nbo serve never leaves an orphaned Node child
 // behind on a clean shutdown — port of installShutdownHook (serve.go
@@ -224,9 +234,11 @@ export async function runServe(args: string[]): Promise<number> {
 
   let handler;
   try {
+    const protection = protectionFromEnv();
     handler = await createHandler(dir, resolve, resolveISRCache(urls), {
       deploymentId: await manifestContentId(dir),
       carryDir,
+      ...(protection ? { protection } : {}),
     });
   } catch (err) {
     console.error(err instanceof Error ? err.message : String(err));

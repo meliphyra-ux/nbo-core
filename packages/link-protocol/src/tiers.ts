@@ -78,6 +78,8 @@ export const LINK_ROUTE_TIERS: Readonly<Record<string, TierRule>> = deepFreeze({
 
   // Git, builds and webhooks. The push webhook is not forwarded over the link.
   "GET /projects/{projectID}/git": 0,
+  "GET /projects/{projectID}/protection": 0,
+  "PUT /projects/{projectID}/protection": 2,
   "PUT /projects/{projectID}/git": 2,
   "POST /projects/{projectID}/git/deploy-key": 2,
   "POST /projects/{projectID}/git/poll": 1,
@@ -180,6 +182,7 @@ export const LINK_SEALED_FIELDS: Readonly<Record<string, readonly { path: string
   "PUT /workspace/env/{name}": [{ path: "value" }],
   "POST /projects/setup": [{ path: "credential.token" }],
   "PUT /projects/{projectID}/git": [{ path: "credential.token" }],
+  "PUT /projects/{projectID}/protection": [{ path: "password" }],
   "PUT /projects/{projectID}/domains/{domainID}/certificate": [{ path: "keyPem" }],
   "POST /system/connections/google": [{ path: "keyJson" }],
   "POST /system/connections/kubernetes": [

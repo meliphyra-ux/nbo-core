@@ -69,6 +69,8 @@ To add your own domain to an environment, send its name as `stage` when you add 
 
 ## Adding a domain to a project
 
+A project with [deployment protection](./protection.md) asks for its password on custom domains too.
+
 `GET /projects/{id}/domains` lists the default host and each custom domain. Terraform's `nbo_domain` does the same as the steps below.
 
 1. Add the domain: `POST /projects/{id}/domains` with `{"host": "shop.example.com"}` (and `"stage"` for an environment other than Production). It is lower-cased and must be a plain DNS name: no `*`, no IP address, not already used by another project.

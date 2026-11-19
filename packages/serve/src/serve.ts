@@ -2,6 +2,7 @@
 // Copyright 2026 Nikita Dovhich
 
 import { readFile } from "node:fs/promises";
+import { createGate, keepPrivate } from "./protection.js";
 import { createRouter, type Decision, type HeaderOp, type Router } from "@nbo/router";
 import { resolveStatic } from "@nbo/nbopath";
 import type { Resolver, FetchHandler } from "@nbo/funcproxy";
@@ -53,6 +54,8 @@ export const DEPLOYMENT_ID_HEADER = "x-nbo-deployment-id";
 export interface HandlerOptions {
   deploymentId?: string;
   carryDir?: string;
+  // Deployment protection: NBO_PROTECTION's hash, and the cron signing secret signed cron calls pass with.
+  protection?: { hash: string; cronSecret?: string };
 }
 
 // withDeploymentId returns res carrying the real id, re-wrapping when its headers
@@ -475,13 +478,18 @@ export async function createHandler(
 
   const { deploymentId } = options;
   const carry = options.carryDir !== undefined ? await loadCarry(options.carryDir) : null;
-  const inner = (request: Request): Promise<Response> => {
+  const route = (request: Request): Promise<Response> => {
     request = prepareIncoming(request, deploymentId);
     const path = new URL(request.url).pathname;
     if (request.method === "POST" && path === "/_nbo/revalidate") return handleRevalidate(state, request);
     if (request.method === "GET" && path === "/_nbo/image") return handleImage(state, request);
     return dispatch(state, request, carry);
   };
+  // Deployment protection: the gate answers first, and what it lets through is kept out of shared caches.
+  const gate = options.protection ? createGate(options.protection) : null;
+  const inner = gate
+    ? async (request: Request): Promise<Response> => (await gate(request)) ?? keepPrivate(await route(request))
+    : route;
   if (deploymentId === undefined) return inner;
   return async (request: Request) => withDeploymentId(await inner(request), deploymentId);
 }

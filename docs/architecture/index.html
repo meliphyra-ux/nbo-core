@@ -1871,7 +1871,7 @@ gcloud run services add-iam-policy-binding &lt;app&gt;-fn-&lt;fn&gt; \\
           d: `<pre>docker build -t nbo-app-&lt;app&gt;:&lt;id prefix&gt; …     # same Dockerfile as Kubernetes
 docker push &lt;arRepo&gt;/nbo-app-&lt;app&gt;:&lt;id prefix&gt;
 gcloud run deploy &lt;app&gt; --image … --labels nbo-content-id=&lt;32 hex&gt; \\
-  --allow-unauthenticated --quiet</pre><p>The service URL (<code>https://&lt;app&gt;-…-lz.a.run.app</code>) is read back with <code>describe</code> and becomes the cloud's backend on the edge.</p>`,
+  --no-invoker-iam-check --quiet</pre><p>The service URL (<code>https://&lt;app&gt;-…-lz.a.run.app</code>) is read back with <code>describe</code> and becomes the cloud's backend on the edge.</p>`,
         },
         {
           t: "Teardown",
@@ -2155,6 +2155,8 @@ spec:
       ["GET","/projects","List projects.","control-plane","token","Projects"],
       ["GET","/projects/{id}","One project.","control-plane","token","Projects"],
       ["PUT","/projects/{id}/git","Repo (https, or ssh with a deploy key), branch, framework, build command, outputDir, rootDirectory, ignored build step, and credential (public, token or deploy-key). A github field is 400.","control-plane","token","Git, builds and webhooks"],
+      ["GET","/projects/{id}/protection","Deployment protection: { mode, passwordSet }, never the password or its hash.","control-plane","token","Projects"],
+      ["PUT","/projects/{id}/protection","Set deployment protection { mode, password? } (off, previews, all; 8 to 256 characters); redeploys the affected clouds' live builds and answers redeploying and notRedeployed.","control-plane","token","Projects"],
       ["GET","/projects/{id}/git","The git config plus credential: { kind, publicKey?, username? }, never the token or private key.","control-plane","token","Git, builds and webhooks"],
       ["POST","/projects/{id}/git/deploy-key","Make (or replace) the project's SSH deploy key pair; 201 { publicKey }.","control-plane","token","Git, builds and webhooks"],
       ["POST","/projects/{id}/git/poll","Check the branch heads now and queue a build for each unseen head (the poll loop's own check); no body. 200 { queued, setupStatus, note? }; 502 when the repository can't be read.","control-plane","token","Git, builds and webhooks"],

@@ -171,7 +171,9 @@ export function buildDeployArgs(spec: DeploySpec, envVarsFile?: string): string[
       .join("")}`,
     "--quiet",
   ];
-  args.push(spec.allowUnauthenticated ? "--allow-unauthenticated" : "--no-allow-unauthenticated");
+  // Public: no invoker check, which an organisation that refuses allUsers grants (Domain restricted
+  // sharing) still allows; gcloud reports an --allow-unauthenticated deploy done even when its grant fails.
+  args.push(spec.allowUnauthenticated ? "--no-invoker-iam-check" : "--no-allow-unauthenticated");
   if (spec.memoryMB !== undefined) {
     args.push("--memory", `${spec.memoryMB}Mi`);
   }

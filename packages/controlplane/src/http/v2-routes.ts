@@ -9,6 +9,7 @@ import { registerBuildRoutes } from "../builds/build-routes.js";
 import { registerDomainRoutes } from "../domains/domain-routes.js";
 import { registerStageRoutes } from "../stages/stage-routes.js";
 import { registerRevalidateRoutes } from "../stages/revalidate-routes.js";
+import { registerProtectionRoutes } from "../protection/protection-routes.js";
 import { registerProjectRoutes } from "./v2-project-routes.js";
 import { registerTrafficRoutes } from "./v2-traffic-routes.js";
 import { registerLifecycleRoutes } from "./v2-lifecycle-routes.js";
@@ -29,6 +30,7 @@ export function registerV2Routes(router: Router, store: Store, v2: V2): void {
   registerDomainRoutes(router, store, v2);
   registerStageRoutes(router, store, v2);
   registerRevalidateRoutes(router, store, v2);
+  registerProtectionRoutes(router, store, v2);
   registerProjectRoutes(router, store, v2);
   registerTrafficRoutes(router, store, v2);
   registerLifecycleRoutes(router, store, v2);

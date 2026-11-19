@@ -9,7 +9,14 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { contentId } from "@nbo/digest";
 import { ISR_CACHE_KEY } from "@nbo/serve";
-import { readBakedEnv, resolveFunctions, resolveISRCache, parseServeArgs, manifestContentId } from "../serve.js";
+import {
+  readBakedEnv,
+  resolveFunctions,
+  resolveISRCache,
+  parseServeArgs,
+  manifestContentId,
+  protectionFromEnv,
+} from "../serve.js";
 
 let dir: string;
 
@@ -178,5 +185,31 @@ describe("the ISR cache from /functions.json", () => {
   it("a map holding only __isrcache resolves no functions", async () => {
     const { resolve } = await resolveFunctions(dir, { __isrcache: "http://127.0.0.1:1" });
     expect(resolve).toBeUndefined();
+  });
+});
+
+describe("protectionFromEnv", () => {
+  const hash = "scrypt$16384$8$1$BwcHBwcHBwcHBwcHBwcHBw$jqNYMZJ6k8yP9UrEwEFdAphyQW3NDqRG8javhwKNA-0";
+
+  it("is off without NBO_PROTECTION, or with it empty", () => {
+    expect(protectionFromEnv({})).toBeUndefined();
+    expect(protectionFromEnv({ NBO_PROTECTION: "" })).toBeUndefined();
+  });
+
+  it("passes the hash and the cron signing secret to the handler", () => {
+    expect(protectionFromEnv({ NBO_PROTECTION: hash, NBO_CRON_SIGNING_SECRET: "c" })).toEqual({
+      hash,
+      cronSecret: "c",
+    });
+    expect(protectionFromEnv({ NBO_PROTECTION: hash })).toEqual({ hash });
+  });
+
+  it("refuses a malformed NBO_PROTECTION, naming the variable and not the value", () => {
+    expect(() => protectionFromEnv({ NBO_PROTECTION: "hunter2-secret" })).toThrow(/NBO_PROTECTION/);
+    try {
+      protectionFromEnv({ NBO_PROTECTION: "hunter2-secret" });
+    } catch (err) {
+      expect(String(err)).not.toContain("hunter2-secret");
+    }
   });
 });

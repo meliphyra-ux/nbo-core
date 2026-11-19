@@ -118,6 +118,15 @@ describe("buildDeployArgs scaling and cpu", () => {
     expect(at("--cpu")).toBe("1");
   });
 
+  it("opens a public service by turning off the invoker check, not by granting allUsers", () => {
+    // Domain restricted sharing (on by default in new Google Workspace organisations) refuses an
+    // allUsers grant, and gcloud still reports the deploy as done: the site then answers 403.
+    const args = buildDeployArgs({ ...base, allowUnauthenticated: true });
+    expect(args).toContain("--no-invoker-iam-check");
+    expect(args).not.toContain("--allow-unauthenticated");
+    expect(args).not.toContain("--no-allow-unauthenticated");
+  });
+
   it("renders none of them when absent, so existing services' arguments don't change", () => {
     const args = buildDeployArgs(base);
     for (const flag of ["--min-instances", "--max-instances", "--concurrency", "--cpu", "--execution-environment"])

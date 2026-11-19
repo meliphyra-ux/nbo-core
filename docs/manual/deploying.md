@@ -163,7 +163,7 @@ For a build with prerender routes, `deployIsrCache` (Cloud Run target) deploys a
 ### The app
 
 1. `buildImage` (same app Dockerfile) → push as `<arRepo>/nbo-app-<app>:<tag>` (the same tag as on Kubernetes).
-2. `gcloud run deploy <app> --image … --allow-unauthenticated` with label `nbo-content-id` (a shortened form of the content id; labels can't hold the full value, hence the deployer's own `idsMatch`).
+2. `gcloud run deploy <app> --image … --no-invoker-iam-check` (public without an `allUsers` grant, which organisations with Domain restricted sharing refuse) with label `nbo-content-id` (a shortened form of the content id; labels can't hold the full value, hence the deployer's own `idsMatch`).
 3. Cloud Run prints the service's `https://…run.app` URL; NBO stores it as the deployment URL and the edge backend.
 
 ### Calling private functions

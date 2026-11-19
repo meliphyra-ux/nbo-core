@@ -115,6 +115,17 @@ describe("knownSecrets", () => {
     expect(found).toEqual(expect.arrayContaining(["k", "plain-value", hook, own.encryptionPkcs8, own.identityPkcs8]));
     expect(found).not.toContain("abc");
   });
+
+  it("finds a project's deployment protection hash (it is enough to forge the cookie)", async () => {
+    const store = await newStore();
+    const p = store.createProject("shop");
+    store.setProtection(
+      p.id,
+      "all",
+      "scrypt$16384$8$1$BwcHBwcHBwcHBwcHBwcHBw$jqNYMZJ6k8yP9UrEwEFdAphyQW3NDqRG8javhwKNA-0",
+    );
+    expect(knownSecrets(store)).toContain(store.getProtection(p.id).hash);
+  });
 });
 
 describe("the filter on replies", () => {

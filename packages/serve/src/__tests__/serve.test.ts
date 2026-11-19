@@ -55,6 +55,31 @@ describe("createHandler", () => {
     expect(res.headers.get("content-type")).toBe("text/html; charset=utf-8");
   });
 
+  it("with protection, refuses a page without the password and serves it once signed in", async () => {
+    const dir = await writeServeFixture(false);
+    const hash = "scrypt$16384$8$1$BwcHBwcHBwcHBwcHBwcHBw$jqNYMZJ6k8yP9UrEwEFdAphyQW3NDqRG8javhwKNA-0";
+    const handler = await createHandler(dir, undefined, undefined, { protection: { hash }, deploymentId: "c1" });
+    const refused = await handler(new Request("http://x/", { headers: { accept: "text/html" } }));
+    expect(refused.status).toBe(401);
+    expect(await refused.text()).not.toContain("home");
+    const login = await handler(
+      new Request("http://x/_nbo/protect", {
+        method: "POST",
+        headers: { "content-type": "application/x-www-form-urlencoded" },
+        body: "password=correct+horse+battery&next=%2F",
+      }),
+    );
+    expect(login.status).toBe(303);
+    const cookie = login.headers.get("set-cookie")!.split(";")[0]!;
+    const res = await handler(new Request("http://x/", { headers: { cookie } }));
+    expect(res.status).toBe(200);
+    expect(await res.text()).toBe("home");
+    // No shared cache in front of the site may keep it and hand it to visitors without the password.
+    const cc = res.headers.get("cache-control")!;
+    expect(cc.startsWith("private")).toBe(true);
+    expect(cc).not.toMatch(/public|s-maxage/);
+  });
+
   it("returns 404 without a fallback", async () => {
     const dir = await writeServeFixture(false);
     const handler = await createHandler(dir);

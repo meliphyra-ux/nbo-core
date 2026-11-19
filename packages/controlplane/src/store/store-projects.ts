@@ -133,6 +133,7 @@ export function projectMethods(
         db.prepare(
           "DELETE FROM stage_revalidate_tokens WHERE stage_id IN (SELECT id FROM stages WHERE project_id = ?)",
         ).run(id);
+        db.prepare("DELETE FROM project_protection WHERE project_id = ?").run(id);
         db.prepare("DELETE FROM stages WHERE project_id = ?").run(id);
         db.prepare("DELETE FROM projects WHERE id = ?").run(id);
         db.exec("COMMIT");

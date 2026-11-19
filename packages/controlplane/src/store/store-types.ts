@@ -17,6 +17,7 @@ import type { EdgeJob, PendingCert, ServerSettings, ServerSecretName } from "./s
 import type { Domain, DomainPatch } from "../domains/domains.js";
 import type { Relay, RelayInput } from "../edge/relays.js";
 import type { RevalidateToken } from "../variables/revalidate-tokens.js";
+import type { Protection, ProtectionMode } from "../protection/protection.js";
 import type { ApiToken } from "../http/api-tokens.js";
 import type { Stage, StagePatch } from "../stages/stages.js";
 import type { GitHeadsStore } from "../git/git-heads.js";
@@ -257,6 +258,9 @@ export interface Store extends GitHeadsStore, GitCredentialsStore, EphemeralCert
   getRevalidateToken(stageId: string): RevalidateToken | undefined;
   ensureRevalidateToken(stageId: string): RevalidateToken;
   rotateRevalidateToken(stageId: string): RevalidateToken;
+  // Deployment protection (protection/protection.ts): the mode and the password's hash per project.
+  getProtection(projectId: string): Protection;
+  setProtection(projectId: string, mode: ProtectionMode, hash: string): void;
   // API tokens (api-tokens.ts): only a sha256 of each token is stored.
   createApiToken(name: string): { token: ApiToken; secret: string };
   listApiTokens(): ApiToken[];

@@ -77,6 +77,7 @@ export function knownSecrets(store: Store, sources: SecretSources = {}): string[
   for (const p of projects) {
     tryAll(() => add(store.openGitCredential(p.id)));
     tryAll(() => add(store.getWebhookSecret(p.id)));
+    tryAll(() => add(store.getProtection(p.id).hash));
     tryAll(() => {
       for (const s of store.listStages(p.id, { includeEphemeral: true }))
         tryAll(() => add(store.getRevalidateToken(s.id)?.token));

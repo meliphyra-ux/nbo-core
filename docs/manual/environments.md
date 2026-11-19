@@ -92,6 +92,10 @@ NBO names it `pv-` plus 8 characters and builds nothing yet. The next push to it
 
 Each environment has its own page cache and its own revalidation secret, so `staging` can't refresh Production. Details in [Page cache and revalidation](./cache.md).
 
+## Password protection
+
+A project can ask for a password before anyone opens its environments: every environment except Production, or all of them. See [Deployment protection](./protection.md).
+
 ## Variables per environment
 
 Each variable belongs to **All environments** or to one. `PUT /projects/{id}/env/{name}?stage=staging` (or `/workspace/env/{name}`) sets it for one environment; `?stage=*` means all of them. Setting it for several environments makes one row per environment. `GET /projects/{id}/env` lists each row with its environment.

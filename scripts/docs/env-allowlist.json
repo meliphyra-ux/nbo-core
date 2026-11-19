@@ -21,5 +21,6 @@
   "NBO_ENV": "Set by NBO for each build command (the environment's name); documented in the Environments chapter.",
   "NBO_GIT_COMMIT_REF": "Set by NBO for each build command (the branch); documented in the Environments chapter.",
   "NBO_GIT_COMMIT_SHA": "Set by NBO for each build command (the commit); documented in the Environments chapter.",
-  "NBO_GIT_PULL_REQUEST_ID": "Set by NBO for a preview's build command (the pull request number, empty otherwise); documented in the Previews chapter."
+  "NBO_GIT_PULL_REQUEST_ID": "Set by NBO for a preview's build command (the pull request number, empty otherwise); documented in the Previews chapter.",
+  "NBO_PROTECTION": "Set by NBO inside deployed apps of a protected environment: the hash of the deployment protection password; never set by an operator."
 }

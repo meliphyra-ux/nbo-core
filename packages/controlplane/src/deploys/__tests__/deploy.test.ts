@@ -10,6 +10,7 @@ import type { CommandRunner, DeployResult, IsrOptions, ProgressOptions, UserEnv 
 import { createStore, ErrNotFound, type Store, type Environment } from "../../store/store.js";
 import { triggerDeploy, deployAppName, otherAppNames, recordDeployFailure, type Orchestrator } from "../deploy.js";
 import { withRevalidateToken } from "../../variables/revalidate-tokens.js";
+import type { ResolvedEnv } from "../../variables/env-vars.js";
 import { canonicalize } from "@nbo/digest";
 
 // Docker builds and the CLI bundle are stubbed below (by file, as @nbo/deploy
@@ -494,6 +495,58 @@ describe("triggerDeploy and the revalidation secret", () => {
     expect(failed.status).toBe("failed");
     expect(failed.error).not.toContain(token);
     expect(failed.error).toContain("[redacted]");
+  });
+});
+
+describe("triggerDeploy and deployment protection", () => {
+  const HASH = "scrypt$16384$8$1$BwcHBwcHBwcHBwcHBwcHBw$jqNYMZJ6k8yP9UrEwEFdAphyQW3NDqRG8javhwKNA-0";
+
+  async function deployOnce(s: Store, envId: string, snapshot: ResolvedEnv, fingerprint: string | null) {
+    let seen: MadeTarget | undefined;
+    deployOverride = async () => {
+      seen = madeTargets.at(-1);
+      return okResult;
+    };
+    await triggerDeploy({ store: s }, envId, await nboDir(false), { env: snapshot, fingerprint });
+    return seen!.userEnv!;
+  }
+
+  it("a protected stage deploys with NBO_PROTECTION as a secret; an unprotected one gets none", async () => {
+    const s = await keyedStore();
+    const p = s.createProject("shop");
+    const env = s.createEnvironment(p.id, "production", "kubernetes");
+    s.setEnv({ projectId: p.id }, "API_KEY", "user-secret-value", true);
+    const snapshot = s.resolveEnv(p.id);
+    const fingerprint = s.envFingerprintFor(snapshot);
+
+    s.setProtection(p.id, "previews", HASH);
+    const previewsOnly = await deployOnce(s, env.id, snapshot, fingerprint);
+    expect(previewsOnly.vars.NBO_PROTECTION).toBeUndefined();
+    expect(previewsOnly.fingerprint).toBe(fingerprint);
+
+    s.setProtection(p.id, "all", HASH);
+    const all = await deployOnce(s, env.id, snapshot, fingerprint);
+    expect(all.vars.NBO_PROTECTION).toBe(HASH);
+    expect(all.secretNames).toEqual(["API_KEY", "NBO_PROTECTION"]);
+    expect(snapshot.vars.NBO_PROTECTION).toBeUndefined();
+  });
+
+  it("turning protection on or off changes the fingerprint the cloud records, so a redeploy is not skipped", async () => {
+    const s = await keyedStore();
+    const p = s.createProject("shop");
+    const env = s.createEnvironment(p.id, "production", "kubernetes");
+    const snapshot = s.resolveEnv(p.id);
+    const fingerprint = s.envFingerprintFor(snapshot);
+
+    const off = await deployOnce(s, env.id, snapshot, fingerprint);
+    s.setProtection(p.id, "all", HASH);
+    const on = await deployOnce(s, env.id, snapshot, fingerprint);
+    s.setProtection(p.id, "off", HASH);
+    const offAgain = await deployOnce(s, env.id, snapshot, fingerprint);
+    expect(on.fingerprint).not.toBe(off.fingerprint);
+    expect(offAgain.fingerprint).toBe(off.fingerprint);
+    expect(offAgain.fingerprint).not.toBe(on.fingerprint);
+    expect(offAgain.vars.NBO_PROTECTION).toBeUndefined();
   });
 });
 

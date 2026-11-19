@@ -8,3 +8,4 @@ export { handlePrerender, handleRevalidate, loadPrerenderDoc, ISR_CACHE_KEY } fr
 export { handleImage, loadImagesConfig } from "./image.js";
 export type { CarryIndex } from "./carry.js";
 export { loadCarry, CARRIED_FROM_HEADER } from "./carry.js";
+export { createGate, keepPrivate, parseProtectionHash, verifyPassword } from "./protection.js";

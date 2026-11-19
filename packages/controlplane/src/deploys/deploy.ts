@@ -26,6 +26,7 @@ import { environmentClusterId } from "../clouds/connections.js";
 import { PULLER_NOTE, googleCredential } from "../clouds/google-wif.js";
 import { variableStage } from "../stages/stages.js";
 import { withRevalidateToken } from "../variables/revalidate-tokens.js";
+import { stageProtected, withProtection } from "../protection/protection.js";
 
 interface CloudRunConfig {
   project?: string;
@@ -298,8 +299,14 @@ export async function triggerDeploy(
   // snapshot and fingerprint stay exactly the caller's, so upgrading NBO
   // doesn't make them look changed (and redeploy).
   const isr = await prerenderRoutes(nboDir);
-  const resolvedEnv = isr ? withRevalidateToken(o.store, stage, snapshot) : snapshot;
-  const fingerprint = isr || !opts?.env ? o.store.envFingerprintFor(resolvedEnv) : (opts.fingerprint ?? null);
+  // A protected stage (deployment protection) gets NBO_PROTECTION the same way, so turning protection on
+  // or changing its password changes the fingerprint; turning it off brings back the caller's fingerprint,
+  // which differs from the protected one the cloud recorded. Either way the deploy is not "already live".
+  const passwordProtected = stageProtected(o.store.getProtection(env.projectId), stage);
+  const withSecrets = isr ? withRevalidateToken(o.store, stage, snapshot) : snapshot;
+  const resolvedEnv = passwordProtected ? withProtection(o.store, stage, withSecrets) : withSecrets;
+  const fingerprint =
+    isr || passwordProtected || !opts?.env ? o.store.envFingerprintFor(resolvedEnv) : (opts.fingerprint ?? null);
   // The cache goes when the cloud's current build (carryFrom, set only when
   // it differs from this one) had prerender routes and this one has none.
   const isrOptions: IsrOptions = {

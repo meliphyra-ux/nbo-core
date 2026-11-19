@@ -20,6 +20,7 @@ import { serverSettingsSchema, attachServerSettingsMethods } from "./server-sett
 import { domainsSchema, attachDomainMethods } from "../domains/domains.js";
 import { relaysSchema, attachRelayMethods } from "../edge/relays.js";
 import { revalidateTokensSchema, attachRevalidateTokenMethods } from "../variables/revalidate-tokens.js";
+import { protectionSchema, attachProtectionMethods } from "../protection/protection.js";
 import { apiTokensSchema, attachApiTokenMethods } from "../http/api-tokens.js";
 import { stagesSchema, attachStageMethods } from "../stages/stages.js";
 import { attachGitHeadMethods } from "../git/git-heads.js";
@@ -76,6 +77,7 @@ export function createStore(path: string, options?: { secretKey?: Buffer; artifa
       stagesSchema,
       ephemeralCertsSchema,
       revalidateTokensSchema,
+      protectionSchema,
       gitCredentialsSchema,
       linkSchema,
     ]);
@@ -138,5 +140,8 @@ export function createStore(path: string, options?: { secretKey?: Buffer; artifa
     ),
     options?.secretKey,
   );
-  return attachLinkMethods(db, attachGitCredentialMethods(db, attached, options?.secretKey), options?.secretKey);
+  return attachProtectionMethods(
+    db,
+    attachLinkMethods(db, attachGitCredentialMethods(db, attached, options?.secretKey), options?.secretKey),
+  );
 }

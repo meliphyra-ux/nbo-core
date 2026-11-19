@@ -135,6 +135,7 @@ The webhook and cron secrets above are stored as plain text. Cloud credentials, 
 - `preview_cert_orders`: when NBO ordered each ephemeral environment's certificate, to stay under Let's Encrypt's weekly limit (`domains/ephemeral-certs.ts`; the table keeps the name earlier versions gave it).
 - A database from an earlier NBO may also hold `preview_settings`, `previews` and `preview_branch_heads`. NBO reads `previews` and `preview_settings` once, when it turns those previews into ephemeral environments, and never changes or creates these tables; deleting a project deletes its rows from them.
 - `stage_revalidate_tokens`: the secret that lets your code revalidate an environment's cached pages (see [Page cache and revalidation](./cache.md)).
+- `project_protection`: a project's deployment protection, its mode and the salted hash of its password, never the password (see [Deployment protection](./protection.md)).
 
 ### Git access
 

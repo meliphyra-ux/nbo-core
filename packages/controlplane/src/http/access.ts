@@ -44,6 +44,8 @@ export const routeAccess: Record<string, Access> = {
 
   // Git, builds and webhooks
   "GET /projects/{projectID}/git": "token",
+  "GET /projects/{projectID}/protection": "token",
+  "PUT /projects/{projectID}/protection": "token",
   "PUT /projects/{projectID}/git": "token",
   "POST /projects/{projectID}/git/deploy-key": "token",
   "POST /projects/{projectID}/git/poll": "token",
@@ -234,6 +236,8 @@ export const routeLinkTier: Readonly<Record<string, LinkTier>> = Object.freeze({
 
   // Git, builds and webhooks. The push webhook is not forwarded over the link.
   "GET /projects/{projectID}/git": 0,
+  "GET /projects/{projectID}/protection": 0,
+  "PUT /projects/{projectID}/protection": 2,
   "PUT /projects/{projectID}/git": 2,
   "POST /projects/{projectID}/git/deploy-key": 2,
   "POST /projects/{projectID}/git/poll": 1,
