@@ -658,6 +658,12 @@ It should print both `data/nbo.db` and `keys/nbo-secret.key`. If either is missi
 
 This is for a server that already runs NBO (this is also how you update it). Your projects keep serving while you upgrade, because the edge holds the routes and certificates. Run these in the folder you cloned NBO into, for example `/opt/nbo`. If you used step 8, add `-f compose.yaml -f compose.public.yaml` to each `docker compose up` below.
 
+### Releases
+
+Each release of NBO is tagged with its date, `v<year>.<month>.<day>`, and a second release on the same day gets `.2` (for example `v2026.11.19` and `v2026.11.19.2`). Its image has the same name, such as `ghcr.io/meliphyra-ux/nbo-core:v2026.11.19`, and `latest` is always the newest. The tags are listed at https://github.com/meliphyra-ux/nbo-core/tags.
+
+To see the release your server runs, use `docker compose exec nbo nbo-server link status` and read `version`. A server from before release tags shows no `version`; a server built from source shows `dev`. A server linked to the hosted dashboard shows its release on its core page, together with these steps whenever a newer release exists. To stay on one release instead of `latest`, set `NBO_IMAGE=ghcr.io/meliphyra-ux/nbo-core:v2026.11.19` in `.env`.
+
 ### Every upgrade
 
 1. **Back up both volumes first.** This is what makes a rollback safe. It uses the image you already have, so do it before you rebuild:
@@ -725,7 +731,7 @@ Rolling back from 2026-11-12 or newer to an NBO from before that date also means
 
 1. If you are going back to a version older than 2026-11-08 and removed the `NBO_LB_ANNOTATIONS` line from `.env`, put it back, because the older NBO doesn't detect the location itself.
 2. Find the previous commit. Use the one you wrote down in step 1 of Every upgrade, or `git log --oneline -5` or `git reflog`.
-3. Restore the backup you took in step 1 of Every upgrade, then check out that commit and run its image. Each commit on `main` has its own image, tagged `sha-` plus the first 12 characters of the commit:
+3. Restore the backup you took in step 1 of Every upgrade, then check out that commit and run its image. Each commit on `main` has its own image, tagged `sha-` plus the first 12 characters of the commit, and each release also has one tagged with its name (see [Releases](#releases)):
 
    ```bash
    docker compose down

@@ -101,6 +101,10 @@ RUN set -eu; \
              windows_amd64/terraform-provider-nbo_v0.1.0.exe; do \
       test -f "terraform-provider/dist/$f"; \
     done
+# The release this image is (the image workflow passes its tag, such as v2026.11.19, or sha-<commit>).
+# GET /healthz reports it, so the hosted dashboard can say when a newer release exists.
+ARG NBO_VERSION=dev
+ENV NBO_VERSION=${NBO_VERSION}
 EXPOSE 8081
 # /data is a volume, so the temp folder has to be made after it is mounted.
 CMD ["sh", "-c", "mkdir -p /data/tmp && exec node packages/controlplane/dist/main.js"]

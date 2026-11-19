@@ -109,6 +109,8 @@ export function registerLinkRoutes(
       transport: client.transport,
       lastConnectedAt: client.lastConnectedAt,
       lastError: client.lastError,
+      // The release the image was built from (the image sets NBO_VERSION), so the dashboard can name a newer one.
+      version: process.env.NBO_VERSION || "dev",
     };
     if (!state) return json({ linked: false, ...conn, memberKeys }, 200);
     return json(

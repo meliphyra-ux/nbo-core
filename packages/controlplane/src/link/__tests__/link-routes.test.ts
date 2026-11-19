@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: FSL-1.1-ALv2
 // Copyright 2026 Nikita Dovhich
 
-import { describe, it, expect, beforeAll, afterEach } from "vitest";
+import { describe, it, expect, beforeAll, afterEach, vi } from "vitest";
 import { randomBytes } from "node:crypto";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -105,7 +105,18 @@ describe("link status", () => {
       lastConnectedAt: null,
       lastError: null,
       memberKeys: 0,
+      version: "dev",
     });
+  });
+
+  it("status names the release the image was built from", async () => {
+    const { h } = await setup();
+    vi.stubEnv("NBO_VERSION", "v2026.11.19");
+    try {
+      expect((await h.call("GET", "/link/status")).json).toMatchObject({ version: "v2026.11.19" });
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 
   it("status names the core, the team and the pinned platform key once linked", async () => {
