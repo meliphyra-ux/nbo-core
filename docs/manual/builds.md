@@ -112,7 +112,7 @@ Runs in `appDir` through the shell (so `&&` works), with one extra environment v
 NEXT_ADAPTER_PATH=<repo>/packages/next-adapter/src/adapter.js
 ```
 
-Next.js 16+ reads this and loads NBO's adapter during `next build`. You don't need to change `next.config.ts`. Other frameworks ignore it.
+Next.js 16+ reads this and loads NBO's adapter during `next build`. You don't need to change `next.config.ts`. Next.js 14 and 15 and other frameworks ignore it (for 14 and 15, see step 5).
 
 The build command and the ignored build step also get three variables that say which [environment](./environments.md) the build is for: `NBO_ENV` (its name, such as `production` or `staging`), `NBO_GIT_COMMIT_REF` (its branch) and `NBO_GIT_COMMIT_SHA`. An ephemeral environment's builds get `NBO_ENV=preview`. (Earlier versions also set `NBO_GIT_PULL_REQUEST_ID` for previews; NBO no longer knows about pull requests, so it is gone.) User variables can't use `NBO_*` names, so these can't clash.
 
@@ -128,7 +128,7 @@ The build command gets **all** the variables of the build's environment (workspa
 ### 5. Produce `.nbo/`
 
 - **Static / React (Vite):** checks the output folder exists (`dist` by default, must be inside the clone), then calls `produce(outputDir, appDir/.nbo, { spa })` from `@nbo/producer-static`.
-- **Next.js:** the adapter already wrote `appDir/.nbo` during `next build`. If it's missing, the runner looks one level down for a `.nbo` and, if found, tells you to set **Root directory** to that folder. Otherwise it explains that `NEXT_ADAPTER_PATH` needs Next.js 16+.
+- **Next.js:** the adapter already wrote `appDir/.nbo` during `next build`. If it's missing, the runner looks one level down for a `.nbo` and, if found, tells you to set **Root directory** to that folder. Next.js 14 and 15 don't load the adapter: when there's no `.nbo` but there is a `.next/required-server-files.json`, the runner reads `.next/` itself (see [Next 14 and 15](#next-14-and-15)). Otherwise it explains that the app must be Next.js 14 or later and its build must run `next build`.
 
 ### 6. Deploy to every cloud with automatic deploys on
 
@@ -163,6 +163,27 @@ Next.js 16 lets a plugin run code after the build, through `onBuildComplete({ ou
    - `fromNextEnv(process.env)`: records which `NEXT_PUBLIC_*` variables were baked in at build time (names and a digest, never values).
    - `setRoutes`: `translateRoutes(outputs)` and `translateMiddleware(...)` (`translate-routing.js`) turn Next's routing into `routes.json`.
 3. `nbo.write()` and prints `nbo: wrote .nbo/ in …ms (content id …)`.
+
+## Next 14 and 15
+
+**Files:** `packages/next-adapter/src/legacy.js`, `legacy-entry-shim.mjs`
+
+Next.js 14 and 15 have no adapter API, so the runner calls `produceLegacyNext(appDir)` after `next build`. You don't change `next.config` (no `output: "standalone"` needed). It writes:
+
+- **Static files:** `.next/static` as `/_next/static/…` (`immutable`) and `public/` (`revalidate`), under `basePath` if set.
+- **One function, `ssr`:** Next's own server, the one `next start` runs, started on a loopback port by `legacy-entry-shim.mjs`. Its files are what Next traced (`.next/**/*.nft.json`), everything under `.next/server` and `.next/static`, the manifests `required-server-files.json` names, and the server entry traced with the tracer Next ships (Next traces that only for standalone builds). A traced file that resolves outside the cloned repository fails the build.
+- **Routes:** every path that isn't a static file goes to `ssr`, so Next does the routing itself: dynamic routes, the Pages Router, middleware (edge or Node.js), redirects, rewrites and headers from `next.config`, and `/_next/image`.
+
+Differences from Next.js 16:
+
+- **ISR is Next's own cache, per running instance**, kept in memory (the bundle is never written to). Each replica regenerates on its own, NBO's shared page cache and Settings → Cache don't apply, and `revalidatePath`/`revalidateTag` only reach the instance that ran them.
+- **Middleware doesn't run for static files** (`public/` and `/_next/static`), because NBO serves them before the function.
+- Next compresses nothing (`compress: false`); partial prerendering is 16 only.
+- An app with `output: "export"` fails with a message to use the Static framework with output directory `out`.
+- **The content id changes on every build**, even of the same commit: Next 14 and 15 write their manifests in no fixed order and new random preview and Server Actions keys each build. A rebuild therefore deploys again instead of being recognised as already live.
+- **Each package is bundled once.** pnpm links packages with symlinks, which `.nbo/` can't hold, so `placeFiles` lays them out as npm does (`node_modules/<name>`, other versions inside the package that needs them). Without that, React would load twice and every hook would fail.
+
+`scripts/verify-next-legacy.sh` builds `fixtures/next14-app` and `fixtures/next15-app`, produces their `.nbo/`, serves it with `nbo serve` and checks pages, a dynamic route, middleware, a route handler, ISR, the Pages Router and static files.
 
 ## The output and spec 1.0
 

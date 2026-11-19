@@ -193,9 +193,9 @@ Static / React (Vite): the build command finished but wrote somewhere else. Chec
 
 Next.js built in a subfolder. Set **Root directory** to the folder named in the message, and remove any `cd` from the build command.
 
-### "expected the build command to produce" … "check that this is a Next.js 16+ app"
+### "expected the build command to produce" … "check that this is a Next.js 14+ app"
 
-The NBO adapter didn't run. It's loaded through `NEXT_ADAPTER_PATH`, which only Next.js 16 and later read. Upgrade Next.js, and make sure the build command actually runs `next build` (for example `pnpm install && pnpm run build`).
+The build left neither `.nbo/` (Next.js 16, through the adapter) nor `.next/required-server-files.json` (Next.js 14 and 15). Make sure the app uses Next.js 14 or later and the build command actually runs `next build` (for example `pnpm install && pnpm run build`). A custom `distDir` isn't supported on 14 and 15: NBO looks in `.next`.
 
 ### "outputDir … escapes the cloned repository"
 

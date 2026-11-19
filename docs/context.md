@@ -51,6 +51,7 @@ Put shared logic in one writer library (`@nbo/writer`); each producer is then a 
 ### Next.js adapter API facts (checked 2026-10-22)
 
 - `adapterPath` was stabilized in Next.js v16.2.0 (moved out of `experimental`). `NEXT_ADAPTER_PATH` enables zero-config use on platforms.
+- Next.js 15.5 has an earlier `experimental.adapterPath` (no environment variable, a flat `outputs` array, no `routing`), and Next.js 14 has none (checked 2026-11-19), so 14 and 15 go through `packages/next-adapter/src/legacy.js`, which reads `.next/` after the build and runs Next's own server as one function (manual, Builds → Next 14 and 15).
 - Hooks: `modifyConfig(config, ctx)` and `onBuildComplete(ctx)`.
 - `onBuildComplete` context: `routing` (`beforeMiddleware`, `middlewareMatchers`, `beforeFiles`, `afterFiles`, `dynamicRoutes`, `onMatch`, `fallback`, `shouldNormalizeNextData`, `rsc`), `outputs`, `projectDir`, `repoRoot`, `distDir`, `config`, `nextVersion`, `buildId`.
 - `outputs`: `pages`, `pagesApi`, `appPages`, `appRoutes`, `prerenders`, `staticFiles`, `middleware`. With `output: 'export'` only `staticFiles` is populated.

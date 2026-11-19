@@ -5,6 +5,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { createRequire } from "node:module";
+import { pathToFileURL } from "node:url";
 import { produce } from "@nbo/producer-static";
 import { formatSeconds } from "@nbo/deploy";
 import type { Store } from "../store/store.js";
@@ -29,6 +30,15 @@ export interface Runner {
 
 function defaultNextAdapterPath(): string {
   return createRequire(import.meta.url).resolve("@nbo/next-adapter/src/adapter.js");
+}
+
+type ProduceLegacyNext = (appDir: string, opts: { root: string; env: Record<string, string> }) => Promise<unknown>;
+
+// Next.js 14 and 15 ignore NEXT_ADAPTER_PATH; @nbo/next-adapter reads their .next/ after the build instead.
+async function produceLegacyNext(...args: Parameters<ProduceLegacyNext>): Promise<unknown> {
+  const path = createRequire(import.meta.url).resolve("@nbo/next-adapter/src/legacy.js");
+  const mod = (await import(pathToFileURL(path).href)) as { produceLegacyNext: ProduceLegacyNext };
+  return mod.produceLegacyNext(...args);
 }
 
 // createRunner executes one already-created (queued) build: clone,
@@ -228,13 +238,18 @@ export function createRunner(store: Store, trigger: DeploymentTrigger, options?:
           }
           log(`Producing .nbo/ from ${config.outputDir ?? "dist"}${config.spa ? " (SPA fallback)" : ""}\n`);
           await timedPhase("produce .nbo", "produce .nbo done", () => produce(rawDir, nboDir, { spa: config.spa }));
+        } else if (!(await exists(nboDir)) && (await exists(join(appDir, ".next", "required-server-files.json")))) {
+          log("No .nbo/ from the adapter: reading .next/ (Next.js 14 or 15)\n");
+          await timedPhase("produce .nbo", "produce .nbo done", () =>
+            produceLegacyNext(appDir, { root: cloneDir!, env: { ...resolvedEnv.vars, ...stageEnv } }),
+          );
         } else if (!(await exists(nboDir))) {
           // The adapter writes .nbo/ next to the Next.js app; if the build
           // command cd'd into a subfolder, point at the setting that fixes it.
           const found = await findNestedNbo(appDir);
           const hint = found
             ? ` — found ${found}/.nbo — set Root Directory to "${[config.rootDirectory, found].filter(Boolean).join("/")}" (and drop the cd from the build command)`
-            : " (NBO sets NEXT_ADAPTER_PATH during the build; check that this is a Next.js 16+ app and its build ran next build)";
+            : " (NBO sets NEXT_ADAPTER_PATH during the build; check that this is a Next.js 14+ app and its build ran next build)";
           store.completeBuild(
             buildId,
             "failed",

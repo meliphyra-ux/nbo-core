@@ -1,8 +1,31 @@
 # NBO
 
-NBO is a hosting platform you run yourself, a bit like Vercel. Point it at a Git repository and it builds the site, packages the result into a cloud-neutral folder (`.nbo/`), deploys it to Kubernetes, Google Cloud Run or both, and puts its own edge in front so you can move a site between clouds without downtime. It supports Next.js, React single-page apps (Vite) and static sites.
+**Git-push deploys on your own servers. One build, any cloud, and a live switch between them.**
 
-NBO has no web interface. You drive it with `nbo-server` (a command on the server), its HTTP API and its Terraform provider. A hosted dashboard made by NBO's licensor can sit on top of the same API; NBO does not need it.
+NBO is a hosting platform you run yourself, a bit like Vercel. Point it at a Git repository and it:
+
+1. builds the site,
+2. packages the result into a cloud-neutral folder (`.nbo/`),
+3. deploys it to Kubernetes, Google Cloud Run or both,
+4. puts its own edge in front, with your domains and Let's Encrypt certificates,
+5. and lets you move a live site from one cloud to the other as a gradual traffic shift.
+
+It supports Next.js (SSR, ISR, middleware, `next/image`), React single-page apps built with Vite, and static sites.
+
+## Why
+
+- **Your servers, your bill.** Nothing runs on anyone else's infrastructure, and nobody charges you per request.
+- **No lock-in, including to a cloud.** The build output names no cloud. The same build runs on two at once.
+- **Previews.** A branch or pull request gets its own address and is removed when it closes or expires.
+- **Driven your way.** NBO has no web interface of its own. You drive it with `nbo-server` (a command on the server), its HTTP API and its Terraform provider, with no account anywhere.
+
+## Want a dashboard?
+
+[Ostiarius](https://ostiarius.io) is a hosted dashboard for NBO, made by NBO's licensor: sign-in, teams and roles, GitHub import, pull request previews and approvals. It never holds your sites or secrets, and your NBO keeps working without it. It is free for small teams. NBO runs fully without it.
+
+## Status
+
+NBO is young. Next.js, Vite React apps and static sites on Kubernetes and Cloud Run are supported; AWS Lambda and other frameworks are planned and not started. What is unfinished is listed in [`docs/points-to-improve-or-fix.md`](./docs/points-to-improve-or-fix.md).
 
 ## Quick start on your computer
 

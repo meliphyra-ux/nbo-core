@@ -249,6 +249,30 @@ describe("createRunner", () => {
     expect(triggerDeploy).not.toHaveBeenCalled();
   }, 30000);
 
+  it("a nextjs build with .next/ but no .nbo/ (Next.js 14 or 15) is read by the legacy producer", async () => {
+    const { repoPath, revision } = await makeTestRepo();
+    const store = await openTestStore();
+    const proj = store.createProject("acme");
+    const config = '{"config":{"output":"export"},"files":[]}';
+    const buildCommand =
+      process.platform === "win32"
+        ? `mkdir .next && echo ${config} > .next\\required-server-files.json`
+        : `mkdir .next && echo '${config}' > .next/required-server-files.json`;
+    store.setGitConfig(
+      proj.id,
+      fixtureGitConfig({ repo: repoPath, framework: "nextjs", buildCommand, outputDir: undefined }),
+    );
+    store.createEnvironment(proj.id, "k8s", "kubernetes");
+    const runner = createRunner(store, { triggerDeploy: vi.fn() });
+
+    await runner.runBuild(store.createQueuedBuild(proj.id, revision).id);
+
+    const build = store.listBuilds(proj.id)[0]!;
+    expect(build.log).toContain("reading .next/ (Next.js 14 or 15)");
+    expect(build.status).toBe("failed");
+    expect(build.error).toContain('output: "export"');
+  }, 30000);
+
   it("a nextjs build whose command produces a real .nbo/ deploys it directly, with no producer call", async () => {
     const { repoPath, revision } = await makeTestRepo();
     const store = await openTestStore();
