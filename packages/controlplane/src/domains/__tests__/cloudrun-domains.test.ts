@@ -116,8 +116,8 @@ describe("parseMapping", () => {
     });
     expect(parseMapping(json)).toEqual({
       records: [
-        { type: "CNAME", name: "www", value: "ghs.googlehosted.com." },
-        { type: "A", name: "", value: "216.239.32.21" },
+        { type: "CNAME", name: "www", value: "ghs.googlehosted.com.", data: "ghs.googlehosted.com." },
+        { type: "A", name: "", value: "216.239.32.21", data: "216.239.32.21" },
       ],
       ready: false,
       message: "waiting",

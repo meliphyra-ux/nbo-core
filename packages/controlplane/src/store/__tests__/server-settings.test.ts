@@ -152,7 +152,7 @@ describe("domains", () => {
     const { store } = await openStore();
     const p = store.createProject("shop");
     const d = store.addDomain(p.id, "b.acme.com", "custom", "cloudrun");
-    const records = [{ type: "CNAME", name: "b", value: "ghs.googlehosted.com." }];
+    const records = [{ type: "CNAME", name: "b", value: "ghs.googlehosted.com.", data: "ghs.googlehosted.com." }];
     const u = store.updateDomain(d.id, { mappingRecords: records, mappingKept: true, serving: "edge" });
     expect(u).toMatchObject({ mappingRecords: records, mappingKept: true, serving: "edge" });
     expect(store.getDomain(d.id)).toEqual(u);
@@ -175,7 +175,7 @@ describe("domains", () => {
     raw
       .prepare("UPDATE domains SET mapping_records = ? WHERE id = ?")
       .run('[1,null,{"type":"A","name":"x"},{"type":"A","name":"","value":"1.2.3.4"}]', d.id);
-    expect(store.getDomain(d.id).mappingRecords).toEqual([{ type: "A", name: "", value: "1.2.3.4" }]);
+    expect(store.getDomain(d.id).mappingRecords).toEqual([{ type: "A", name: "", value: "1.2.3.4", data: "1.2.3.4" }]);
     raw.close();
   });
 

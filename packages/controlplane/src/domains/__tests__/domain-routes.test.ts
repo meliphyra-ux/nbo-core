@@ -485,7 +485,7 @@ describe("project domains", () => {
       host: "shop.acme.com",
       kind: "custom",
       status: "dns_pending",
-      record: { type: "A", name: "shop.acme.com", value: "34.1.2.3" },
+      record: { type: "A", name: "shop.acme.com", value: "34.1.2.3", data: "34.1.2.3" },
     });
     // Pushed right away: the host routes over HTTP before its certificate.
     expect(Object.keys(kubectl.table().targets)).toContain("shop.acme.com");
@@ -532,12 +532,18 @@ describe("project domains", () => {
     await h.call("POST", `/projects/${id}/domains`, { host: "shop.acme.com" });
     h.store.updateServerSettings({ edgeAddress: "lb-1.elb.example.com" });
     const cname = (await h.call("GET", `/projects/${id}/domains`)).json.domains[1];
-    expect(cname.record).toEqual({ type: "CNAME", name: "shop.acme.com", value: "lb-1.elb.example.com" });
+    expect(cname.record).toEqual({
+      type: "CNAME",
+      name: "shop.acme.com",
+      value: "lb-1.elb.example.com",
+      data: "lb-1.elb.example.com",
+    });
     h.store.updateServerSettings({ edgeAddress: "2001:db8::1" });
     expect((await h.call("GET", `/projects/${id}/domains`)).json.domains[1].record).toEqual({
       type: "AAAA",
       name: "shop.acme.com",
       value: "2001:db8::1",
+      data: "2001:db8::1",
     });
   });
 
@@ -681,14 +687,24 @@ describe("DNS records for apex domains", () => {
   const note = "Use an ALIAS/ANAME record (or your DNS provider's flattened CNAME); a domain's apex can't use CNAME.";
   it("an apex on a hostname-only edge gets an ALIAS with a note; subdomains get a CNAME", () => {
     const lb = "lb-1.elb.example.com";
-    expect(recordFor("acme.com", lb)).toEqual({ type: "ALIAS", name: "acme.com", value: lb, note });
-    expect(recordFor("acme.co.uk", lb)).toEqual({ type: "ALIAS", name: "acme.co.uk", value: lb, note });
-    expect(recordFor("shop.acme.com", lb)).toEqual({ type: "CNAME", name: "shop.acme.com", value: lb });
-    expect(recordFor("shop.acme.co.uk", lb)).toEqual({ type: "CNAME", name: "shop.acme.co.uk", value: lb });
+    expect(recordFor("acme.com", lb)).toEqual({ type: "ALIAS", name: "acme.com", value: lb, data: lb, note });
+    expect(recordFor("acme.co.uk", lb)).toEqual({ type: "ALIAS", name: "acme.co.uk", value: lb, data: lb, note });
+    expect(recordFor("shop.acme.com", lb)).toEqual({ type: "CNAME", name: "shop.acme.com", value: lb, data: lb });
+    expect(recordFor("shop.acme.co.uk", lb)).toEqual({ type: "CNAME", name: "shop.acme.co.uk", value: lb, data: lb });
   });
   it("an apex on an IP edge keeps A/AAAA", () => {
-    expect(recordFor("acme.com", "34.1.2.3")).toEqual({ type: "A", name: "acme.com", value: "34.1.2.3" });
-    expect(recordFor("acme.com", "2001:db8::1")).toEqual({ type: "AAAA", name: "acme.com", value: "2001:db8::1" });
+    expect(recordFor("acme.com", "34.1.2.3")).toEqual({
+      type: "A",
+      name: "acme.com",
+      value: "34.1.2.3",
+      data: "34.1.2.3",
+    });
+    expect(recordFor("acme.com", "2001:db8::1")).toEqual({
+      type: "AAAA",
+      name: "acme.com",
+      value: "2001:db8::1",
+      data: "2001:db8::1",
+    });
   });
 });
 
@@ -942,7 +958,7 @@ ${"# padding ".repeat(1100)}
 
 describe("Cloud Run domains", () => {
   const host = "shop.example.com";
-  const records = [{ type: "CNAME", name: "shop", value: "ghs.googlehosted.com." }];
+  const records = [{ type: "CNAME", name: "shop", value: "ghs.googlehosted.com.", data: "ghs.googlehosted.com." }];
   const account = "d@g.iam.gserviceaccount.com";
 
   function fakeCloudRun() {
@@ -1168,7 +1184,7 @@ describe("Cloud Run domains", () => {
         status: "dns_pending",
         mappingKept: true,
         warning: "",
-        record: { type: "A", value: "34.1.2.3" },
+        record: { type: "A", value: "34.1.2.3", data: "34.1.2.3" },
       });
       expect(t.h.store.getDomain(row.id)).toMatchObject({ serving: "edge", status: "dns_pending", mappingKept: true });
       // The route table was pushed.

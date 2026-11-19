@@ -202,7 +202,10 @@ You need all of this:
 Add the domain with `POST /projects/{id}/domains`. Then:
 
 1. **Verify ownership**, once per root domain. Google only maps a domain for an account that owns it. Open [Google Search Console](https://search.google.com/search-console), verify the root domain (a DNS TXT record), then add the account named in the domain's status as a **verified owner** of that domain: select the domain, open **Verified owners** and choose **Add an owner**. NBO retries every 5 minutes, and the check route tries at once.
-2. **Create the records** listed in the domain's `mappingRecords` at your DNS provider. If the domain has CAA records, allow both `pki.goog` and `letsencrypt.org`.
+2. **Create the records** listed in the domain's `mappingRecords` at your DNS provider. If the domain has CAA records, allow both `pki.goog` and `letsencrypt.org`. For a subdomain this is usually one `CNAME` to `ghs.googlehosted.com.`.
+
+   Each DNS record NBO gives (the edge's `record` and each of `mappingRecords`) has `type`, `name` and `value`, and the same target again as `data`. The hosted dashboard reads `data`, because the link never passes a field named `value`.
+
 3. **Wait.** Google's certificate usually takes about 15 minutes and can take up to 24 hours. The status becomes **Active** when Google reports the mapping ready.
 
 Wildcards aren't supported, and a domain can have at most 64 characters.

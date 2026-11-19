@@ -43,6 +43,9 @@ export interface DnsRecord {
   type: "A" | "AAAA" | "CNAME" | "ALIAS";
   name: string;
   value: string;
+  // data: the same as value. The link withholds every field named value (variable values are
+  // secrets), so the hosted dashboard reads a record's target from data.
+  data: string;
   // note: extra advice the dashboard shows with the record.
   note?: string;
 }
@@ -75,10 +78,10 @@ export type DomainView = Domain & { record: DnsRecord; rootDomain?: string; stag
 export function recordFor(host: string, edgeAddress: string): DnsRecord {
   const address = edgeAddress.replace(/^\[(.*)\]$/, "$1");
   const v = isIP(address);
-  if (v === 6) return { type: "AAAA", name: host, value: address };
-  if (v === 4 || address === "") return { type: "A", name: host, value: address };
-  if (isApex(host)) return { type: "ALIAS", name: host, value: address, note: apexAliasNote };
-  return { type: "CNAME", name: host, value: address };
+  if (v === 6) return { type: "AAAA", name: host, value: address, data: address };
+  if (v === 4 || address === "") return { type: "A", name: host, value: address, data: address };
+  if (isApex(host)) return { type: "ALIAS", name: host, value: address, data: address, note: apexAliasNote };
+  return { type: "CNAME", name: host, value: address, data: address };
 }
 
 async function readObject(request: Request, allowed: string[]): Promise<Record<string, unknown>> {

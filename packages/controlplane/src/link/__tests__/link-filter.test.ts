@@ -12,6 +12,8 @@ import type { RouteHandler } from "../../http/router.js";
 import { createDispatcher } from "../dispatch.js";
 import { createSuppliedValues } from "../../variables/supplied-values.js";
 import { filterJson, filterStream, knownSecrets, withheldKeys } from "../filter.js";
+import { recordFor } from "../../domains/domain-routes.js";
+import { parseMapping } from "../../domains/cloudrun-domains.js";
 import {
   makeEnvelope,
   makeLinkTestKeys,
@@ -67,6 +69,17 @@ describe("filterJson", () => {
     expect(out.nested[0].Token).toBe("[withheld over the link]");
     expect(out.nested[0].deep).toEqual({ KUBECONFIG: "[withheld over the link]", ok: 1 });
     expect(out.name).toBe("a");
+  });
+
+  it("lets a domain's DNS records reach the dashboard: their target is in data, which is not withheld", () => {
+    const edge = filterJson(recordFor("www.example.com", "203.0.113.7"), []) as any;
+    expect(edge.data).toBe("203.0.113.7");
+    const mapped = parseMapping(
+      JSON.stringify({
+        status: { resourceRecords: [{ type: "CNAME", name: "www", rrdata: "ghs.googlehosted.com." }] },
+      }),
+    );
+    expect((filterJson(mapped.records, []) as any)[0].data).toBe("ghs.googlehosted.com.");
   });
 
   it("keeps a __proto__ key a plain key", () => {

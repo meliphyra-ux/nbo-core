@@ -36,6 +36,9 @@ export interface MappingRecord {
   type: string;
   name: string;
   value: string;
+  // data: the same as value. The link withholds every field named value (variable values are
+  // secrets), so the hosted dashboard reads a record's target from data.
+  data: string;
 }
 
 export interface Domain {
@@ -132,14 +135,16 @@ function parseRecords(text: string): MappingRecord[] {
   try {
     const v: unknown = JSON.parse(text);
     if (!Array.isArray(v)) return [];
-    return v.filter(
-      (r): r is MappingRecord =>
-        typeof r === "object" &&
-        r !== null &&
-        typeof r.type === "string" &&
-        typeof r.name === "string" &&
-        typeof r.value === "string",
-    );
+    return v
+      .filter(
+        (r): r is MappingRecord =>
+          typeof r === "object" &&
+          r !== null &&
+          typeof r.type === "string" &&
+          typeof r.name === "string" &&
+          typeof r.value === "string",
+      )
+      .map((r) => ({ ...r, data: r.value })); // rows saved before data existed have none
   } catch {
     return [];
   }

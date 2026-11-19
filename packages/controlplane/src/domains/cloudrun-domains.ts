@@ -98,6 +98,7 @@ export function parseMapping(json: string): MappingState {
       type: r.type ?? "",
       name: r.name ?? "",
       value: r.rrdata ?? "",
+      data: r.rrdata ?? "",
     })),
     ready: conditions.some((c) => c.type === "Ready" && c.status === "True"),
     message: conditions.find((c) => c.status === "False")?.message ?? "",
