@@ -11,7 +11,7 @@ import { randomBytes } from "node:crypto";
 import { createStore, type Store } from "../../store/store.js";
 import { createRunner } from "../runner.js";
 import { run } from "../run.js";
-import { containerSandboxes, defaultBuildImage } from "../sandbox.js";
+import { containerSandboxes, defaultBuildImage, egressHelperImage, egressScript } from "../sandbox.js";
 
 const scratchDirs: string[] = [];
 const stores: Store[] = [];
@@ -65,6 +65,7 @@ async function build(
     cpus: "1",
     memory: "1g",
     minFree: "1m",
+    egress: "open" as const,
     install: "nbo-test",
     dataDirs: [tmpdir()],
   };
@@ -158,5 +159,89 @@ describe.skipIf(process.env.NBO_TEST_DOCKER !== "1")("container sandbox on a rea
     );
     expect(left).toBe("");
     expect(volumes).toBe("");
+  }, 600_000);
+});
+
+// The firewall helper, as NBO runs it, for the test's own looks at the host's chain.
+const onHost = (pid: string, script: string) =>
+  execFileSync("docker", [
+    ...["run", "--rm", "--privileged", "--pid=host", "--network=host", egressHelperImage],
+    ...["nsenter", "-t", pid, "-m", "-n", "sh", "-c", script],
+  ]).toString();
+
+describe.skipIf(process.env.NBO_TEST_DOCKER !== "1")("restricted egress on a real Docker daemon", () => {
+  it("a build on nbo-builds can't reach link-local or private addresses, but resolves and reaches the internet", async () => {
+    // Docker Desktop keeps iptables in dockerd's mount namespace, not in pid 1's as a Linux server does.
+    const pid = execFileSync("docker", [
+      ...["run", "--rm", "--privileged", "--pid=host", egressHelperImage, "sh", "-c"],
+      "nsenter -t 1 -m sh -c 'command -v iptables' >/dev/null && echo 1 || pidof dockerd",
+    ])
+      .toString()
+      .trim()
+      .split(" ")[0]!;
+    const ours = () =>
+      onHost(pid, "iptables -S DOCKER-USER")
+        .split("\n")
+        .filter((l) => l.includes("nbo-builds0"));
+    const removeRules = egressScript
+      .split("\n")
+      .filter((l) => l.startsWith("while"))
+      .join("\n");
+    const settings = {
+      image: defaultBuildImage,
+      cpus: "1",
+      memory: "1g",
+      minFree: "0",
+      egress: "restricted" as const,
+      install: "nbo-test",
+      dataDirs: [],
+    };
+    const sandboxes = containerSandboxes(settings, { docker, hostPid: pid });
+    const sb = sandboxes("egress1", () => {});
+    const sb2 = sandboxes("egress2", () => {});
+    const clone = await scratch("nbo-docker-egress-");
+    try {
+      await sb.prepare(clone);
+      // Another build's container on the same network: a private (172.16.0.0/12) address with a server on it.
+      execFileSync("docker", [
+        ...["run", "-d", "--name", "nbo-egress-peer", "--network", "nbo-builds", defaultBuildImage],
+        ...["node", "-e", 'require("http").createServer((q, s) => s.end("ok")).listen(8080)'],
+      ]);
+      const peer = execFileSync("docker", [
+        ...["inspect", "--format", "{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}", "nbo-egress-peer"],
+      ])
+        .toString()
+        .trim();
+      const js = [
+        'const t = (u) => fetch(u, { signal: AbortSignal.timeout(5000) }).then((r) => "ok", () => "blocked");',
+        `Promise.all(["http://${peer}:8080", "http://169.254.169.254/", "https://registry.npmjs.org/"].map(t))`,
+        '.then((r) => console.log("egress=" + r.join(",")));',
+      ].join(" ");
+      const probe = async () =>
+        /egress=(\S+)/.exec(await sb.run(`node -e '${js}'`, [], { cwd: clone, env: {} }))![1]!.split(",");
+      // The registry is looked up by name, so DNS works too.
+      expect(await probe()).toEqual(["blocked", "blocked", "ok"]);
+      // The next build checks again (-C) and adds nothing.
+      await sb2.prepare(await scratch("nbo-docker-egress-"));
+      expect(ours()).toEqual([
+        "-A DOCKER-USER -i nbo-builds0 -p tcp -m tcp --dport 53 -j ACCEPT",
+        "-A DOCKER-USER -i nbo-builds0 -p udp -m udp --dport 53 -j ACCEPT",
+        "-A DOCKER-USER -d 100.64.0.0/10 -i nbo-builds0 -j DROP",
+        "-A DOCKER-USER -d 192.168.0.0/16 -i nbo-builds0 -j DROP",
+        "-A DOCKER-USER -d 172.16.0.0/12 -i nbo-builds0 -j DROP",
+        "-A DOCKER-USER -d 10.0.0.0/8 -i nbo-builds0 -j DROP",
+        "-A DOCKER-USER -d 169.254.0.0/16 -i nbo-builds0 -j DROP",
+      ]);
+      // Without the rules the same peer answers: they did the blocking.
+      onHost(pid, removeRules);
+      expect((await probe())[0]).toBe("ok");
+    } finally {
+      await sb.dispose();
+      await sb2.dispose();
+      execFileSync("docker", ["rm", "-f", "nbo-egress-peer"], { stdio: "ignore" });
+      onHost(pid, removeRules);
+      execFileSync("docker", ["network", "rm", "nbo-builds"], { stdio: "ignore" });
+    }
+    expect(ours()).toEqual([]);
   }, 600_000);
 });

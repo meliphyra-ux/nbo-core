@@ -1352,7 +1352,7 @@ terraform apply
           minute). Deleting the row revokes it at once.
         </p>
         <p>
-          <strong>A token controls every site.</strong> It can't read stored cloud credentials, and in container mode (the production default) the builds it starts can't read NBO's files, environment or Docker socket or run code in NBO's process either, though they reach the network, including the cloud metadata address (which hands out the VM's own credentials on Google Cloud and AWS unless the host blocks it); but it can change variables, repositories and build commands, deploy any build and move traffic. With <code>NBO_BUILD_ISOLATION=none</code> builds run as the NBO user, so a token equals root on the server. A token has no expiry. The <code>user_id</code> and <code>role</code> columns are
+          <strong>A token controls every site.</strong> It can't read stored cloud credentials, and in container mode (the production default) the builds it starts can't read NBO's files, environment or Docker socket or run code in NBO's process either, and reach only the public internet (NBO's firewall rules drop private ranges and the cloud metadata address unless <code>NBO_BUILD_EGRESS=open</code>); but it can change variables, repositories and build commands, deploy any build and move traffic. With <code>NBO_BUILD_ISOLATION=none</code> builds run as the NBO user, so a token equals root on the server. A token has no expiry. The <code>user_id</code> and <code>role</code> columns are
           what an older NBO with sign-in wrote; NBO writes <code>''</code> and <code>admin</code>.
         </p>
         <p>

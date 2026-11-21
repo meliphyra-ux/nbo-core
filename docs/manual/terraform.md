@@ -26,7 +26,7 @@ On the server, run `docker compose exec nbo nbo-server token create terraform`. 
 
 NBO has no roles: every token may use every project route, and none may use `/system/*`. A token made for a Viewer or a Developer while an older NBO had sign-in on is refused with `401`; make a new one.
 
-**Treat a token like a password to every site.** It can't read your cloud credentials through the API, and the builds it starts run in a container without NBO's files ([Where builds run](./builds.md#where-builds-run)), though they still reach the network, including the cloud metadata address unless you block it. It can change variables and build commands, deploy any build and move traffic. With `NBO_BUILD_ISOLATION=none` builds run as NBO's own user, and a token is equal to root on the server. Keep it out of `.tf` files and out of git. If one leaks, revoke it with `nbo-server token revoke`.
+**Treat a token like a password to every site.** It can't read your cloud credentials through the API, and the builds it starts run in a container without NBO's files ([Where builds run](./builds.md#where-builds-run)), and reach the public internet but not private addresses or the cloud metadata address (unless the server sets `NBO_BUILD_EGRESS=open`). It can change variables and build commands, deploy any build and move traffic. With `NBO_BUILD_ISOLATION=none` builds run as NBO's own user, and a token is equal to root on the server. Keep it out of `.tf` files and out of git. If one leaks, revoke it with `nbo-server token revoke`.
 
 ## Connect to NBO
 

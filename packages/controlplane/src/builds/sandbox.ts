@@ -71,6 +71,8 @@ export interface ContainerSettings {
   memory: string;
   // NBO_BUILD_MIN_FREE as written ("0": the disk guard is off).
   minFree: string;
+  // NBO_BUILD_EGRESS: "restricted" puts builds on nbo-builds behind host firewall rules; "open", Docker's default bridge.
+  egress: "restricted" | "open";
 }
 
 export interface SandboxSettings extends ContainerSettings {
@@ -81,8 +83,8 @@ export interface SandboxSettings extends ContainerSettings {
 export const defaultBuildImage =
   "node:24.22.2-bookworm@sha256:8fa96264f302f58bbb13aa7339c541547b56975766ce956c875da149452a3e40";
 
-// parseBuildSandbox reads NBO_BUILD_ISOLATION, NBO_BUILD_IMAGE, NBO_BUILD_CPUS, NBO_BUILD_MEMORY and
-// NBO_BUILD_MIN_FREE once at startup.
+// parseBuildSandbox reads NBO_BUILD_ISOLATION, NBO_BUILD_IMAGE, NBO_BUILD_CPUS, NBO_BUILD_MEMORY,
+// NBO_BUILD_MIN_FREE and NBO_BUILD_EGRESS once at startup.
 // shortcut: production on a Windows host would default to `container`, which only works with Linux containers; set none there.
 export function parseBuildSandbox(env: Record<string, string | undefined>, mode: Mode): SandboxSettings {
   const isolation = env.NBO_BUILD_ISOLATION || (mode === "production" ? "container" : "none");
@@ -103,7 +105,9 @@ export function parseBuildSandbox(env: Record<string, string | undefined>, mode:
   if (minFree !== "0" && !/^[1-9]\d*[bkmg]?$/i.test(minFree)) {
     throw new Error("NBO_BUILD_MIN_FREE must be a size, such as 10g or 500m, or 0 to turn the disk guard off");
   }
-  return { isolation, image, cpus, memory, minFree };
+  const egress = env.NBO_BUILD_EGRESS || "restricted";
+  if (egress !== "restricted" && egress !== "open") throw new Error('NBO_BUILD_EGRESS must be "restricted" or "open"');
+  return { isolation, image, cpus, memory, minFree, egress };
 }
 
 // sizeBytes reads a size as Docker does: a number of bytes, or with b, k, m or g.
@@ -138,6 +142,67 @@ const cleanupMs = 30_000;
 // shortcut: a fixed cap on what copy-out brings back (the .nbo/ tar stream); make it a setting if real sites need more.
 const outputLimitBytes = 5 * 2 ** 30;
 
+const buildNetwork = "nbo-builds";
+const buildBridge = "nbo-builds0";
+// alpine 3.22.2 (built 2025-10-08), pinned: its busybox nsenter runs the host's own iptables (legacy or nft).
+export const egressHelperImage =
+  "alpine:3.22.2@sha256:4b7ce07002c69e8f3d704a9c5d6fd3053be500b7f1c69fc0d80990c2ad8dd412";
+const egressRules = [
+  ...["169.254.0.0/16", "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "100.64.0.0/10"].map(
+    (range) => `-i ${buildBridge} -d ${range} -j DROP`,
+  ),
+  // Docker's embedded resolver forwards a build's lookups from the build's own network namespace, often to a
+  // private resolver (a cloud's VPC resolver, Docker Desktop's 192.168.65.7), so port 53 stays open.
+  `-i ${buildBridge} -p udp --dport 53 -j ACCEPT`,
+  `-i ${buildBridge} -p tcp --dport 53 -j ACCEPT`,
+];
+// egressScript runs on the host: nothing when every rule is there (-C), else ours come out and go back in with
+// -I in this order, so they sit before Docker's own and the DNS ACCEPTs before the DROPs.
+export const egressScript = [
+  "set -e",
+  `${egressRules.map((r) => `iptables -C DOCKER-USER ${r} 2>/dev/null`).join(" && ")} && exit 0`,
+  ...egressRules.map((r) => `while iptables -D DOCKER-USER ${r} 2>/dev/null; do :; done`),
+  ...egressRules.map((r) => `iptables -I DOCKER-USER ${r}`),
+].join("\n");
+
+const lastLine = (err: unknown) =>
+  errMessage(err)
+    .split("\n")
+    .filter((l) => l.trim())
+    .at(-1);
+
+// restrictEgress makes sure the network nbo-builds (bridge nbo-builds0) exists and the host's DOCKER-USER chain
+// holds egressRules, through a short-lived privileged helper in the host's namespaces. It runs before every
+// build: a reboot or a Docker restart drops the rules, and this puts them back. Never a fallback to open.
+async function restrictEgress(call: (args: string[], o?: Parameters<typeof run>[2]) => Promise<string>, pid: string) {
+  const format = '{{index .Options "com.docker.network.bridge.name"}}';
+  const bridge = () => call(["network", "inspect", "--format", format, buildNetwork]).then((o) => o.trim());
+  try {
+    let name = await bridge().catch(() => "");
+    if (!name) {
+      const create = ["network", "create", "--driver", "bridge", "-o", `com.docker.network.bridge.name=${buildBridge}`];
+      // Another NBO on this daemon may have made it first.
+      await call([...create, buildNetwork]).catch((err) => {
+        if (!/already exists/.test(errMessage(err))) throw err;
+      });
+      name = await bridge();
+    }
+    if (name !== buildBridge) {
+      throw new Error(`the Docker network ${buildNetwork} has the bridge "${name}", not ${buildBridge}; remove it`);
+    }
+    const helper = ["run", "--rm", "--privileged", "--pid=host", "--network=host", egressHelperImage];
+    await call([...helper, "nsenter", "-t", pid, "-m", "-u", "-n", "-i", "sh", "-c", egressScript], {
+      name: "the firewall helper",
+    });
+  } catch (err) {
+    throw new Error(
+      `the build network's firewall rules couldn't be applied (NBO_BUILD_EGRESS=restricted): ${lastLine(err)}. ` +
+        "Set NBO_BUILD_EGRESS=open to build without them.",
+      { cause: err },
+    );
+  }
+}
+
 // containerSandboxes: each build in its own container and volume `nbo-build-<id>`, fed with `docker cp`, so no
 // host path is shared and it works the same with NBO on the host or in Compose. The first build waits for a
 // sweep of this install's leftovers (labelled nbo.install=<install>) from a stopped NBO; the build image is
@@ -145,8 +210,8 @@ const outputLimitBytes = 5 * 2 ** 30;
 // The disk guard (minFree above 0): before the build, NBO's dataDirs (statfs) and Docker's data folder (`df` of
 // the volume, from inside the build's own container, so it works in Compose too) need minFree free; while it
 // runs, a check every 5 s stops it when either falls under half of that.
-// shortcut: builds reach the network (installs need it); private ranges and metadata addresses need host
-// firewall rules, the next step.
+// With egress "restricted" the build container joins nbo-builds, whose traffic to private ranges and link-local
+// (cloud metadata) the host drops (restrictEgress); the public internet stays open, installs need it.
 export function containerSandboxes(
   settings: ContainerSettings & { install: string; dataDirs: string[] },
   opts: {
@@ -156,6 +221,8 @@ export function containerSandboxes(
     outputLimit?: number;
     freeBytes?: (dir: string) => Promise<number>;
     watchEveryMs?: number;
+    // The host process whose namespaces the firewall helper enters (Docker Desktop keeps iptables in dockerd's).
+    hostPid?: string;
   } = {},
 ): SandboxFactory {
   const docker = opts.docker ?? run;
@@ -170,6 +237,8 @@ export function containerSandboxes(
     `${installLabel}=${settings.install}`,
   ];
   const swept = sweep(docker, settings.install);
+  // One firewall check at a time, so two builds never create the network or edit the chain together.
+  let egressTail: Promise<unknown> = Promise.resolve();
   void swept.then(() => pullImage(docker, settings.image));
   return (buildId, log) => {
     const volume = `nbo-build-${buildId}`;
@@ -244,10 +313,12 @@ export function containerSandboxes(
         try {
           await call(["volume", "create", ...labels(buildId), volume]);
         } catch (err) {
-          const lines = errMessage(err)
-            .split("\n")
-            .filter((l) => l.trim());
-          throw new Error(`the build sandbox needs Docker: ${lines.at(-1)}`, { cause: err });
+          throw new Error(`the build sandbox needs Docker: ${lastLine(err)}`, { cause: err });
+        }
+        if (settings.egress === "restricted") {
+          const ready = egressTail.then(() => restrictEgress(call, opts.hostPid ?? "1"));
+          egressTail = ready.catch(() => {});
+          await ready;
         }
         log(`Build sandbox: a container from ${settings.image}\n`);
         const staged = await mkdtemp(join(tmpdir(), "nbo-adapter-"));
@@ -301,6 +372,7 @@ export function containerSandboxes(
           settings.memory,
           "--memory-swap",
           settings.memory,
+          ...(settings.egress === "restricted" ? ["--network", buildNetwork] : []),
           ...labels(buildId),
           "-v",
           `${volume}:/work`,

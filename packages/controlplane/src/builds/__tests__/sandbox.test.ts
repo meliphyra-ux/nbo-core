@@ -49,7 +49,7 @@ function fakeDocker(handlers: Record<string, (args: string[], opts: Opts) => Pro
       args[0] === "exec" &&
       !args.includes("sh") &&
       args.find((a) => a === "printenv" || a === "corepack" || a === "df");
-    const h = answers[own || (args[0] === "volume" ? `volume ${args[1]}` : args[0]!)];
+    const h = answers[own || (args[0] === "volume" || args[0] === "network" ? `${args[0]} ${args[1]}` : args[0]!)];
     return h ? h(args, opts) : "";
   };
   const lines = () => calls.map((c) => c.args.join(" "));
@@ -103,7 +103,16 @@ const canSymlink = (() => {
 
 const gib = 2 ** 30;
 // The disk guard is off here ("0"); its own tests turn it on.
-const settings = { image: "node:test", cpus: "2", memory: "4g", minFree: "0", install: "i1", dataDirs: [] as string[] };
+// Egress "open" here (Docker's default bridge, no firewall helper); its own tests restrict it.
+const settings = {
+  image: "node:test",
+  cpus: "2",
+  memory: "4g",
+  minFree: "0",
+  egress: "open" as "open" | "restricted",
+  install: "i1",
+  dataDirs: [] as string[],
+};
 // dfOut is `df -Pk /work` saying `free` bytes are available.
 const dfOut = (free: number) =>
   `Filesystem 1024-blocks Used Available Capacity Mounted on\n/dev/sda1 104857600 1 ${free / 1024} 1% /work\n`;
@@ -124,7 +133,14 @@ describe("parseBuildSandbox", () => {
         },
         "dev",
       ),
-    ).toEqual({ isolation: "container", image: "node:22", cpus: "1.5", memory: "512m", minFree: "10g" });
+    ).toEqual({
+      isolation: "container",
+      image: "node:22",
+      cpus: "1.5",
+      memory: "512m",
+      minFree: "10g",
+      egress: "restricted",
+    });
   });
 
   it("NBO_BUILD_MIN_FREE: 10g by default, a size like NBO_BUILD_MEMORY, or 0 for off", () => {
@@ -132,6 +148,14 @@ describe("parseBuildSandbox", () => {
     expect(parseBuildSandbox({ NBO_BUILD_MIN_FREE: "500m" }, "production").minFree).toBe("500m");
     expect(parseBuildSandbox({ NBO_BUILD_MIN_FREE: "0" }, "production").minFree).toBe("0");
     expect(() => parseBuildSandbox({ NBO_BUILD_MIN_FREE: "10 GB" }, "dev")).toThrow(/NBO_BUILD_MIN_FREE/);
+  });
+
+  it("NBO_BUILD_EGRESS: restricted by default, or open", () => {
+    expect(parseBuildSandbox({}, "production").egress).toBe("restricted");
+    expect(parseBuildSandbox({ NBO_BUILD_EGRESS: "open" }, "production").egress).toBe("open");
+    expect(() => parseBuildSandbox({ NBO_BUILD_EGRESS: "closed" }, "production")).toThrow(
+      'NBO_BUILD_EGRESS must be "restricted" or "open"',
+    );
   });
 
   it("refuses bad values, naming the setting", () => {
@@ -351,6 +375,94 @@ describe("container sandbox", () => {
       "the build sandbox needs Docker: Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?",
     );
     expect(d.lines().some((l) => /^(create|run|exec)/.test(l))).toBe(false);
+  });
+});
+
+describe("container sandbox: restricted egress", () => {
+  const restricted = { ...settings, egress: "restricted" as const };
+  const helper =
+    "run --rm --privileged --pid=host --network=host alpine:3.22.2@sha256:4b7ce07002c69e8f3d704a9c5d6fd3053be500b7f1c69fc0d80990c2ad8dd412 nsenter -t 1 -m -u -n -i sh -c";
+  const rules = [
+    "-i nbo-builds0 -d 169.254.0.0/16 -j DROP",
+    "-i nbo-builds0 -d 10.0.0.0/8 -j DROP",
+    "-i nbo-builds0 -d 172.16.0.0/12 -j DROP",
+    "-i nbo-builds0 -d 192.168.0.0/16 -j DROP",
+    "-i nbo-builds0 -d 100.64.0.0/10 -j DROP",
+    "-i nbo-builds0 -p udp --dport 53 -j ACCEPT",
+    "-i nbo-builds0 -p tcp --dport 53 -j ACCEPT",
+  ];
+  // -C first: when every rule is there nothing changes; else ours come out and go in again with -I, DNS on top.
+  const script = [
+    "set -e",
+    rules.map((r) => `iptables -C DOCKER-USER ${r} 2>/dev/null`).join(" && ") + " && exit 0",
+    ...rules.map((r) => `while iptables -D DOCKER-USER ${r} 2>/dev/null; do :; done`),
+    ...rules.map((r) => `iptables -I DOCKER-USER ${r}`),
+  ].join("\n");
+  const inspect = 'network inspect --format {{index .Options "com.docker.network.bridge.name"}} nbo-builds';
+  let made = false;
+  const noNetwork = () => ({
+    "network inspect": () => (made ? "nbo-builds0\n" : Promise.reject(new Error("Error: No such network: nbo-builds"))),
+    "network create": () => ((made = true), ""),
+  });
+  afterEach(() => (made = false));
+
+  it("creates nbo-builds, applies the rules on the host, then starts the build on that network", async () => {
+    const d = fakeDocker(noNetwork());
+    const sb = containerSandboxes(restricted, { docker: d.exec })("b1", () => {});
+    await sb.prepare(await scratch());
+    expect(d.lines().slice(3, 8)).toEqual([
+      "volume create --label nbo.build=b1 --label nbo.install=i1 nbo-build-b1",
+      inspect,
+      "network create --driver bridge -o com.docker.network.bridge.name=nbo-builds0 nbo-builds",
+      inspect,
+      `${helper} ${script}`,
+    ]);
+    const helperCall = d.calls.find((c) => c.args.includes("nsenter"))!;
+    expect(helperCall.args.at(-1)).toBe(script);
+    expect(d.lines().find((l) => l.startsWith("run -d"))).toContain(" --memory-swap 4g --network nbo-builds --label");
+  });
+
+  it("an existing nbo-builds is used as is, and the rules are checked again before every build", async () => {
+    const d = fakeDocker({ "network inspect": () => "nbo-builds0\n" });
+    const sandboxes = containerSandboxes(restricted, { docker: d.exec });
+    await sandboxes("b1", () => {}).prepare(await scratch());
+    await sandboxes("b2", () => {}).prepare(await scratch());
+    expect(d.lines().filter((l) => l.startsWith("network create"))).toEqual([]);
+    expect(d.lines().filter((l) => l.includes("nsenter"))).toEqual([`${helper} ${script}`, `${helper} ${script}`]);
+  });
+
+  it("rules that can't be applied fail the build, naming the setting, and start no build container", async () => {
+    const d = fakeDocker({
+      "network inspect": () => "nbo-builds0\n",
+      run: (args) =>
+        args.includes("nsenter")
+          ? Promise.reject(new Error("the firewall helper failed with exit code 127:\nsh: iptables: not found\n"))
+          : "",
+    });
+    const sb = containerSandboxes(restricted, { docker: d.exec })("b1", () => {});
+    await expect(sb.prepare(await scratch())).rejects.toThrow(
+      "the build network's firewall rules couldn't be applied (NBO_BUILD_EGRESS=restricted): sh: iptables: not found. Set NBO_BUILD_EGRESS=open to build without them.",
+    );
+    expect(d.lines().some((l) => l.startsWith("run -d") || l.startsWith("create"))).toBe(false);
+    await sb.dispose();
+    expect(d.lines().at(-1)).toBe("volume rm -f nbo-build-b1");
+  });
+
+  it("a network named nbo-builds with another bridge is refused, not used", async () => {
+    const d = fakeDocker({ "network inspect": () => "br-123\n" });
+    const sb = containerSandboxes(restricted, { docker: d.exec })("b1", () => {});
+    await expect(sb.prepare(await scratch())).rejects.toThrow(
+      `the build network's firewall rules couldn't be applied (NBO_BUILD_EGRESS=restricted): the Docker network nbo-builds has the bridge "br-123", not nbo-builds0; remove it. Set NBO_BUILD_EGRESS=open to build without them.`,
+    );
+    expect(d.lines().some((l) => l.includes("nsenter") || l.startsWith("run -d"))).toBe(false);
+  });
+
+  it("open egress: no network, no helper, Docker's default bridge as before", async () => {
+    const d = fakeDocker();
+    await containerSandboxes(settings, { docker: d.exec })("b1", () => {}).prepare(await scratch());
+    expect(d.lines().some((l) => l.startsWith("network") || l.includes("nsenter") || l.includes("--network nbo"))).toBe(
+      false,
+    );
   });
 });
 
