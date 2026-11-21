@@ -78,7 +78,25 @@ export interface KubernetesSecrets {
   registryPassword?: string;
 }
 
-export type ConnectionKind = "google" | "kubernetes";
+// One AWS account and region (Lambda). The key pair is sealed (AwsSecrets).
+export interface AwsConnection {
+  kind: "aws";
+  region: string;
+  accountId: string;
+  // The ECR repository NBO pushes images to (<account>.dkr.ecr.<region>.amazonaws.com/nbo).
+  repository: string;
+  status: ConnectionStatus;
+  lastChecked: string;
+  lastError: string;
+  createdAt: string;
+}
+export type AwsConnectionInput = Omit<AwsConnection, Meta>;
+export interface AwsSecrets {
+  accessKeyId: string;
+  secretAccessKey: string;
+}
+
+export type ConnectionKind = "google" | "kubernetes" | "aws";
 type Meta = "kind" | "createdAt" | "status" | "lastChecked" | "lastError";
 export type KubernetesConnectionInput = Omit<KubernetesConnection, Meta | "id"> & { id?: string };
 
@@ -109,7 +127,7 @@ export const clusterNameRule =
 // migration below moves it to kube_connections.
 export const legacyConnectionsSchema = `
 CREATE TABLE IF NOT EXISTS connections (
-	kind TEXT PRIMARY KEY CHECK (kind IN ('google','kubernetes')),
+	kind TEXT PRIMARY KEY CHECK (kind IN ('google','kubernetes','aws')),
 	config TEXT NOT NULL,
 	secret TEXT NOT NULL,
 	status TEXT NOT NULL,
@@ -133,6 +151,28 @@ CREATE TABLE IF NOT EXISTS kube_connections (
 `;
 
 export const connectionsSchema = legacyConnectionsSchema + kubeConnectionsSchema;
+
+// migrateConnectionKinds rebuilds a connections table made before AWS, whose
+// kind CHECK refuses 'aws' (SQLite can't alter a CHECK), keeping every row.
+export function migrateConnectionKinds(db: DatabaseSync): void {
+  const sql = (
+    db.prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'connections'").get() as
+      { sql: string } | undefined
+  )?.sql;
+  if (sql === undefined || sql.includes("'aws'")) return;
+  const cols = "kind, config, secret, status, last_checked, last_error, created_at";
+  db.exec("BEGIN");
+  try {
+    db.exec("ALTER TABLE connections RENAME TO connections_before_aws");
+    db.exec(legacyConnectionsSchema);
+    db.exec(`INSERT INTO connections (${cols}) SELECT ${cols} FROM connections_before_aws`);
+    db.exec("DROP TABLE connections_before_aws");
+    db.exec("COMMIT");
+  } catch (err) {
+    db.exec("ROLLBACK");
+    throw err;
+  }
+}
 
 // migrateKubernetesConnections moves a pre-multi-cluster Kubernetes row
 // (connections.kind='kubernetes') to kube_connections as kc_default /
@@ -236,6 +276,9 @@ type KubeRow = {
   lb_annotations?: string | null;
 };
 
+// The environment target each single-row connection serves.
+const connectionTarget = { google: "cloudrun", aws: "lambda" } as const;
+
 function isUniqueViolation(err: unknown): boolean {
   return err instanceof Error && err.message.includes("UNIQUE constraint failed");
 }
@@ -263,6 +306,23 @@ export function attachConnectionMethods(db: DatabaseSync, store: Store, initialK
 
   const getGoogleRow = (): Row | undefined =>
     db.prepare("SELECT * FROM connections WHERE kind = 'google'").get() as Row | undefined;
+  const getAwsRow = (): Row | undefined =>
+    db.prepare("SELECT * FROM connections WHERE kind = 'aws'").get() as Row | undefined;
+  const toAws = (): AwsConnection | null => {
+    const r = getAwsRow();
+    if (!r) return null;
+    const cfg = JSON.parse(r.config) as { region: string; accountId: string; repository: string };
+    return {
+      kind: "aws",
+      region: cfg.region,
+      accountId: cfg.accountId,
+      repository: cfg.repository,
+      status: r.status as ConnectionStatus,
+      lastChecked: r.last_checked,
+      lastError: r.last_error,
+      createdAt: r.created_at,
+    };
+  };
   const getKubeRow = (id: string): KubeRow | undefined =>
     db.prepare("SELECT * FROM kube_connections WHERE id = ?").get(id) as KubeRow | undefined;
 
@@ -376,6 +436,25 @@ export function attachConnectionMethods(db: DatabaseSync, store: Store, initialK
       ).run(JSON.stringify(pickGoogle(c)), sealed, new Date().toISOString());
       return toGoogle()!;
     },
+    getAwsConnection: toAws,
+    getAwsSecrets(): AwsSecrets {
+      const r = getAwsRow();
+      if (!r) throw new ErrNotFound("aws connection");
+      return JSON.parse(open(needKey(), r.secret)) as AwsSecrets;
+    },
+    saveAwsConnection(c: AwsConnectionInput, s: AwsSecrets): AwsConnection {
+      // Only declared fields, so nothing secret reaches the plaintext config column.
+      const config = JSON.stringify({ region: c.region, accountId: c.accountId, repository: c.repository });
+      const sealed = seal(
+        needKey(),
+        JSON.stringify({ accessKeyId: s.accessKeyId, secretAccessKey: s.secretAccessKey }),
+      );
+      db.prepare(
+        `INSERT INTO connections (kind, config, secret, status, last_checked, last_error, created_at) VALUES ('aws', ?, ?, 'connected', '', '', ?)
+         ON CONFLICT(kind) DO UPDATE SET config = excluded.config, secret = excluded.secret, status = 'connected', last_checked = '', last_error = '', created_at = excluded.created_at`,
+      ).run(config, sealed, new Date().toISOString());
+      return toAws()!;
+    },
     listKubernetesConnections(): KubernetesConnection[] {
       return (db.prepare("SELECT * FROM kube_connections ORDER BY created_at, rowid").all() as KubeRow[]).map(toKube);
     },
@@ -413,11 +492,12 @@ export function attachConnectionMethods(db: DatabaseSync, store: Store, initialK
     recordConnectionCheck(kind: ConnectionKind, error: string | null, id?: string): void {
       const status = error === null ? "connected" : "failing";
       const now = new Date().toISOString();
-      if (kind === "google") {
-        db.prepare("UPDATE connections SET status = ?, last_checked = ?, last_error = ? WHERE kind = 'google'").run(
+      if (kind !== "kubernetes") {
+        db.prepare("UPDATE connections SET status = ?, last_checked = ?, last_error = ? WHERE kind = ?").run(
           status,
           now,
           error ?? "",
+          kind,
         );
         return;
       }
@@ -429,16 +509,16 @@ export function attachConnectionMethods(db: DatabaseSync, store: Store, initialK
         id,
       );
     },
-    deleteConnection(kind: "google"): void {
+    deleteConnection(kind: "google" | "aws"): void {
       db.prepare("DELETE FROM connections WHERE kind = ?").run(kind);
     },
-    environmentsUsing(_kind: "google"): { projectName: string; environmentId: string }[] {
+    environmentsUsing(kind: "google" | "aws"): { projectName: string; environmentId: string }[] {
       const rows = db
         .prepare(
           `SELECT p.name AS name, e.id AS id FROM environments e JOIN projects p ON p.id = e.project_id
-           WHERE e.archived = 0 AND e.target = 'cloudrun' ORDER BY e.created_at, e.rowid`,
+           WHERE e.archived = 0 AND e.target = ? ORDER BY e.created_at, e.rowid`,
         )
-        .all() as { name: string; id: string }[];
+        .all(connectionTarget[kind]) as { name: string; id: string }[];
       return rows.map((r) => ({ projectName: r.name, environmentId: r.id }));
     },
     environmentsUsingCluster(id: string): { projectName: string; environmentId: string }[] {

@@ -51,7 +51,7 @@ export function nowUTC(): string {
 // kubeName keeps, so a function's name still starts with it.
 export const validEnvironmentName = /^[a-z]([-a-z0-9]{0,38}[a-z0-9])?$/;
 
-export const validTargets: Record<string, boolean> = { kubernetes: true, cloudrun: true };
+export const validTargets: Record<string, boolean> = { kubernetes: true, cloudrun: true, lambda: true };
 
 // node:sqlite has no error codes, so a unique violation is recognised by its message.
 export function isUniqueConstraintViolation(err: unknown): boolean {

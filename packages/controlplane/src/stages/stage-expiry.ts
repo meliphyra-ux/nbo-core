@@ -73,6 +73,9 @@ function scrub(store: Store, mode: Mode, env: Environment | undefined, err: unkn
         }
       } else if (env.target === "cloudrun" && store.getGoogleConnection()) {
         secrets.push(...googleSecrets(store.getGoogleSecrets()));
+      } else if (env.target === "lambda" && store.getAwsConnection()) {
+        const keys = store.getAwsSecrets();
+        secrets.push(keys.accessKeyId, keys.secretAccessKey);
       }
     } catch {
       // nothing more to scrub with

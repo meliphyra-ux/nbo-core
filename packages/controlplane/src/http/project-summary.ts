@@ -40,7 +40,7 @@ export interface EnvironmentView extends Omit<Environment, "config"> {
 export function environmentView(store: Store, mode: Mode, env: Environment): EnvironmentView {
   const clusterId =
     env.target === "kubernetes" && mode === "production" ? (environmentClusterId(env.config) ?? null) : null;
-  let displayName = env.target === "cloudrun" ? "Cloud Run" : "Kubernetes";
+  let displayName = env.target === "cloudrun" ? "Cloud Run" : env.target === "lambda" ? "AWS Lambda" : "Kubernetes";
   if (clusterId) displayName = store.getKubernetesConnection(clusterId)?.name ?? "Kubernetes";
   return { ...env, config: JSON.parse(env.config) as unknown, clusterId, displayName };
 }

@@ -133,7 +133,9 @@ export function liveBuild(
 // project's (non-archived) environments of every stage (see liveBuild), plus the
 // source of every promote still queued or running (the in-memory hold
 // only starts once a promote runs; a queued one must not lose its
-// build to the build ahead of it).
+// build to the build ahead of it), plus every build still queued or running
+// (builds of other stages run at once, and one finishing prunes while
+// another has just saved its output and is still deploying).
 export function retainedBuildIds(store: Store, projectId: string, newest = defaultKeepBuilds): Set<string> {
   const builds = store.listBuilds(projectId); // oldest first
   const keep = new Set<string>();
@@ -153,8 +155,9 @@ export function retainedBuildIds(store: Store, projectId: string, newest = defau
     if (live) keep.add(live.id);
   }
   for (const b of builds) {
-    if (b.kind === "promote" && (b.status === "queued" || b.status === "running") && b.sourceBuildId)
-      keep.add(b.sourceBuildId);
+    if (b.status !== "queued" && b.status !== "running") continue;
+    keep.add(b.id);
+    if (b.kind === "promote" && b.sourceBuildId) keep.add(b.sourceBuildId);
   }
   return keep;
 }

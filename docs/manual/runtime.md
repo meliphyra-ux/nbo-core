@@ -1,6 +1,6 @@
 # Inside a running app
 
-What happens inside the container when a visitor's request arrives. The same code runs locally (`nbo serve`), on Kubernetes and on Cloud Run. That is the point of NBO.
+What happens inside the container when a visitor's request arrives. The same code runs locally (`nbo serve`), on Kubernetes, on Cloud Run and on AWS Lambda. That is the point of NBO.
 
 ## The container starts
 
@@ -17,6 +17,7 @@ node dist/main.js serve /app/app --port 8080
 3. `resolveFunctions(nboDir, …)`: decides **how to reach functions**:
    - URLs given with `--function name=url`, or found in `/functions.json` (baked in at deploy time):
      - with `K_SERVICE` set (we're on Cloud Run) → `createCloudRunURLs`: adds a Google identity token to each call, because Cloud Run functions are private;
+     - with `AWS_LAMBDA_FUNCTION_NAME` set (we're on AWS Lambda) → `createLambdaURLs`: signs each call with AWS Signature Version 4, because Lambda functions' URLs take only signed requests;
      - otherwise (Kubernetes) → `createStaticURLs`: plain HTTP to the in-cluster Service.
    - no URLs, but the manifest lists functions (local `nbo serve`) → `createLocalSpawner`: starts each function as a child Node process on a free port.
    - no functions → static-only app.

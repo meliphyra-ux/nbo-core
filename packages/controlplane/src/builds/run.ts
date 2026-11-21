@@ -42,6 +42,8 @@ export function run(
     // buildStep: a repository's own command (build, ignored build step),
     // which gets buildStepEnv's environment, not NBO's own settings.
     buildStep?: boolean;
+    // name: what errors call the command instead of `cmd args` (the build sandbox's docker arguments carry values).
+    name?: string;
   },
 ): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -63,7 +65,9 @@ export function run(
     let settled = false;
     let grace: ReturnType<typeof setTimeout> | undefined;
     const timeoutMs = options?.timeoutMs ?? defaultRunTimeoutMs;
-    const timeoutError = () => new Error(`${cmd} ${args.join(" ")} timed out after ${timeoutMs}ms:\n${output}`);
+    const name = options?.name ?? `${cmd} ${args.join(" ")}`;
+    const timeoutError = () =>
+      Object.assign(new Error(`${name} timed out after ${timeoutMs}ms:\n${output}`), { timedOut: true });
     const timer = setTimeout(() => {
       timedOut = true;
       killTree(child.pid);
@@ -121,7 +125,7 @@ export function run(
         resolve(output);
       } else {
         const how = signal ? `was killed by signal ${signal}` : `failed with exit code ${code}`;
-        reject(new Error(`${cmd} ${args.join(" ")} ${how}:\n${output}`));
+        reject(new Error(`${name} ${how}:\n${output}`));
       }
     });
   });

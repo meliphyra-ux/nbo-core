@@ -144,6 +144,8 @@ export const LINK_ROUTE_TIERS: Readonly<Record<string, TierRule>> = deepFreeze({
   "GET /system/connections/plan": 0,
   "GET /system/connections/google/identity": 0,
   "POST /system/connections/google": 2,
+  "POST /system/connections/aws": 2,
+  "GET /system/connections/aws/policy": 0,
   "POST /system/connections/kubernetes": 2,
   "PUT /system/connections/kubernetes/{id}": 2,
   "DELETE /system/connections/kubernetes/{id}": 2,
@@ -185,6 +187,7 @@ export const LINK_SEALED_FIELDS: Readonly<Record<string, readonly { path: string
   "PUT /projects/{projectID}/protection": [{ path: "password" }],
   "PUT /projects/{projectID}/domains/{domainID}/certificate": [{ path: "keyPem" }],
   "POST /system/connections/google": [{ path: "keyJson" }],
+  "POST /system/connections/aws": [{ path: "secretAccessKey" }],
   "POST /system/connections/kubernetes": [
     { path: "source.kubeconfig" },
     { path: "source.token" },

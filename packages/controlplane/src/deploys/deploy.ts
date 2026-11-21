@@ -5,6 +5,7 @@ import {
   deploy,
   createKubernetesTarget,
   createCloudRunTarget,
+  createLambdaTarget,
   withKubeconfig,
   withGoogleCredentials,
   withDockerLogin,
@@ -27,6 +28,8 @@ import { PULLER_NOTE, googleCredential } from "../clouds/google-wif.js";
 import { variableStage } from "../stages/stages.js";
 import { withRevalidateToken } from "../variables/revalidate-tokens.js";
 import { stageProtected, withProtection } from "../protection/protection.js";
+import { awsContext } from "@nbo/adapter-lambda";
+import { awsCredentials } from "../clouds/aws-connect.js";
 
 interface CloudRunConfig {
   project?: string;
@@ -51,6 +54,26 @@ export interface Orchestrator {
 // a hung registry or cluster from wedging the build queue.
 const connectedRunner: CommandRunner = (cmd, args, opts) =>
   run(cmd, args, { timeoutMs: 10 * 60_000, env: opts?.env, input: opts?.input });
+
+// lambdaReserved: names Lambda sets itself (AWS's reserved list) or the Web
+// Adapter reads; Lambda refuses the first, the second would break serving.
+// Refused only on Lambda: other clouds may well need e.g. AWS_REGION.
+const lambdaReservedNames = new Set([
+  "_HANDLER",
+  "_X_AMZN_TRACE_ID",
+  "AWS_DEFAULT_REGION",
+  "AWS_REGION",
+  "AWS_EXECUTION_ENV",
+  "AWS_ACCESS_KEY",
+  "AWS_ACCESS_KEY_ID",
+  "AWS_SECRET_ACCESS_KEY",
+  "AWS_SESSION_TOKEN",
+  "LAMBDA_TASK_ROOT",
+  "LAMBDA_RUNTIME_DIR",
+]);
+export function lambdaReserved(name: string): boolean {
+  return lambdaReservedNames.has(name) || name.startsWith("AWS_LAMBDA_") || name.startsWith("AWS_LWA_");
+}
 
 // projectNamespace is the namespace a project's Kubernetes environments
 // deploy into on a connected cluster: nbo-p- plus the first 8 chars of
@@ -473,6 +496,43 @@ export async function triggerDeploy(
       target.isr = isrOptions;
       runDeploy = () => deploy(target.deployer, nboDir, appName, progress);
       appURLOf = () => target.appURL;
+      break;
+    }
+    case "lambda": {
+      const aws = o.store.getAwsConnection();
+      if (!aws)
+        throw new ErrInvalidEnvironmentConfig("AWS is not connected: connect it first with nbo-server connect aws");
+      let region: unknown;
+      try {
+        region = (JSON.parse(env.config) as { region?: unknown }).region;
+      } catch {
+        region = undefined;
+      }
+      if (region !== aws.region)
+        throw new ErrInvalidEnvironmentConfig(
+          `this environment runs in AWS region ${String(region)} but NBO is connected to ${aws.region}`,
+        );
+      const refused = Object.keys(resolvedEnv.vars).filter(lambdaReserved);
+      if (refused.length > 0)
+        throw new ErrInvalidEnvironmentConfig(
+          `Lambda sets ${refused.join(", ")} itself, so a project can't: rename ${refused.length === 1 ? "this variable" : "these variables"}`,
+        );
+      const keys = o.store.getAwsSecrets();
+      secrets = [keys.accessKeyId, keys.secretAccessKey];
+      const target = createLambdaTarget(
+        {
+          ctx: awsContext(awsCredentials(o.store), o.run ?? connectedRunner),
+          accountId: aws.accountId,
+          repository: aws.repository,
+        },
+        progress,
+      );
+      target.extraEnv = extraEnv;
+      target.userEnv = userEnv;
+      target.carryFrom = opts?.carryFrom;
+      runDeploy = () => deploy(target.deployer, nboDir, appName, progress);
+      // A function URL ends in "/"; crons and the edge append paths to it.
+      appURLOf = () => target.appURL.replace(/\/+$/, "");
       break;
     }
     default:

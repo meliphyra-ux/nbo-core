@@ -13,6 +13,8 @@ import { wireV2 } from "../../v2.js";
 import { parseMode, type Mode } from "../../mode.js";
 import { createCloudSetup } from "../cloud-setup.js";
 import { FIXTURE_CODE, saveWifConnection } from "./google-wif-fixture.js";
+import { KEY_ID, SECRET, fakeAws } from "./aws-fixture.js";
+import { DatabaseSync } from "node:sqlite";
 import { fakeCloudSetup, fakeDeploymentTrigger, fakeGoogleConnect, fakeKubeConnect } from "../../testing.js";
 
 const cleanups: (() => Promise<void> | void)[] = [];
@@ -58,7 +60,7 @@ async function setup(mode: Mode, run?: CommandRunner) {
     }
     return { status: res.status, json, text };
   };
-  return { store, google, kube, call };
+  return { store, google, kube, call, path: join(dir, "test.db") };
 }
 
 describe("parseMode", () => {
@@ -77,6 +79,7 @@ describe("GET /system/connections", () => {
       mode: "production",
       google: null,
       kubernetes: [],
+      aws: null,
       setupComplete: false,
     });
     const dev = await setup("dev");
@@ -611,5 +614,73 @@ describe("createCloudSetup in production", () => {
     expect(() => createCloudSetup(undefined, { mode: "production" })).toThrow(
       "production preflight needs the connections store",
     );
+  });
+});
+
+describe("AWS connection routes", () => {
+  const body = { accessKeyId: KEY_ID, secretAccessKey: SECRET, region: "eu-west-1" };
+
+  it("connects, lists, tests and disconnects without ever returning the key pair", async () => {
+    const f = fakeAws();
+    const t = await setup("production", f.run);
+    const res = await t.call("POST", "/system/connections/aws", body);
+    expect(res.status).toBe(201);
+    expect(res.json).toMatchObject({ kind: "aws", accountId: "123456789012", region: "eu-west-1" });
+    const list = await t.call("GET", "/system/connections");
+    expect(list.json).toMatchObject({ aws: { kind: "aws" }, setupComplete: true });
+    expect((await t.call("POST", "/system/connections/aws/test")).status).toBe(200);
+    for (const r of [res, list]) {
+      expect(r.text).not.toContain(SECRET);
+      expect(r.text).not.toContain(KEY_ID);
+    }
+    for (const c of f.calls) expect(c.args.join(" ")).not.toContain(SECRET);
+    expect((await t.call("DELETE", "/system/connections/aws")).status).toBe(204);
+    expect(t.store.getAwsConnection()).toBeNull();
+    expect((await t.call("DELETE", "/system/connections/aws")).status).toBe(404);
+    expect((await t.call("POST", "/system/connections/aws/test")).status).toBe(404);
+  });
+
+  it("answers 400 with the key pair redacted when AWS refuses", async () => {
+    const echo = (l: string) => (l.startsWith("sts") ? new Error(`denied: ${SECRET} ${KEY_ID}`) : undefined);
+    const t = await setup("production", fakeAws(echo).run);
+    const res = await t.call("POST", "/system/connections/aws", body);
+    expect(res.status).toBe(400);
+    expect(res.text).toContain("checking the access key");
+    expect(res.text).not.toContain(SECRET);
+    expect(res.text).not.toContain(KEY_ID);
+    expect((await t.call("POST", "/system/connections/aws", { ...body, secretAccessKey: "" })).status).toBe(400);
+  });
+
+  it("refuses to disconnect while a Lambda environment uses it", async () => {
+    const t = await setup("production", fakeAws().run);
+    await t.call("POST", "/system/connections/aws", body);
+    const project = t.store.createProject("web");
+    const env = t.store.createEnvironment(project.id, "lambda", "cloudrun");
+    // shortcut: written raw until the lambda target exists (validTargets, Task 4).
+    const raw = new DatabaseSync(t.path);
+    raw.prepare("UPDATE environments SET target = 'lambda' WHERE id = ?").run(env.id);
+    raw.close();
+    const blocked = await t.call("DELETE", "/system/connections/aws");
+    expect(blocked.status).toBe(409);
+    expect(blocked.json.error).toContain("web");
+  });
+
+  it("serves the IAM policy, filled in from the query or the connection", async () => {
+    const t = await setup("production", fakeAws().run);
+    const blank = await t.call("GET", "/system/connections/aws/policy");
+    expect(blank.text).toContain("<account>");
+    const q = await t.call("GET", "/system/connections/aws/policy?region=us-east-1&account=111122223333");
+    expect(q.text).toContain("arn:aws:lambda:us-east-1:111122223333:function:nbo-*");
+    const b = await t.call(
+      "GET",
+      "/system/connections/aws/policy?region=us-east-1&account=111122223333&document=boundary",
+    );
+    expect(b.text).toContain("logs:PutLogEvents");
+    expect(b.text).not.toContain("iam:");
+    expect((await t.call("GET", "/system/connections/aws/policy?document=other")).status).toBe(400);
+    expect((await t.call("GET", "/system/connections/aws/policy?account=nope")).status).toBe(400);
+    await t.call("POST", "/system/connections/aws", body);
+    expect((await t.call("GET", "/system/connections/aws/policy")).text).toContain("role/nbo/*");
+    expect((await t.call("GET", "/system/connections/aws/policy")).text).toContain("123456789012");
   });
 });

@@ -71,6 +71,33 @@ describe("filterJson", () => {
     expect(out.name).toBe("a");
   });
 
+  it("lets a boolean under a withheld name through: a variable's secret flag carries no secret", () => {
+    const out = filterJson(
+      [
+        { name: "API_URL", secret: false, value: "https://x" },
+        { name: "K", secret: true },
+      ],
+      [],
+    ) as any;
+    expect(out[0]).toEqual({ name: "API_URL", secret: false, value: "https://x" });
+    expect(out[1]).toEqual({ name: "K", secret: true });
+  });
+
+  it("lets a plain variable's own value through, still scrubbing other secrets out of it", () => {
+    // The redaction list holds plain values of 6+ characters too; a plain variable's own value is not hidden from itself.
+    const out = filterJson(
+      [
+        { name: "API_URL", secret: false, value: "https://api.example.com" },
+        { name: "MIX", secret: false, value: "pre-s3cret-token-post" },
+        { name: "K", secret: true, value: "s3cret-token" },
+      ],
+      ["https://api.example.com", "s3cret-token"],
+    ) as any;
+    expect(out[0].value).toBe("https://api.example.com");
+    expect(out[1].value).toBe("pre-[redacted]-post");
+    expect(out[2].value).toBe("[withheld over the link]");
+  });
+
   it("lets a domain's DNS records reach the dashboard: their target is in data, which is not withheld", () => {
     const edge = filterJson(recordFor("www.example.com", "203.0.113.7"), []) as any;
     expect(edge.data).toBe("203.0.113.7");
@@ -125,6 +152,21 @@ describe("knownSecrets", () => {
       "scrypt$16384$8$1$BwcHBwcHBwcHBwcHBwcHBw$jqNYMZJ6k8yP9UrEwEFdAphyQW3NDqRG8javhwKNA-0",
     );
     expect(knownSecrets(store)).toContain(store.getProtection(p.id).hash);
+  });
+
+  it("finds the AWS key pair", async () => {
+    const store = await newStore();
+    store.saveAwsConnection(
+      {
+        region: "eu-west-1",
+        accountId: "123456789012",
+        repository: "123456789012.dkr.ecr.eu-west-1.amazonaws.com/nbo",
+      },
+      { accessKeyId: "AKIAABCDEFGHIJKLMNOP", secretAccessKey: "aws-secret/KEY+value0123456789" },
+    );
+    expect(knownSecrets(store)).toEqual(
+      expect.arrayContaining(["AKIAABCDEFGHIJKLMNOP", "aws-secret/KEY+value0123456789"]),
+    );
   });
 });
 

@@ -6,6 +6,7 @@ import { hasOwnHost, type Stage } from "./stages/stages.js";
 import type { DeploymentTrigger } from "./http/handlers.js";
 import type { CloudSetup } from "./clouds/cloud-setup.js";
 import { createRunner } from "./builds/runner.js";
+import type { SandboxFactory } from "./builds/sandbox.js";
 import { createBuildQueue, recoverInterruptedBuilds, type BuildQueue } from "./builds/build-queue.js";
 import { createClusterEdgeSync, createEdgeSync, type EdgeSync } from "./edge/edge-sync.js";
 import { clusterEdgeActive, createClusterEdgeWriter, latestSuccessfulURL, storeKubeconfig } from "./edge/edge-table.js";
@@ -18,6 +19,7 @@ import { createSuppliedValues, type SuppliedValues } from "./variables/supplied-
 import { createCloudTeardown, type CloudTeardown } from "./clouds/cloud-teardown.js";
 import type { CommandRunner } from "@nbo/deploy";
 import { defaultRunner } from "./clouds/cloud-setup.js";
+import { createAwsConnect, type AwsConnect } from "./clouds/aws-connect.js";
 import { createGoogleConnect, type GoogleConnect } from "./clouds/google-connect.js";
 import { createKubeConnect, type KubeConnect } from "./clouds/kube-connect.js";
 import type { Mode } from "./mode.js";
@@ -68,6 +70,7 @@ export interface V2 {
   mode: Mode;
   googleConnect: GoogleConnect;
   kubeConnect: KubeConnect;
+  awsConnect: AwsConnect;
   run: CommandRunner;
   artifacts?: ArtifactStore;
   // domains checks DNS and issues/renews certificates (main.ts runs it in
@@ -119,6 +122,8 @@ export interface V2Options {
   publicUrl?: URL;
   // supplied: the one in-memory values map (main.ts makes it; a fresh one by default).
   supplied?: SuppliedValues;
+  // buildConcurrency: how many builds run at once (NBO_BUILD_CONCURRENCY; 2 by default).
+  buildConcurrency?: number;
   mode?: Mode;
   googleConnect?: GoogleConnect;
   kubeConnect?: KubeConnect;
@@ -130,6 +135,8 @@ export interface V2Options {
   edgeAdminUrl: string;
   edgePublicPort: number;
   nextAdapterPath?: string;
+  // buildSandbox: where repositories' commands run (NBO_BUILD_ISOLATION; this host by default).
+  buildSandbox?: SandboxFactory;
   lsRemote?: (repo: string, branch: string, opts?: GitRemoteOptions) => Promise<string>;
   lsRemoteHeads?: (repo: string, opts?: GitRemoteOptions) => Promise<Map<string, string>>;
   // artifacts keeps each build's .nbo/ for the build page.
@@ -210,10 +217,11 @@ export function wireV2(store: Store, options: V2Options): V2 {
     supplied,
     gitAuth,
     nextAdapterPath: options.nextAdapterPath,
+    sandbox: options.buildSandbox,
     onDeployed: (projectId, environmentId) => edgeSync.onDeployed(projectId, environmentId),
     artifacts: options.artifacts,
   });
-  const queue = createBuildQueue(store, runner, supplied);
+  const queue = createBuildQueue(store, runner, supplied, { concurrency: options.buildConcurrency });
   const setup = createSetup({
     store,
     cloudSetup: options.cloudSetup,
@@ -274,6 +282,7 @@ export function wireV2(store: Store, options: V2Options): V2 {
     mode: options.mode ?? "dev",
     googleConnect: options.googleConnect ?? createGoogleConnect({ store, run: cmd }),
     kubeConnect,
+    awsConnect: createAwsConnect({ store, run: cmd }),
     run: cmd,
     artifacts: options.artifacts,
     domains,
@@ -325,12 +334,13 @@ function siteUrl(
   stageId?: string,
 ): string {
   if (!host) return "";
-  if (ctx.mode === "production" && !clusterEdgeActive(ctx.store, ctx.mode))
-    return publicCloudUrl(ctx.store, projectId, stageId);
-  if (!clusterEdgeActive(ctx.store, ctx.mode)) return `http://${host}:${ctx.edgePublicPort}`;
-  const domains = ctx.store.listDomains(projectId).filter(ownDomain);
+  const edge = clusterEdgeActive(ctx.store, ctx.mode);
+  const domains = ctx.mode === "production" || edge ? ctx.store.listDomains(projectId).filter(ownDomain) : [];
+  // An active custom domain wins, the edge's or one Google serves through a Cloud Run mapping.
   const custom = domains.find((d) => d.kind === "custom" && d.status === "active");
   if (custom) return `https://${custom.host}`;
+  if (ctx.mode === "production" && !edge) return publicCloudUrl(ctx.store, projectId, stageId);
+  if (!edge) return `http://${host}:${ctx.edgePublicPort}`;
   const own = domains.find((d) => d.host === host);
   return `${own?.status === "active" ? "https" : "http"}://${host}`;
 }
@@ -342,9 +352,10 @@ function productionStageId(store: Store, projectId: string): string {
 
 // domainUrlFor is a project's address (spec A6), always Production's. Dev
 // mode: the edge host on the edge's public port. Production before an edge
-// is installed: the cloud's own public address, if it has one. With the
-// edge: https on the first active custom domain of Production, else the
-// default host (https once its certificate is active, http until then).
+// is installed: the first active custom domain (a Cloud Run mapping), else
+// the cloud's own public address, if it has one. With the edge: https on the
+// first active custom domain of Production, else the default host (https once
+// its certificate is active, http until then).
 export function domainUrlFor(project: Pick<Project, "id" | "edgeHost">, ctx: DomainUrlContext): string {
   if (!project.edgeHost) return "";
   const productionId = productionStageId(ctx.store, project.id);

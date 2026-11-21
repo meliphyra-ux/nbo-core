@@ -549,6 +549,9 @@ func (f *fakeNBO) add(id string, req client.SetupRequest) *client.ProjectSummary
 			if cloud.Region != "" {
 				env.Config.Region = cloud.Region
 			}
+		} else if cloud.Target == "lambda" {
+			env.Name = "lambda"
+			env.Config = client.EnvironmentConfig{Region: "eu-west-1"}
 		} else {
 			env.Name = "k8s"
 		}

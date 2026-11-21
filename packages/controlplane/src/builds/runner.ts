@@ -1,12 +1,10 @@
 // SPDX-License-Identifier: FSL-1.1-ALv2
 // Copyright 2026 Nikita Dovhich
 
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, realpath, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { createRequire } from "node:module";
-import { pathToFileURL } from "node:url";
-import { produce } from "@nbo/producer-static";
 import { formatSeconds } from "@nbo/deploy";
 import type { Store } from "../store/store.js";
 import { redactionsFor } from "../variables/env-vars.js";
@@ -20,7 +18,8 @@ import { defaultKeepBuilds, retainedBuildIds } from "./artifacts.js";
 import { createJob, type RunnerOptions } from "./runner-job.js";
 import { createDeployTo, deployEverywhere } from "./runner-deploy.js";
 import { createPromoter } from "./runner-promote.js";
-import { errMessage, exists, findNestedNbo, firstLine, sepFor, stageOf } from "./runner-helpers.js";
+import { noSandbox } from "./sandbox.js";
+import { errMessage, firstLine, sepFor, stageOf } from "./runner-helpers.js";
 
 const noAutoDeploy = "Built — no cloud set to deploy new commits automatically";
 
@@ -30,15 +29,6 @@ export interface Runner {
 
 function defaultNextAdapterPath(): string {
   return createRequire(import.meta.url).resolve("@nbo/next-adapter/src/adapter.js");
-}
-
-type ProduceLegacyNext = (appDir: string, opts: { root: string; env: Record<string, string> }) => Promise<unknown>;
-
-// Next.js 14 and 15 ignore NEXT_ADAPTER_PATH; @nbo/next-adapter reads their .next/ after the build instead.
-async function produceLegacyNext(...args: Parameters<ProduceLegacyNext>): Promise<unknown> {
-  const path = createRequire(import.meta.url).resolve("@nbo/next-adapter/src/legacy.js");
-  const mod = (await import(pathToFileURL(path).href)) as { produceLegacyNext: ProduceLegacyNext };
-  return mod.produceLegacyNext(...args);
 }
 
 // createRunner executes one already-created (queued) build: clone,
@@ -58,6 +48,7 @@ export function createRunner(store: Store, trigger: DeploymentTrigger, options?:
       const { supplied, namesOnly, state, scrub, log, step, timeline, phases, timedPhase, releaseGitAuth } = ctx;
       let retentionProject: string | undefined;
       const deployTo = createDeployTo(ctx, trigger);
+      const sandbox = (options?.sandbox ?? noSandbox)(buildId, log);
       const runPromote = createPromoter(ctx, deployTo);
       let started = false;
       const buildEvent = async (phase: "started" | "finished") => {
@@ -161,7 +152,11 @@ export function createRunner(store: Store, trigger: DeploymentTrigger, options?:
           );
           return;
         }
-        if (!(await exists(appDir))) {
+        // Resolved by the kernel: a Root Directory linked outside the repository reads as missing whether or
+        // not its target exists on this host (no existence oracle for host paths).
+        const realClone = await realpath(cloneDir);
+        const realApp = await realpath(appDir).catch(() => "");
+        if (realApp !== realClone && !realApp.startsWith(realClone + sepFor(realClone))) {
           store.completeBuild(
             buildId,
             "failed",
@@ -171,6 +166,7 @@ export function createRunner(store: Store, trigger: DeploymentTrigger, options?:
           return;
         }
         if (config.rootDirectory) log(`Root Directory: ${config.rootDirectory}\n`);
+        const sandboxAdapterPath = await sandbox.prepare(cloneDir);
 
         // A manual rebuild (Redeploy) always builds in full.
         if (config.ignoredBuildStepCommand && !build.manual) {
@@ -183,6 +179,7 @@ export function createRunner(store: Store, trigger: DeploymentTrigger, options?:
               shell: true,
               env: stageEnv,
               buildStep: true,
+              via: sandbox.run,
             });
           } catch {
             skip = false;
@@ -197,7 +194,7 @@ export function createRunner(store: Store, trigger: DeploymentTrigger, options?:
           }
         }
 
-        const nextAdapterPath = options?.nextAdapterPath ?? defaultNextAdapterPath();
+        const nextAdapterPath = sandboxAdapterPath ?? options?.nextAdapterPath ?? defaultNextAdapterPath();
         try {
           await timedPhase("build command", "build command done", () =>
             step(config.buildCommand, [], {
@@ -205,6 +202,7 @@ export function createRunner(store: Store, trigger: DeploymentTrigger, options?:
               shell: true,
               env: { ...resolvedEnv.vars, ...stageEnv, NEXT_ADAPTER_PATH: nextAdapterPath },
               buildStep: true,
+              via: sandbox.run,
             }),
           );
         } catch (err) {
@@ -212,50 +210,26 @@ export function createRunner(store: Store, trigger: DeploymentTrigger, options?:
           return;
         }
 
+        // .nbo/ from the build's output; in a container it is made there and only it comes back here.
         const nboDir = join(appDir, ".nbo");
-        if (config.framework === "static") {
-          const rawDir = resolve(appDir, config.outputDir ?? "dist");
-          // Defense in depth — the git-config PUT already rejects an
-          // outputDir escaping the clone; this check means .git/ can
-          // never be published even if that validation is loosened.
-          if (rawDir !== cloneDir && !rawDir.startsWith(cloneDir + sepFor(cloneDir))) {
-            store.completeBuild(
-              buildId,
-              "failed",
-              undefined,
-              `outputDir "${config.outputDir}" escapes the cloned repository`,
-            );
-            return;
-          }
-          if (!(await exists(rawDir))) {
-            store.completeBuild(
-              buildId,
-              "failed",
-              undefined,
-              `expected the build command to create "${config.outputDir ?? "dist"}", but it does not exist`,
-            );
-            return;
-          }
-          log(`Producing .nbo/ from ${config.outputDir ?? "dist"}${config.spa ? " (SPA fallback)" : ""}\n`);
-          await timedPhase("produce .nbo", "produce .nbo done", () => produce(rawDir, nboDir, { spa: config.spa }));
-        } else if (!(await exists(nboDir)) && (await exists(join(appDir, ".next", "required-server-files.json")))) {
-          log("No .nbo/ from the adapter: reading .next/ (Next.js 14 or 15)\n");
-          await timedPhase("produce .nbo", "produce .nbo done", () =>
-            produceLegacyNext(appDir, { root: cloneDir!, env: { ...resolvedEnv.vars, ...stageEnv } }),
-          );
-        } else if (!(await exists(nboDir))) {
-          // The adapter writes .nbo/ next to the Next.js app; if the build
-          // command cd'd into a subfolder, point at the setting that fixes it.
-          const found = await findNestedNbo(appDir);
-          const hint = found
-            ? ` — found ${found}/.nbo — set Root Directory to "${[config.rootDirectory, found].filter(Boolean).join("/")}" (and drop the cd from the build command)`
-            : " (NBO sets NEXT_ADAPTER_PATH during the build; check that this is a Next.js 14+ app and its build ran next build)";
-          store.completeBuild(
-            buildId,
-            "failed",
-            undefined,
-            `expected the build command to produce ".nbo/" in ${config.rootDirectory || "the repository root"}, but it does not exist${hint}`,
-          );
+        const failure = await sandbox.produce(
+          {
+            framework: config.framework,
+            appDir,
+            root: cloneDir,
+            outputDir: config.outputDir,
+            spa: config.spa,
+            rootDirectory: config.rootDirectory,
+            env: { ...resolvedEnv.vars, ...stageEnv },
+          },
+          {
+            log,
+            timed: (fn) => timedPhase("produce .nbo", "produce .nbo done", fn),
+            step: (cmd, args, env) => step(cmd, args, { cwd: appDir, env, buildStep: true, via: sandbox.run }),
+          },
+        );
+        if (failure) {
+          store.completeBuild(buildId, "failed", undefined, scrub(failure));
           return;
         }
 
@@ -334,6 +308,7 @@ export function createRunner(store: Store, trigger: DeploymentTrigger, options?:
         // However the job ended, its values are gone from the shared map.
         options?.supplied?.drop(buildId);
         await releaseGitAuth();
+        await sandbox.dispose();
         if (cloneDir) {
           try {
             await rm(cloneDir, { recursive: true, force: true });

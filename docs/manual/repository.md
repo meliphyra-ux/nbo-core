@@ -47,23 +47,24 @@ Every TypeScript package name starts with `@nbo/`. Tests live next to the code i
 
 ### Deploying: `.nbo/` → cloud
 
-| Package            | Role                                                                             | Start reading at                                                      |
-| ------------------ | -------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| `deploy`           | Generic deploy flow (`deploy`) plus the two targets that glue adapters together. | `src/deploy.ts`, `src/kubernetes-target.ts`, `src/cloudrun-target.ts` |
-| `planner`          | Compares what a build needs against what a cloud can do.                         | `src/planner.ts` → `evaluate`                                         |
-| `adapter-k8s`      | Builds Docker images, renders Kubernetes YAML, applies it with `kubectl`.        | `src/image.ts`, `src/manifest.ts`, `src/templates.ts`                 |
-| `adapter-cloudrun` | Pushes images and runs `gcloud run deploy`.                                      | `src/deploy.ts`, `src/image.ts`, `src/iam.ts`                         |
+| Package            | Role                                                                                                                           | Start reading at                                                      |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------- |
+| `deploy`           | Generic deploy flow (`deploy`) plus the targets (Kubernetes, Cloud Run, Lambda) that glue adapters together.                   | `src/deploy.ts`, `src/kubernetes-target.ts`, `src/cloudrun-target.ts` |
+| `planner`          | Compares what a build needs against what a cloud can do.                                                                       | `src/planner.ts` → `evaluate`                                         |
+| `adapter-k8s`      | Builds Docker images, renders Kubernetes YAML, applies it with `kubectl`.                                                      | `src/image.ts`, `src/manifest.ts`, `src/templates.ts`                 |
+| `adapter-cloudrun` | Pushes images and runs `gcloud run deploy`.                                                                                    | `src/deploy.ts`, `src/image.ts`, `src/iam.ts`                         |
+| `adapter-lambda`   | AWS Lambda: adds the Web Adapter to images, pushes them to ECR, creates functions, roles and function URLs with the `aws` CLI. | `src/function.ts`, `src/image.ts`                                     |
 
 ### Running: inside every deployed container
 
-| Package     | Role                                                                                                                                                    | Start reading at                             |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
-| `cli`       | The `nbo` command: `serve`, `validate`, `deploy`, `plan`, `conformance`. In a container it runs `nbo serve`.                                            | `src/main.ts`, `src/serve.ts`                |
-| `serve`     | The request handler for a deployed app: static files, redirects, functions, ISR, images.                                                                | `src/serve.ts` → `createHandler`, `dispatch` |
-| `router`    | Decides what to do with a URL using `routes.json` (six phases, RE2).                                                                                    | `src/router.ts` → `createRouter`             |
-| `funcproxy` | Forwards a request to a function (local child process, Kubernetes service or Cloud Run service). Also `host.mjs`, the tiny server that runs a function. | `src/proxy.ts`, `src/host.mjs`               |
-| `nodehost`  | Turns a `FetchHandler` into a real Node HTTP server.                                                                                                    | `src/serve-fetch.ts` → `serveFetch`          |
-| `nbopath`   | Safe file-path resolution inside `.nbo/static`.                                                                                                         | `src/nbopath.ts`                             |
+| Package     | Role                                                                                                                                                                                            | Start reading at                             |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| `cli`       | The `nbo` command: `serve`, `validate`, `deploy`, `plan`, `conformance`. In a container it runs `nbo serve`.                                                                                    | `src/main.ts`, `src/serve.ts`                |
+| `serve`     | The request handler for a deployed app: static files, redirects, functions, ISR, images.                                                                                                        | `src/serve.ts` → `createHandler`, `dispatch` |
+| `router`    | Decides what to do with a URL using `routes.json` (six phases, RE2).                                                                                                                            | `src/router.ts` → `createRouter`             |
+| `funcproxy` | Forwards a request to a function (local child process, Kubernetes service, Cloud Run service, or Lambda function URL signed with SigV4). Also `host.mjs`, the tiny server that runs a function. | `src/proxy.ts`, `src/host.mjs`               |
+| `nodehost`  | Turns a `FetchHandler` into a real Node HTTP server.                                                                                                                                            | `src/serve-fetch.ts` → `serveFetch`          |
+| `nbopath`   | Safe file-path resolution inside `.nbo/static`.                                                                                                                                                 | `src/nbopath.ts`                             |
 
 ### Infrastructure as code
 

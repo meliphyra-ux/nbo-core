@@ -19,6 +19,7 @@ Jump to a group: [NBO won't start](#nbo-wont-start), [Docker Compose](#docker-co
 | A Kubernetes app                                         | `kubectl -n nbo-p-<id> get pods`, then `kubectl -n nbo-p-<id> logs deployment/<app>`. Dev mode: `kubectl --context kind-nbo-local get pods`. |
 | The edge                                                 | `kubectl -n nbo-edge get pods`, then `kubectl -n nbo-edge logs deployment/nbo-edge`. Dev mode: the edge's terminal.                          |
 | A Cloud Run app                                          | Google Cloud console → Cloud Run → the service → Logs.                                                                                       |
+| A Lambda app                                             | AWS console → Lambda → the function `<app>` (or `<app>-fn-<name>`) → Monitor → CloudWatch logs.                                              |
 
 ## NBO won't start
 
@@ -185,6 +186,22 @@ Exactly that. Retry: `nbo-server project retry <id>`.
 - **"could not read Username"**: git asked for a login. The URL is wrong, or the repository is private and the project has no credential. Give it a deploy key or a token (see [Private repositories](../production.md#4-private-repositories)).
 - Network errors: check you can `git clone` the URL yourself.
 
+### "the build sandbox needs Docker: …"
+
+In production mode builds run in a container ([Where builds run](./builds.md#where-builds-run)), and NBO couldn't reach Docker to make one; the rest of the line is Docker's own message. With Compose, check that `compose.yaml` still mounts `/var/run/docker.sock` and that Docker is running on the server (`docker info`). NBO never builds outside the container when this happens. On a computer of your own where Docker can't run containers (such as a Windows host), set `NBO_BUILD_ISOLATION=none` ([Server settings](./server-settings.md)).
+
+### A build stops with exit code 137, or "Killed"
+
+The build container ran out of memory: a build may use `NBO_BUILD_MEMORY` (default `4g`) and no swap. Large Next.js apps can need more. Raise it in `.env` (for example `NBO_BUILD_MEMORY=6g`) and restart NBO, and keep `NBO_BUILD_CONCURRENCY` times that below the server's memory. `pnpm: not found` in the same place is a different problem: pnpm and Yarn come from corepack in the build image, so an `NBO_BUILD_IMAGE` of your own without corepack needs them installed (the log says `corepack enable failed`).
+
+### "not enough free disk: …" or "stopped: the disk is almost full (…)"
+
+The disk guard of container builds ([Server settings](./server-settings.md), `NBO_BUILD_MIN_FREE`, default `10g`). The message names the folder: Docker's data folder (as Docker reports it, usually `/var/lib/docker`) or one of NBO's folders (the database's folder or the temporary folder). `not enough free disk` means the build never started; `stopped` means it was writing while that folder dropped under half the minimum, so NBO removed its container and volume. Free space there: `docker system df` shows what Docker keeps, and `docker image prune` and `docker builder prune` remove unused images and build cache; old build volumes are removed by NBO itself. If one build really writes that much, look at its log for what grows (a cache, test output), and give Docker's data folder its own disk ([Launching NBO](../production.md)). Lowering `NBO_BUILD_MIN_FREE` or setting it to `0` only hides the problem until the disk is really full.
+
+### "timed out after" … or "the build ran past its 30-minute limit"
+
+Each build step may take 10 minutes, and in container mode the whole build, copies in and out included, 30 minutes. The step was stopped and, in container mode, its container removed. Look at the log for a step that hangs (an install waiting for input, a test watcher started by the build command). A build that is only slow needs a faster server or less work per build; the limits aren't settings.
+
 ### "expected the build command to create "dist", but it does not exist"
 
 Static / React (Vite): the build command finished but wrote somewhere else. Check the framework's output folder (Vite: `dist`, Create React App: `build`, Astro: `dist`) and set **Output directory**. In a monorepo, also set **Root directory**.
@@ -238,6 +255,10 @@ Secret variables on Cloud Run live in Secret Manager. "Enable" means the API is 
 ### "Secret values can't be empty" or a reserved name
 
 Secrets need a value. Names starting with `NBO_`, and `PORT`, `K_SERVICE`, `K_REVISION`, `K_CONFIGURATION` and `NEXT_ADAPTER_PATH`, are set by NBO or the cloud and can't be used.
+
+### "Lambda allows 4 KB of environment variables in all" or "Lambda sets … itself"
+
+A deploy to AWS Lambda puts every variable into the function's environment, which Lambda limits to 4 KB in all, measured as the JSON of the names and values; the message names the largest. Move large values out (a file in the build, or a store the app reads at start), or keep the project off Lambda. "Lambda sets … itself" names variables such as `AWS_REGION` that Lambda reserves: rename them for this project. Both are checked before anything is built or pushed. More in [AWS Lambda in detail](./deploying.md#aws-lambda-in-detail).
 
 ### "cloudrun environment needs project, region and arRepo"
 

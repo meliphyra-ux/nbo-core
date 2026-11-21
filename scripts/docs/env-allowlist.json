@@ -7,6 +7,7 @@
   "NBO_EDGE_HEADER_TIMEOUT_MS": "Test only: lowers the wait for upstream response headers so timeout tests finish fast.",
   "NBO_EDGE_RELAY_UPSTREAM_OVERRIDE": "Test only: host:port that replaces the relay's upstream so tests need no cluster.",
   "NBO_EDGE_IDLE_TIMEOUT_MS": "Test only (Rust edge): shortens the idle limit on visitor connections.",
+  "NBO_PRODUCE": "Set by NBO inside a build container: what produce-cli.js makes .nbo/ from; never set by an operator.",
   "NBO_ISRCACHE_URL": "Set by NBO inside deployed apps (local nbo serve and deploys) to reach the page cache; never set by an operator.",
   "NBO_PRERENDER_BYPASS": "Set by NBO inside deployed apps: the revalidation secret the app checks; never set by an operator.",
   "NBO_EDGE_RELAY_PORT": "Test only: moves a relay's listener off 8443 so the black-box suite can run unprivileged.",

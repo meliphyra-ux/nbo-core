@@ -16,6 +16,13 @@ describe("childEnv", () => {
     expect(childEnv(host, { DOCKER_CONFIG: "/d" })).toEqual({ ...host, DOCKER_CONFIG: "/d" });
   });
 
+  it("strips the host's AWS_* settings from a call that brings its own AWS key pair", () => {
+    const aws = { PATH: "/bin", AWS_PROFILE: "host", AWS_SESSION_TOKEN: "host-token", aws_ca_bundle: "/x" };
+    const own = { AWS_ACCESS_KEY_ID: "AKIA", AWS_SECRET_ACCESS_KEY: "s", AWS_REGION: "eu-west-1" };
+    expect(childEnv(aws, own)).toEqual({ PATH: "/bin", ...own });
+    expect(childEnv(aws, { DOCKER_CONFIG: "/d" })).toEqual({ ...aws, DOCKER_CONFIG: "/d" });
+  });
+
   it("run applies it to the child process", async () => {
     process.env.CLOUDSDK_CORE_PROJECT = "host-proj";
     try {

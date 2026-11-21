@@ -22,10 +22,11 @@ export const usage = `Usage: nbo-server <command>
   connect google --key-file <path|-> --region <r>
   connect google --from-machine --project <p> --region <r>
   connect google --code <code> --region <r> keyless, with the setup command's code
+  connect aws --access-key-id <id> --secret-key-file <path|-> --region <r>
   connect kubernetes --name <n> --kubeconfig-file <path|-> --registry-file <path|-> [--context <c>]
   google identity                          the core's Google identity (for the keyless setup command)
   google check                             the core's own check of its keyless Google connection
-  disconnect google | disconnect kubernetes <id>
+  disconnect google | disconnect aws | disconnect kubernetes <id>
   cluster test <id>
   cluster update-setup <id> --admin-kubeconfig-file <path|->
   cluster relay <id> --confirm-billing
@@ -35,7 +36,7 @@ export const usage = `Usage: nbo-server <command>
   domains settings [--base-domain <d>] [--acme-email <e>] [--move-existing]
   project setup --body-file <path|-> | --body-stdin
   project retry <id>
-  transfer <projectId> --to <cloudrun|kubernetes|kc_id> | transfer cancel <projectId>
+  transfer <projectId> --to <cloudrun|lambda|kubernetes|kc_id> | transfer cancel <projectId>
   revalidate <projectId> --stage <stageId> [--tag <t>]... [--path <p>]...
   link <code|-> --url <url> --owner-key <fingerprint>
                                            link this server to a hosted dashboard

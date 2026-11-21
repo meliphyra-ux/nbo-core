@@ -88,13 +88,25 @@ export async function runSetupCommand(
         print(await call("POST", "/system/connections/kubernetes", body));
         return 0;
       }
-      throw new UsageError("connect needs google or kubernetes");
+      if (sub === "aws") {
+        const { values } = parse(
+          rest,
+          { "access-key-id": { type: "string" }, "secret-key-file": fileFlag, region: { type: "string" } },
+          0,
+        );
+        const accessKeyId = need(values, "access-key-id");
+        const region = need(values, "region");
+        const secretAccessKey = (await readSecret(need(values, "secret-key-file"), "secret-key-file")).trim();
+        print(await call("POST", "/system/connections/aws", { accessKeyId, secretAccessKey, region }));
+        return 0;
+      }
+      throw new UsageError("connect needs google, kubernetes or aws");
     }
 
     case "disconnect": {
-      if (sub === "google") {
+      if (sub === "google" || sub === "aws") {
         parse(rest, {}, 0);
-        print(await call("DELETE", "/system/connections/google"));
+        print(await call("DELETE", `/system/connections/${sub}`));
         return 0;
       }
       if (sub === "kubernetes") {
@@ -102,7 +114,7 @@ export async function runSetupCommand(
         print(await call("DELETE", `/system/connections/kubernetes/${segment(pos[0]!, "cluster id")}`));
         return 0;
       }
-      throw new UsageError("disconnect needs google or kubernetes <id>");
+      throw new UsageError("disconnect needs google, aws or kubernetes <id>");
     }
 
     case "cluster": {

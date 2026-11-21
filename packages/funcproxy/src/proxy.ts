@@ -108,17 +108,22 @@ export function fetchDecoded(method: string, status: number, contentEncoding: st
   return contentEncoding.split(",").every((coding) => FETCH_DECODED_CODINGS.has(coding.trim().toLowerCase()));
 }
 
+// outgoingURL is the URL proxyRequest sends request to (what a SigV4
+// signature has to cover).
+export function outgoingURL(request: Request, target: URL): URL {
+  const incoming = new URL(request.url);
+  const url = new URL(target.toString());
+  url.pathname = joinPath(target.pathname, incoming.pathname);
+  url.search = mergeQuery(target.search.slice(1), incoming.search.slice(1));
+  return url;
+}
+
 export async function proxyRequest(
   request: Request,
   target: URL,
   extraHeaders?: Record<string, string>,
   options?: ProxyRequestOptions,
 ): Promise<Response> {
-  const incoming = new URL(request.url);
-  const outgoingURL = new URL(target.toString());
-  outgoingURL.pathname = joinPath(target.pathname, incoming.pathname);
-  outgoingURL.search = mergeQuery(target.search.slice(1), incoming.search.slice(1));
-
   // Connection may itself name additional headers that are hop-by-hop
   // for this connection only (RFC 7230 §6.1) — those get stripped too.
   const connectionNamed = new Set<string>();
@@ -151,7 +156,7 @@ export async function proxyRequest(
   const signals = [request.signal, options?.signal].filter((s): s is AbortSignal => s != null);
   const combinedSignal = signals.length > 0 ? AbortSignal.any(signals) : undefined;
 
-  const response = await fetch(outgoingURL, {
+  const response = await fetch(outgoingURL(request, target), {
     method: request.method,
     headers,
     body,

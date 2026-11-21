@@ -79,7 +79,7 @@ The cache belongs to one app: one environment on one cloud.
 - An ephemeral environment or `staging` can never write into Production's cache, and its secret cannot refresh Production.
 - When a site is on several clouds, NBO's edge sends your request to every cloud that serves the address, clouds at 0% traffic included, because each has its own cache. It answers `204` when all said yes. If they all gave the same answer, you get that answer (a wrong secret is a plain `401`). Otherwise you get `502` with a list of which cloud failed, by environment id (`null` for a cloud the edge has no id for).
 - Upgrade the edge first (`nbo-server edge reinstall`). An older edge reaches only one cloud.
-- Without an edge (production mode with only Cloud Run), NBO's revalidate route calls each Cloud Run address itself. A cluster app has no public address without the edge, so it cannot be revalidated that way.
+- Without an edge (production mode with only Cloud Run or Lambda), NBO's revalidate route calls each Cloud Run or Lambda address itself. A cluster app has no public address without the edge, so it cannot be revalidated that way.
 
 ## What it costs
 
@@ -92,6 +92,7 @@ The cache belongs to one app: one environment on one cloud.
 - **In memory only.** The cache holds up to 96 MiB and drops the pages used least recently first. A page larger than a quarter of that is not stored. A restarted cache starts empty, and pages render again on the next visit.
 - **Cloud Run sleeps.** The cache service stops when the site is idle and wakes in about a second, so a quiet site loses its stored pages. The work behind a stale page runs after the answer is sent, and Cloud Run gives a service little CPU between requests, so the background render can be slow.
 - **Kubernetes policy.** The cache runs as user 1000 with a read-only root filesystem and no extra permissions. A cluster policy that forces another user or forbids that will stop it from starting.
+- **None on AWS Lambda.** A Lambda can't host the cache, so on Lambda ISR pages are served uncached: every visit renders the page. See [No page cache](./deploying.md#no-page-cache).
 - **Not shared.** Clouds and environments do not share a cache, and there is no "purge everything" call. Revalidate by tag or path.
 - **Prefetching.** A page with many `<Link>`s to ISR pages costs one render per prefetch, because those requests skip the cache. Use `prefetch={false}` where it matters.
 - **Partial prerendering** shells do not refresh until the next deploy, even for `"use cache"` content.

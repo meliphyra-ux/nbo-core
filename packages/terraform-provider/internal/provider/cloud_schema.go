@@ -15,8 +15,8 @@ func cloudNestedObject() schema.NestedAttributeObject {
 		Attributes: map[string]schema.Attribute{
 			"target": schema.StringAttribute{
 				Required:    true,
-				Description: `"kubernetes" or "cloudrun".`,
-				Validators:  []validator.String{stringvalidator.OneOf("kubernetes", "cloudrun")},
+				Description: `"kubernetes", "cloudrun" or "lambda" (AWS Lambda, in the AWS connection's region).`,
+				Validators:  []validator.String{stringvalidator.OneOf("kubernetes", "cloudrun", "lambda")},
 			},
 			"cluster_id": schema.StringAttribute{
 				Optional:    true,

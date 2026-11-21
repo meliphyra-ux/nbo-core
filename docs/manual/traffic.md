@@ -1,6 +1,6 @@
 # Traffic and moving clouds
 
-A project can run on one cloud or on several (Cloud Run, and any Kubernetes cluster you connected). Visitors never choose: they use the project's own address, and NBO's **edge** decides, request by request, which cloud answers. This chapter shows how to change that split, how to move a site from one cloud to another without downtime, and how the edge does it. The last section, [How it works](#how-it-works), is for readers who want the machinery.
+A project can run on one cloud or on several (Cloud Run, AWS Lambda, and any Kubernetes cluster you connected). Visitors never choose: they use the project's own address, and NBO's **edge** decides, request by request, which cloud answers. This chapter shows how to change that split, how to move a site from one cloud to another without downtime, and how the edge does it. The last section, [How it works](#how-it-works), is for readers who want the machinery.
 
 ## Why NBO has its own edge
 
@@ -39,10 +39,10 @@ Each cloud serves its own live build, and the clouds can differ when automatic d
 
 ## Moving to another cloud: transfers
 
-A **transfer** moves a project's traffic to one cloud (Cloud Run, or any connected cluster, including from one cluster to another), gradually, so a problem on the new side affects only a few visitors before you notice.
+A **transfer** moves a project's traffic to one cloud (Cloud Run, AWS Lambda, or any connected cluster, including from one cluster to another), gradually, so a problem on the new side affects only a few visitors before you notice.
 
-1. Pick the destination: Cloud Run, or a connected cluster by its id (`nbo-server status` lists them).
-2. Start it: `nbo-server transfer <project id> --to cloudrun` (or `--to kc_...`), or `POST /projects/{id}/transfer` with `{ "target": "kubernetes", "clusterId": "kc_..." }`. If the workspace uses [names-only variables](./environments.md#dont-store-variable-values), send them as `values` in the same body.
+1. Pick the destination: Cloud Run, AWS Lambda, or a connected cluster by its id (`nbo-server status` lists them).
+2. Start it: `nbo-server transfer <project id> --to cloudrun` (or `--to lambda`, or `--to kc_...`), or `POST /projects/{id}/transfer` with `{ "target": "kubernetes", "clusterId": "kc_..." }`. If the workspace uses [names-only variables](./environments.md#dont-store-variable-values), send them as `values` in the same body.
 
 NBO then does this; the project summary shows the transfer's `status` at each step:
 
@@ -60,7 +60,7 @@ Each cloud keeps its own page cache, so pages cached on the old cloud are not co
 
 ## Splitting across many clouds
 
-A project can run on Cloud Run and on any number of connected clusters at once. The traffic route lists one row per cloud, named by its `displayName` (the cluster's name, or Cloud Run). A transfer to a new cloud takes traffic from every other cloud in proportion to the shares they had when it started.
+A project can run on Cloud Run, AWS Lambda and any number of connected clusters at once. The traffic route lists one row per cloud, named by its `displayName` (the cluster's name, Cloud Run, or AWS Lambda). A transfer to a new cloud takes traffic from every other cloud in proportion to the shares they had when it started.
 
 ## How it works
 

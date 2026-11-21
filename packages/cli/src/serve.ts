@@ -10,6 +10,7 @@ import {
   createStaticURLs,
   createLocalSpawner,
   createCloudRunURLs,
+  createLambdaURLs,
   metadataServerIdentityToken,
   type Resolver,
 } from "@nbo/funcproxy";
@@ -117,6 +118,10 @@ export async function resolveFunctions(
 ): Promise<{ resolve?: Resolver; stop?: () => Promise<void> }> {
   const urls = withoutCache(await serviceURLs(functionURLs));
   if (Object.keys(urls).length > 0) {
+    if (process.env.AWS_LAMBDA_FUNCTION_NAME) {
+      console.error(`nbo: on AWS Lambda — signing function calls (SigV4) for ${JSON.stringify(urls)}`);
+      return { resolve: createLambdaURLs(urls) };
+    }
     const k = process.env.K_SERVICE;
     if (k) {
       console.error(

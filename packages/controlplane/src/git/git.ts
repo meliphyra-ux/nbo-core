@@ -415,20 +415,24 @@ export function attachGitMethods(db: DatabaseSync, store: Store): Store {
       return row ? rowToBuild(row) : undefined;
     },
 
+    nextQueuedJob(projectId: string): Build | undefined {
+      return this.queuedJobs(projectId)[0];
+    },
+
     // Production's jobs first (a build with no stage is Production's), then
     // custom stages', then ephemeral ones', each oldest first.
-    nextQueuedJob(projectId: string): Build | undefined {
-      const row = db
+    queuedJobs(projectId?: string): Build[] {
+      const rows = db
         .prepare(
           `SELECT ${buildColumns
             .split(", ")
             .map((c) => `b.${c}`)
             .join(", ")} FROM builds b LEFT JOIN stages s ON s.id = b.stage_id
-           WHERE b.project_id = ? AND b.status = 'queued'
-           ORDER BY CASE COALESCE(s.kind, 'production') WHEN 'production' THEN 0 WHEN 'custom' THEN 1 ELSE 2 END, b.created_at, b.rowid LIMIT 1`,
+           WHERE b.status = 'queued' AND (? IS NULL OR b.project_id = ?)
+           ORDER BY CASE COALESCE(s.kind, 'production') WHEN 'production' THEN 0 WHEN 'custom' THEN 1 ELSE 2 END, b.created_at, b.rowid`,
         )
-        .get(projectId) as BuildRow | undefined;
-      return row ? rowToBuild(row) : undefined;
+        .all(projectId ?? null, projectId ?? null) as BuildRow[];
+      return rows.map(rowToBuild);
     },
 
     createQueuedPromote(projectId: string, sourceBuildId: string, environmentId: string): Build {

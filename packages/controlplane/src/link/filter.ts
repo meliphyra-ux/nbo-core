@@ -106,6 +106,11 @@ export function knownSecrets(store: Store, sources: SecretSources = {}): string[
     add(g.pullerKey);
   });
   tryAll(() => {
+    const a = store.getAwsSecrets();
+    add(a.accessKeyId);
+    add(a.secretAccessKey);
+  });
+  tryAll(() => {
     for (const d of store.listDomains()) {
       tryAll(() => add(store.getPendingCert(d.id)?.keyPem));
       tryAll(() => add(store.getPastedCert(d.id)?.keyPem));
@@ -146,10 +151,18 @@ export function filterJson(body: unknown, secrets: string[]): unknown {
     if (Array.isArray(v)) return v.map(walk);
     if (typeof v === "object" && v !== null) {
       return Object.fromEntries(
-        Object.keys(v).map((k) => [
-          k,
-          withheldLower.has(k.toLowerCase()) ? WITHHELD : walk((v as Record<string, unknown>)[k]),
-        ]),
+        Object.keys(v).map((k) => {
+          const val = (v as Record<string, unknown>)[k];
+          // A plain variable's value (its view says secret: false) is shown to people who can see the project; it is
+          // in the redaction list (plain values of 6+ characters), so only its own forms are let through.
+          if (k === "value" && typeof val === "string" && (v as Record<string, unknown>).secret === false) {
+            const own = new Set(forms([val]));
+            const others = list.filter((s) => !own.has(s));
+            return [k, others.length ? redact(val, others) : val];
+          }
+          // A boolean holds no secret (a variable's `secret` flag); withholding it reads as true.
+          return [k, withheldLower.has(k.toLowerCase()) && typeof val !== "boolean" ? WITHHELD : walk(val)];
+        }),
       );
     }
     return v;

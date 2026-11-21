@@ -174,6 +174,7 @@ func TestPlanAfterCreateIsEmpty(t *testing.T) {
 			"delete_cloud_resources": true,
 		}),
 		"cloud run auto": with(shopConfig(), map[string]any{"clouds": []map[string]any{{"target": "cloudrun", "mode": "auto"}}}),
+		"lambda":         with(shopConfig(), map[string]any{"clouds": []map[string]any{{"target": "lambda"}}}),
 	}
 	for name, attrs := range configs {
 		t.Run(name, func(t *testing.T) {
@@ -464,7 +465,8 @@ func TestValidation(t *testing.T) {
 		{"empty ignored command", map[string]any{"ignored_build_step_command": ""}, "ignored_build_step_command"},
 		{"sample rate", map[string]any{"speed_insights_sample_rate": 33}, "speed_insights_sample_rate"},
 		{"no clouds", map[string]any{"clouds": []map[string]any{}}, "clouds"},
-		{"unknown target", map[string]any{"clouds": []map[string]any{{"target": "lambda"}}}, "target"},
+		{"unknown target", map[string]any{"clouds": []map[string]any{{"target": "azure"}}}, "target"},
+		{"lambda with region", map[string]any{"clouds": []map[string]any{{"target": "lambda", "region": "eu-west-1"}}}, "region"},
 		{"cloud run without mode", map[string]any{"clouds": []map[string]any{{"target": "cloudrun"}}}, "mode"},
 		{"manual without project", map[string]any{"clouds": []map[string]any{{"target": "cloudrun", "mode": "manual", "region": "us-central1"}}}, "project"},
 		{"auto with project", map[string]any{"clouds": []map[string]any{{"target": "cloudrun", "mode": "auto", "project": "acme-prod"}}}, "project"},
@@ -486,6 +488,7 @@ func TestValidationAcceptsWhatNBOAccepts(t *testing.T) {
 		"clouds": []map[string]any{
 			{"target": "cloudrun", "mode": "manual", "project": "acme-prod", "region": "us-central1", "ar_repo": "us-central1-docker.pkg.dev/acme-prod/nbo"},
 			{"target": "kubernetes", "cluster_id": "kc_a"},
+			{"target": "lambda"},
 		},
 	})))
 }

@@ -12,6 +12,7 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
+    "@nbo/adapter-lambda": "workspace:*",
     "@nbo/deploy": "workspace:*",
     "@nbo/digest": "workspace:*",
     "@nbo/link-protocol": "workspace:*",

@@ -20,6 +20,8 @@ import { listMappingsArgs, mappingCommand, mappingMissing } from "../domains/clo
 import type { Mode } from "../mode.js";
 import type { Store } from "../store/store.js";
 import { googleCredential } from "./google-wif.js";
+import { awsContext, awsJson, deleteFunction, lambdaName, type ToolContext } from "@nbo/adapter-lambda";
+import { awsCredentials } from "./aws-connect.js";
 
 export const defaultRunner: CommandRunner = (cmd, args, opts) => run(cmd, args, { timeoutMs: 120_000, env: opts?.env });
 
@@ -137,6 +139,43 @@ async function removeIsrcache(step: Step, base: string[], appName: string): Prom
     ...base,
     ...isrcacheDeleteArgs(appName),
   ]);
+}
+
+// removeLambdaApp deletes one app's Lambdas (lambdaName: "nbo-<app>" and "nbo-<app>-fn-*", not a
+// kept app's), each with its URL and role, then the app's and its functions'
+// image tags in the one ECR repository ("<lambda name>_<hash>"). Names come
+// from listings, so a function the latest build dropped goes too.
+async function removeLambdaApp(ctx: ToolContext, appName: string, keep: readonly string[]): Promise<void> {
+  const base = lambdaName(appName);
+  const kept = keep.map((k) => lambdaName(k));
+  const own = (name: string) => name === base || (name.startsWith(`${base}-fn-`) && !keptBy(kept, name));
+  const { Functions = [] } = await awsJson<{ Functions?: { FunctionName: string }[] }>(ctx, [
+    "lambda",
+    "list-functions",
+  ]);
+  for (const { FunctionName } of Functions) if (own(FunctionName)) await deleteFunction(FunctionName, ctx);
+  const { imageIds = [] } = await awsJson<{ imageIds?: { imageTag?: string }[] }>(ctx, [
+    "ecr",
+    "list-images",
+    "--repository-name",
+    "nbo",
+    "--filter",
+    "tagStatus=TAGGED",
+  ]);
+  const tags = imageIds
+    .map((i) => i.imageTag ?? "")
+    .filter((t) => t.includes("_") && own(t.slice(0, t.lastIndexOf("_"))));
+  // batch-delete-image takes at most 100 ids per call.
+  for (let i = 0; i < tags.length; i += 100) {
+    await awsJson(ctx, [
+      "ecr",
+      "batch-delete-image",
+      "--repository-name",
+      "nbo",
+      "--image-ids",
+      ...tags.slice(i, i + 100).map((t) => `imageTag=${t}`),
+    ]);
+  }
 }
 
 function cliMessage(err: unknown): string {
@@ -360,6 +399,17 @@ export function createCloudTeardown(
           }
         }
         await deleteSecrets(project, { run: runCmd });
+        return;
+      }
+      if (target === "lambda") {
+        if (!options.store?.getAwsConnection()) throw new Error("Lambda: AWS is not connected");
+        const keys = options.store.getAwsSecrets();
+        try {
+          await removeLambdaApp(awsContext(awsCredentials(options.store), runCmd), appName, keep);
+        } catch (err) {
+          // eslint-disable-next-line preserve-caught-error -- the original error may carry the key pair
+          throw new Error(redact(`Lambda: ${cliMessage(err)}`, [keys.accessKeyId, keys.secretAccessKey]));
+        }
         return;
       }
       throw new Error(`unknown target "${target}"`);

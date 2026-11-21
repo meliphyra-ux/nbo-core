@@ -95,4 +95,17 @@ describe("bundleFiles", () => {
     file(join(outside, "secret.key"));
     expect(() => bundleFiles(app, root, [], [join(outside, "secret.key")])).toThrow(/resolves outside the repository/);
   });
+
+  // JS realpath resolves `..` before following an earlier link, so this chain looks inside; the kernel opens
+  // /etc/passwd. File symlinks need a privilege Windows rarely grants; this runs on Linux.
+  it.skipIf(process.platform === "win32")("refuses a file reached through chained links leaving the repository", () => {
+    const { root, app } = repo();
+    mkdirSync(join(root, "c"));
+    const deep = join(root, "a1", "a2", "a3", "a4", "a5", "a6");
+    mkdirSync(deep, { recursive: true });
+    symlinkSync("../../../../../../c", join(deep, "L1"));
+    symlinkSync("a1/a2/a3/a4/a5/a6/L1/../../../../../../../", join(root, "L2"));
+    symlinkSync("L2/etc/passwd", join(root, "leak"));
+    expect(() => bundleFiles(app, root, [], [join(root, "leak")])).toThrow(/resolves outside the repository/);
+  });
 });

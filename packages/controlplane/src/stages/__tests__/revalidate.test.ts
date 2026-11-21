@@ -295,6 +295,22 @@ describe("revalidateStage without an edge", () => {
       { environmentId: cr2, cloud: "Cloud Run", status: 401, error: expect.stringContaining("401") },
     ]);
   });
+  it("calls a live Lambda app on its function URL directly too (no edge cluster)", async () => {
+    const { store, stage, cr } = await shop();
+    store.ensureRevalidateToken(stage.id);
+    const lm = store.createEnvironment(stage.projectId, "lambda", "lambda", JSON.stringify({ region: "eu-west-1" })).id;
+    store.completeDeployment(store.createDeployment(lm).id, "sha256:x", "https://abc.lambda-url.eu-west-1.on.aws");
+    const { fetch, calls } = fakeFetch(() => new Response(null, { status: 204 }));
+    const out = await revalidateStage(deps(store, "production", fetch), stage, { tags: ["a"] });
+    expect(calls.map((c) => c.url).sort()).toEqual([
+      "https://abc.lambda-url.eu-west-1.on.aws/_nbo/revalidate",
+      "https://pshop-cr-abc123-uc.a.run.app/_nbo/revalidate",
+    ]);
+    expect(out.results).toEqual([
+      { environmentId: cr, cloud: "Cloud Run", status: 204 },
+      { environmentId: lm, cloud: "AWS Lambda", status: 204 },
+    ]);
+  });
 });
 
 describe("revalidateStage refusals", () => {

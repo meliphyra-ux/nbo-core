@@ -100,6 +100,11 @@ export function childEnv(
       if (upper.startsWith("CLOUDSDK_") || upper === "GOOGLE_APPLICATION_CREDENTIALS") delete env[k];
     }
   }
+  // Likewise an aws call with its own key pair: a host AWS_PROFILE,
+  // AWS_SESSION_TOKEN or endpoint override would mix with it.
+  if (overrides.AWS_ACCESS_KEY_ID !== undefined) {
+    for (const k of Object.keys(env)) if (k.toUpperCase().startsWith("AWS_")) delete env[k];
+  }
   return { ...env, ...overrides };
 }
 

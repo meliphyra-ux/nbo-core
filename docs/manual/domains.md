@@ -112,7 +112,7 @@ The edge also stops trusting a visitor's own `X-Forwarded-Proto` header: it deci
 
 The edge can send traffic to apps on **other clusters** too. Visitors still only reach the edge cluster, so a cluster that is not the edge cluster needs a way in. NBO calls it a **relay**: two small pods, plus a LoadBalancer on port 443, in that cluster's `nbo-edge` namespace. The edge sends the request to the relay over a connection that only trusts a private certificate authority NBO made for that relay, and attaches a secret token. The relay accepts only that token, and only for services in projects' own namespaces (`<app>.nbo-p-<id>.svc.cluster.local:8080`), so it is not an open door into the cluster.
 
-A cluster other than the edge cluster gets one with `nbo-server cluster relay kc_... --confirm-billing`: `--confirm-billing` says you know **your provider bills** the LoadBalancer. It needs no admin credentials and runs as a background job with steps, one at a time per cluster; `nbo-server api GET /system/clusters/kc_.../relay` shows its state. Until it is enabled, deploys to that cluster still succeed, but it **cannot take traffic**: a higher traffic share for it is refused with **"This cluster has no public entry yet…"**, and a transfer to it is refused (a transfer already running stops, with the split left at its last step). If every cloud with traffic is unreachable, the project does not go dark: it serves from its reachable clouds in equal shares. Cloud Run needs no relay because it already has a public address.
+A cluster other than the edge cluster gets one with `nbo-server cluster relay kc_... --confirm-billing`: `--confirm-billing` says you know **your provider bills** the LoadBalancer. It needs no admin credentials and runs as a background job with steps, one at a time per cluster; `nbo-server api GET /system/clusters/kc_.../relay` shows its state. Until it is enabled, deploys to that cluster still succeed, but it **cannot take traffic**: a higher traffic share for it is refused with **"This cluster has no public entry yet…"**, and a transfer to it is refused (a transfer already running stops, with the split left at its last step). If every cloud with traffic is unreachable, the project does not go dark: it serves from its reachable clouds in equal shares. Cloud Run and AWS Lambda need no relay because they already have a public address. A project on Lambda gets its own domains only through the edge: NBO doesn't set up CloudFront or API Gateway, and without an edge adding a domain to it is refused.
 
 ## What your app sees as the visitor's address
 
@@ -208,7 +208,7 @@ Add the domain with `POST /projects/{id}/domains`. Then:
 
    Each DNS record NBO gives (the edge's `record` and each of `mappingRecords`) has `type`, `name` and `value`, and the same target again as `data`. The hosted dashboard reads `data`, because the link never passes a field named `value`.
 
-3. **Wait.** Google's certificate usually takes about 15 minutes and can take up to 24 hours. The status becomes **Active** when Google reports the mapping ready.
+3. **Wait.** Google's certificate usually takes about 15 minutes and can take up to 24 hours. The status becomes **Active** when Google reports the mapping ready, and from then on the domain is the project's address (until then it is the cloud's `run.app` one).
 
 Wildcards aren't supported, and a domain can have at most 64 characters.
 

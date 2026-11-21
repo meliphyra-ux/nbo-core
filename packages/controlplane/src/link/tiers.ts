@@ -48,6 +48,7 @@ export const sealedFields: Readonly<Record<string, readonly { path: string; json
   "PUT /projects/{projectID}/protection": [{ path: "password" }],
   "PUT /projects/{projectID}/domains/{domainID}/certificate": [{ path: "keyPem" }],
   "POST /system/connections/google": [{ path: "keyJson" }],
+  "POST /system/connections/aws": [{ path: "secretAccessKey" }],
   "POST /system/connections/kubernetes": [
     { path: "source.kubeconfig" },
     { path: "source.token" },

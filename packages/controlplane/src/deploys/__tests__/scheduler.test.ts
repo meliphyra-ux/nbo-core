@@ -196,6 +196,35 @@ describe("tick", () => {
     await waitForHits(() => hits, 1);
   }, 15000);
 
+  it("calls a Lambda app on its function URL, signed like any other cloud", async () => {
+    const store = await openTestStore();
+    const proj = store.createProject("acme");
+    const env = store.createEnvironment(
+      proj.id,
+      "lambda",
+      "lambda",
+      JSON.stringify({ region: "eu-west-1", cronsEnabled: true }),
+    );
+    store.setCronSigningSecret(env.id, "test-secret");
+    // triggerDeploy records the function URL without its trailing slash.
+    store.completeDeployment(
+      store.createDeployment(env.id).id,
+      "sha256:abc",
+      "https://abc.lambda-url.eu-west-1.on.aws",
+    );
+    store.registerCronsFromManifest(env.id, await writeCronManifest([cronFixture("a", "* * * * *")]));
+    store.releaseCron(env.id, "a", new Date(), new Date(Date.now() - 60_000));
+    const sent: { url: string; auth: string }[] = [];
+    const httpClient = (async (url: string, init?: RequestInit) => {
+      sent.push({ url, auth: new Headers(init?.headers).get("authorization") ?? "" });
+      return new Response(null, { status: 204 });
+    }) as typeof fetch;
+    await tick({ store, httpClient }, new Date());
+    await waitForHits(() => sent.length, 1);
+    expect(sent[0]!.url).toBe("https://abc.lambda-url.eu-west-1.on.aws/api/cron/a");
+    expect(sent[0]!.auth).toMatch(/^Bearer /);
+  });
+
   it("never fires on non-production without opt-in", async () => {
     let hits = 0;
     const backendURL = await startBackend((_req, res) => {

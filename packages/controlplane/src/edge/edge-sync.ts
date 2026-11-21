@@ -196,6 +196,24 @@ export function createEdgeSync(store: Store, options: { adminUrl: string; fetch?
     );
   };
 
+  const pushNow = async (projectId: string, opts?: { stageHost?: string }): Promise<void> => {
+    const productionHost = store.getProject(projectId).edgeHost;
+    let failure: unknown = null;
+    for (const desired of desiredTargetsFor(store, projectId)) {
+      try {
+        await pushTarget(desired);
+      } catch (err) {
+        if (desired.host === productionHost || desired.host === opts?.stageHost) failure ??= err;
+        else
+          console.error(
+            `control-plane: pushing ${desired.host} to the edge failed: ${err instanceof Error ? err.message : String(err)}`,
+          );
+      }
+    }
+    if (failure !== null) throw failure;
+  };
+  let pushTail: Promise<unknown> = Promise.resolve();
+
   const sync: EdgeSync = {
     desiredTarget(projectId) {
       return desiredTargetFor(store, projectId);
@@ -210,20 +228,13 @@ export function createEdgeSync(store: Store, options: { adminUrl: string; fetch?
     // transfer step act on it); a custom stage's is logged, and the poll
     // loop's reconcile pushes it again.
     async push(projectId, opts) {
-      const productionHost = store.getProject(projectId).edgeHost;
-      let failure: unknown = null;
-      for (const desired of sync.desiredTargets(projectId)) {
-        try {
-          await pushTarget(desired);
-        } catch (err) {
-          if (desired.host === productionHost || desired.host === opts?.stageHost) failure ??= err;
-          else
-            console.error(
-              `control-plane: pushing ${desired.host} to the edge failed: ${err instanceof Error ? err.message : String(err)}`,
-            );
-        }
-      }
-      if (failure !== null) throw failure;
+      // One push at a time: a later push renders only after earlier ones
+      // finished, so a slow push never lands an older split over a newer
+      // one (two stages of a project deploy at once).
+      // shortcut: in-process lock, so one NBO process per edge.
+      const next = pushTail.then(() => pushNow(projectId, opts));
+      pushTail = next.catch(() => undefined);
+      return next;
     },
 
     async onDeployed(projectId, environmentId) {
@@ -238,10 +249,15 @@ export function createEdgeSync(store: Store, options: { adminUrl: string; fetch?
       return true;
     },
 
+    // remove waits behind running pushes too: one that already read a deleted stage's host would put it back.
     async remove(host) {
       if (!host) return;
-      const res = await doFetch(targetUrl(host), { method: "DELETE" });
-      if (!res.ok && res.status !== 404) throw new Error(`edge refused to remove ${host} (${res.status})`);
+      const next = pushTail.then(async () => {
+        const res = await doFetch(targetUrl(host), { method: "DELETE" });
+        if (!res.ok && res.status !== 404) throw new Error(`edge refused to remove ${host} (${res.status})`);
+      });
+      pushTail = next.catch(() => undefined);
+      return next;
     },
 
     async reconcile() {

@@ -16,6 +16,7 @@ export {
 export { renderNetworkPolicies, kubeName, isrcacheObjectName, isrcacheDeleteArgs } from "@nbo/adapter-k8s";
 export { childEnv } from "@nbo/adapter-cloudrun";
 export { createCloudRunTarget, type CloudRunTargetOptions } from "./cloudrun-target.js";
+export { createLambdaTarget, type LambdaTargetOptions } from "./lambda-target.js";
 export {
   serviceIdentityId,
   deleteServiceIdentity,

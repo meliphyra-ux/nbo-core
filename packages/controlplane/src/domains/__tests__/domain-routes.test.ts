@@ -21,6 +21,7 @@ import {
   isApex,
   rootDomainOf,
   deployToCloudRunFirstMessage,
+  lambdaNeedsEdgeMessage,
   confirmGapMessage,
   unsupportedRegionMessage,
 } from "../domain-routes.js";
@@ -1039,6 +1040,13 @@ describe("Cloud Run domains", () => {
     const r1 = await none.h.call("POST", none.url, { host });
     expect([r1.status, r1.json.error]).toEqual([409, "Install the edge first (nbo-server edge install on the server)"]);
 
+    // A project on Lambda only: AWS serves no domains, so the edge is the way.
+    const lambda = await setup({ env: "none" });
+    lambda.h.store.createEnvironment(lambda.id, "lambda", "lambda", JSON.stringify({ region: "eu-west-1" }));
+    const r1b = await lambda.h.call("POST", lambda.url, { host });
+    expect([r1b.status, r1b.json.error]).toEqual([409, lambdaNeedsEdgeMessage]);
+    expect(lambdaNeedsEdgeMessage).toContain("Install the edge first");
+
     const undeployed = await setup({ env: "undeployed" });
     const r2 = await undeployed.h.call("POST", undeployed.url, { host });
     expect([r2.status, r2.json.error]).toEqual([409, deployToCloudRunFirstMessage]);
@@ -1068,6 +1076,18 @@ describe("Cloud Run domains", () => {
     const r5 = await edge.h.call("POST", edge.url, { host });
     expect(r5.status).toBe(201);
     expect(r5.json).toMatchObject({ serving: "edge", status: "dns_pending" });
+  });
+
+  it("the project's address is the mapped domain once Google serves it, the cloud's until then", async () => {
+    const t = await setup();
+    t.h.store.updateProject(t.id, { edgeHost: "shop.nbo.example" });
+    const address = async () => (await t.h.call("GET", `/projects/${t.id}/summary`)).json.domainUrl as string;
+    expect((await t.h.call("POST", t.url, { host })).status).toBe(201);
+    expect(await address()).toBe("https://svc-abc-uc.a.run.app");
+    const row = t.h.store.listDomains(t.id).find((d) => d.host === host)!;
+    t.h.store.updateDomain(row.id, { status: "active" });
+    expect(await address()).toBe(`https://${host}`);
+    expect((await t.h.call("GET", `/projects/${t.id}/traffic`)).json.domainUrl).toBe(`https://${host}`);
   });
 
   it("refuses a host over 64 characters on the Cloud Run path", async () => {

@@ -101,6 +101,18 @@ describe("renderDesiredTable", () => {
     });
   });
 
+  it("routes a Lambda app straight to its function URL, as a Cloud Run service", async () => {
+    const store = await openTestStore();
+    const p = store.createProject("shop");
+    store.updateProject(p.id, { edgeHost: "shop.example.net" });
+    const lm = store.createEnvironment(p.id, "lambda", "lambda", JSON.stringify({ region: "eu-west-1" }));
+    deployOk(store, lm.id, "https://abc.lambda-url.eu-west-1.on.aws");
+    store.setTrafficWeights(p.id, { [lm.id]: 100 });
+    expect(renderDesiredTable(store, { challenges: {} }).targets["shop.example.net"]).toEqual({
+      backends: [{ id: lm.id, url: "https://abc.lambda-url.eu-west-1.on.aws", weight: 100, insecureSkipVerify: false }],
+    });
+  });
+
   it("reaches another cluster through its relay, and omits a backend whose cluster has no relay", async () => {
     const store = await openTestStore();
     store.saveRelay(relayRecord("kc_far", "203.0.113.7"));

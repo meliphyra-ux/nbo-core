@@ -128,6 +128,10 @@ describe("createSetup.start validation", () => {
     expect(() => setup.start(request({ clouds: [{ target: "kubernetes" }, { target: "kubernetes" }] }))).toThrow(
       /once/,
     );
+    expect(() => setup.start(request({ clouds: [{ target: "lambda" }, { target: "lambda" }] }))).toThrow(/once/);
+    expect(() => setup.start(request({ clouds: [{ target: "azure" }] }))).toThrow(
+      'unknown cloud target "azure" (known: kubernetes, cloudrun, lambda)',
+    );
     expect(() =>
       setup.start(
         request({ clouds: [{ target: "cloudrun", mode: "manual", project: "", region: "us-central1", arRepo: "x" }] }),

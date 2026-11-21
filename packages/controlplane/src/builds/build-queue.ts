@@ -27,17 +27,32 @@ export interface BuildQueue extends BuildTrigger {
 
 const cleanedUp = "This build's output was cleaned up: rebuild it to deploy it";
 
-// createBuildQueue serializes builds per project: at most one running,
-// and one queued commit build per stage. A newer request of the same
-// stage replaces the queued one (newest wins; the replaced build is
-// recorded "skipped" so the history never silently loses it). Different
-// projects build concurrently. Promote jobs share the queue: jobs start
-// one at a time, Production's first, then other stages', each oldest first.
+// How many builds run at once on this server when NBO_BUILD_CONCURRENCY is unset.
+const defaultConcurrency = 2;
+
+// parseBuildConcurrency reads NBO_BUILD_CONCURRENCY: unset means the
+// default, anything but a positive whole number throws (main.ts refuses to start).
+export function parseBuildConcurrency(value: string | undefined): number {
+  if (value === undefined || value === "") return defaultConcurrency;
+  if (!/^[1-9][0-9]*$/.test(value))
+    throw new Error(`NBO_BUILD_CONCURRENCY must be a positive whole number, not "${value}"`);
+  return Number(value);
+}
+
+// createBuildQueue runs at most one job per (project, stage), and at most
+// `concurrency` commit builds across the server; promotes take no build slot
+// (they run no repository code) but stay serial with their stage's builds.
+// Each stage keeps at most one queued commit build: a newer request of the
+// same stage replaces the queued one (newest wins; the replaced build is
+// recorded "skipped" so the history never silently loses it). When a stage
+// or a slot frees, jobs start in the queue's own order across every
+// project: Production's first, then other stages', each oldest first.
 //
-// The queue's state of truth is in-process (`active`), not the DB:
+// The queue's state of truth is in-process (`running`), not the DB:
 // after a restart nothing is running, and any build the previous
 // process left "running"/"queued" is not resumed here (main.ts marks
 // those failed at startup).
+// shortcut: in-process state, so one NBO process per database; a second process would need a DB lease.
 //
 // Supplied values (names only) wait in `supplied` under the job's id until
 // the runner takes them; a superseded job's are dropped at once, and the
@@ -46,39 +61,52 @@ export function createBuildQueue(
   store: Store,
   runner: { runBuild(buildId: string): Promise<void> },
   supplied: SuppliedValues,
+  opts?: { concurrency?: number },
 ): BuildQueue {
-  const active = new Map<string, Promise<void>>();
+  const concurrency = opts?.concurrency ?? defaultConcurrency;
+  // The running jobs, keyed by project and stage.
+  const running = new Map<string, { projectId: string; done: Promise<void> }>();
+  let buildsRunning = 0;
   const namesOnly = (): boolean => store.getServerSettings().envValues === "none";
   // The stage whose variables a job uses (an ephemeral stage uses Preview's).
   const stageName = (projectId: string, stageId: string): string =>
     variableStage(stageId ? store.getStage(stageId) : store.productionStage(projectId));
 
-  function drain(projectId: string): void {
-    if (active.has(projectId)) return;
-    const next = store.nextQueuedJob(projectId);
-    if (!next) return;
-    const done = (async () => {
-      try {
-        await runner.runBuild(next.id);
-      } catch (err) {
+  function drain(): void {
+    // A stage is taken by its running job, or by its first queued job
+    // (later jobs of that stage never pass it, even while it waits for a slot).
+    const taken = new Set(running.keys());
+    for (const next of store.queuedJobs()) {
+      const key = `${next.projectId}/${next.stageId}`;
+      if (taken.has(key)) continue;
+      taken.add(key);
+      const isBuild = next.kind !== "promote";
+      if (isBuild && buildsRunning >= concurrency) continue;
+      if (isBuild) buildsRunning++;
+      const done = (async () => {
         try {
-          store.completeBuild(next.id, "failed", undefined, err instanceof Error ? err.message : String(err));
-        } catch {
-          // store unavailable
+          await runner.runBuild(next.id);
+        } catch (err) {
+          try {
+            store.completeBuild(next.id, "failed", undefined, err instanceof Error ? err.message : String(err));
+          } catch {
+            // store unavailable
+          }
+        } finally {
+          supplied.drop(next.id);
         }
-      } finally {
-        supplied.drop(next.id);
-      }
-    })();
-    active.set(projectId, done);
-    void done.finally(() => {
-      active.delete(projectId);
-      try {
-        drain(projectId);
-      } catch {
-        // store closed (process shutting down) — nothing to drain
-      }
-    });
+      })();
+      running.set(key, { projectId: next.projectId, done });
+      void done.finally(() => {
+        running.delete(key);
+        if (isBuild) buildsRunning--;
+        try {
+          drain();
+        } catch {
+          // store closed (process shutting down) — nothing to drain
+        }
+      });
+    }
   }
 
   return {
@@ -119,7 +147,7 @@ export function createBuildQueue(
       const manual = opts?.manual === true || older?.manual === true;
       const build = store.createQueuedBuild(projectId, revision, { manual, stageId });
       if (namesOnly() && opts?.values !== undefined) supplied.put(build.id, opts.values);
-      drain(projectId);
+      drain();
       return store.getBuild(build.id);
     },
 
@@ -146,15 +174,18 @@ export function createBuildQueue(
         store.resolveEnv(projectId, stageName(projectId, env.stageId), opts?.values);
       const job = store.createQueuedPromote(projectId, source.id, env.id);
       if (namesOnly() && opts?.values !== undefined) supplied.put(job.id, opts.values);
-      drain(projectId);
+      drain();
       return store.getBuild(job.id);
     },
 
     async idle(projectId: string): Promise<void> {
       for (;;) {
-        const current = active.get(projectId);
-        if (!current) return;
-        await current.catch(() => {});
+        const all = [...running.values()];
+        // The project is idle when nothing of it runs and nothing of it is
+        // queued (a queued job waits for one of the running ones to finish).
+        if (!all.some((r) => r.projectId === projectId) && (all.length === 0 || !store.nextQueuedJob(projectId)))
+          return;
+        await Promise.race(all.map((r) => r.done.catch(() => {})));
         // let the .finally above run and possibly start the queued build
         await new Promise((r) => setImmediate(r));
       }

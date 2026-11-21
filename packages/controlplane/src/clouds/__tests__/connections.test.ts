@@ -389,3 +389,64 @@ describe("migrating the single Kubernetes connection: edge cases", () => {
     raw.close();
   });
 });
+
+describe("the AWS connection", () => {
+  const aws = {
+    region: "eu-west-1",
+    accountId: "123456789012",
+    repository: "123456789012.dkr.ecr.eu-west-1.amazonaws.com/nbo",
+  };
+  const keys = { accessKeyId: "AKIAABCDEFGHIJKLMNOP", secretAccessKey: "AWS-SECRET-ACCESS-KEY-0123456789abcdefghij" };
+
+  it("round-trips, keeps the key pair sealed at rest, records checks and deletes", async () => {
+    const { store, path } = await openTestStore();
+    expect(store.getAwsConnection()).toBeNull();
+    expect(() => store.getAwsSecrets()).toThrow(ErrNotFound);
+    const saved = store.saveAwsConnection(aws, keys);
+    expect(saved).toMatchObject({ kind: "aws", ...aws, status: "connected", lastError: "" });
+    expect(store.getAwsSecrets()).toEqual(keys);
+    expect(store.hasSealedSecrets()).toBe(true);
+    expect(() => store.verifySecretKey()).not.toThrow();
+    const raw = new DatabaseSync(path);
+    const row = JSON.stringify(raw.prepare("SELECT * FROM connections WHERE kind = 'aws'").get());
+    raw.close();
+    expect(row).not.toContain(keys.secretAccessKey);
+    expect(row).not.toContain(keys.accessKeyId);
+    store.recordConnectionCheck("aws", "denied");
+    expect(store.getAwsConnection()).toMatchObject({ status: "failing", lastError: "denied" });
+    store.deleteConnection("aws");
+    expect(store.getAwsConnection()).toBeNull();
+  });
+
+  it("lists non-archived Lambda environments as using it", async () => {
+    const { store, path } = await openTestStore();
+    const p = store.createProject("web");
+    // shortcut: written raw until the lambda target exists (validTargets, Task 4).
+    const live = store.createEnvironment(p.id, "lambda", "cloudrun");
+    store.createEnvironment(p.id, "run", "cloudrun");
+    const raw = new DatabaseSync(path);
+    raw.prepare("UPDATE environments SET target = 'lambda' WHERE id = ?").run(live.id);
+    raw.close();
+    expect(store.environmentsUsing("aws")).toEqual([{ projectName: "web", environmentId: live.id }]);
+  });
+
+  it("migrates a connections table from before AWS, keeping its rows", async () => {
+    const key = randomBytes(32);
+    const dir = await mkdtemp(join(tmpdir(), "controlplane-conn-aws-"));
+    const path = join(dir, "test.db");
+    const db = new DatabaseSync(path);
+    db.exec(baseSchema);
+    db.exec(gitSchema);
+    db.exec(legacyConnectionsSchema.replace(",'aws'", ""));
+    db.prepare(
+      "INSERT INTO connections (kind, config, secret, status, created_at) VALUES ('google', ?, ?, 'connected', '2026-10-01T00:00:00Z')",
+    ).run(JSON.stringify(google), seal(key, JSON.stringify({ deployerKey: "a", pullerKey: "b" })));
+    db.close();
+    for (let i = 0; i < 2; i++) createStore(path, { secretKey: key }).close();
+    const store = createStore(path, { secretKey: key });
+    openStores.push(store);
+    expect(store.getGoogleConnection()).toMatchObject({ ...google, createdAt: "2026-10-01T00:00:00Z" });
+    expect(store.getGoogleSecrets()).toEqual({ deployerKey: "a", pullerKey: "b" });
+    expect(store.saveAwsConnection(aws, keys).accountId).toBe("123456789012");
+  });
+});

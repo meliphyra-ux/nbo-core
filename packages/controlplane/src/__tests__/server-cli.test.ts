@@ -294,6 +294,27 @@ describe("nbo-server connect and disconnect", () => {
     expect(r.err.join("\n")).toContain("--registry-file");
   });
 
+  it("connect aws reads the secret key from a file or stdin, never a flag", async () => {
+    const SECRET = "wJalrXUtnFEMI/K7MDENG+bPxRfiCYzEXAMPLEKEY";
+    const f = await run(
+      ["connect", "aws", "--access-key-id", "AKIAABCDEFGHIJKLMNOP", "--secret-key-file", "/s", "--region", "eu-west-1"],
+      { files: { "/s": `${SECRET}\n` }, answers: [{ status: 201, body: {} }] },
+    );
+    expect(f.code).toBe(0);
+    expect(req(f.sent[0]!)).toEqual([
+      "POST",
+      `${B}/system/connections/aws`,
+      { accessKeyId: "AKIAABCDEFGHIJKLMNOP", secretAccessKey: SECRET, region: "eu-west-1" },
+    ]);
+    const s = await run(
+      ["connect", "aws", "--access-key-id", "AKIAABCDEFGHIJKLMNOP", "--secret-key-file", "-", "--region", "eu-west-1"],
+      { stdin: SECRET, answers: [{ status: 201, body: {} }] },
+    );
+    expect(body(s.sent[0]!)).toMatchObject({ secretAccessKey: SECRET });
+    const d = await run(["disconnect", "aws"], { answers: [{ status: 204 }] });
+    expect(req(d.sent[0]!)).toEqual(["DELETE", `${B}/system/connections/aws`, undefined]);
+  });
+
   it("disconnect google and a cluster", async () => {
     const g = await run(["disconnect", "google"], { answers: [{ status: 204 }] });
     expect(req(g.sent[0]!)).toEqual(["DELETE", `${B}/system/connections/google`, undefined]);
@@ -425,13 +446,15 @@ describe("nbo-server domains settings", () => {
 });
 
 describe("nbo-server transfer and revalidate", () => {
-  it("transfer to Cloud Run, to a cluster, and cancel", async () => {
+  it("transfer to Cloud Run, to Lambda, to a cluster, and cancel", async () => {
     const cr = await run(["transfer", "prj_1", "--to", "cloudrun"], { answers: [{ status: 202, body: {} }] });
     expect(req(cr.sent[0]!)).toEqual(["POST", `${B}/projects/prj_1/transfer`, { target: "cloudrun", mode: "auto" }]);
     const kc = await run(["transfer", "prj_1", "--to", "kc_abc"], { answers: [{ status: 202, body: {} }] });
     expect(body(kc.sent[0]!)).toEqual({ target: "kubernetes", clusterId: "kc_abc" });
     const k = await run(["transfer", "prj_1", "--to", "kubernetes"], { answers: [{ status: 202, body: {} }] });
     expect(body(k.sent[0]!)).toEqual({ target: "kubernetes" });
+    const lm = await run(["transfer", "prj_1", "--to", "lambda"], { answers: [{ status: 202, body: {} }] });
+    expect(body(lm.sent[0]!)).toEqual({ target: "lambda" });
     const cancel = await run(["transfer", "cancel", "prj_1"]);
     expect(req(cancel.sent[0]!)).toEqual(["POST", `${B}/projects/prj_1/transfer/cancel`, undefined]);
   });

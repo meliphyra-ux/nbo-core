@@ -2,7 +2,7 @@
 // Copyright 2026 Nikita Dovhich
 
 import type { DatabaseSync } from "node:sqlite";
-import { migrateKubernetesConnections } from "../clouds/connections.js";
+import { migrateConnectionKinds, migrateKubernetesConnections } from "../clouds/connections.js";
 import { ephemeralStageColumns, migrateStages } from "../stages/stages.js";
 
 // v2 columns are added with ALTER TABLE rather than folded into the
@@ -227,6 +227,8 @@ export function migrate(db: DatabaseSync, schemas: string[] = []): void {
   // Multiple Kubernetes clusters: the single connection becomes kc_default
   // (in a transaction of its own).
   migrateKubernetesConnections(db);
+  // AWS: an older connections table's kind CHECK gains 'aws' (its own transaction).
+  migrateConnectionKinds(db);
   // Stages: every project gets Production, Preview and Development, and
   // every cloud row without a stage goes on Production (its own transaction).
   migrateStages(db);

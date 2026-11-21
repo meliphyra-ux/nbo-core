@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: FSL-1.1-ALv2
 // Copyright 2026 Nikita Dovhich
 
-import { proxyRequest, type Resolver } from "./proxy.js";
+import { outgoingURL, proxyRequest, type Resolver } from "./proxy.js";
 
 export type IdentityTokenFetcher = (audience: string) => Promise<{ token: string; expiresAt: Date }>;
 
@@ -107,10 +107,31 @@ export function createCloudRunURLs(urls: Record<string, string>, fetchToken: Ide
       tokens.set(name, cached);
     }
     const token = cached;
+    const auth: Auth = {
+      headers: async () => {
+        try {
+          return { Authorization: `Bearer ${await token.get(target.origin, fetchToken)}` };
+        } catch (err) {
+          throw new Error(`failed to fetch identity token: ${String(err)}`, { cause: err });
+        }
+      },
+      invalidate: () => token.invalidate(),
+    };
 
-    return (request: Request): Promise<Response> =>
-      proxyWithAuthRetry(request, target, token, target.origin, fetchToken);
+    return (request: Request): Promise<Response> => proxyWithAuthRetry(request, target, auth);
   };
+}
+
+// Auth is what a call to a private function adds: Cloud Run's identity
+// token (above) or Lambda's SigV4 signature (lambda.ts), computed per
+// attempt over the outgoing URL, method and buffered body. invalidate
+// drops a cached credential after a 401/403.
+export interface Auth {
+  headers: (url: URL, method: string, body: ArrayBuffer | null) => Promise<Record<string, string>>;
+  invalidate: () => void;
+  // responseHeaderTimeoutMs: this backend's wait for response headers
+  // (cloudRunConfig.responseHeaderTimeoutMs when absent).
+  responseHeaderTimeoutMs?: number;
 }
 
 // proxyWithAuthRetry buffers the request body up front so it can be
@@ -124,42 +145,38 @@ export function createCloudRunURLs(urls: Record<string, string>, fetchToken: Ide
 // — port of isSafeRetryMethod/roundTripWithAuthRetry (cloudrun.go lines
 // 135-211). A thrown attempt means no response headers arrived, so no
 // bytes of it have gone anywhere.
-async function proxyWithAuthRetry(
-  request: Request,
-  target: URL,
-  token: CachedToken,
-  audience: string,
-  fetchToken: IdentityTokenFetcher,
-): Promise<Response> {
+export async function proxyWithAuthRetry(request: Request, target: URL, auth: Auth): Promise<Response> {
   const hasBody = request.method !== "GET" && request.method !== "HEAD";
   const bodyBuffer = hasBody ? await request.arrayBuffer() : null;
   const backoffs = cloudRunConfig.authRetryBackoffMs;
   const resume = isResume(request);
 
   for (let attempt = 0; ; attempt++) {
-    let bearer: string;
+    let authHeaders: Record<string, string>;
     try {
-      bearer = await token.get(audience, fetchToken);
+      authHeaders = await auth.headers(outgoingURL(request, target), request.method, bodyBuffer);
     } catch (err) {
-      return new Response(`funcproxy: failed to fetch identity token: ${String(err)}`, { status: 502 });
+      return new Response(`funcproxy: ${err instanceof Error ? err.message : String(err)}`, { status: 502 });
     }
 
     const controller = new AbortController();
     const timer = setTimeout(
       () => controller.abort(),
-      resume ? cloudRunConfig.resumeHeaderTimeoutMs : cloudRunConfig.responseHeaderTimeoutMs,
+      resume
+        ? cloudRunConfig.resumeHeaderTimeoutMs
+        : (auth.responseHeaderTimeoutMs ?? cloudRunConfig.responseHeaderTimeoutMs),
     );
     let response: Response | undefined;
     let threwError: unknown;
-    // Overwriting Authorization below is Cloud Run's own requirement
-    // (its IAM layer needs a Google identity token there to let the
-    // request through at all) — it would otherwise silently discard
+    // Overwriting Authorization below is Cloud Run's and Lambda's own
+    // requirement (their IAM layer needs the token or signature there to
+    // let the request through at all) — it would otherwise silently discard
     // whatever Authorization the client sent for the function's own
     // code to check. Stash it under a reserved header so host.mjs can
     // restore it before the function ever sees the request; absent
     // entirely when the client sent no Authorization, matching every
     // other (non-Cloud-Run) path where this header never appears.
-    const extraHeaders: Record<string, string> = { Authorization: `Bearer ${bearer}` };
+    const extraHeaders: Record<string, string> = { ...authHeaders };
     const originalAuth = request.headers.get("authorization");
     if (originalAuth !== null) {
       extraHeaders["X-Nbo-Forwarded-Authorization"] = originalAuth;
@@ -183,12 +200,12 @@ async function proxyWithAuthRetry(
     if (!canRetry) {
       // Not retried, but the next call mustn't reuse a token that may be why
       // this one was turned away.
-      if (rejected) token.invalidate();
+      if (rejected) auth.invalidate();
       if (response !== undefined) return response;
       return new Response(`funcproxy: backend request failed: ${String(threwError)}`, { status: 502 });
     }
 
-    token.invalidate();
+    auth.invalidate();
     await new Promise((r) => setTimeout(r, backoffs[attempt]));
   }
 }

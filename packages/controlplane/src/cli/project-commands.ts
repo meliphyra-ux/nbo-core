@@ -59,9 +59,10 @@ export async function runProjectCommand(
       const to = need(values, "to");
       let body: Record<string, unknown>;
       if (to === "cloudrun") body = { target: "cloudrun", mode: "auto" };
+      else if (to === "lambda") body = { target: "lambda" };
       else if (to === "kubernetes") body = { target: "kubernetes" };
       else if (/^kc_[a-z0-9]{1,32}$/.test(to)) body = { target: "kubernetes", clusterId: to };
-      else throw new UsageError("--to must be cloudrun, kubernetes or a cluster id (kc_...)");
+      else throw new UsageError("--to must be cloudrun, lambda, kubernetes or a cluster id (kc_...)");
       print(await call("POST", `/projects/${id}/transfer`, body));
       return 0;
     }

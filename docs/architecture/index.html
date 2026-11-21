@@ -675,7 +675,7 @@
     word-break: break-all;
   }
 
-  /* Traffic switch (chapter 6) */
+  /* Traffic switch (chapter 7) */
   .bar {
     display: flex;
     height: 32px;
@@ -751,7 +751,7 @@
     color: var(--ink-soft);
   }
 
-  /* Routing phases (chapter 7) */
+  /* Routing phases (chapter 8) */
   .phases {
     display: flex;
     flex-wrap: wrap;
@@ -785,7 +785,7 @@
     z-index: 1;
   }
 
-  /* API (chapter 9) */
+  /* API (chapter 10) */
   .search {
     font: 14px var(--display);
     background: var(--leaf);
@@ -857,7 +857,7 @@
       <span class="ch-no">1</span>
       <h1 class="display">How NBO works</h1>
       <p class="prose">
-        NBO deploys the same build to Kubernetes and Cloud Run, and moves a project between them as a weighted traffic shift. It is built like a compiler: frameworks write a
+        NBO deploys the same build to Kubernetes, Cloud Run and AWS Lambda, and moves a project between them as a weighted traffic shift. It is built like a compiler: frameworks write a
         neutral build output, and cloud adapters deploy from it without knowing the framework.
       </p>
     </div>
@@ -921,12 +921,12 @@
           </tr>
           <tr>
             <td><code>@nbo/deploy</code></td>
-            <td>The deploy algorithm and the two targets (Kubernetes, Cloud Run).</td>
+            <td>The deploy algorithm and the targets (Kubernetes, Cloud Run, Lambda).</td>
             <td>Inside the control-plane / CLI</td>
           </tr>
           <tr>
-            <td><code>@nbo/adapter-k8s</code>, <code>@nbo/adapter-cloudrun</code></td>
-            <td>Images, manifests, <code>kubectl</code> / <code>gcloud</code> calls.</td>
+            <td><code>@nbo/adapter-k8s</code>, <code>@nbo/adapter-cloudrun</code>, <code>@nbo/adapter-lambda</code></td>
+            <td>Images, manifests, <code>kubectl</code> / <code>gcloud</code> / <code>aws</code> calls.</td>
             <td>Your machine (shells out)</td>
           </tr>
           <tr>
@@ -941,13 +941,13 @@
           </tr>
           <tr>
             <td><code>@nbo/funcproxy</code>, <code>@nbo/nodehost</code></td>
-            <td>Call functions (local spawn, in-cluster URL, or Cloud Run with an ID token); Node ↔ Fetch bridge.</td>
+            <td>Call functions (local spawn, in-cluster URL, Cloud Run with an ID token, or a Lambda function URL signed with SigV4); Node ↔ Fetch bridge.</td>
             <td>App containers, function containers</td>
           </tr>
           <tr>
             <td><code>@nbo/isrcache</code></td>
             <td>ISR cache service (in-memory, byte-limited, <code>/healthz</code>); <code>nbo isrcache</code> starts it.</td>
-            <td>One per app (<code>&lt;app&gt;-isr</code>) on Kubernetes and Cloud Run, when the build has ISR pages</td>
+            <td>One per app (<code>&lt;app&gt;-isr</code>) on Kubernetes and Cloud Run, when the build has ISR pages (none on Lambda: served uncached)</td>
           </tr>
           <tr>
             <td><code>@nbo/conformance</code>, <code>@nbo/loadtest</code></td>
@@ -1025,9 +1025,22 @@
   </section>
 
   <!-- ================================================================== -->
-  <section class="chapter" id="traffic" data-title="Edge & traffic" data-c="var(--grass)">
+  <section class="chapter" id="lambda" data-title="Lambda adapter" data-c="var(--sienna)">
     <div class="ch-head">
       <span class="ch-no">6</span>
+      <h1 class="display">Lambda adapter</h1>
+      <p class="prose">
+        The same build on AWS Lambda: the connection (an IAM user's key in one region, the ECR repository <code>nbo</code>), and what each deploy pushes and runs. Not tried on
+        a real AWS account yet: every step below ran against a fake <code>aws</code> command.
+      </p>
+    </div>
+    <div class="stepper" data-steps="lambda"></div>
+  </section>
+
+  <!-- ================================================================== -->
+  <section class="chapter" id="traffic" data-title="Edge & traffic" data-c="var(--grass)">
+    <div class="ch-head">
+      <span class="ch-no">7</span>
       <h1 class="display">Edge &amp; traffic</h1>
       <p class="prose">
         Every project has one address on the NBO edge, <code>http://&lt;name&gt;.127.0.0.1.sslip.io:9443</code>. The edge picks a backend by weight and keeps each visitor on it (a random-id cookie, <code>nbo_v</code>, plus weighted rendezvous hashing in
@@ -1088,7 +1101,7 @@ PUT http://127.0.0.1:9444/targets/storefront.127.0.0.1.sslip.io
   <!-- ================================================================== -->
   <section class="chapter" id="runtime" data-title="Routing & runtime" data-c="var(--sienna)">
     <div class="ch-head">
-      <span class="ch-no">7</span>
+      <span class="ch-no">8</span>
       <h1 class="display">Routing &amp; runtime</h1>
       <p class="prose">Inside every app container, <code>nbo serve</code> answers requests from the <code>.nbo/</code> tree: one router, the same on every cloud.</p>
     </div>
@@ -1113,8 +1126,8 @@ PUT http://127.0.0.1:9444/targets/storefront.127.0.0.1.sslip.io
         <p>
           Functions (SSR, middleware) run in their own containers. The app reads their URLs from <code>/functions.json</code>, written into the image at build time:
           <code>http://&lt;app&gt;-fn-&lt;name&gt;:8080</code> on Kubernetes (a name over 63 characters becomes its first 54, a dash and 8 hex of its sha256,
-          <code>kubeName</code>), the private <code>*.run.app</code> URL on Cloud Run. On Cloud Run, <code>@nbo/funcproxy</code> fetches an ID token from the metadata server for
-          each call.
+          <code>kubeName</code>), the private <code>*.run.app</code> URL on Cloud Run, the function URL (auth <code>AWS_IAM</code>) on Lambda. On Cloud Run, <code>@nbo/funcproxy</code> fetches an ID token from the metadata server for
+          each call; on Lambda (<code>AWS_LAMBDA_FUNCTION_NAME</code> set) it signs each call with SigV4 from the role's credentials and waits up to 15 s for the first byte.
         </p>
       </div>
       <div class="leaf stack">
@@ -1143,7 +1156,7 @@ PUT http://127.0.0.1:9444/targets/storefront.127.0.0.1.sslip.io
   <!-- ================================================================== -->
   <section class="chapter" id="operate" data-title="Operating" data-c="var(--chrome)">
     <div class="ch-head">
-      <span class="ch-no">8</span>
+      <span class="ch-no">9</span>
       <h1 class="display">Operating NBO</h1>
       <p class="prose">The ports NBO listens on. Running, configuring and launching NBO are described in the manual (<code>docs/manual/README.md</code>) and <code>docs/production.md</code>.</p>
     </div>
@@ -1201,7 +1214,7 @@ PUT http://127.0.0.1:9444/targets/storefront.127.0.0.1.sslip.io
   <!-- ================================================================== -->
   <section class="chapter" id="api" data-title="API" data-c="var(--oxide)">
     <div class="ch-head">
-      <span class="ch-no">9</span>
+      <span class="ch-no">10</span>
       <h1 class="display">API reference</h1>
       <p class="prose">
         Every route of the control-plane (<code>127.0.0.1:8081</code>) and the edge admin API (<code>127.0.0.1:9444</code>). Bodies are JSON; errors are
@@ -1301,7 +1314,7 @@ PUT http://127.0.0.1:9444/targets/storefront.127.0.0.1.sslip.io
   <!-- ================================================================== -->
   <section class="chapter" id="terraform" data-title="Terraform" data-c="var(--teal)">
     <div class="ch-head">
-      <span class="ch-no">10</span>
+      <span class="ch-no">11</span>
       <h1 class="display">Terraform &amp; API tokens</h1>
       <p class="prose">
         Projects, variables, builds, domains and traffic can live in <code>.tf</code> files. The provider (<code>packages/terraform-provider</code>, Go, ADR 0004) is a separate
@@ -1339,7 +1352,7 @@ terraform apply
           minute). Deleting the row revokes it at once.
         </p>
         <p>
-          <strong>A token equals root on the server.</strong> It can't read stored cloud credentials, but it can run builds, and builds run as the NBO user; NBO has no isolated builds. A token has no expiry. The <code>user_id</code> and <code>role</code> columns are
+          <strong>A token controls every site.</strong> It can't read stored cloud credentials, and in container mode (the production default) the builds it starts can't read NBO's files, environment or Docker socket or run code in NBO's process either, though they reach the network, including the cloud metadata address (which hands out the VM's own credentials on Google Cloud and AWS unless the host blocks it); but it can change variables, repositories and build commands, deploy any build and move traffic. With <code>NBO_BUILD_ISOLATION=none</code> builds run as the NBO user, so a token equals root on the server. A token has no expiry. The <code>user_id</code> and <code>role</code> columns are
           what an older NBO with sign-in wrote; NBO writes <code>''</code> and <code>admin</code>.
         </p>
         <p>
@@ -1568,7 +1581,7 @@ terraform apply</pre>
         t: "Image + deploy",
         c: "var(--ultra)",
         where: ["Docker", "kind / Artifact Registry"],
-        d: "Functions first (one image and service each), then the app image (the NBO server + <code>.nbo/</code> + <code>/functions.json</code>). Kubernetes: <code>kind load</code> + <code>kubectl apply</code>. Cloud Run: <code>docker push</code> + <code>gcloud run deploy</code>. Your own variables are delivered at deploy time: plain ones through <code>--env-vars-file</code>, secret ones from Secret Manager through <code>--set-secrets</code>. Skipped entirely if the live content id already matches.",
+        d: "Functions first (one image and service each), then the app image (the NBO server + <code>.nbo/</code> + <code>/functions.json</code>). Kubernetes: <code>kind load</code> + <code>kubectl apply</code>. Cloud Run: <code>docker push</code> + <code>gcloud run deploy</code>. Lambda: the Web Adapter added, <code>docker push</code> to ECR + <code>aws lambda create-function</code> / <code>update-function-code</code> and a function URL; every variable is Lambda environment (4 KB in all). Your own variables are delivered at deploy time: plain ones through <code>--env-vars-file</code>, secret ones from Secret Manager through <code>--set-secrets</code>. Skipped entirely if the live content id already matches.",
       },
       {
         k: "Edge",
@@ -1615,7 +1628,7 @@ terraform apply</pre>
           ["projects", "id, name (unique), created_at, edge_host, polling_enabled, last_seen_sha, setup_status (provisioning | ready | needs-setup), setup_error"],
           ["stages", "id, project_id, name, kind (production | preview | development | custom | ephemeral), branch, auto_deploy, host, last_seen_sha; ephemeral ones also expires_at, label, removal_status (\"\" | removing | removal-failed | removed), removal_attempts, next_attempt_at, removal_error. The manual calls these environments; clouds, builds and domains carry a stage_id (old rows: Production)"],
           ["env_vars", "project_id (empty = workspace), stage (an environment name or *), name, value (secret ones sealed), secret, has_value (0 when NBO keeps names only); unique per scope, stage and name"],
-          ["environments", "One row per cloud (the manual says cloud): id, project_id, name (k8s | cloudrun), target, config (JSON: project/region/arRepo/cronsEnabled), traffic_weight, archived"],
+          ["environments", "One row per cloud (the manual says cloud): id, project_id, name (k8s | cloudrun | lambda), target, config (JSON: project/region/arRepo/cronsEnabled; Lambda: region/cronsEnabled), traffic_weight, archived"],
           ["deployments", "id, environment_id, content_id, status, url, error, created_at; one per cloud per build"],
           [
             "builds",
@@ -1750,12 +1763,12 @@ terraform apply</pre>
         {
           t: "Queue",
           files: ["controlplane/src/builds/build-queue.ts"],
-          d: `<p>One job runs per project at a time; at most one commit build waits. A newer commit replaces the waiting build (recorded as <em>skipped: superseded</em>); promote jobs (a stored build deployed to one cloud) wait in order behind it and are never replaced. Poll ticks, Redeploy, webhooks, setup and transfers all go through this queue.</p>`,
+          d: `<p>One job runs per environment (stage) at a time, so environments of one project build side by side; at most <code>NBO_BUILD_CONCURRENCY</code> builds (default 2) run on the whole server, the next picked in queue order across projects (Production first, then oldest; promotes take no place). At most one commit build waits per environment. A newer commit replaces the waiting build (recorded as <em>skipped: superseded</em>); promote jobs (a stored build deployed to one cloud) wait in order behind it and are never replaced. Poll ticks, Redeploy, webhooks, setup and transfers all go through this queue.</p>`,
         },
         {
           t: "Build",
-          files: ["controlplane/src/builds/runner.ts", "controlplane/src/builds/run.ts"],
-          d: `<p><code>git clone</code> → <code>git checkout &lt;sha&gt;</code> → optional ignored-build-step (exit 0 skips) → your build command, in the Root Directory, with <code>NEXT_ADAPTER_PATH</code> set. Every command's output streams into the build log. A command that times out has its whole process tree killed.</p><p>Static builds: <code>produce(outputDir → .nbo/)</code>. Next.js: the adapter already wrote <code>.nbo/</code>; if it landed in a subfolder the error names the Root Directory to set.</p>`,
+          files: ["controlplane/src/builds/runner.ts", "controlplane/src/builds/run.ts", "controlplane/src/builds/sandbox.ts"],
+          d: `<p><code>git clone</code> → <code>git checkout &lt;sha&gt;</code> (by NBO, so git credentials stay outside) → optional ignored-build-step (exit 0 skips) → your build command, in the Root Directory, with <code>NEXT_ADAPTER_PATH</code> set. Every command's output streams into the build log. A command that times out has its whole process tree killed.</p><p><strong>The sandbox</strong> (<code>NBO_BUILD_ISOLATION=container</code>, the production default): the two repository commands and the producers run in a throwaway container on the server's Docker. A helper container with no network copies the clone (and NBO's Next.js adapter with the producers) into a volume <code>nbo-build-&lt;id&gt;</code>, and NBO empties its own copy of the clone; the build container runs <code>sleep infinity</code> as <code>--init --user 1000:1000 --cap-drop ALL --security-opt no-new-privileges --read-only --tmpfs /tmp --pids-limit 4096 --cpus --memory</code> with only that volume mounted, and each step is a <code>docker exec</code> with the project's variables and <code>NBO_ENV</code>/<code>NBO_GIT_*</code>/<code>NEXT_ADAPTER_PATH</code>/<code>CI</code>/<code>HOME</code>, <code>PATH</code> with corepack's pnpm and Yarn first, none of NBO's own environment, no Docker socket. 10 minutes per step, 30 per build; a timeout removes the container. Afterwards NBO restarts it, runs <code>produce-cli.js</code> in it (static output, Next 14/15's <code>.next/</code>, or the adapter's <code>.nbo/</code>), stops it and streams only <code>.nbo/</code> out (<code>docker cp … -</code>, capped at 5 GiB), refusing any symlink, hard link or special file; container and volume go in <code>finally</code>, leftovers (label <code>nbo.build</code>) at startup. No Docker means "the build sandbox needs Docker", never a fallback. So the repository's code never reads NBO's files or runs in NBO's process; the network is open, though, metadata address included (egress rules are not done). <code>none</code> (dev default) runs the commands as NBO's own child processes.</p><p>Static builds: <code>produce(outputDir → .nbo/)</code>. Next.js: the adapter already wrote <code>.nbo/</code>; if it landed in a subfolder the error names the Root Directory to set.</p>`,
         },
         {
           t: "Deploy to each cloud",
@@ -1879,6 +1892,53 @@ gcloud run deploy &lt;app&gt; --image … --labels nbo-content-id=&lt;32 hex&gt;
           d: `<pre>gcloud run services list --project &lt;p&gt; --region &lt;r&gt; --format=value(metadata.name)
 gcloud run services delete &lt;app&gt; --project &lt;p&gt; --region &lt;r&gt; --quiet
 gcloud run services delete &lt;app&gt;-fn-&lt;fn&gt; … --quiet</pre><p>Images stay in Artifact Registry.</p>`,
+        },
+      ],
+      lambda: [
+        {
+          t: "Connect",
+          files: ["controlplane/src/clouds/aws-connect.ts"],
+          d: `<p><code>nbo-server connect aws --access-key-id &lt;id&gt; --secret-key-file &lt;path|-&gt; --region &lt;r&gt;</code> (<code>POST /system/connections/aws</code>). The key pair reaches <code>aws</code> only through its environment:</p><pre>aws sts get-caller-identity                       # the account id
+aws ecr describe-repositories --repository-names nbo
+aws ecr create-repository --repository-name nbo \\
+  --image-scanning-configuration scanOnPush=true   # when missing</pre><p>The IAM user's least-privilege policy is <code>awsIamPolicy</code>, served by <code>GET /system/connections/aws/policy</code>: Lambda only on <code>function:nbo-*</code>, and roles under <code>/nbo/</code> only with the permissions boundary <code>nbo-boundary</code> (<code>awsBoundaryPolicy</code>, <code>?document=boundary</code>: logs and calling <code>nbo-</code> functions), which the person connecting creates.</p>`,
+        },
+        {
+          t: "Idempotency check",
+          files: ["adapter-lambda/src/function.ts", "deploy/src/lambda-target.ts"],
+          d: `<pre>aws lambda get-function --function-name nbo-&lt;app&gt;
+aws lambda get-function-url-config --function-name nbo-&lt;app&gt;</pre><p>Tags <code>nbo-content-id</code>, <code>nbo-fn-config</code> and <code>nbo-env</code> on a ready function mean nothing to do. Tags are written last, and an update sets them to <code>pending</code> before replacing code, so a half-finished deploy never reads as live.</p>`,
+        },
+        {
+          t: "Images with the Web Adapter",
+          files: ["adapter-lambda/src/image.ts", "deploy/src/lambda-target.ts"],
+          d: `<p>The same app and function images as Cloud Run, plus one layer: the AWS Lambda Web Adapter copied to <code>/opt/extensions/lambda-adapter</code> from its public image pinned by digest, with <code>AWS_LWA_PORT=8080</code> and <code>AWS_LWA_INVOKE_MODE=response_stream</code>.</p><pre>aws ecr get-login-password | docker login --password-stdin &lt;account&gt;.dkr.ecr.&lt;r&gt;.amazonaws.com
+docker push &lt;repo&gt;:&lt;lambda name&gt;_&lt;image hash&gt;-l&lt;layer hash&gt;</pre><p>Each push has its own private <code>DOCKER_CONFIG</code>.</p>`,
+        },
+        {
+          t: "Function Lambdas (private)",
+          files: ["adapter-lambda/src/function.ts"],
+          d: `<pre>aws iam create-role --role-name nbo-&lt;app&gt;-fn-&lt;fn&gt; --path /nbo/ --permissions-boundary …/nbo-boundary …
+aws lambda create-function --function-name nbo-&lt;app&gt;-fn-&lt;fn&gt; --package-type Image \\
+  --memory-size &lt;memoryMb&gt; --timeout &lt;maxDurationSec&gt; --environment file://…
+aws lambda create-function-url-config --auth-type AWS_IAM --invoke-mode RESPONSE_STREAM</pre><p>Only the app's role may call them; the app signs each call with SigV4.</p>`,
+        },
+        {
+          t: "App Lambda (public)",
+          files: ["adapter-lambda/src/function.ts", "deploy/src/lambda-target.ts"],
+          d: `<pre>aws lambda create-function --function-name nbo-&lt;app&gt; …   # or update-function-code + update-function-configuration
+aws lambda create-function-url-config --auth-type NONE --invoke-mode RESPONSE_STREAM
+aws lambda add-permission … lambda:InvokeFunctionUrl
+aws lambda tag-resource … nbo-content-id=&lt;id&gt;</pre><p>The function URL (<code>https://&lt;id&gt;.lambda-url.&lt;r&gt;.on.aws</code>, trailing slash dropped) becomes the cloud's backend on the edge. No ISR cache: prerender routes are served uncached. Custom domains only through the edge.</p>`,
+        },
+        {
+          t: "Teardown",
+          files: ["controlplane/src/clouds/cloud-teardown.ts"],
+          d: `<pre>aws lambda list-functions
+aws lambda delete-function --function-name &lt;app&gt;[-fn-&lt;fn&gt;]
+aws iam delete-role --role-name &lt;same name&gt;
+aws ecr list-images --repository-name nbo --filter tagStatus=TAGGED
+aws ecr batch-delete-image --repository-name nbo --image-ids …</pre><p>Only names that are the app itself or start with <code>&lt;app&gt;-fn-</code> and belong to no other app of the project.</p>`,
         },
       ],
     };
@@ -2205,7 +2265,7 @@ spec:
       ["DELETE","/workspace/env/{name}","Delete a workspace variable.","control-plane","token","Variables"],
       ["PATCH","/system/workspace-settings","{ storeEnvValues: false, confirm: \"delete values\" } turns names only on (from this computer only; tokens get 403).","control-plane","local","Variables"],
       ["GET","/system/preflight","What this machine can deploy to: gcloud (account, project, region), Docker, kind; plus a Kubernetes summary and per-cluster list.","control-plane","local","System: clouds, edge and domains"],
-      ["GET","/system/connections","Production connections: Google, and a list of Kubernetes clusters (never secrets).","control-plane","local","System: clouds, edge and domains"],
+      ["GET","/system/connections","Production connections: Google, AWS, and a list of Kubernetes clusters (never secrets).","control-plane","local","System: clouds, edge and domains"],
       ["POST","/system/connections/kubernetes","Connect another Kubernetes cluster ({ name, source, registry }); names are unique and cannot change later.","control-plane","local","System: clouds, edge and domains"],
       ["PUT","/system/connections/kubernetes/{id}","Replace one cluster's credentials or registry.","control-plane","local","System: clouds, edge and domains"],
       ["POST","/system/connections/kubernetes/{id}/test","Re-check one cluster with its own stored kubeconfig.","control-plane","local","System: clouds, edge and domains"],
@@ -2217,8 +2277,10 @@ spec:
       ["GET","/system/connections/plan","The steps a connection would run, before it runs: ?google=<machine|key>,<project>,<region> and/or ?kubernetes=1.","control-plane","local","System: clouds, edge and domains"],
       ["GET","/system/connections/google/identity","The core's Google identity: issuer, subject, provider id, key id and the public key set Google trusts. Never the private key. nbo-server google identity prints issuer, subject, provider and keyId.","control-plane","local","System: clouds, edge and domains"],
       ["POST","/system/connections/google","Connect Google: { source: \"machine\", project, region }, { source: \"key\", keyJson, region } or keyless { source: \"wif\", code, region } (the setup command's connection code); 201.","control-plane","local","System: clouds, edge and domains"],
-      ["POST","/system/connections/{kind}/test","Re-check the stored connection (google); a keyless one also runs the self-check (checkWarnings, otherCores). nbo-server google check prints its result.","control-plane","local","System: clouds, edge and domains"],
-      ["DELETE","/system/connections/{kind}","Disconnect Google; refused while projects or domains use it.","control-plane","local","System: clouds, edge and domains"],
+      ["POST","/system/connections/{kind}/test","Re-check the stored connection (google or aws); a keyless Google one also runs the self-check (checkWarnings, otherCores). nbo-server google check prints its result.","control-plane","local","System: clouds, edge and domains"],
+      ["POST","/system/connections/aws","Connect AWS (Lambda) or replace its key: { accessKeyId, secretAccessKey, region } of an IAM user; checks the key with STS and creates the ECR repository nbo; 201. The key reaches the aws CLI only through its environment.","control-plane","local","System: clouds, edge and domains"],
+      ["GET","/system/connections/aws/policy","The least-privilege IAM policy for NBO's IAM user (?region=&account=, else the connection's; placeholders when unknown); &document=boundary gives the nbo-boundary permissions boundary instead.","control-plane","local","System: clouds, edge and domains"],
+      ["DELETE","/system/connections/{kind}","Disconnect Google or AWS; refused while projects (or, for Google, domains) use it.","control-plane","local","System: clouds, edge and domains"],
       ["GET","/system/clusters/{id}/relay","A cluster's relay state: { status, address, caFingerprint?, job? }.","control-plane","local","System: clouds, edge and domains"],
       ["POST","/system/clusters/{id}/relay","Enable public entry on a cluster: { confirmBilling: true }; runs as a background job (202 { job }).","control-plane","local","System: clouds, edge and domains"],
       ["POST","/system/clusters/{id}/update-setup","Re-run the cluster's guard and RBAC setup with admin credentials ({ admin }, never stored).","control-plane","local","System: clouds, edge and domains"],

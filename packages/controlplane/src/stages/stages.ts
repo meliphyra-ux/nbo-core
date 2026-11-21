@@ -160,12 +160,13 @@ export function validateHostLabel(label: unknown): string | null {
 }
 
 // stageRowName names a custom stage's cloud row: s-<stage>-<slot>, where
-// the slot is "cr" for Cloud Run, "k8s" for the dev cluster or kc_default,
+// the slot is "cr" for Cloud Run, "lm" for Lambda, "k8s" for the dev cluster or kc_default,
 // otherwise "k-" plus the first 6 hex of the cluster id's sha256. No
 // Production row starts with "s-", so the two never collide.
 export function stageRowName(stage: Pick<Stage, "name">, cloud: { target: string; clusterId?: string }): string {
   let slot: string;
   if (cloud.target === "cloudrun") slot = "cr";
+  else if (cloud.target === "lambda") slot = "lm";
   else if (cloud.clusterId === undefined || cloud.clusterId === "kc_default") slot = "k8s";
   else slot = `k-${createHash("sha256").update(cloud.clusterId).digest("hex").slice(0, 6)}`;
   return `s-${stage.name}-${slot}`;

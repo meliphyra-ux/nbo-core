@@ -63,7 +63,7 @@ func (r *trafficResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 			"weights": schema.MapAttribute{
 				Required:      true,
 				ElementType:   types.Int64Type,
-				Description:   `Cloud name to percent, adding up to 100, like { k8s = 90, cloudrun = 10 }. A custom environment names its clouds s-<environment>-cr, s-<environment>-k8s and so on. A cloud left out gets 0.`,
+				Description:   `Cloud name to percent, adding up to 100, like { k8s = 90, cloudrun = 10 }. A custom environment names its clouds s-<environment>-cr, s-<environment>-lm, s-<environment>-k8s and so on. A cloud left out gets 0.`,
 				PlanModifiers: []planmodifier.Map{weightsPlanModifier{}},
 			},
 		},

@@ -4,9 +4,14 @@ A **build** turns one commit into a `.nbo/` folder, then deploys it everywhere t
 
 ## Where builds run
 
-On the same machine as the control-plane, as normal child processes. There's no sandbox: the build command can do anything your user account can. That's acceptable for a single developer and is the first thing that must change before NBO serves other people (see the multitenancy notes in `docs/`).
+On the same machine as the control-plane. NBO itself clones the repository (so git credentials stay with NBO) and deploys the `.nbo/` the build ends with. Everything of the repository's, the [ignored build step](#3-ignored-build-step-optional), the [build command](#4-build-command) and turning its output into `.nbo/`, runs where `NBO_BUILD_ISOLATION` says ([Server settings](./server-settings.md)):
 
-Builds use your installed `git`, `node`, `pnpm`/`npm`, and `docker`.
+- **`container`** (the default in production mode): in a throwaway container on the server's Docker, one per build (`packages/controlplane/src/builds/sandbox.ts`). NBO copies the clone into a Docker volume of its own (`nbo-build-<build id>`) and then empties its own copy, so nothing it does later reads the repository's files on the server. It starts a container from `NBO_BUILD_IMAGE` (default `node:24-bookworm`, pinned by digest: Node.js 24, npm, git, python3, make and g++, with pnpm and Yarn through corepack: the repository's `packageManager` field picks the version, downloaded on first use) and runs each step in it with `docker exec`. The container runs as user 1000 with no Linux capabilities, a read-only root (only `/tmp` and the work volume are writable; `HOME` is `/work/.home`), no Docker socket and no other mount, and none of NBO's files or environment. Limits: `NBO_BUILD_CPUS` (2), `NBO_BUILD_MEMORY` (`4g`, no swap beyond it), 4096 processes, 10 minutes per step and **30 minutes per build**, counted from the start of the build and covering the copies in and out. A step past either limit removes the container at once and the build fails. After the build command, NBO restarts the container (ending anything the build left running) and makes `.nbo/` inside it with the same producers it runs in `none` mode (`@nbo/next-adapter`'s `produce-output.js`: the static output folder, Next.js 14 and 15's `.next/`, or the `.nbo/` Next.js 16's adapter wrote). Then it copies only `.nbo/` out, at most 5 GiB (`the build output is larger than … bytes`), and refuses any symlink, hard link or special file in it (`the build output has a link or special file: …`), since the producers never write one. The container and volume are removed when the build ends, and leftovers (labelled `nbo.build`) are removed when NBO starts. If Docker can't be reached, the build fails with `the build sandbox needs Docker: …`; NBO never falls back to `none`. The project's variables reach each step on its standard input, as `export` lines its shell reads first, so they never appear on a command line (`ps`) or in `docker inspect`; they are in the build's processes' environment, which root on the server (or anyone allowed to use Docker) can read while the step runs. Before the build, NBO checks free disk (`NBO_BUILD_MIN_FREE`, default `10g`) on Docker's data folder and on its own data and temporary folders, and checks again every 5 seconds while the build runs, stopping it when either falls under half ([Server settings](./server-settings.md)). Leftovers are matched by this server's own id (`nbo.install`, kept in `build-install-id` next to the database), so two NBOs on one Docker don't remove each other's builds. When NBO starts it pulls the build image in the background if Docker doesn't have it yet.
+- **`none`** (the default in dev mode): on the server itself, as normal child processes of NBO, with your installed `git`, `node`, `pnpm`/`npm` and `docker`. The build command can do anything NBO's user account can, including reading its database and secret key. Use it only on a computer of your own; a Windows host needs it, because container mode isn't supported there.
+
+So in container mode the repository's code can't read NBO's key, database or environment, can't use the Docker socket, and never runs in NBO's own process. The container's network is open, though: installs need the internet, and the build can also reach private addresses and the cloud metadata address `169.254.169.254`, which on Google Cloud and AWS virtual machines hands out the machine's own credentials. Block it on the server ([Read this first](../production.md#read-this-first) has the rule) or run NBO on a machine whose cloud identity has no rights.
+
+> **Not tried for real yet.** Container builds have run only on a development machine's Docker (Docker 24), with static sites; not on a Linux server running NBO with Compose, and not with a real Next.js build.
 
 ## The build record
 
@@ -59,14 +64,16 @@ When NBO is set to [keep no variable values](./environments.md#dont-store-variab
 
 ## Promote jobs
 
-Deploying a stored build to a cloud is also a row in `builds`, with `kind` `promote`. It goes through the same queue as normal builds, so a build and a promote of one project never run at the same time. A promote job has no clone and no build command: it validates the stored output and deploys it to one cloud. See [Deploying](./deploying.md#deploying-a-stored-build).
+Deploying a stored build to a cloud is also a row in `builds`, with `kind` `promote`. It goes through the same queue as normal builds, so a build and a promote of one environment never run at the same time. A promote job has no clone and no build command: it validates the stored output and deploys it to one cloud. See [Deploying](./deploying.md#deploying-a-stored-build).
 
 ## The queue
 
 **File:** `packages/controlplane/src/builds/build-queue.ts`
 
-- One build runs per project at a time; different projects build in parallel.
-- At most one build waits behind it **for each [environment](./environments.md)**. A newer request replaces the waiting build of the same environment only, so a staging push never throws away a waiting Production build. When the running build finishes, Production goes first, then custom environments, oldest first.
+- One job runs per **[environment](./environments.md)** at a time, so a Production build and a preview build of the same project run side by side, while a build and a promote of one environment wait for each other.
+- At most `NBO_BUILD_CONCURRENCY` builds (default 2) run at once on the whole server. A build beyond that waits; when a place frees up, the next one is picked in queue order across every project: Production first, then custom environments, then ephemeral ones, oldest first. Promotes don't take a place, because they run no repository code. Each running build uses the CPU and memory of a full build (in container mode up to `NBO_BUILD_CPUS` and `NBO_BUILD_MEMORY` each), so raise the number only if the server has room. Production first is strict: on a busy server where Production builds keep every place taken, other environments' builds wait as long as that lasts (there is no ageing), and a transfer waits until nothing of the project is running or queued, previews included.
+- At most one build waits **for each environment**. A newer request replaces the waiting build of the same environment only, so a staging push never throws away a waiting Production build.
+- Work that touches the whole project stays one at a time: the edge's route table is written by one push at a time, retention never deletes the output of a build that is queued or running, and transfers run for Production only and wait until no build of the project is running.
 - If the control-plane stops mid-build, the build would stay "running" forever. On startup, `recoverInterruptedBuilds` / `recoverInterruptedWork` (`src/v2.ts`) marks such builds failed with "interrupted".
 
 ## Step by step: `runBuild`
@@ -112,11 +119,13 @@ Runs in `appDir` through the shell (so `&&` works), with one extra environment v
 NEXT_ADAPTER_PATH=<repo>/packages/next-adapter/src/adapter.js
 ```
 
+In container mode NBO copies the adapter and the few packages it needs into the build's volume, and the path is `/work/.nbo-adapter/node_modules/@nbo/next-adapter/src/adapter.js`.
+
 Next.js 16+ reads this and loads NBO's adapter during `next build`. You don't need to change `next.config.ts`. Next.js 14 and 15 and other frameworks ignore it (for 14 and 15, see step 5).
 
 The build command and the ignored build step also get three variables that say which [environment](./environments.md) the build is for: `NBO_ENV` (its name, such as `production` or `staging`), `NBO_GIT_COMMIT_REF` (its branch) and `NBO_GIT_COMMIT_SHA`. An ephemeral environment's builds get `NBO_ENV=preview`. (Earlier versions also set `NBO_GIT_PULL_REQUEST_ID` for previews; NBO no longer knows about pull requests, so it is gone.) User variables can't use `NBO_*` names, so these can't clash.
 
-**NBO's own settings stay out of builds.** The build command and the ignored build step inherit NBO's environment (`PATH`, `HOME`, proxy settings and so on) minus every `NBO_*` variable, because those name NBO's database, its secret key file, the link's enrolment code and its cloud accounts, and a build runs code from the repository. Three kinds pass: `NBO_ENV`, `NBO_GIT_*` and `NBO_BUILD_ID` (which pins the Next.js build id). NBO then adds `NBO_ENV`, `NBO_GIT_COMMIT_REF`, `NBO_GIT_COMMIT_SHA`, `NEXT_ADAPTER_PATH` and, for the build command, your variables. Only `NBO_*` names are dropped: every other variable in NBO's own environment (for example `GOOGLE_APPLICATION_CREDENTIALS`, `KUBECONFIG`, `DOCKER_HOST` or `CLOUDSDK_CONFIG` set for NBO's process) is still inherited by the build until builds are isolated; don't give NBO's process cloud credentials through its environment. Builds are not isolated yet either, so a build can still read files NBO can read.
+**NBO's own settings stay out of builds.** In container mode a build gets only the project's variables, `NBO_ENV`, `NBO_GIT_COMMIT_REF`, `NBO_GIT_COMMIT_SHA`, `NBO_BUILD_ID` (when NBO's own environment sets it), `NEXT_ADAPTER_PATH`, `CI=1` and `HOME`, plus the image's own `PATH`; nothing else of NBO's environment. The rest of this paragraph is about `none`. The build command and the ignored build step inherit NBO's environment (`PATH`, `HOME`, proxy settings and so on) minus every `NBO_*` variable, because those name NBO's database, its secret key file, the link's enrolment code and its cloud accounts, and a build runs code from the repository. Three kinds pass: `NBO_ENV`, `NBO_GIT_*` and `NBO_BUILD_ID` (which pins the Next.js build id). NBO then adds `NBO_ENV`, `NBO_GIT_COMMIT_REF`, `NBO_GIT_COMMIT_SHA`, `NEXT_ADAPTER_PATH` and, for the build command, your variables. Only `NBO_*` names are dropped: every other variable in NBO's own environment (for example `GOOGLE_APPLICATION_CREDENTIALS`, `KUBECONFIG`, `DOCKER_HOST` or `CLOUDSDK_CONFIG` set for NBO's process) is still inherited by the build in `none` mode; don't give NBO's process cloud credentials through its environment. With `none` a build can also read every file NBO can read.
 
 The build command gets **all** the variables of the build's environment (workspace ones, overridden by project ones; see [Environments](./environments.md#variables-per-environment)), secret or not, so `NEXT_PUBLIC_*` values can be baked into the bundle. Secret values are replaced with `[redacted]` in the build log, even when the output arrives split across chunks. Very short secrets (one or two characters) can over-redact, because every match in the log is hidden. The ignored build step (step 3) runs **without** your project variables.
 
@@ -136,7 +145,7 @@ See [Deploying](./deploying.md). Each cloud that has automatic deploys on (`auto
 
 ### 7. Clean up
 
-The clone is deleted in a `finally` block, so it goes even after errors.
+The clone, and in container mode the build's container and volume, are deleted in a `finally` block, so they go even after errors.
 
 ## The static producer
 

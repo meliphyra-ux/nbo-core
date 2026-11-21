@@ -198,6 +198,25 @@ importers:
         specifier: ^3.2.4
         version: 3.2.7(@types/debug@4.1.13)(@types/node@24.19.2)(jiti@2.7.0)(jsdom@25.0.1(supports-color@7.2.0))(lightningcss@1.33.0)(supports-color@7.2.0)(tsx@4.23.15)(yaml@2.9.1)
 
+  packages/adapter-lambda:
+    dependencies:
+      '@nbo/planner':
+        specifier: workspace:*
+        version: link:../planner
+    devDependencies:
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      '@types/node':
+        specifier: ^24.0.0
+        version: 24.19.2
+      typescript:
+        specifier: 7.0.2
+        version: 7.0.2
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.7(@types/debug@4.1.13)(@types/node@24.19.2)(jiti@2.7.0)(jsdom@25.0.1(supports-color@7.2.0))(lightningcss@1.33.0)(supports-color@7.2.0)(tsx@4.23.15)(yaml@2.9.1)
+
   packages/cli:
     dependencies:
       '@nbo/adapter-k8s':
@@ -268,6 +287,9 @@ importers:
 
   packages/controlplane:
     dependencies:
+      '@nbo/adapter-lambda':
+        specifier: workspace:*
+        version: link:../adapter-lambda
       '@nbo/deploy':
         specifier: workspace:*
         version: link:../deploy
@@ -338,6 +360,9 @@ importers:
       '@nbo/adapter-k8s':
         specifier: workspace:*
         version: link:../adapter-k8s
+      '@nbo/adapter-lambda':
+        specifier: workspace:*
+        version: link:../adapter-lambda
       '@nbo/digest':
         specifier: workspace:*
         version: link:../digest
@@ -545,6 +570,9 @@ importers:
 
   packages/next-adapter:
     dependencies:
+      '@nbo/producer-static':
+        specifier: workspace:*
+        version: link:../producer-static
       '@nbo/writer':
         specifier: workspace:*
         version: link:../writer
@@ -1362,6 +1390,10 @@ packages:
 
   '@nbo/next-adapter@file:packages/next-adapter':
     resolution: {directory: packages/next-adapter, type: directory}
+
+  '@nbo/producer-static@file:packages/producer-static':
+    resolution: {directory: packages/producer-static, type: directory}
+    hasBin: true
 
   '@nbo/spec@file:spec':
     resolution: {directory: spec, type: directory}
@@ -5341,6 +5373,7 @@ snapshots:
 
   '@nbo/next-adapter@file:packages/next-adapter(@babel/core@8.0.1)(@types/node@20.19.43)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)':
     dependencies:
+      '@nbo/producer-static': file:packages/producer-static
       '@nbo/writer': file:packages/writer
       next: 16.4.2(@babel/core@8.0.1)(@types/node@20.19.43)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
     transitivePeerDependencies:
@@ -5356,6 +5389,7 @@ snapshots:
 
   '@nbo/next-adapter@file:packages/next-adapter(@types/node@24.19.2)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
     dependencies:
+      '@nbo/producer-static': file:packages/producer-static
       '@nbo/writer': file:packages/writer
       next: 16.4.2(@types/node@24.19.2)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
     transitivePeerDependencies:
@@ -5368,6 +5402,10 @@ snapshots:
       - react
       - react-dom
       - sass
+
+  '@nbo/producer-static@file:packages/producer-static':
+    dependencies:
+      '@nbo/writer': file:packages/writer
 
   '@nbo/spec@file:spec': {}
 

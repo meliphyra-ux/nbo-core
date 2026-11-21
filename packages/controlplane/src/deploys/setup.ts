@@ -34,7 +34,8 @@ import { stageRowName } from "../stages/stages.js";
 export type CloudChoice =
   | { target: "kubernetes"; clusterId?: string }
   | { target: "cloudrun"; mode: "auto"; region?: string }
-  | { target: "cloudrun"; mode: "manual"; project: string; region: string; arRepo: string };
+  | { target: "cloudrun"; mode: "manual"; project: string; region: string; arRepo: string }
+  | { target: "lambda" };
 
 export interface SetupRequest {
   name: string;
@@ -60,11 +61,11 @@ export interface SetupRequest {
 const projectNamePattern = /^[a-z0-9]([a-z0-9-]{0,38}[a-z0-9])?$/;
 const fallbackRegion = "us-central1";
 
-// Environment names: Cloud Run is "cloudrun"; Kubernetes is "k8s" in dev
+// Environment names: Cloud Run is "cloudrun", Lambda "lambda"; Kubernetes is "k8s" in dev
 // and on the upgraded kc_default cluster (existing cloud objects keep
 // their names), "k8s-<cluster name>" on any other cluster.
 export function envNameFor(target: CloudChoice["target"], cluster?: KubernetesConnection): string {
-  if (target === "cloudrun") return "cloudrun";
+  if (target === "cloudrun" || target === "lambda") return target;
   return !cluster || cluster.id === defaultClusterId ? "k8s" : `k8s-${cluster.name}`;
 }
 
@@ -96,8 +97,10 @@ export function parseCloudChoice(raw: unknown): CloudChoice {
       invalid("clusterId must be a connected cluster's id (kc_…)");
     return { target: "kubernetes", clusterId: raw.clusterId };
   }
+  // Lambda's region is the AWS connection's.
+  if (raw.target === "lambda") return { target: "lambda" };
   if (raw.target !== "cloudrun")
-    invalid(`unknown cloud target ${JSON.stringify(raw.target)} (known: kubernetes, cloudrun)`);
+    invalid(`unknown cloud target ${JSON.stringify(raw.target)} (known: kubernetes, cloudrun, lambda)`);
   if (raw.mode === "auto") {
     if (raw.region !== undefined && (typeof raw.region !== "string" || !gcpRegion.test(raw.region)))
       invalid("region must look like us-central1");
@@ -186,10 +189,10 @@ export function parseSetupRequest(raw: unknown): SetupRequest {
   };
 }
 
-// cloudKey: one environment per (target, cluster) — Cloud Run once,
-// each Kubernetes cluster once.
+// cloudKey: one environment per (target, cluster) — Cloud Run and Lambda
+// once, each Kubernetes cluster once.
 function cloudKey(c: CloudChoice): string {
-  return c.target === "kubernetes" ? `kubernetes:${c.clusterId ?? ""}` : "cloudrun";
+  return c.target === "kubernetes" ? `kubernetes:${c.clusterId ?? ""}` : c.target;
 }
 
 const maxClouds = 10;
@@ -342,7 +345,7 @@ export function createSetup(deps: SetupDeps): Setup {
           e.target === cloud.target &&
           (cloud.target !== "kubernetes" || environmentClusterId(e.config) === cluster?.id),
       );
-    const create = (target: "kubernetes" | "cloudrun", config: string): Environment =>
+    const create = (target: Environment["target"], config: string): Environment =>
       archived
         ? store.reviveEnvironment(archived.id, config)
         : store.createEnvironment(projectId, name, target, config, custom?.id);
@@ -350,6 +353,11 @@ export function createSetup(deps: SetupDeps): Setup {
     const cronsEnabled = !custom && existing.length === 0;
     if (cloud.target === "kubernetes") {
       return create("kubernetes", JSON.stringify(cluster ? { cronsEnabled, clusterId: cluster.id } : { cronsEnabled }));
+    }
+    if (cloud.target === "lambda") {
+      const aws = store.getAwsConnection();
+      if (!aws) invalid("AWS is not connected: connect it first with nbo-server connect aws");
+      return create("lambda", JSON.stringify({ region: aws.region, cronsEnabled }));
     }
     if (deps.mode === "production" && cloud.mode === "manual") {
       invalid("in production, Cloud Run uses the connected Google Cloud project — choose the automatic option");

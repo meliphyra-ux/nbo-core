@@ -167,9 +167,7 @@ export async function withDockerLogin<T>(
   run: CommandRunner,
   fn: (ctx: ToolContext) => Promise<T>,
 ): Promise<T> {
-  const dir = await privateDir("nbo-docker-");
-  try {
-    const env = { DOCKER_CONFIG: dir };
+  return withDockerConfig(async (env) => {
     try {
       await run("docker", ["login", server, "--username", username, "--password-stdin"], { env, input: password });
     } catch (err) {
@@ -178,6 +176,15 @@ export async function withDockerLogin<T>(
       throw new Error(redact(msg, [password]));
     }
     return await fn({ env });
+  });
+}
+
+// withDockerConfig runs fn with a private, empty DOCKER_CONFIG (env) and
+// always removes it, so a registry login made inside never outlives fn.
+export async function withDockerConfig<T>(fn: (env: { DOCKER_CONFIG: string }) => Promise<T>): Promise<T> {
+  const dir = await privateDir("nbo-docker-");
+  try {
+    return await fn({ DOCKER_CONFIG: dir });
   } finally {
     await removeDir(dir);
   }

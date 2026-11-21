@@ -90,6 +90,57 @@ describe("createEdgeSync", () => {
     expect(registry.get("storefront.127.0.0.1.sslip.io")?.backends.map((b) => b.weight)).toEqual([90, 10]);
   });
 
+  it("pushes run one at a time, so a slow push never lands an older split over a newer one", async () => {
+    const store = await openTestStore();
+    const { p, k8s, cr } = await projectWithEnvs(store);
+    deployOk(store, k8s.id, "https://pabc-k8s.127.0.0.1.sslip.io");
+    deployOk(store, cr.id, "https://pabc-cloudrun-xyz.a.run.app");
+    store.setTrafficWeights(p.id, { [k8s.id]: 100, [cr.id]: 0 });
+    const bodies: string[] = [];
+    let releaseFirst!: () => void;
+    const firstGate = new Promise<void>((r) => (releaseFirst = r));
+    const fakeFetch = (async (_url: string, init?: RequestInit) => {
+      const n = bodies.push(String(init?.body));
+      if (n === 1) await firstGate;
+      return new Response(null, { status: 204 });
+    }) as typeof fetch;
+    const sync = createEdgeSync(store, { adminUrl: "http://edge.invalid", fetch: fakeFetch });
+
+    const first = sync.push(p.id);
+    store.setTrafficWeights(p.id, { [k8s.id]: 0, [cr.id]: 100 });
+    const second = sync.push(p.id);
+    await new Promise((r) => setTimeout(r, 10));
+    expect(bodies).toHaveLength(1);
+    releaseFirst();
+    await Promise.all([first, second]);
+    expect(bodies).toHaveLength(2);
+    expect(JSON.parse(bodies[1]!).backends.map((b: { weight: number }) => b.weight)).toEqual([0, 100]);
+  });
+
+  it("remove waits for a running push, so a push that read a stage's host can't put it back after", async () => {
+    const store = await openTestStore();
+    const { p, k8s, cr } = await projectWithEnvs(store);
+    deployOk(store, k8s.id, "https://pabc-k8s.127.0.0.1.sslip.io");
+    store.setTrafficWeights(p.id, { [k8s.id]: 100, [cr.id]: 0 });
+    const methods: string[] = [];
+    let releaseFirst!: () => void;
+    const firstGate = new Promise<void>((r) => (releaseFirst = r));
+    const fakeFetch = (async (_url: string, init?: RequestInit) => {
+      const n = methods.push(init?.method ?? "GET");
+      if (n === 1) await firstGate;
+      return new Response(null, { status: 204 });
+    }) as typeof fetch;
+    const sync = createEdgeSync(store, { adminUrl: "http://edge.invalid", fetch: fakeFetch });
+
+    const pushed = sync.push(p.id);
+    const removed = sync.remove("storefront.127.0.0.1.sslip.io");
+    await new Promise((r) => setTimeout(r, 10));
+    expect(methods).toEqual(["PUT"]);
+    releaseFirst();
+    await Promise.all([pushed, removed]);
+    expect(methods).toEqual(["PUT", "DELETE"]);
+  });
+
   it("push skips an all-zero split instead of sending it", async () => {
     const store = await openTestStore();
     const { registry, adminUrl } = await startEdge();

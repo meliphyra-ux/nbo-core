@@ -57,7 +57,7 @@ func (d *projectDataSource) Schema(_ context.Context, _ datasource.SchemaRequest
 				Description: "Where the project runs now. NBO doesn't report a Cloud Run mode, so mode is always null here.",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-						"target":     text(`"kubernetes" or "cloudrun".`),
+						"target":     text(`"kubernetes", "cloudrun" or "lambda".`),
 						"cluster_id": text("Kubernetes in production: the connected cluster's id."),
 						"mode":       text("Always null."),
 						"region":     text("Cloud Run: the region."),

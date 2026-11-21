@@ -9,6 +9,7 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
+    "@nbo/producer-static": "workspace:*",
     "@nbo/writer": "workspace:*",
     "next": "16.4.2"
   },

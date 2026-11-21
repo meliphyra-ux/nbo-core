@@ -127,3 +127,39 @@ describe("provisionEnvironment for Cloud Run in production", () => {
     ).rejects.toThrow(/connected Google Cloud project/);
   });
 });
+
+describe("provisionEnvironment for Lambda", () => {
+  const aws = {
+    region: "eu-west-1",
+    accountId: "123456789012",
+    repository: "123456789012.dkr.ecr.eu-west-1.amazonaws.com/nbo",
+  };
+
+  it("refuses without an AWS connection, then makes a lambda row in the connection's region (crons on, once)", async () => {
+    const s = await openStore();
+    const { setup, gcloudCalls } = harness(s);
+    const p = s.createProject("shop");
+    await expect(setup.addCloud(p.id, { target: "lambda" })).rejects.toThrow(
+      "AWS is not connected: connect it first with nbo-server connect aws",
+    );
+    s.saveAwsConnection(aws, { accessKeyId: "AKIAABCDEFGHIJKLMNOP", secretAccessKey: "x".repeat(40) });
+    const env = await setup.addCloud(p.id, { target: "lambda" });
+    expect([env.name, env.target, JSON.parse(env.config)]).toEqual([
+      "lambda",
+      "lambda",
+      { region: "eu-west-1", cronsEnabled: true },
+    ]);
+    await expect(setup.addCloud(p.id, { target: "lambda" })).rejects.toThrow("already has a lambda environment");
+    expect(gcloudCalls).toEqual([]);
+  });
+
+  it("names a custom environment's Lambda row s-<stage>-lm, crons off", async () => {
+    const s = await openStore();
+    s.saveAwsConnection(aws, { accessKeyId: "AKIAABCDEFGHIJKLMNOP", secretAccessKey: "x".repeat(40) });
+    const { setup } = harness(s);
+    const p = s.createProject("shop");
+    const stage = s.createStage(p.id, { name: "staging", branch: "staging", host: "staging--shop.example.com" });
+    const env = await setup.addCloud(p.id, { target: "lambda" }, { stageId: stage.id });
+    expect([env.name, JSON.parse(env.config)]).toEqual(["s-staging-lm", { region: "eu-west-1", cronsEnabled: false }]);
+  });
+});

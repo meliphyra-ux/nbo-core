@@ -6,7 +6,7 @@ import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createStore, type Store } from "../../store/store.js";
-import { createBuildQueue, recoverInterruptedBuilds } from "../build-queue.js";
+import { createBuildQueue, parseBuildConcurrency, recoverInterruptedBuilds } from "../build-queue.js";
 import { createSuppliedValues } from "../../variables/supplied-values.js";
 
 const openStores: Store[] = [];
@@ -191,7 +191,7 @@ describe("builds per stage", () => {
     const p = store.createProject("acme");
     const staging = store.createStage(p.id, { name: "staging", branch: "staging", host: "" });
     const runner = gatedRunner(store);
-    const queue = createBuildQueue(store, runner, createSuppliedValues());
+    const queue = createBuildQueue(store, runner, createSuppliedValues(), { concurrency: 1 });
 
     const running = queue.enqueue(p.id, sha("a"));
     const prod = queue.enqueue(p.id, sha("b"));
@@ -218,7 +218,7 @@ describe("builds per stage", () => {
     const p = store.createProject("acme");
     const staging = store.createStage(p.id, { name: "staging", branch: "staging", host: "" });
     const runner = gatedRunner(store);
-    const queue = createBuildQueue(store, runner, createSuppliedValues());
+    const queue = createBuildQueue(store, runner, createSuppliedValues(), { concurrency: 1 });
 
     const running = queue.enqueue(p.id, sha("a"));
     const older = queue.enqueue(p.id, sha("b"), { stageId: staging.id });
@@ -247,7 +247,7 @@ describe("builds per stage", () => {
       label: "",
     });
     const runner = gatedRunner(store);
-    const queue = createBuildQueue(store, runner, createSuppliedValues());
+    const queue = createBuildQueue(store, runner, createSuppliedValues(), { concurrency: 1 });
     const running = queue.enqueue(p.id, sha("a"));
     const pv = queue.enqueue(p.id, sha("b"), { stageId: preview.id });
     const custom = queue.enqueue(p.id, sha("c"), { stageId: staging.id });
@@ -262,5 +262,133 @@ describe("builds per stage", () => {
     runner.release(pv.id);
     await queue.idle(p.id);
     expect(runner.started).toEqual([running.id, prod.id, custom.id, pv.id]);
+  });
+});
+
+const tick = async () => {
+  for (let i = 0; i < 3; i++) await new Promise((r) => setImmediate(r));
+};
+
+describe("parallel builds", () => {
+  it("a Production build and a preview build of one project run at once", async () => {
+    const store = await openTestStore();
+    const p = store.createProject("acme");
+    const preview = store.createEphemeralStage(p.id, {
+      branch: "feature/x",
+      host: "x--acme.example",
+      expiresAt: "",
+      label: "",
+    });
+    const runner = gatedRunner(store);
+    const queue = createBuildQueue(store, runner, createSuppliedValues());
+
+    const prod = queue.enqueue(p.id, sha("a"));
+    const pv = queue.enqueue(p.id, sha("b"), { stageId: preview.id });
+    expect(runner.started).toEqual([prod.id, pv.id]);
+    // Two more pushes to the preview: the queued one is superseded.
+    const pv2 = queue.enqueue(p.id, sha("c"), { stageId: preview.id });
+    const pv3 = queue.enqueue(p.id, sha("d"), { stageId: preview.id });
+    expect(store.getBuild(pv2.id)).toMatchObject({ status: "skipped", error: "superseded by a newer build" });
+    expect(store.getBuild(pv3.id).status).toBe("queued");
+
+    runner.release(pv.id);
+    await tick();
+    expect(runner.started).toEqual([prod.id, pv.id, pv3.id]);
+    runner.release(prod.id);
+    runner.release(pv3.id);
+    await queue.idle(p.id);
+    expect(store.getBuild(pv3.id).status).toBe("succeeded");
+  });
+
+  it("with the cap at 2, a third project's build waits for a slot; the next is Production's across projects", async () => {
+    const store = await openTestStore();
+    const [a, b, c, d] = ["a", "b", "c", "d"].map((n) => store.createProject(n));
+    const staging = store.createStage(c!.id, { name: "staging", branch: "staging", host: "" });
+    const runner = gatedRunner(store);
+    const queue = createBuildQueue(store, runner, createSuppliedValues(), { concurrency: 2 });
+
+    const ba = queue.enqueue(a!.id, sha("a"));
+    const bb = queue.enqueue(b!.id, sha("b"));
+    const cStaging = queue.enqueue(c!.id, sha("c"), { stageId: staging.id });
+    await new Promise((r) => setTimeout(r, 5));
+    const dProd = queue.enqueue(d!.id, sha("d"));
+    expect(runner.started).toEqual([ba.id, bb.id]);
+    expect(store.getBuild(cStaging.id).status).toBe("queued");
+
+    runner.release(ba.id);
+    await tick();
+    expect(runner.started).toEqual([ba.id, bb.id, dProd.id]);
+    runner.release(bb.id);
+    await tick();
+    expect(runner.started).toEqual([ba.id, bb.id, dProd.id, cStaging.id]);
+    runner.release(dProd.id);
+    runner.release(cStaging.id);
+    await queue.idle(c!.id);
+    await queue.idle(d!.id);
+    expect(store.getBuild(cStaging.id).status).toBe("succeeded");
+  });
+
+  it("a promote waits for its stage's running build and takes no build slot", async () => {
+    const store = await openTestStore();
+    const p = store.createProject("acme");
+    const q = store.createProject("other");
+    const pEnv = store.createEnvironment(p.id, "k8s", "kubernetes");
+    const qEnv = store.createEnvironment(q.id, "k8s", "kubernetes");
+    const stored = (projectId: string) => {
+      const b = store.createQueuedBuild(projectId, sha("0"));
+      store.completeBuild(b.id, "succeeded", []);
+      store.setBuildDetails(b.id, { artifact: true });
+      return b;
+    };
+    const pOld = stored(p.id);
+    const qOld = stored(q.id);
+    const runner = gatedRunner(store);
+    const queue = createBuildQueue(store, runner, createSuppliedValues(), { concurrency: 1 });
+
+    const build = queue.enqueue(p.id, sha("a"));
+    const pPromote = queue.enqueuePromote(p.id, pOld.id, pEnv.id);
+    // The only build slot is taken, yet another project's promote runs.
+    const qPromote = queue.enqueuePromote(q.id, qOld.id, qEnv.id);
+    expect(runner.started).toEqual([build.id, qPromote.id]);
+    expect(store.getBuild(pPromote.id).status).toBe("queued");
+
+    runner.release(build.id);
+    await tick();
+    expect(runner.started).toEqual([build.id, qPromote.id, pPromote.id]);
+    runner.release(qPromote.id);
+    runner.release(pPromote.id);
+    await queue.idle(p.id);
+    await queue.idle(q.id);
+  });
+
+  it("idle waits for the project's build that waits for a slot", async () => {
+    const store = await openTestStore();
+    const a = store.createProject("a");
+    const b = store.createProject("b");
+    const runner = gatedRunner(store);
+    const queue = createBuildQueue(store, runner, createSuppliedValues(), { concurrency: 1 });
+    const ba = queue.enqueue(a.id, sha("a"));
+    const bb = queue.enqueue(b.id, sha("b"));
+    let idle = false;
+    void queue.idle(b.id).then(() => (idle = true));
+    runner.release(ba.id);
+    await tick();
+    expect(idle).toBe(false);
+    runner.release(bb.id);
+    await queue.idle(b.id);
+    expect(store.getBuild(bb.id).status).toBe("succeeded");
+  });
+});
+
+describe("parseBuildConcurrency", () => {
+  it("defaults to 2 and takes a positive whole number", () => {
+    expect(parseBuildConcurrency(undefined)).toBe(2);
+    expect(parseBuildConcurrency("")).toBe(2);
+    expect(parseBuildConcurrency("4")).toBe(4);
+  });
+
+  it("refuses anything else, naming the setting", () => {
+    for (const bad of ["0", "-1", "1.5", "two", " 3x"])
+      expect(() => parseBuildConcurrency(bad)).toThrow(/NBO_BUILD_CONCURRENCY/);
   });
 });

@@ -107,6 +107,7 @@ func cloudFromEnvironment(env client.Environment) cloudModel {
 		cloud.ArRepo = optString(env.Config.ArRepo)
 		return cloud
 	}
+	// Lambda's region is the connection's, never set in config: nothing more to read.
 	cloud.ClusterID = optString(env.ClusterID)
 	return cloud
 }

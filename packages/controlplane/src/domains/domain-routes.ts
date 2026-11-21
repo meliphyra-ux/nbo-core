@@ -27,6 +27,8 @@ import { hasOwnHost } from "../stages/stages.js";
 export const needsProductionMessage = "Domains need the public edge (production mode)";
 export const installEdgeFirstMessage = "Install the edge first (nbo-server edge install on the server)";
 export const defaultNotRemovableMessage = "The default address can't be removed";
+export const lambdaNeedsEdgeMessage =
+  "AWS Lambda serves only its function URL: custom domains of a project on Lambda need the edge. Install the edge first (nbo-server edge install on the server)";
 export const deployToCloudRunFirstMessage = "Deploy this project to Cloud Run first";
 export const confirmGapMessage = "Confirm the HTTPS gap first";
 export const unsupportedRegionMessage = (region: string): string =>
@@ -174,7 +176,12 @@ export function registerDomainRoutes(router: Router, store: Store, v2: V2): void
     const no = (reason: string) => ({ available: false, reason, region });
     if (!production()) return no(needsProductionMessage);
     if (edgeInstalled()) return no("");
-    if (!env) return no(installEdgeFirstMessage);
+    if (!env)
+      return no(
+        store.listEnvironments(projectId).some((e) => e.target === "lambda")
+          ? lambdaNeedsEdgeMessage
+          : installEdgeFirstMessage,
+      );
     if (!store.listDeployments(env.id).some((d) => d.status === "succeeded")) return no(deployToCloudRunFirstMessage);
     if (!domainMappingRegions.regions.includes(region)) return no(unsupportedRegionMessage(region));
     return { available: true, reason: "", region };

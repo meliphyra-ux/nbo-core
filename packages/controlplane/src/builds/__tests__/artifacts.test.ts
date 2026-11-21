@@ -122,6 +122,15 @@ describe("retainedBuildIds", () => {
 
     expect([...retainedBuildIds(store, p.id, 1)].sort()).toEqual([live.id, newer.id].sort());
   });
+
+  it("keeps the output of a build still running (another stage's build may prune meanwhile)", async () => {
+    const store = await openStore();
+    const p = store.createProject("acme");
+    const running = store.createQueuedBuild(p.id, "a".repeat(40));
+    store.startBuild(running.id);
+    store.setBuildDetails(running.id, { artifact: true });
+    expect([...retainedBuildIds(store, p.id, 0)]).toEqual([running.id]);
+  });
 });
 
 describe("deleteProject", () => {

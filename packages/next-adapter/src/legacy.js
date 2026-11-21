@@ -99,14 +99,15 @@ export function bundleFiles(appDir, root, requiredFiles, extra = []) {
 // copied once per link is loaded once per copy (two Reacts break every hook). So each real package
 // directory gets one place, as npm lays packages out: node_modules/<name>, or, where another version
 // has that, node_modules/<name> inside each package linking it. Other files keep their paths. A file
-// resolving outside root is refused, so a build can't ship the host's files.
+// resolving outside root is refused, so a build can't ship the host's files (by the kernel's realpath: JS's
+// resolves `..` before the links in front of it, so chained links get past it).
 export function placeFiles(paths, appDir, root) {
-  const realRoot = realpathSync(root);
+  const realRoot = realpathSync.native(root);
   const packages = new Map(); // real package dir -> { name, linkedFrom: real dirs whose node_modules link it }
   const files = [];
   for (const path of paths) {
     if (!existsSync(path)) continue; // traces name optional files a build may not have
-    const real = realpathSync(path);
+    const real = realpathSync.native(path);
     if (real !== realRoot && !real.startsWith(realRoot + sep)) {
       throw new Error(`the build's file ${toKey(relative(root, path))} resolves outside the repository`);
     }
@@ -118,13 +119,13 @@ export function placeFiles(paths, appDir, root) {
     if (at < 0 || !lstatSync(path).isSymbolicLink()) continue; // a plain directory: its files are listed
     const name = toKey(path.slice(at + 14));
     const pkg = packages.get(real) ?? { name, linkedFrom: new Set() };
-    pkg.linkedFrom.add(realpathSync(path.slice(0, at)));
+    pkg.linkedFrom.add(realpathSync.native(path.slice(0, at)));
     packages.set(real, pkg);
   }
 
   // One version per name sits at the top, as Node resolves from the app: the version the app links,
   // else one a workspace folder links, else the first by path.
-  const realApp = realpathSync(appDir);
+  const realApp = realpathSync.native(appDir);
   const rank = (real) => {
     const from = [...packages.get(real).linkedFrom];
     if (from.includes(realApp)) return 0;

@@ -190,10 +190,12 @@ export async function revalidateStage(
       for (const { env } of routed) results.push(result(env.id, cloud(env), res.status, error));
     }
   } else {
-    // No edge: an address has one cloud; each Cloud Run service is called
-    // on its own public URL. A cluster's app has no public address without
-    // the edge, so it isn't called.
-    const direct = live.filter(({ env, url }) => env.target === "cloudrun" && url.startsWith("https://"));
+    // No edge: an address has one cloud; each Cloud Run service and Lambda
+    // app is called on its own public URL. A cluster's app has no public
+    // address without the edge, so it isn't called.
+    const direct = live.filter(
+      ({ env, url }) => (env.target === "cloudrun" || env.target === "lambda") && url.startsWith("https://"),
+    );
     if (direct.length === 0)
       throw new ErrConflict(`the ${stage.name} environment has no address: no cloud has a public URL yet`);
     const answers = await Promise.all(

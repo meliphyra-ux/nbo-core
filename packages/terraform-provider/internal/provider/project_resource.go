@@ -134,7 +134,7 @@ func (r *projectResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				Required: true,
 				Description: "Where the project runs, as it was set up. Changing it replaces the project. " +
 					"A cloud added or removed outside Terraform later is not detected. " +
-					"Order here means nothing: NBO sets clouds up sorted by target, then cluster_id, so cloudrun comes before kubernetes. " +
+					"Order here means nothing: NBO sets clouds up sorted by target, then cluster_id, so cloudrun comes before kubernetes, then lambda. " +
 					"The first one runs crons, and the first to deploy in that order gets all traffic.",
 				PlanModifiers: []planmodifier.Set{cloudsPlanModifier{}},
 				Validators:    []validator.Set{setvalidator.SizeBetween(1, 10)},
@@ -273,6 +273,12 @@ func cloudProblems(c cloudModel) []string {
 		mustBeEmpty(c.Region, "region", "kubernetes")
 		mustBeEmpty(c.Project, "project", "kubernetes")
 		mustBeEmpty(c.ArRepo, "ar_repo", "kubernetes")
+	case "lambda":
+		mustBeEmpty(c.ClusterID, "cluster_id", "lambda")
+		mustBeEmpty(c.Mode, "mode", "lambda")
+		mustBeEmpty(c.Region, "region", "lambda")
+		mustBeEmpty(c.Project, "project", "lambda")
+		mustBeEmpty(c.ArRepo, "ar_repo", "lambda")
 	case "cloudrun":
 		mustBeEmpty(c.ClusterID, "cluster_id", "cloudrun")
 		mustBeSet(c.Mode, "mode", "cloudrun")

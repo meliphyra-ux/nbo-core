@@ -7,3 +7,4 @@ export { createStaticURLs } from "./static-urls.js";
 export { createLocalSpawner } from "./local-spawner.js";
 export type { IdentityTokenFetcher } from "./cloudrun.js";
 export { createCloudRunURLs, metadataServerIdentityToken, cloudRunConfig, metadataServerConfig } from "./cloudrun.js";
+export { createLambdaURLs } from "./lambda.js";

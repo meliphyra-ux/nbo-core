@@ -11,6 +11,7 @@ import { isRecord, writeJSON, writeError, errorMessage } from "../http/handlers.
 import { googleIdentity } from "./google-identity.js";
 import { googleCredential } from "./google-wif.js";
 import { domainMappingRegions, listCloudRunRegions } from "./regions.js";
+import { awsBoundaryPolicy, awsIamPolicyFor, validAwsAccount, validAwsRegion } from "./aws-connect.js";
 
 // An ErrInvalid, so other routes reusing these parsers answer 400 too.
 class BadRequest extends ErrInvalid {}
@@ -24,7 +25,17 @@ export function secretsIn(body: unknown): string[] {
   const add = (v: unknown) => {
     if (typeof v === "string" && v) out.push(v);
   };
-  for (const k of ["keyJson", "deployerKey", "pullerKey", "kubeconfig", "token", "caData", "registryPassword"])
+  for (const k of [
+    "keyJson",
+    "deployerKey",
+    "pullerKey",
+    "kubeconfig",
+    "token",
+    "caData",
+    "registryPassword",
+    "accessKeyId",
+    "secretAccessKey",
+  ])
     add(body[k]);
   for (const k of ["keyJson", "deployerKey", "pullerKey"]) {
     const raw = body[k];
@@ -120,6 +131,14 @@ function storedSecrets(store: Store, clusterId?: string): string[] {
   }
 }
 
+function awsStoredSecrets(store: Store): string[] {
+  try {
+    return secretsIn(store.getAwsSecrets());
+  } catch {
+    return [];
+  }
+}
+
 const stillRunning = (where: string, names: string): string =>
   `projects still run on ${where}: ${names} — archive those environments first. Archiving does not stop running sites: to take them down, delete the project with "also delete what it runs" while ${where} is still connected.`;
 
@@ -131,12 +150,14 @@ export function registerConnectionRoutes(router: Router, store: Store, v2: V2): 
   router.handle("GET", "/system/connections", async () => {
     const google = store.getGoogleConnection();
     const kubernetes = store.listKubernetesConnections();
+    const aws = store.getAwsConnection();
     return writeJSON(
       {
         mode: v2.mode,
         google,
         kubernetes,
-        setupComplete: v2.mode === "dev" || google !== null || kubernetes.length > 0,
+        aws,
+        setupComplete: v2.mode === "dev" || google !== null || kubernetes.length > 0 || aws !== null,
       },
       200,
     );
@@ -190,6 +211,41 @@ export function registerConnectionRoutes(router: Router, store: Store, v2: V2): 
     } catch (err) {
       return fail(err, secrets);
     }
+  });
+
+  // AWS: connect, or replace the key pair (same account and region while
+  // Lambda environments use it). The key pair goes to aws through its env only.
+  router.handle("POST", "/system/connections/aws", async (request) => {
+    let secrets: string[] = [];
+    try {
+      const body = await readBody(request);
+      secrets = secretsIn(body);
+      const req = {
+        accessKeyId: str(body, "accessKeyId"),
+        secretAccessKey: str(body, "secretAccessKey"),
+        region: str(body, "region"),
+      };
+      return writeJSON(await v2.awsConnect.connect(req), 201);
+    } catch (err) {
+      return fail(err, [...secrets, ...awsStoredSecrets(store)]);
+    }
+  });
+
+  // The IAM policy for NBO's IAM user: ?region=&account= (else the
+  // connection's), placeholders where neither is known; ?document=boundary
+  // is the nbo-boundary permissions boundary instead.
+  router.handle("GET", "/system/connections/aws/policy", async (request) => {
+    const q = new URL(request.url).searchParams;
+    const conn = store.getAwsConnection();
+    const region = q.get("region") ?? conn?.region;
+    const account = q.get("account") ?? conn?.accountId;
+    if (region !== undefined && !validAwsRegion.test(region))
+      return writeError(400, "region must be an AWS region such as eu-west-1");
+    if (account !== undefined && !validAwsAccount.test(account))
+      return writeError(400, "account must be a 12-digit AWS account id");
+    const document = q.get("document");
+    if (document !== null && document !== "boundary") return writeError(400, "document must be boundary");
+    return writeJSON(awsIamPolicyFor(region, account, document ? awsBoundaryPolicy : undefined), 200);
   });
 
   router.handle("POST", "/system/connections/kubernetes", async (request) => {
@@ -253,9 +309,17 @@ export function registerConnectionRoutes(router: Router, store: Store, v2: V2): 
     }
   });
 
-  // Google keeps one connection; Kubernetes clusters are tested and
-  // removed by id above.
+  // Google and AWS keep one connection each; Kubernetes clusters are
+  // tested and removed by id above.
   router.handle("POST", "/system/connections/{kind}/test", async (_request, params) => {
+    if (params.kind === "aws") {
+      if (store.getAwsConnection() === null) return writeError(404, "AWS is not connected");
+      try {
+        return writeJSON(await v2.awsConnect.test(), 200);
+      } catch (err) {
+        return fail(err, awsStoredSecrets(store));
+      }
+    }
     if (params.kind !== "google") return writeError(404, "unknown connection kind");
     if (store.getGoogleConnection() === null) return writeError(404, "Cloud Run is not connected");
     try {
@@ -266,6 +330,14 @@ export function registerConnectionRoutes(router: Router, store: Store, v2: V2): 
   });
 
   router.handle("DELETE", "/system/connections/{kind}", async (_request, params) => {
+    if (params.kind === "aws") {
+      if (store.getAwsConnection() === null) return writeError(404, "AWS is not connected");
+      const using = store.environmentsUsing("aws");
+      if (using.length > 0)
+        return writeError(409, stillRunning("AWS Lambda", [...new Set(using.map((u) => u.projectName))].join(", ")));
+      store.deleteConnection("aws");
+      return new Response(null, { status: 204 });
+    }
     if (params.kind !== "google") return writeError(404, "unknown connection kind");
     try {
       const using = store.environmentsUsing("google");

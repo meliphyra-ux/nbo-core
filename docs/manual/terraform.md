@@ -26,7 +26,7 @@ On the server, run `docker compose exec nbo nbo-server token create terraform`. 
 
 NBO has no roles: every token may use every project route, and none may use `/system/*`. A token made for a Viewer or a Developer while an older NBO had sign-in on is refused with `401`; make a new one.
 
-**Treat a token like a root password.** It can't read your cloud credentials through the API, but it can run builds, and builds have full control of NBO's server until isolated builds exist. Keep it out of `.tf` files and out of git. If one leaks, revoke it with `nbo-server token revoke`.
+**Treat a token like a password to every site.** It can't read your cloud credentials through the API, and the builds it starts run in a container without NBO's files ([Where builds run](./builds.md#where-builds-run)), though they still reach the network, including the cloud metadata address unless you block it. It can change variables and build commands, deploy any build and move traffic. With `NBO_BUILD_ISOLATION=none` builds run as NBO's own user, and a token is equal to root on the server. Keep it out of `.tf` files and out of git. If one leaks, revoke it with `nbo-server token revoke`.
 
 ## Connect to NBO
 
@@ -164,7 +164,7 @@ Creating an environment builds nothing. Its branch is built by the next push, or
 
 - **`stage`** is also an attribute of `nbo_env_var`, `nbo_deployment`, `nbo_domain` and `nbo_traffic`. Left out, it is `production`, as before. Changing it replaces the resource. A variable's `stage` can also be `*`, for every environment. Workspace variables can use only `*` and the three built-in names. A variable of one environment beats one for `*`.
 - **A variable already there is not copied.** Variables you made before environments existed belong to `production`. Preview and staging start with none.
-- **`nbo_traffic` for a custom environment** names its clouds, like `s-staging-cr` for Cloud Run and `s-staging-k8s` for Kubernetes. The first successful deploy of an environment gets all of its traffic.
+- **`nbo_traffic` for a custom environment** names its clouds, like `s-staging-cr` for Cloud Run, `s-staging-lm` for AWS Lambda and `s-staging-k8s` for Kubernetes. A cloud's `target` is `kubernetes`, `cloudrun` or `lambda` (Lambda takes no other field). The first successful deploy of an environment gets all of its traffic.
 - **`nbo_domain` for a custom environment** needs the public edge, because Cloud Run domain mappings are for production only.
 - **Destroying `nbo_stage`** removes the environment, its variables and its domains, and keeps its builds in history. Its clouds keep running unless you set `delete_cloud_resources = true`. NBO refuses while a build of that environment is queued or running.
 - The project's `stages` attribute lists the environments by name and id.

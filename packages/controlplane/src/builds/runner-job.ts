@@ -9,6 +9,7 @@ import type { SuppliedValues } from "../variables/supplied-values.js";
 import type { GitAuth, GitAuthFn } from "../git/git-credentials.js";
 import { createTimeline } from "./build-details.js";
 import { run } from "./run.js";
+import type { SandboxFactory } from "./sandbox.js";
 
 export interface RunnerOptions {
   // nextAdapterPath is exported to the build command as
@@ -42,6 +43,8 @@ export interface RunnerOptions {
   // gitAuth gives the git steps (clone, checkout, log) the project's
   // credential (git-credentials.ts); never the build command.
   gitAuth?: GitAuthFn;
+  // sandbox is where the ignored build step and the build command run (sandbox.ts); this host by default.
+  sandbox?: SandboxFactory;
 }
 
 /** The mutable per-build state: the git credential until it is used once, and the values to redact from logs. */
@@ -81,10 +84,12 @@ export function createJob(store: Store, options: RunnerOptions | undefined, buil
   const step = (
     cmd: string,
     args: string[],
-    opts?: { cwd?: string; shell?: boolean; env?: Record<string, string>; buildStep?: boolean },
+    opts?: { cwd?: string; shell?: boolean; env?: Record<string, string>; buildStep?: boolean; via?: typeof run },
   ) => {
     log(`$ ${[cmd, ...args].join(" ")}\n`);
-    return run(cmd, args, { ...opts, onOutput: log, redactSecrets: state.secretValues });
+    // via: the build sandbox's run, for the repository's own commands.
+    const { via = run, ...rest } = opts ?? {};
+    return via(cmd, args, { ...rest, onOutput: log, redactSecrets: state.secretValues });
   };
   // Step timings: "[mm:ss]" is the time since the build started.
   const now = options?.now ?? Date.now;

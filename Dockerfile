@@ -34,7 +34,7 @@ RUN set -eu; \
 # --- Download the pinned tools. -----------------------------------------------
 FROM node:24-bookworm-slim AS tools
 RUN apt-get update \
- && apt-get install --yes --no-install-recommends ca-certificates curl \
+ && apt-get install --yes --no-install-recommends ca-certificates curl unzip \
  && rm -rf /var/lib/apt/lists/*
 WORKDIR /tools
 RUN curl -fsSL -o kubectl https://dl.k8s.io/release/v1.34.13/bin/linux/amd64/kubectl \
@@ -58,6 +58,13 @@ RUN curl -fsSL -o gcloud.tgz https://dl.google.com/dl/cloudsdk/channels/rapid/do
  && rm -rf google-cloud-sdk/.install/.backup google-cloud-sdk/platform/gsutil google-cloud-sdk/platform/bq \
            google-cloud-sdk/bin/anthoscli google-cloud-sdk/bin/gsutil google-cloud-sdk/bin/bq \
  && find google-cloud-sdk -name __pycache__ -type d -prune -exec rm -rf {} +
+# The AWS CLI v2 (Lambda). Its installer links /opt/aws-cli/bin/aws to the
+# versioned copy under /opt/aws-cli, so the whole folder is copied below.
+RUN curl -fsSL -o awscliv2.zip https://awscli.amazonaws.com/awscli-exe-linux-x86_64-2.39.5.zip \
+ && echo "fe0553306b3d001d162bc193d3b040027aab3466b9f910b50e702c122c0f3ff9  awscliv2.zip" | sha256sum -c - \
+ && unzip -q awscliv2.zip \
+ && ./aws/install --install-dir /opt/aws-cli --bin-dir /opt/aws-cli/bin \
+ && rm -rf awscliv2.zip aws
 
 # --- What runs. ---------------------------------------------------------------
 FROM node:24-bookworm-slim
@@ -69,7 +76,8 @@ RUN apt-get update \
 COPY --from=tools /tools/kubectl /tools/docker /usr/local/bin/
 COPY --from=tools /tools/docker-buildx /usr/local/lib/docker/cli-plugins/docker-buildx
 COPY --from=tools /tools/google-cloud-sdk /opt/google-cloud-sdk
-ENV PATH=/opt/google-cloud-sdk/bin:$PATH
+COPY --from=tools /opt/aws-cli /opt/aws-cli
+ENV PATH=/opt/google-cloud-sdk/bin:/opt/aws-cli/bin:$PATH
 # The whole built checkout, not just dist/: installing the edge and deploying
 # run `pnpm deploy` here to build the app images (@nbo/deploy's
 # kubernetes-target.ts); the edge image is built by Docker from
@@ -86,6 +94,7 @@ RUN chmod +x /app/packages/controlplane/dist/server-cli.js \
 # Needs neither the network nor a Docker daemon.
 RUN set -eu; \
     gcloud beta --help > /dev/null; \
+    aws --version > /dev/null; \
     kubectl version --client > /dev/null; \
     docker --version > /dev/null; \
     docker buildx version > /dev/null; \

@@ -90,7 +90,11 @@ export function fakeDeploymentTrigger(store: Store): FakeDeploymentTrigger {
       } else {
         const app = `p${env.projectId.slice(-8)}-${env.name}`;
         const url =
-          env.target === "cloudrun" ? `https://${app}-abc123-uc.a.run.app` : `https://${app}.127.0.0.1.sslip.io`;
+          env.target === "cloudrun"
+            ? `https://${app}-abc123-uc.a.run.app`
+            : env.target === "lambda"
+              ? `https://${app}-abc123.lambda-url.eu-west-1.on.aws`
+              : `https://${app}.127.0.0.1.sslip.io`;
         store.completeDeployment(dep.id, "sha256:fake", url);
       }
       return store.getDeployment(dep.id);

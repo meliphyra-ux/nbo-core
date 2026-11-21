@@ -24,7 +24,7 @@ Every chapter of the manual for NBO, in reading order. NBO has no web interface:
 - [Repository map](./repository.md): every folder and package, and what lives where.
 - [Running NBO for development](./running.md): starting the services, a first project, ports, settings and commands.
 - [Builds](./builds.md): how NBO clones, builds and packages your code, and how it reaches private repositories.
-- [Deploying](./deploying.md): how a build becomes running containers on Kubernetes and Cloud Run.
+- [Deploying](./deploying.md): how a build becomes running containers on Kubernetes, Cloud Run and AWS Lambda.
 - [Inside a running app](./runtime.md): what happens inside a deployed app for every request.
 - [The control-plane](./control-plane.md): the server behind the API: data, modules and routes.
 - [Tests and code quality](./quality.md): how the code is tested and kept tidy.

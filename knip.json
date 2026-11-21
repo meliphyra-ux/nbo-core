@@ -2,7 +2,7 @@
   "$schema": "https://unpkg.com/knip@5/schema.json",
   "workspaces": {
     "packages/next-adapter": {
-      "entry": ["src/adapter.js", "src/legacy.js", "src/legacy-entry-shim.mjs"]
+      "entry": ["src/adapter.js", "src/legacy.js", "src/legacy-entry-shim.mjs", "src/produce-cli.js"]
     }
   },
   "ignore": ["fixtures/**", "platform/**", "packages/edge-rs/assets/web-vitals.iife.js", "scripts/ci/nbo-diff.mjs"],

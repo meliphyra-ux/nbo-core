@@ -47,7 +47,7 @@ export function environmentMethods(
         );
       }
       if (!validTargets[target]) {
-        throw new ErrInvalidEnvironmentConfig(`unknown target "${target}" (known: kubernetes, cloudrun)`);
+        throw new ErrInvalidEnvironmentConfig(`unknown target "${target}" (known: kubernetes, cloudrun, lambda)`);
       }
       const cfg = config && config.length > 0 ? config : "{}";
       // Adding a cloud back after archiving it revives the archived row

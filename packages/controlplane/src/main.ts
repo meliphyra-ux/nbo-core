@@ -4,6 +4,7 @@
 import { pathToFileURL } from "node:url";
 import { mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { tmpdir } from "node:os";
 import { createServer } from "node:http";
 import { nodeToFetch } from "@nbo/nodehost";
 import { createStore, type Store } from "./store/store.js";
@@ -24,6 +25,8 @@ import { clusterEdgeActive, createClusterDrainSource, storeKubeconfig } from "./
 import { parseServiceAnnotations } from "./edge/edge-manifests.js";
 import { createSuppliedValues } from "./variables/supplied-values.js";
 import { parsePublicUrl } from "./http/public-url.js";
+import { parseBuildConcurrency } from "./builds/build-queue.js";
+import { buildInstallId, containerSandboxes, parseBuildSandbox, type SandboxFactory } from "./builds/sandbox.js";
 import { createDispatcher } from "./link/dispatch.js";
 import { startLinkClient } from "./link/client.js";
 import { enrollFromEnvironment } from "./link/enroll.js";
@@ -166,12 +169,37 @@ export function main(
     process.exitCode = 1;
     return undefined;
   }
+  // NBO_BUILD_CONCURRENCY: how many builds run at once. A bad value stops startup.
+  let buildConcurrency: number;
+  try {
+    buildConcurrency = parseBuildConcurrency(env.NBO_BUILD_CONCURRENCY);
+  } catch (err) {
+    console.error(`control-plane: ${(err as Error).message}`);
+    process.exitCode = 1;
+    return undefined;
+  }
+  // NBO_BUILD_ISOLATION and the build container's image and limits. A bad value stops startup.
+  let buildSandbox: SandboxFactory | undefined;
+  try {
+    const sandbox = parseBuildSandbox(env, mode);
+    if (sandbox.isolation === "container") {
+      // The disk guard watches the database's folder and the temporary folder (copy-out lands there).
+      const dataDirs = [...new Set([dirname(dbPath), tmpdir()])];
+      buildSandbox = containerSandboxes({ ...sandbox, install: buildInstallId(dirname(dbPath)), dataDirs });
+    }
+  } catch (err) {
+    console.error(`control-plane: ${(err as Error).message}`);
+    process.exitCode = 1;
+    return undefined;
+  }
   // The link routes exist before the link client does; the client is
   // attached once started below.
   const link = createLinkControl();
   const v2 = wireV2(store, {
     link,
     publicUrl,
+    buildConcurrency,
+    buildSandbox,
     // Deploy keys check host keys against this file, next to the database.
     knownHostsFile: join(dirname(dbPath), "known_hosts"),
     // Projects linked to the old per-server GitHub App (github-legacy.ts).

@@ -5,6 +5,9 @@
 import type { CronRow } from "../deploys/cron.js";
 import type { GitConfig, Build, BuildDetailsPatch } from "../git/git.js";
 import type {
+  AwsConnection,
+  AwsConnectionInput,
+  AwsSecrets,
   GoogleConnection,
   GoogleConnectionInput,
   KubernetesConnection,
@@ -190,6 +193,8 @@ export interface Store extends GitHeadsStore, GitCredentialsStore, EphemeralCert
   // nextQueuedJob: the next queued job of either kind (queue order):
   // Production's first, then other stages', each oldest first.
   nextQueuedJob(projectId: string): Build | undefined;
+  // queuedJobs: every queued job in that order, of one project or (no id) of all.
+  queuedJobs(projectId?: string): Build[];
   // createQueuedPromote records a queued job deploying sourceBuildId's
   // stored output to environmentId.
   createQueuedPromote(projectId: string, sourceBuildId: string, environmentId: string): Build;
@@ -205,6 +210,10 @@ export interface Store extends GitHeadsStore, GitCredentialsStore, EphemeralCert
   getGoogleSecrets(): GoogleSecrets;
   saveGoogleConnection(c: GoogleConnectionInput, s: GoogleSecrets): GoogleConnection;
   recordGoogleSelfCheck(warnings: string[], otherCores: string[]): void;
+  // AWS: one account and region (Lambda); saving replaces it.
+  getAwsConnection(): AwsConnection | null;
+  getAwsSecrets(): AwsSecrets;
+  saveAwsConnection(c: AwsConnectionInput, s: AwsSecrets): AwsConnection;
   // Kubernetes: any number of named clusters, keyed by id (kc_...).
   listKubernetesConnections(): KubernetesConnection[];
   getKubernetesConnection(id: string): KubernetesConnection | null;
@@ -218,9 +227,10 @@ export interface Store extends GitHeadsStore, GitCredentialsStore, EphemeralCert
   setClusterLbAnnotations(id: string, annotations: Record<string, string>): void;
   deleteKubernetesConnection(id: string): void;
   // id names the cluster for a Kubernetes check (required there).
-  recordConnectionCheck(kind: "google" | "kubernetes", error: string | null, id?: string): void;
-  deleteConnection(kind: "google"): void;
-  environmentsUsing(kind: "google"): { projectName: string; environmentId: string }[];
+  recordConnectionCheck(kind: "google" | "kubernetes" | "aws", error: string | null, id?: string): void;
+  deleteConnection(kind: "google" | "aws"): void;
+  // Non-archived environments on that connection's cloud (cloudrun, lambda).
+  environmentsUsing(kind: "google" | "aws"): { projectName: string; environmentId: string }[];
   // Non-archived Kubernetes environments whose config.clusterId is id.
   environmentsUsingCluster(id: string): { projectName: string; environmentId: string }[];
 

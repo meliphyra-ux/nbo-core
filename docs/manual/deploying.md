@@ -1,6 +1,6 @@
 # Deploying
 
-How a `.nbo/` folder becomes running containers. This is the most cloud-specific part of NBO, so it's covered in detail for both Kubernetes and Cloud Run.
+How a `.nbo/` folder becomes running containers. This is the most cloud-specific part of NBO, so it's covered in detail for Kubernetes, Cloud Run and AWS Lambda.
 
 ## The path through the code
 
@@ -9,6 +9,7 @@ runner.runBuild                      packages/controlplane/src/builds/runner.ts
   `- triggerDeploy(env, nboDir)      packages/controlplane/src/deploys/deploy.ts
        |- createKubernetesTarget     packages/deploy/src/kubernetes-target.ts
        |  or createCloudRunTarget    packages/deploy/src/cloudrun-target.ts
+       |  or createLambdaTarget      packages/deploy/src/lambda-target.ts
        `- deploy(deployer, …)        packages/deploy/src/deploy.ts
             |- validate              packages/validate
             |- evaluate (planner)    packages/planner
@@ -22,9 +23,9 @@ runner.runBuild                      packages/controlplane/src/builds/runner.ts
 **File:** `packages/controlplane/src/deploys/deploy.ts`
 
 1. Loads the environment row.
-2. `deployAppName(env)` picks the name used for every cloud object, `p` + the first 8 characters of the project id + `-` + the environment name, for example `p4715bebb-k8s` (environment names are `cloudrun`, `k8s` for the local cluster or the upgraded `default` cluster, and `k8s-<cluster name>` for every other connected cluster). Stable across deploys, so each deploy updates the same objects.
+2. `deployAppName(env)` picks the name used for every cloud object, `p` + the first 8 characters of the project id + `-` + the environment name, for example `p4715bebb-k8s` (environment names are `cloudrun`, `lambda`, `k8s` for the local cluster or the upgraded `default` cluster, and `k8s-<cluster name>` for every other connected cluster). Stable across deploys, so each deploy updates the same objects.
 3. `store.ensureCronSigningSecret(envId)` gets (or creates) a secret that the app uses to verify cron calls really come from NBO. Passed as `NBO_CRON_SIGNING_SECRET`.
-4. Creates the right **target** for `env.target`. In production, a Kubernetes environment records the id of its cluster (`clusterId` in its config), and the deploy reads that cluster's own credentials and registry, never another cluster's. If the environment has no `clusterId`, or its cluster has been disconnected, the deploy is refused before anything is created. For Cloud Run, reads `project`, `region`, `arRepo` from the environment's config; missing any → error.
+4. Creates the right **target** for `env.target`. In production, a Kubernetes environment records the id of its cluster (`clusterId` in its config), and the deploy reads that cluster's own credentials and registry, never another cluster's. If the environment has no `clusterId`, or its cluster has been disconnected, the deploy is refused before anything is created. For Cloud Run, reads `project`, `region`, `arRepo` from the environment's config; missing any → error. For Lambda, needs the AWS connection, and the environment's `region` must be the connection's.
 5. Inserts a `deployments` row (status `pending`).
 6. Calls `deploy(...)`, then records success (URL, content id) or failure (error text) on the deployment row. After a successful deploy, `store.registerCronsFromManifest` records the build's `crons.json` schedules for this environment.
 
@@ -174,6 +175,46 @@ Inside the app container, `nbo serve` sees the `K_SERVICE` environment variable 
 
 `liveContentID` reads the `nbo-content-id` label with `gcloud run services describe`. "Not found" means nothing is deployed yet.
 
+## AWS Lambda in detail
+
+**Files:** `packages/deploy/src/lambda-target.ts`, `packages/adapter-lambda/src/function.ts`, `packages/adapter-lambda/src/image.ts`, `packages/funcproxy/src/lambda.ts`
+
+> **Not tried for real yet.** Everything on Lambda: images with the Web Adapter, functions, function URLs, signed calls between them, variables and the "already live" check ran against a fake `aws` command and a fake Docker only. No real AWS account was used. `scripts/verify-lambda.sh` is the first real run; it costs money on your AWS bill.
+
+Settings per environment: `region` (always the AWS connection's) and `cronsEnabled`. There is no cluster or project to choose: everything goes into the one AWS account and region you connected (see [Connect AWS (Lambda)](../production.md#connect-aws-lambda)).
+
+### What runs where
+
+- **The app** is one Lambda function named `nbo-<app>` (for example `nbo-p4715bebb-lambda`; NBO's IAM user may only touch functions named `nbo-…`). It runs the same app image as Cloud Run and Kubernetes (`nbo serve`), plus the **AWS Lambda Web Adapter**, AWS's open-source extension that turns an HTTP server into a Lambda handler. NBO copies its binary into the image from its public image, pinned by digest, and sets `AWS_LWA_PORT=8080` and `AWS_LWA_INVOKE_MODE=response_stream`.
+- **Each function** of the build is its own Lambda, `nbo-<app>-fn-<name>`, from the same function image as on the other clouds. Memory and timeout come from `function.json` (Lambda allows 128 to 10240 MB and up to 900 seconds; the app gets 512 MB and 300 seconds). A name longer than Lambda's 64 characters keeps `nbo-<app>-fn-` and has the rest shortened with a hash.
+- **Function URLs.** Each Lambda gets a function URL with response streaming (`RESPONSE_STREAM`), so streamed pages arrive in pieces as they do elsewhere. The app's URL is public (auth `NONE`): deployment protection and everything else is `nbo serve`'s job, as on Cloud Run. A function's URL only takes signed requests (auth `AWS_IAM`), so only the app can call it. The app's URL is the deployment URL and the edge's backend.
+- **Roles.** Each Lambda runs as its own IAM role, `/nbo/<function name>`, which may only write logs. The app's role may also call its own functions, nothing else. Every role carries the permissions boundary `nbo-boundary` (logs and calling `nbo-` functions only), and NBO creates a role without reading it first: IAM can't know a missing role's path, so reading one may be refused. When a role step at teardown is refused (`AccessDenied`), NBO takes the role as gone and goes on.
+- **Images** go to the one ECR repository `nbo` that NBO made when you connected AWS, tagged `<lambda name>_<image hash>-l<layer hash>`, for x86_64.
+
+### Deploying
+
+Functions first, up to 4 at once, then the app, as on the other clouds. For each Lambda, NBO first reads its tags: `nbo-content-id`, `nbo-fn-config` (a hash of its image, memory, timeout and variables) and `nbo-env` (the variables fingerprint). When they match and the function is ready, nothing is built, pushed or written. Otherwise NBO creates or updates the role, the function (and waits for Lambda to finish), the function URL and its permissions, and writes the tags last, so a deploy that stopped half way never reads as live. An update first sets `nbo-content-id` and `nbo-fn-config` to `pending`, before the new code goes in, so a deploy that fails after that is never read as the old build either.
+
+### Calling private functions
+
+Inside the app, `nbo serve` sees `AWS_LAMBDA_FUNCTION_NAME` (Lambda always sets it) and uses `createLambdaURLs`: each call to a function URL is signed with AWS Signature Version 4 (service `lambda`), with the credentials Lambda gives the app's role. A visitor's own `Authorization` header moves to `x-nbo-forwarded-authorization`, as on Cloud Run, and visitor headers starting with `x-amz-` are dropped. The app waits up to 15 seconds for a function's first byte (3 seconds on Cloud Run), because a cold Lambda container can take that long to start.
+
+### Cold starts
+
+A Lambda that hasn't run for a while starts a new container on the next request, and that visitor waits for it: about as long as the container takes to start `nbo serve` or the function host. NBO buys no provisioned concurrency, so a quiet site pays this on its first visit. Readiness is checked on the port only, so a cold start doesn't run your home page or function code just to check it.
+
+### No page cache
+
+Lambda can't run the in-memory page cache (`<app>-isr`) that Kubernetes and Cloud Run get. A build with ISR pages still deploys: the plan says "served uncached on Lambda", and every request to such a page reaches the function. `POST /_nbo/revalidate` has nothing to refresh there. See [Page cache and revalidation](./cache.md).
+
+### Domains
+
+A project on Lambda has its function URL as its own address (`https://<id>.lambda-url.<region>.on.aws`). Your own domains come through NBO's [public edge](./domains.md), as for any cloud; NBO doesn't set up CloudFront or API Gateway. Without an edge, adding a domain to a project on Lambda is refused with "AWS Lambda serves only its function URL: custom domains of a project on Lambda need the edge."
+
+### "What's running?"
+
+`liveContentID` reads the app Lambda's `nbo-content-id` tag. "Not found" means nothing is deployed yet.
+
 ## Environment variables at deploy time
 
 `deployTimeEnvVars(nboDir)` (`packages/deploy/src/env.ts`) reads `env.json` from the build, merges NBO's own (like `NBO_CRON_SIGNING_SECRET`) and bakes them into the images as `/env.json` (app) and `/app/env.json` (functions). On startup, `nbo serve` and `host.mjs` copy them into `process.env`.
@@ -187,9 +228,11 @@ Your own variables (workspace and project) are never baked into images; they rea
 - A project with no variables never creates Secret Manager secrets and adds no variable flags to a service that never had variables. The exceptions: if a service had variables (its `nbo-env` label) and the set is now empty, the deploy adds `--clear-env-vars --clear-secrets`; a function deployed for the first time (no live service to read) gets the same two flags, which are harmless on a new service.
 - If Secret Manager is off, the deploy asks to reconnect Google Cloud to enable it (dev: "enable the Secret Manager API in your Google Cloud project"). If permission is missing: reconnect (connected from this machine), "grant roles/secretmanager.admin to <deployer>" (pasted key), or "your gcloud account needs roles/secretmanager.admin" (dev). Secret values can't be empty.
 
+**On Lambda** (`packages/deploy/src/lambda-target.ts`), every variable, plain and secret, plus NBO's own (the cron signing secret, `NBO_PROTECTION`, the revalidation secret) is the Lambda function's environment, never baked into an image. AWS encrypts it at rest with its own key, but **anyone in your AWS account allowed `lambda:GetFunctionConfiguration` can read every value**, secrets included, so give that permission only to people you'd trust with the secrets. Lambda allows 4 KB of variables in all, measured as the JSON of the variables (`{"NAME":"value",…}`, so quotes, commas and escaping count); NBO measures the same way before it builds or pushes anything and refuses with "Lambda allows 4 KB of environment variables in all …", naming the largest. Names Lambda sets itself (`AWS_REGION`, `AWS_DEFAULT_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`, `AWS_ACCESS_KEY`, `AWS_EXECUTION_ENV`, `_HANDLER`, `_X_AMZN_TRACE_ID`, `LAMBDA_TASK_ROOT`, `LAMBDA_RUNTIME_DIR`, and anything starting with `AWS_LAMBDA_` or `AWS_LWA_`) are refused at deploy, before anything happens: "Lambda sets … itself, so a project can't: rename …". The same names are fine on the project's other clouds.
+
 **On Kubernetes**, all of a project's variables go into one Secret named `<app>-env` (plain ones too, so nothing readable sits in the Deployment). The app and every function Deployment load it with `envFrom`, marked `optional: true` so an old pod that restarts after a failed rollout removed or replaced the Secret still starts. The Deployment carries an `nbo.dev/env-fingerprint` annotation, so when a variable changes the pods restart and pick up the new set. With no variables there is no Secret: each deploy runs `kubectl delete secret <app>-env --ignore-not-found`, which does nothing when there was never one and removes a leftover Secret when the last variable was deleted.
 
-**Names only.** When NBO is set to [keep no variable values](./environments.md#dont-store-variable-values), the values come with the deploy request and are held in memory (`variables/supplied-values.ts`) until the job ends. They are used in exactly these places: the build command's environment, the Kubernetes Secret, and Cloud Run's env file and Secret Manager. Redaction of build logs and the deployment's `error` text covers secrets and plain values of 6 or more characters. Turning the setting on blanks the database values but does not touch these cloud-side Secrets, so apps keep running with the values they had until their next deploy.
+**Names only.** When NBO is set to [keep no variable values](./environments.md#dont-store-variable-values), the values come with the deploy request and are held in memory (`variables/supplied-values.ts`) until the job ends. They are used in exactly these places: the build command's environment, the Kubernetes Secret, Cloud Run's env file and Secret Manager, and the Lambda environment. Redaction of build logs and the deployment's `error` text covers secrets and plain values of 6 or more characters. Turning the setting on blanks the database values but does not touch these cloud-side Secrets, so apps keep running with the values they had until their next deploy.
 
 **"Already live" includes the variables.** The check that skips an unchanged deploy compares the content id plus a fingerprint of the variable set (a keyed hash; it reveals no values). Changing a variable therefore redeploys even if the code is the same, and a project with no variables behaves exactly as before.
 
@@ -205,8 +248,10 @@ The edge has two editions with the same ports, settings and admin API. The **Nod
 
 ## Deleting
 
-`DELETE /projects/{id}?resources=true|false` deletes a project. With `resources=true`, `createCloudTeardown` (`packages/controlplane/src/clouds/cloud-teardown.ts`) runs `kubectl delete` for the app's Deployment/Service/Ingress and its functions, and `gcloud run services delete` for Cloud Run services. Images in registries are kept. Then the edge entry is removed and the database rows are deleted.
+`DELETE /projects/{id}?resources=true|false` deletes a project. With `resources=true`, `createCloudTeardown` (`packages/controlplane/src/clouds/cloud-teardown.ts`) runs `kubectl delete` for the app's Deployment/Service/Ingress and its functions, `gcloud run services delete` for Cloud Run services, and on Lambda deletes the app's and its functions' Lambdas (their URLs go with them), their roles and the app's images in the ECR repository `nbo`. Other images in registries are kept. Then the edge entry is removed and the database rows are deleted.
 
 Removing a single cloud (`POST /environments/{id}/archive`) only hides it; its cloud resources stay up.
 
-**Deleting one custom environment** (`DELETE /projects/{id}/stages/{stageId}`) tears down only that environment's apps when you add `?resources=true`. The teardown has a scope. `project` is the whole project, as above. `app` is one app: on production Kubernetes it deletes only what the adapter made for that app in the project's namespace (its Deployment and Service, its `<app>-env` Secret, its two NetworkPolicies `<app>-from-edge` and `<app>-to-functions`, and each function's Deployment and Service), and never the namespace, the shared `nbo-default-deny-ingress` policy or the image pull secret. On Cloud Run it deletes that app's services, service accounts and secrets and leaves domain mappings alone, since only Production has them. It is told the names of every other app of the project and never touches those. If a step fails, everything stays and auto-deploy is turned back on.
+> **Not tried for real yet.** Lambda teardown ran against a fake `aws` command only. One gap is known: a function the new build no longer has stays on Lambda until the project or environment is torn down (Cloud Run behaves the same).
+
+**Deleting one custom environment** (`DELETE /projects/{id}/stages/{stageId}`) tears down only that environment's apps when you add `?resources=true`. The teardown has a scope. `project` is the whole project, as above. `app` is one app: on production Kubernetes it deletes only what the adapter made for that app in the project's namespace (its Deployment and Service, its `<app>-env` Secret, its two NetworkPolicies `<app>-from-edge` and `<app>-to-functions`, and each function's Deployment and Service), and never the namespace, the shared `nbo-default-deny-ingress` policy or the image pull secret. On Cloud Run it deletes that app's services, service accounts and secrets and leaves domain mappings alone, since only Production has them. On Lambda it deletes the Lambdas named `nbo-<app>` and `nbo-<app>-fn-…`, their roles and their ECR images. It is told the names of every other app of the project and never touches those. If a step fails, everything stays and auto-deploy is turned back on.

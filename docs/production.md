@@ -22,7 +22,7 @@ Compose (step 2) sets production mode for you.
 
 ## The steps at a glance
 
-A typical setup is one Linux machine that runs NBO with Docker Compose, plus a place for your sites: a Kubernetes cluster (for example k3s on Hetzner), Cloud Run in a Google project you already have, or both.
+A typical setup is one Linux machine that runs NBO with Docker Compose, plus a place for your sites: a Kubernetes cluster (for example k3s on Hetzner), Cloud Run in a Google project you already have, AWS Lambda in an AWS account, or several of them.
 
 1. Prepare a server: SSH key, Docker and a firewall.
 2. Start NBO with `docker compose up -d`, which pulls the ready-made image.
@@ -49,20 +49,33 @@ Docker Compose on a Linux server has been run for real: NBO has run with Compose
 
 The full list, feature by feature, is in [What has been tried for real](./manual/tried.md).
 
-- **NBO has no login.** Compose publishes the API on the server's loopback address only, and you reach it through an SSH tunnel. Don't change that to a public address, and don't put a VPN or reverse proxy in front of it: requests without an API token are trusted by their Host header, which a proxy can rewrite. NBO's own https address (see [step 8](#8-reaching-nbo-on-its-own-address)) is the one exception, and it lets in only requests with a token and the push webhooks. Builds are not isolated, so anyone who can run a build, a token holder included, is effectively root on the server.
+- **NBO has no login.** Compose publishes the API on the server's loopback address only, and you reach it through an SSH tunnel. Don't change that to a public address, and don't put a VPN or reverse proxy in front of it: requests without an API token are trusted by their Host header, which a proxy can rewrite. NBO's own https address (see [step 8](#8-reaching-nbo-on-its-own-address)) is the one exception, and it lets in only requests with a token and the push webhooks.
 - **The Docker socket makes NBO equal to root on its server.** NBO's container runs as root with the host's Docker socket mounted, because it builds images. Anything that controls that container controls the server. Use a machine dedicated to NBO.
-- **Only build repositories you trust.** Builds run inside NBO's container. A build can read the secret key and database, and reach the Docker socket, so a hostile repository takes over the server. NBO has no isolated builds, and none are scheduled.
+- **Builds run in a throwaway container, but its network is open.** In production mode everything of a repository's runs in a container of its own on the server's Docker ([Builds](./manual/builds.md#where-builds-run)): the ignored build step, the build command and turning the output into `.nbo/`. It runs as user 1000 with no Linux capabilities and a read-only root, without NBO's files (database, secret key, stored builds), NBO's environment, the Docker socket or any cloud credential, and with limits of 2 CPUs, 4 GB of memory, 4096 processes and 30 minutes per build (`NBO_BUILD_CPUS`, `NBO_BUILD_MEMORY`; [Server settings](./manual/server-settings.md)). NBO clones outside it, so git credentials never enter it, empties its own copy of the clone once it is in the container, and takes back only `.nbo/` (at most 5 GiB, and no links), which it validates as before. So the repository's code can't read NBO's key, database or environment, can't use the Docker socket, and never runs in NBO's process. What it doesn't cover: the build reaches the network freely, including private addresses on the server's network and the cloud metadata address `169.254.169.254`. On a Google Cloud or AWS virtual machine that address hands out the machine's own credentials (on Hetzner it serves the server's cloud-init data), so block it for build containers on the server, or run NBO on a machine whose cloud identity has no rights. Build containers use Docker's default bridge, `docker0`, so this rule blocks them and leaves NBO's own container alone:
+- **A build that fills the disk is stopped, but only by watching.** What a build writes inside its container has no size limit of its own (only the `.nbo/` it hands back is capped, at 5 GiB). Docker keeps the build's volume under its own data folder (`/var/lib/docker`), on the same disk as NBO's database unless you put them apart. So NBO guards the disk: a build starts only when Docker's data folder and NBO's own data folder (the database's folder and the temporary folder) each have `NBO_BUILD_MIN_FREE` free (default `10g`; otherwise it fails with `not enough free disk: …`), and every 5 seconds while it runs NBO checks again and, when either falls under half of that, removes the build's container and volume and fails it with `stopped: the disk is almost full (…)`. A build can still write a lot in 5 seconds, so give Docker's data folder its own disk or partition anyway: then a build that fills it can't touch NBO's database at all.
+
+  ```sh
+  sudo iptables -I DOCKER-USER -i docker0 -d 169.254.169.254 -j DROP
+  # or, with nftables:
+  sudo nft insert rule ip filter DOCKER-USER iifname "docker0" ip daddr 169.254.169.254 drop
+  ```
+
+  Rules added this way are lost on a reboot: save them with your system's firewall tool (on Ubuntu, `sudo apt install iptables-persistent` saves the current rules). The Docker daemon itself is trusted, so a bug that lets a process escape its container would reach the server; and with `NBO_BUILD_ISOLATION=none` (the default in dev mode) builds run as NBO's own user and can read its key and database. Build only repositories whose pushers you would let use the server's network.
+
+> **Not tried for real yet.** Builds in containers have run only on a development machine's Docker, not on a Linux server running NBO with Compose, and the metadata rule has not been run on a real server.
+
 - **Back up by hand.** NBO has no automatic backups, and none are scheduled. See [Backups and restore](#backups-and-restore).
 
 ## What you need
 
-**A server** (Linux, x64) with Git, Docker Engine and the Compose plugin. Everything else NBO uses (Node.js, pnpm, kubectl, gcloud, the Docker client) is inside its image, about 1.5 GB. Ubuntu 24.04 with 4 vCPUs and 8 GB of memory is a comfortable size, because builds run on this server. Don't pick an ARM plan, such as Hetzner's CAX: NBO's image is x64.
+**A server** (Linux, x64) with Git, Docker Engine and the Compose plugin. Everything else NBO uses (Node.js, pnpm, kubectl, gcloud, the Docker client) is inside its image, about 1.5 GB. Ubuntu 24.04 with 4 vCPUs and 8 GB of memory is a comfortable size, because builds run on this server (with 8 GB, let one build run at a time: `NBO_BUILD_CONCURRENCY=1`). Don't pick an ARM plan, such as Hetzner's CAX: NBO's image is x64.
 
 **This server doesn't host your sites.** It runs NBO's API and the builds. Your sites run on a cloud, which is billed separately.
 
-**A cloud to deploy to**, either or both:
+**A cloud to deploy to**, one or more:
 
 - A Google Cloud project for Cloud Run. This is the simplest start, but sites only get a `run.app` address unless you map your own domains through Google (see step 5).
+- An AWS account for Lambda. Sites get a `lambda-url.<region>.on.aws` address; your own domains need the edge on a Kubernetes cluster. Not tried on a real AWS account yet (see [Connect AWS (Lambda)](#connect-aws-lambda)).
 - A Kubernetes cluster, version 1.30 or newer, with admin credentials and LoadBalancer support (the cloud's way of giving the cluster a public address). You need this for your own domains and HTTPS through the edge. [Creating a Kubernetes cluster](./manual/clusters.md) shows how to make one, including a k3s cluster on Hetzner.
 
 **For public HTTPS:** a domain whose DNS you control, and ports 80 and 443 reachable on the edge's load balancer. Let's Encrypt checks port 80.
@@ -305,6 +318,41 @@ rm nbo-key.json
 
 A policy error about key creation means your organization blocks keys.
 
+### Connect AWS (Lambda)
+
+NBO deploys to AWS Lambda with the access key of an IAM user you make for it, in one region. It never uses your own AWS login. The user gets only what NBO needs: Lambda functions whose names start with `nbo-` and their URLs, the ECR repository `nbo` for images, roles under the path `/nbo/` (and passing them to Lambda only), and a check of who it is. Every role NBO makes must carry the **permissions boundary** `nbo-boundary`, a policy you create once that allows only writing logs and calling NBO's own functions; NBO may attach no managed policy but `AWSLambdaBasicExecutionRole` and can't change the boundary. So even someone who stole NBO's key can't make a role worth more than that. NBO prints both exact policies, so you don't copy them from here: the `awsIamPolicy` and `awsBoundaryPolicy` constants in `packages/controlplane/src/clouds/aws-connect.ts`, served at `GET /system/connections/aws/policy` (add `&document=boundary` for the boundary).
+
+You need the `aws` command on your own computer, signed in as someone who may create IAM users. Pick a region, such as `eu-west-1`, and note your 12-digit account id (`aws sts get-caller-identity`). Then, with an SSH tunnel to NBO open (see above), or on the server with `nbo-server api`:
+
+```bash
+curl -s "http://localhost:8081/system/connections/aws/policy?region=eu-west-1&account=123456789012" > nbo-policy.json
+curl -s "http://localhost:8081/system/connections/aws/policy?region=eu-west-1&account=123456789012&document=boundary" > nbo-boundary.json
+aws iam create-policy --policy-name nbo-boundary --policy-document file://nbo-boundary.json
+aws iam create-user --user-name nbo
+aws iam create-policy --policy-name nbo --policy-document file://nbo-policy.json
+aws iam attach-user-policy --user-name nbo --policy-arn arn:aws:iam::123456789012:policy/nbo
+aws iam create-access-key --user-name nbo --query AccessKey.SecretAccessKey --output text > nbo-aws-secret.txt
+aws iam list-access-keys --user-name nbo --query 'AccessKeyMetadata[0].AccessKeyId' --output text
+```
+
+The last command prints the key id (`AKIA…`). Copy `nbo-aws-secret.txt` to the server, connect, and delete the file in both places:
+
+```bash
+docker compose exec -T nbo nbo-server connect aws --access-key-id AKIA... --secret-key-file - --region eu-west-1 < nbo-aws-secret.txt
+rm nbo-aws-secret.txt
+```
+
+The secret comes only from a file or stdin. NBO checks the key with AWS (which account it belongs to), creates the ECR repository `nbo` if it doesn't exist (with image scanning on push) and saves the key encrypted. It reaches the `aws` command only through that command's environment, never its arguments, and is replaced by `[redacted]` in errors and logs. `nbo-server api POST /system/connections/aws/test` checks it again later. Running `connect aws` again replaces the key (rotate it this way); a new key for another account or region is refused while projects use Lambda. `nbo-server disconnect aws` forgets it, and is refused while any project has a Lambda cloud.
+
+Then use `{ "target": "lambda" }` as a cloud when you set up a project (step 6), add it to a project with `POST /projects/{id}/environments/add`, or move a project there with `nbo-server transfer <project id> --to lambda`. How it runs on Lambda, what it costs you in waiting (cold starts) and its limits are in [AWS Lambda in detail](./manual/deploying.md#aws-lambda-in-detail). In short:
+
+- Every variable is a Lambda environment variable. Lambda allows **4 KB in all**, and **anyone in your AWS account allowed `lambda:GetFunctionConfiguration` can read them**, secrets included. Names Lambda sets itself, such as `AWS_REGION`, are refused at the first deploy.
+- ISR pages are served **uncached** on Lambda: there is no page cache.
+- Your own domains need the public edge on a cluster (step 5); NBO doesn't set up CloudFront.
+- Lambda bills per request and per second of run time, and ECR per GB stored. A quiet site costs little, but NBO doesn't delete old images from ECR except when it tears an app down.
+
+> **Not tried for real yet.** AWS Lambda. Connecting, deploying, signed calls between the app and its functions, the "already live" check and teardown ran against a fake `aws` command and a fake Docker only; no real AWS account has been used. Keyless AWS (no stored key) isn't there yet: it needs NBO to have a public address AWS can check. `scripts/verify-lambda.sh` in the repository runs the first real check against an AWS account of yours, with a dev-mode NBO.
+
 ### Connect a Kubernetes cluster
 
 If you don't have a cluster yet, [Creating a Kubernetes cluster](./manual/clusters.md) shows how to make one. For a k3s cluster on Hetzner, follow [Hetzner Cloud](./manual/clusters.md#hetzner-cloud); you can run its commands on this server.
@@ -513,7 +561,7 @@ docker compose exec -T nbo nbo-server project setup --body-stdin < site.json
 docker compose exec nbo nbo-server api GET /projects/summary
 ```
 
-NBO doesn't install dependencies, so the build command must. `framework` is `nextjs` or `static` (add `"spa": true` for a single-page app and `"outputDir"` if it isn't `dist`). Each cloud is `{ "target": "kubernetes", "clusterId": "kc_..." }` or `{ "target": "cloudrun", "mode": "auto" }`. Setup prepares the clouds and starts the first build; the summary shows its progress and, once it has deployed, the project's address. From then on every push to the production branch builds and deploys. Terraform's `nbo_project` and `nbo_deployment` do the same from a `.tf` file (see [Manage it from code](#manage-it-from-code)).
+NBO doesn't install dependencies, so the build command must. `framework` is `nextjs` or `static` (add `"spa": true` for a single-page app and `"outputDir"` if it isn't `dist`). Each cloud is `{ "target": "kubernetes", "clusterId": "kc_..." }`, `{ "target": "cloudrun", "mode": "auto" }` or `{ "target": "lambda" }`. Setup prepares the clouds and starts the first build; the summary shows its progress and, once it has deployed, the project's address. From then on every push to the production branch builds and deploys. Terraform's `nbo_project` and `nbo_deployment` do the same from a `.tf` file (see [Manage it from code](#manage-it-from-code)).
 
 Then add custom domains: `POST /projects/{id}/domains` with `{"host": "shop.example.com"}` (on the server, `nbo-server api POST /projects/<id>/domains --body-stdin`), or Terraform's `nbo_domain`. The answer holds the DNS record to create, and the domain then moves through "Waiting for DNS", "Issuing certificate" and "Active".
 
@@ -537,7 +585,7 @@ NBO has no sign-in, members or roles. It trusts two kinds of caller. A request m
 docker compose exec nbo nbo-server token create ci
 ```
 
-It prints the token once: store it now, it is not shown again. `nbo-server token list` lists tokens (never their values) and `nbo-server token revoke <id>` removes one. A token can run builds, and a build can control this server, so only give a token to people and programs you'd give the root password.
+It prints the token once: store it now, it is not shown again. `nbo-server token list` lists tokens (never their values) and `nbo-server token revoke <id>` removes one. A token can't reach NBO's key, database, environment or Docker socket through a build, because a repository's code runs only in a container (see [Read this first](#read-this-first)). A build it starts can still reach the network, including the cloud metadata address, which on Google Cloud and AWS hands out the server's own credentials unless you block it (same section). It can still change any project's variables, repository and build command, deploy any build to any connected cloud and move traffic, so it controls every site NBO runs: give it only to people and programs you'd trust with all of them. With `NBO_BUILD_ISOLATION=none` a token is still equal to root on the server.
 
 Tokens made while an older NBO had sign-in on keep working if they were made for an Admin or an Owner. Those made for a Viewer or a Developer are refused with `401`, since NBO can no longer limit them; make new ones.
 
@@ -722,6 +770,8 @@ Each note is headed with the date of the version it applies to. If the NBO you u
 **From 2026-11-12: NBO without the dashboard, sign-in, the GitHub App, previews or Speed Insights storage.** Those features moved to the hosted dashboard. The first start upgrades the database: the settings table is renamed (every value, sealed ones included, is kept, and the key check still covers the stored GitHub and Google secrets), previews become [ephemeral environments](#ephemeral-environments-previews), and the tables of the moved features (members, sessions, invites, sign-in rules, the audit log, the GitHub App's installation and deliveries, preview settings and Speed Insights data) stay in the database, unused and unchanged, for the hosted dashboard's one-time import. NBO prints one line naming them at every start (`this database holds data from features that moved to the hosted dashboard`); it is a notice, not an error. If sign-in was on, read this before you start the new NBO: sign-in no longer protects anything, so a request that reaches NBO's port with no token may do everything, as on an NBO that never had sign-in. Keep the port published on `127.0.0.1` only (the default `compose.yaml` does) and reach NBO through the SSH tunnel; never publish it on a public address. Tokens made for a Viewer or a Developer stop working ([Team access](#7-team-access)).
 
 The API also lost its `/api/controlplane` prefix, which only the dashboard's server added. **If you use Terraform,** change the provider's `endpoint` (or `NBO_ENDPOINT`) to NBO's own address with no path, such as `http://localhost:8081`; with the old path the provider stops with "NBO answered with something that isn't its API". Scripts that call `/api/controlplane/...` need the same change. Projects linked to the old GitHub App keep building, with three changes you will notice: their check runs no longer appear on commits and pull requests (and "Re-run" on an old check does nothing); GitHub's deliveries to the app's `POST /github/webhook` now get `404` and show as failed in the app's settings on GitHub; and so a push builds only when NBO's poll sees it, about 45 seconds later. Nothing is broken. To move such a project to a credential of its own, send `PUT /projects/{id}/git` with its settings and a `credential` (a deploy key, with the repository's SSH address, or a token; see [Private repositories](#4-private-repositories)): that drops the old link. For faster pushes, add the per-project webhook (`POST /projects/{id}/webhooks/github`, signed with the `webhookSecret` that same answer gives) to the repository, then uninstall the old app.
+
+**From 2026-11-20: builds run in containers.** In production mode the build command and the ignored build step now run in a throwaway container started from `NBO_BUILD_IMAGE` (default `node:24-bookworm`, pinned), which the first build pulls (a few hundred MB). The container has Node.js 24, npm, git, python3, make and g++, and pnpm and Yarn work through corepack: a repository's `packageManager` field (for example `"pnpm@10.12.1"`) picks the version, which the build downloads on first use (every build, since nothing is kept between builds). An `NBO_BUILD_IMAGE` of your own needs corepack, or pnpm and Yarn of its own. Each build may use 2 CPUs and 4 GB of memory, and two builds run at once (`NBO_BUILD_CONCURRENCY`); on a server with 8 GB of memory or less, set `NBO_BUILD_CONCURRENCY=1` in `.env`. Builds of different environments of one project now run side by side.
 
 ### Rolling back
 

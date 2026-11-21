@@ -14,6 +14,7 @@
   "dependencies": {
     "@nbo/adapter-cloudrun": "workspace:*",
     "@nbo/adapter-k8s": "workspace:*",
+    "@nbo/adapter-lambda": "workspace:*",
     "@nbo/digest": "workspace:*",
     "@nbo/planner": "workspace:*",
     "@nbo/spec": "workspace:*",

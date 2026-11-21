@@ -78,6 +78,34 @@ describe("resolveFunctions", () => {
     }
   });
 
+  it("signs function calls (SigV4) on AWS Lambda", async () => {
+    let auth: string | undefined;
+    server = createServer((req, res) => {
+      auth = req.headers.authorization;
+      res.end();
+    });
+    await new Promise<void>((resolve) => server!.listen(0, resolve));
+    const { port } = server.address() as AddressInfo;
+
+    const set = {
+      AWS_LAMBDA_FUNCTION_NAME: "app",
+      AWS_REGION: "eu-west-1",
+      AWS_ACCESS_KEY_ID: "AKIDEXAMPLE",
+      AWS_SECRET_ACCESS_KEY: "secret",
+    };
+    const saved = Object.fromEntries(Object.keys(set).map((k) => [k, process.env[k]]));
+    Object.assign(process.env, set);
+    try {
+      const { resolve } = await resolveFunctions(dir, { ssr: `http://127.0.0.1:${port}` });
+      await resolve!("ssr")(new Request("http://x/x"));
+      expect(auth).toMatch(/^AWS4-HMAC-SHA256 Credential=AKIDEXAMPLE\/\d{8}\/eu-west-1\/lambda\/aws4_request, /);
+    } finally {
+      for (const [k, v] of Object.entries(saved))
+        if (v === undefined) delete process.env[k];
+        else process.env[k] = v;
+    }
+  });
+
   it("uses the plain static-URL resolver off Cloud Run", async () => {
     server = createServer((_req, res) => res.end("ok"));
     await new Promise<void>((resolve) => server!.listen(0, resolve));

@@ -28,7 +28,7 @@ Adding an environment builds nothing. The first build comes from the next push t
 
 Each environment has its own switch, `autoDeploy` (`PATCH /projects/{id}/stages/{stageId}`). Off, a push to its branch builds nothing.
 
-An environment has its own cloud rows, so it can run on Cloud Run, on a cluster, or on several. Their names look like `s-staging-cr` (Cloud Run), `s-staging-k8s` (the first cluster) or `s-staging-k-1a2b3c` (another cluster, with six letters or digits taken from its id); you only see these in the Traffic section of the API and in Terraform. Environments other than Production have no cloud-to-cloud transfers; you change the split from the API or Terraform.
+An environment has its own cloud rows, so it can run on Cloud Run, AWS Lambda, a cluster, or several. Their names look like `s-staging-cr` (Cloud Run), `s-staging-lm` (AWS Lambda), `s-staging-k8s` (the first cluster) or `s-staging-k-1a2b3c` (another cluster, with six letters or digits taken from its id); you only see these in the Traffic section of the API and in Terraform. Environments other than Production have no cloud-to-cloud transfers; you change the split from the API or Terraform.
 
 With the public edge, a cluster other than the edge's own is reached only through its relay. NBO refuses to add such a cluster to an environment until you enable public entry for it (`nbo-server cluster relay <id> --confirm-billing`), the same rule transfers follow.
 
@@ -44,7 +44,7 @@ Because every address is a different name under your base domain, **each environ
 
 - **Crons** run only on Production, so a staging app doesn't run your scheduled jobs a second time.
 - **Speed Insights** collects only on Production hosts.
-- **Builds** run one at a time per project. Production goes first, then custom environments, then ephemeral ones, so a staging build can wait behind a Production one. A newer staging push replaces only a waiting staging build, never a waiting Production one.
+- **Builds** run one at a time per environment, so a staging build runs next to a Production one. Only `NBO_BUILD_CONCURRENCY` builds (default 2) run at once on the server; when builds wait for a place, Production goes first, then custom environments, then ephemeral ones. A newer staging push replaces only a waiting staging build, never a waiting Production one.
 - **Build commands** get three extra variables: `NBO_ENV` (the environment's name), `NBO_GIT_COMMIT_REF` (its branch) and `NBO_GIT_COMMIT_SHA`. The Ignored Build Step gets them too (before, it got nothing).
 - **Deploying a chosen build** can target any environment's cloud. It uses the variables of the environment you deploy to. Values used during the build itself stay as they were, so a build made for another environment keeps what it baked in.
 
@@ -86,7 +86,7 @@ NBO names it `pv-` plus 8 characters and builds nothing yet. The next push to it
 
 ## Deleting a project
 
-`DELETE /projects/{id}` removes the project from NBO: its builds, clouds, environments, settings and its address on the edge. This can't be undone. Add `?resources=true` to take down the Kubernetes apps and Cloud Run services too; without it they keep running until you remove them yourself. Images in the registry are kept either way. To delete one environment instead, see [Removing an environment](#removing-an-environment) above.
+`DELETE /projects/{id}` removes the project from NBO: its builds, clouds, environments, settings and its address on the edge. This can't be undone. Add `?resources=true` to take down the Kubernetes apps, Cloud Run services and Lambda functions too; without it they keep running until you remove them yourself. Images in the registry are kept either way. To delete one environment instead, see [Removing an environment](#removing-an-environment) above.
 
 ## Page cache and revalidation secret
 
@@ -123,7 +123,7 @@ Some teams keep their secrets somewhere else, such as Terraform or a vault, and 
 - You send the values **with each deploy**: `values` in the body of `POST /projects/{id}/builds`, `POST /builds/{id}/deploy` and `POST /projects/{id}/transfer`. With Terraform, `nbo_deployment` takes `values_wo` or `values` (see [Terraform](./terraform.md#keeping-values-out-of-nbo)). With no names declared, no values are needed.
 - A deploy must give a value for every name its environment declares, and only those names. Otherwise NBO refuses and lists the names.
 - Values live in memory while the job runs and are dropped when it ends, however it ends. If the control-plane restarts mid-build, that build is marked failed and you deploy again.
-- The values reach the build command, and then the running app: the Kubernetes Secret `<app>-env`, or Cloud Run's Secret Manager and environment file. Cloud Run's file is written to a private temporary file for a moment, because `gcloud` needs a path, and deleted straight after. So the promise is "not in NBO's database, logs or build records", not "never on any disk".
+- The values reach the build command, and then the running app: the Kubernetes Secret `<app>-env`, Cloud Run's Secret Manager and environment file, or the Lambda function's environment. Cloud Run's file is written to a private temporary file for a moment, because `gcloud` needs a path, and deleted straight after. So the promise is "not in NBO's database, logs or build records", not "never on any disk".
 - They never go into the database, the build record (it lists names only), the stored build output's details, error messages or build logs. Secret values are always hidden from logs. In this mode **plain values of 6 or more characters** are hidden too. A plain value shorter than that, such as `true` or `prod`, can appear in a log if your build prints it, because hiding it would garble every log.
 - The keyed fingerprint (a hash that can't be reversed without NBO's secret key) is still recorded, so "already live" still works. The fingerprint route answers `null`, because NBO can't compare values it doesn't have.
 - A framework can still put values into its own output. A Next.js `NEXT_PUBLIC_*` value is written into the JavaScript, so it is in the stored build output. Those values are public by design.
